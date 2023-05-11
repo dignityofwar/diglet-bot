@@ -20,7 +20,5 @@ ready(client);
 // Declare event handlers
 interactionCreate(client);
 
-
 client.login(token);
 
-console.log(client);

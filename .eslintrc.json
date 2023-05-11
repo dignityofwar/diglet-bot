@@ -14,6 +14,7 @@
     "quotes": ["error", "single", { "avoidEscape": true }],
     "object-curly-spacing": "error",
     "no-trailing-spaces": "error",
-    "indent": ["error", 4]
+    "indent": ["error", 4],
+    "no-multiple-empty-lines": ["error", { "max": 1 }]
   }
 }
