@@ -11,7 +11,7 @@ console.log('Bot is starting...');
 const token = process.env.TOKEN;
 
 const client = new Client({
-	intents: [],
+    intents: [],
 });
 
 // Declare listeners
