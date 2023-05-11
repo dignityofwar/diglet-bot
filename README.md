@@ -1,0 +1,2 @@
+# diglet-bot
+Typescript DIGBot
