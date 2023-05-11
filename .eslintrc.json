@@ -9,5 +9,11 @@
   "plugins": [
     "@typescript-eslint"
   ],
-  "ignorePatterns": ["src/**/*.test.ts", "dist"]
+  "ignorePatterns": ["src/**/*.test.ts", "dist"],
+  "rules": {
+    "quotes": ["error", "single", { "avoidEscape": true }],
+    "object-curly-spacing": "error",
+    "no-trailing-spaces": "error",
+    "indent": ["error", 4]
+  }
 }

@@ -1,8 +1,8 @@
-import {Client, CommandInteraction, Interaction} from "discord.js";
-import {Commands} from "../commands";
+import {Client, CommandInteraction, Interaction} from 'discord.js';
+import {Commands} from '../commands';
 
 export default (client: Client): void => {
-    client.on("interactionCreate", async (interaction: Interaction) => {
+    client.on('interactionCreate', async (interaction: Interaction) => {
         if (interaction.isCommand()) {
             await handleSlashCommand(client, interaction);
         }
@@ -13,7 +13,7 @@ const handleSlashCommand = async (client: Client, interaction: CommandInteractio
     const slashCommand = Commands.find(c => c.name === interaction.commandName);
 
     if (!slashCommand) {
-        interaction.followUp({ content: "An error has occurred" });
+        interaction.followUp({content: 'An error has occurred'});
         return;
     }
 
