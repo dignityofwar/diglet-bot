@@ -9,7 +9,7 @@ export const HelloCommand: CommandInterface = {
     run: async (client: Client, interaction: CommandInteraction) => {
         const names = ['Bob', 'Charlie', 'Matt', 'Rob', 'Caroline', 'Edda']
 
-        const content = `Hello there, ${_.sample(names)}`
+        const content = `${_.sample(names)} says hello, ${client.user?.username}!`
 
         await interaction.followUp({
             ephemeral: true,
