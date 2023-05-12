@@ -14,5 +14,14 @@ export const PingCommand: CommandInterface = {
             ephemeral: true,
             content,
         });
+
+        const prisma = new PrismaClient();
+
+        const newUser = await prisma.user.create({
+            data: {
+                name: 'Alice',
+                email: 'alice@prisma.io',
+            },
+        });
     },
 };
