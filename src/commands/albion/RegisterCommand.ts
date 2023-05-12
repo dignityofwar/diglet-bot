@@ -1,9 +1,9 @@
 import { Client, CommandInteraction, ApplicationCommandType } from 'discord.js';
 import { CommandInterface } from '../../interfaces/CommandInterface';
-import { PrismaClient } from '@prisma/client';
 import AxiosFactory from '../../factories/AxiosFactory';
 import { PlayersResponseInterface, SearchResponseInterface } from '../../interfaces/ToolsForAlbionInterface';
 import { AlbionConsts } from '../../consts/AlbionConsts';
+import { getConfig } from '../../utilities/Config';
 
 export const RegisterCommand: CommandInterface = {
     name: 'albion-register',
@@ -24,7 +24,7 @@ export const RegisterCommand: CommandInterface = {
             return;
         }
 
-        // Character name
+        // Get Character name input
         const characterName = interaction.options.data.find((option) => option.name === 'character-name')?.value ?? null;
 
         // This shouldn't happen as it's required but anyway
@@ -36,11 +36,11 @@ export const RegisterCommand: CommandInterface = {
             return;
         }
 
-        // Get the character
+        // Get the character from Tools4Albion
         const character = await pullCharacter(String(characterName));
 
-        // Get guild ID
-        const guildId = await getGuildId();
+        // Get guild ID fron config
+        const guildId = await getConfig(AlbionConsts.guildIdKey);
 
         // Check if the character is in the guild
         if (!character.data.GuildId || character.data.GuildId !== guildId) {
@@ -67,10 +67,8 @@ export const RegisterCommand: CommandInterface = {
         }
 
         // Add the initiate role
-        const initiateRoleId = await getInitiateRoleId();
+        const initiateRoleId = await getConfig(AlbionConsts.initiateRoleIdKey);
         const initiateRole = await interaction.guild?.roles.fetch(initiateRoleId);
-
-        console.log('role', initiateRole, 'id', initiateRoleId);
 
         if (!initiateRole) {
             await interaction.followUp({
@@ -97,49 +95,14 @@ export const RegisterCommand: CommandInterface = {
     },
 };
 
-const getGuildId = (async (): Promise<string> => {
-    const prisma = new PrismaClient();
-
-    const guildId = await prisma.config.findUnique({
-        where: { key: AlbionConsts.guildIdKey },
-    });
-
-    if (!guildId || !guildId.value || guildId.value === '') {
-        throw new Error('Guild ID not set.');
-    }
-
-    return guildId.value;
-});
-
-const getInitiateRoleId = (async (): Promise<string> => {
-    const prisma = new PrismaClient();
-
-    const roleId = await prisma.config.findUnique({
-        where: { key: AlbionConsts.initiateRoleIdKey },
-    });
-
-    if (!roleId || !roleId.value || roleId.value === '') {
-        throw new Error('Role ID not set.');
-    }
-
-    return roleId.value;
-});
-
 const checkIfRegistrationChannel = (async (interaction: CommandInteraction): Promise<boolean> => {
-    const prisma = new PrismaClient();
-
     // Check if the command came from the correct channel ID
-    const channelIdFrom = interaction.channelId;
-    const channelIdRow = await prisma.config.findUnique({
-        where: { key: 'albionOnline:registrationChannelId' },
-    });
+    const registrationChannelId = await getConfig(AlbionConsts.registrationChannelIdKey);
 
-    const channelId = channelIdRow?.value ?? '';
-
-    if (channelId && channelIdFrom !== channelId) {
+    if (interaction.channelId !== registrationChannelId) {
         await interaction.followUp({
             ephemeral: true,
-            content: `Please use this command in channel <#${channelId}> to register for Albion Online.`,
+            content: `Please use this command in channel <#${registrationChannelId}> to register for Albion Online.`,
         });
         return false;
     }
@@ -165,10 +128,7 @@ const findCharacterId = async (characterName: string): Promise<string> => {
 
     // Loop through the players response to find the character name
     const foundPlayer = response.data.players.filter((player) => {
-        if (player.Name === characterName) {
-            return true;
-        }
-        return false;
+        return player.Name === characterName;
     });
 
     // There should only be one
