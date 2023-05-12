@@ -17,9 +17,7 @@ export const RegisterCommand: CommandInterface = {
         },
     ],
     run: async (client: Client, interaction: CommandInteraction) => {
-        const valid = await checkIfRegistrationChannel(interaction);
-
-        if (!valid) {
+        if (!await checkIfRegistrationChannel(interaction)) {
             return;
         }
 
