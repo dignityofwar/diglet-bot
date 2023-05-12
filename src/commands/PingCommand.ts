@@ -1,15 +1,14 @@
 import { Client, CommandInteraction, ApplicationCommandType } from 'discord.js';
 import { CommandInterface } from '../interfaces/CommandInterface';
-import _ from 'lodash';
+import { PrismaClient } from '@prisma/client';
 
-export const HelloCommand: CommandInterface = {
-    name: 'hello',
-    description: 'Returns a greeting',
+export const PingCommand: CommandInterface = {
+    name: 'ping',
+    description: 'Returns a message from the bot verifying it is online.',
     type: ApplicationCommandType.ChatInput,
     run: async (client: Client, interaction: CommandInteraction) => {
-        const names = ['Bob', 'Charlie', 'Matt', 'Rob', 'Caroline', 'Edda'];
-
-        const content = `${_.sample(names)} says hello, ${interaction.user.username}!`;
+        // e.g. "Hello Maelstrome26, I'm alive!"
+        const content = `Hello ${interaction.user.username}, I'm alive!`;
 
         await interaction.followUp({
             ephemeral: true,

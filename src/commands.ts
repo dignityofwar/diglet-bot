@@ -1,4 +1,4 @@
 import { CommandInterface } from './interfaces/CommandInterface';
-import { HelloCommand } from './commands/HelloCommand';
+import { PingCommand } from './commands/PingCommand';
 
-export const Commands: CommandInterface[] = [HelloCommand];
+export const Commands: CommandInterface[] = [PingCommand];

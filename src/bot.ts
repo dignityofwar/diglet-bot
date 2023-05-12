@@ -1,24 +1,26 @@
 import { Client } from 'discord.js';
-import ready from './listeners/ready';
-import interactionCreate from './events/InteractionCreate';
+import ReadyListener from './listeners/ReadyListener';
 import * as dotenv from 'dotenv';
+import InteractionCreate from './events/InteractionCreate';
 
-// Grab configs
+export default class Bot {
+    private client: Client;
+
+    constructor() {
+        this.client = new Client({
+            intents: [],
+        });
+
+        // Set up event listeners
+        this.client.on('ready', () => new ReadyListener(this.client).handle());
+        this.client.on('interactionCreate', (interaction) => new InteractionCreate(this.client).handle(interaction));
+    }
+
+    public async start(): Promise<void> {
+        await this.client.login(process.env.TOKEN);
+    }
+}
+
 dotenv.config();
 
-console.log('Bot is starting...');
-
-const token = process.env.TOKEN;
-
-const client = new Client({
-    intents: [],
-});
-
-// Declare listeners
-ready(client);
-
-// Declare event handlers
-interactionCreate(client);
-
-client.login(token);
-
+new Bot().start().then(() => console.log('Bot started!'));
