@@ -12,7 +12,7 @@
     "lint:fix": "eslint . --ext .ts --fix"
   },
   "prisma": {
-    "seed": "ts-node prisma/seed.ts"
+    "seed": "ts-node src/seed.ts"
   },
   "dependencies": {
     "@prisma/client": "4.14.0",
