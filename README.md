@@ -9,7 +9,8 @@ Typescript DIGBot
    2. Create passwords for each branch.
    3. Inject said passwords into your `.env`.
    4. `main` branch should match `DATABASE_URL` and `dev` branch should match `SHADOW_DATABASE_URL`.
-   5. Run `prisma push` to create the schema.
+   5. Run `prisma migrate dev` to create the schema.
+   6. Run `prisma db seed` to seed the database with data.
 4. `yarn dev`.
 5. Invite the bot to your server.
 

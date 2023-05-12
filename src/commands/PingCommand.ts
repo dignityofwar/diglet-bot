@@ -1,6 +1,5 @@
 import { Client, CommandInteraction, ApplicationCommandType } from 'discord.js';
 import { CommandInterface } from '../interfaces/CommandInterface';
-import { PrismaClient } from '@prisma/client';
 
 export const PingCommand: CommandInterface = {
     name: 'ping',
@@ -13,15 +12,6 @@ export const PingCommand: CommandInterface = {
         await interaction.followUp({
             ephemeral: true,
             content,
-        });
-
-        const prisma = new PrismaClient();
-
-        const newUser = await prisma.user.create({
-            data: {
-                name: 'Alice',
-                email: 'alice@prisma.io',
-            },
         });
     },
 };
