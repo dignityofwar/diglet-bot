@@ -35,14 +35,16 @@ const checkIfRegistrationChannel = (async (interaction: CommandInteraction): Pro
 
     // Check if the command came from the correct channel ID
     const channelIdFrom = interaction.channelId;
-    const channelId = await prisma.config.findUnique({
+    const channelIdRow = await prisma.config.findUnique({
         where: { key: 'albionOnline:registrationChannelId' },
     });
 
-    if (channelId && channelIdFrom !== channelId.value) {
+    const channelId = channelIdRow?.value ?? '';
+
+    if (channelId && channelIdFrom !== channelId) {
         await interaction.followUp({
             ephemeral: true,
-            content: 'Please use the correct channel to register for Albion Online.',
+            content: `Please use this command in channel <#${channelId}> to register for Albion Online.`,
         });
         return false;
     }

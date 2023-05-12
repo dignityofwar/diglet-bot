@@ -6,7 +6,7 @@ export default class ConfigSeed {
     public async seed(): Promise<void> {
         const albionRegistrationChannel = {
             key: 'albionOnline:registrationChannelId',
-            value: '1106632012615397457',
+            value: '1039269295735181413',
         };
         await this.prismaClient.config.upsert({
             where: { key: albionRegistrationChannel.key },
