@@ -1,7 +1,3 @@
 #!/bin/sh
 
-cd /app
-
-prisma generate
-
-yarn start:prod
+cd /app && yarn start:prod
