@@ -8,6 +8,6 @@ RUN yarn install --frozen-lockfile
 
 COPY . ./
 
-RUN prisma generate && yarn run build
+RUN npx prisma generate && yarn run build
 
 ENTRYPOINT /app/entrypoint.sh
