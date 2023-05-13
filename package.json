@@ -6,8 +6,10 @@
   "author": "Matt Cavanagh <matt@mattcavanagh.me>",
   "license": "MIT",
   "scripts": {
+    "build": "tsc",
     "dev": "nodemon",
     "start": "ts-node src/bot.ts",
+    "start:prod": "node dist/bot.js",
     "lint": "eslint . --ext .ts",
     "lint:fix": "eslint . --ext .ts --fix"
   },
