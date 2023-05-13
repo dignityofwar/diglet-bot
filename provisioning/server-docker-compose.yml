@@ -1,0 +1,9 @@
+version: "3"
+services:
+  diglet-bot:
+    container_name: digletbot
+    image: maelstromeous/applications:digletbot-latest
+    env_file: docker-digletbot.env
+    restart: unless-stopped
+    labels:
+      - "com.centurylinklabs.watchtower.enable=true"
