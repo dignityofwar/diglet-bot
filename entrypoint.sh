@@ -2,6 +2,6 @@
 
 cd /app
 
-ls -lah dist
+prisma generate
 
 yarn start:prod
