@@ -1,37 +1,71 @@
 {
-  "name": "digletbot",
-  "version": "1.0.0",
-  "description": "Typescript bot that serves the Dignity of War community",
-  "main": "src/bot.ts",
-  "author": "Matt Cavanagh <matt@mattcavanagh.me>",
-  "license": "MIT",
+  "name": "digbot-nest",
+  "version": "0.0.1",
+  "private": true,
+  "license": "UNLICENSED",
   "scripts": {
-    "build": "tsc",
-    "dev": "nodemon",
-    "start": "ts-node src/bot.ts",
-    "start:prod": "node dist/bot.js",
-    "lint": "eslint . --ext .ts",
-    "lint:fix": "eslint . --ext .ts --fix"
-  },
-  "prisma": {
-    "seed": "ts-node src/seed.ts"
+    "prebuild": "rimraf dist",
+    "build": "nest build",
+    "format": "prettier --write \"src/**/*.ts\"",
+    "lint": "eslint \"{src,apps,libs,test}/**/*.ts\" --fix",
+    "seed:config": "ts-node ./node_modules/typeorm-seeding/dist/cli.js config",
+    "seed:run": "ts-node ./node_modules/typeorm-seeding/dist/cli.js seed",
+    "start": "nest start",
+    "start:dev": "nest start --watch",
+    "start:debug": "nest start --debug --watch",
+    "start:prod": "node dist/main",
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "test:cov": "jest --coverage",
+    "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
+    "test:e2e": "jest --config ./test/jest-e2e.json"
   },
   "dependencies": {
-    "@prisma/client": "4.14.0",
-    "axios": "^1.4.0",
-    "discord.js": "^14.11.0",
-    "dotenv": "^16.0.3",
-    "prisma": "^4.14.0"
+    "@discord-nestjs/common": "5.2.3",
+    "@discord-nestjs/core": "5.3.5",
+    "@nestjs/common": "9.4.0",
+    "@nestjs/config": "2.3.1",
+    "@nestjs/core": "9.4.0",
+    "@nestjs/typeorm": "^9.0.1",
+    "class-transformer": "0.5.1",
+    "discord.js": "14.10.2",
+    "mysql2": "^3.3.1",
+    "reflect-metadata": "0.1.13",
+    "rimraf": "5.0.0",
+    "rxjs": "7.8.1",
+    "typeorm": "^0.3.16",
+    "typeorm-seeding": "^1.6.1"
   },
   "devDependencies": {
-    "@types/lodash": "^4.14.194",
-    "@types/node": "^20.1.3",
-    "@typescript-eslint/eslint-plugin": "^5.59.5",
-    "@typescript-eslint/parser": "^5.59.5",
-    "eslint": "^8.40.0",
-    "lodash": "^4.17.21",
-    "nodemon": "^2.0.22",
-    "ts-node": "^10.9.1",
-    "typescript": "^5.0.4"
+    "@nestjs/cli": "9.4.2",
+    "@nestjs/schematics": "9.1.0",
+    "@types/node": "18.16.3",
+    "@typescript-eslint/eslint-plugin": "5.59.2",
+    "@typescript-eslint/parser": "5.59.2",
+    "eslint": "8.39.0",
+    "eslint-config-prettier": "8.8.0",
+    "eslint-plugin-prettier": "4.2.1",
+    "prettier": "2.8.8",
+    "ts-loader": "9.4.2",
+    "ts-node": "10.9.1",
+    "tsconfig-paths": "4.2.0",
+    "typescript": "5.0.4"
+  },
+  "jest": {
+    "moduleFileExtensions": [
+      "js",
+      "json",
+      "ts"
+    ],
+    "rootDir": "src",
+    "testRegex": ".*\\.spec\\.ts$",
+    "transform": {
+      "^.+\\.(t|j)s$": "ts-jest"
+    },
+    "collectCoverageFrom": [
+      "**/*.(t|j)s"
+    ],
+    "coverageDirectory": "../coverage",
+    "testEnvironment": "node"
   }
 }

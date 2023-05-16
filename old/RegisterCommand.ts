@@ -20,10 +20,6 @@ export const RegisterCommand: CommandInterface = {
         },
     ],
     run: async (client: Client, interaction: CommandInteraction) => {
-        if (!await checkIfRegistrationChannel(interaction)) {
-            return;
-        }
-
         // Get Character name input
         const characterName = interaction.options.data.find((option) => option.name === 'character-name')?.value ?? null;
 
@@ -112,7 +108,7 @@ const checkIfRegistrationChannel = (async (interaction: CommandInteraction): Pro
 const pullCharacter = async (characterName: string): Promise<PlayersResponseInterface> => {
     const characterId = await findCharacterId(characterName);
 
-    const request = new AxiosFactory().createT4AClient();
+    const request = new AxiosFactory().createAlbionApiClient();
     const response: PlayersResponseInterface = await request.get(`/players/${characterId}`);
 
     if (response.data.Id !== characterId) {
@@ -123,7 +119,7 @@ const pullCharacter = async (characterName: string): Promise<PlayersResponseInte
 };
 
 const findCharacterId = async (characterName: string): Promise<string> => {
-    const request = new AxiosFactory().createT4AClient();
+    const request = new AxiosFactory().createAlbionApiClient();
     const response: SearchResponseInterface = await request.get(`/search?q=${characterName}`);
 
     // Loop through the players response to find the character name
