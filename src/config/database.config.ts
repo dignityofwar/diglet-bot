@@ -24,4 +24,7 @@ export default () => ({
   synchronize: process.env.DB_SYNCHRONIZE === 'true',
   dropSchema: process.env.DB_DROP_SCHEMA === 'false',
   migrationsRun: process.env.DB_MIGRATIONS_RUN === 'false',
+  ssl: {
+    rejectUnauthorized: true,
+  },
 }) as TypeOrmModuleOptions;

@@ -5,10 +5,12 @@ import { GatewayIntentBits } from 'discord.js';
 import { GeneralModule } from './general/general.module';
 import { AlbionModule } from './albion/albion.module';
 import { ConfigModule } from './config/config.module';
+import { DatabaseModule } from './database/database.module';
 
 @Module({
   imports: [
     ConfigModule,
+    DatabaseModule,
     DiscordModule.forRootAsync({
       imports: [ConfigModule],
       useFactory: (configService: ConfigService) => ({

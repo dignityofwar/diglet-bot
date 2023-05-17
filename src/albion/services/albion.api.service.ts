@@ -4,6 +4,19 @@ import { PlayersResponseInterface, SearchResponseInterface } from '../interfaces
 
 @Injectable()
 export class AlbionApiService {
+  async getCharacter(characterName: string): Promise<PlayersResponseInterface> {
+    const characterId = await this.getCharacterId(characterName);
+
+    const request = new AlbionAxiosFactory().createAlbionApiClient();
+    const response: PlayersResponseInterface = await request.get(`/players/${characterId}`);
+
+    if (response.data.Id !== characterId) {
+      throw new Error('Character ID does not match.');
+    }
+
+    return response;
+  }
+
   async getCharacterId(characterName: string): Promise<string> {
     const request = new AlbionAxiosFactory().createAlbionApiClient();
     const response: SearchResponseInterface = await request.get(`/search?q=${characterName}`);
@@ -24,18 +37,5 @@ export class AlbionApiService {
     }
 
     return foundPlayer[0].Id;
-  }
-
-  async getCharacter(characterName: string) {
-    const characterId = await this.getCharacterId(characterName);
-
-    const request = new AlbionAxiosFactory().createAlbionApiClient();
-    const response: PlayersResponseInterface = await request.get(`/players/${characterId}`);
-
-    if (response.data.Id !== characterId) {
-      throw new Error('Character ID does not match.');
-    }
-
-    return response;
   }
 }

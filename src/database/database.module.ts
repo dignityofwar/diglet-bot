@@ -1,6 +1,8 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ConfigService } from '@nestjs/config';
+import { DatabaseService } from './database.service';
+import { Config } from './entities/config.entity';
 
 @Module({
   imports: [
@@ -8,6 +10,9 @@ import { ConfigService } from '@nestjs/config';
       inject: [ConfigService],
       useFactory: (config: ConfigService) => config.get('database'),
     }),
+    TypeOrmModule.forFeature([Config]),
   ],
+  providers: [DatabaseService],
+  exports: [TypeOrmModule, DatabaseService],
 })
 export class DatabaseModule {}
