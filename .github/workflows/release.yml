@@ -3,12 +3,18 @@ name: Release
 
 on:
   workflow_call:
+    outputs:
+      version:
+        value: {{ jobs.release.outputs.version }}
+        description: 'Version of the release'
 
 jobs:
   release:
     runs-on: ubuntu-latest
     permissions:
       contents: write
+    outputs:
+      version: ${{ steps.version.outputs.newTag }}
     steps:
       - name: Checkout source code
         uses: 'actions/checkout@v3'
@@ -28,6 +34,3 @@ jobs:
         uses: ncipollo/release-action@v1
         with:
           tag: ${{ steps.version.outputs.newTag }}
-
-    outputs:
-      version: ${{ steps.version.outputs.newTag }}
