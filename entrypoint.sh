@@ -1,3 +1,3 @@
 #!/bin/sh
 
-pnpm start:prod
+cd /app && pnpm start:prod

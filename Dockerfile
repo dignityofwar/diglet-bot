@@ -1,7 +1,11 @@
 FROM node:18
 
+COPY . /app
+
+WORKDIR /app
+
 RUN npm install -g pnpm
 
 RUN pnpm build
 
-ENTRYPOINT ./entrypoint.sh
+ENTRYPOINT /app/entrypoint.sh
