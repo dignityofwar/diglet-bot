@@ -18,6 +18,5 @@ jobs:
     needs: [release, node]
     with:
       version: ${{ needs.release.outputs.version }}
-      store-path: ${{ needs.node.outputs.store-path }}
     uses: ./.github/workflows/build-publish.yml
     secrets: inherit

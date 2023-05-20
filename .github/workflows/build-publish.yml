@@ -9,11 +9,6 @@ on:
         type: string
         required: true
         default: '0.0.0'
-      store-path:
-        description: 'Path to the pnpm store'
-        type: string
-        required: true
-        default: ''
 
 jobs:
   build-docker-images:
@@ -26,15 +21,10 @@ jobs:
           fetch-depth: 2
           submodules: true
 
-      - name: Echo inputs
-        run: |
-          echo "Version: ${{ inputs.version }}"
-          echo "Store Path: ${{ inputs.store-path }}"
-
       - uses: actions/cache@v3
         name: Pull pnpm cache
         with:
-          path: ${{ inputs.store-path }}
+          path: node_modules
           key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
           restore-keys: |
             ${{ runner.os }}-pnpm-store-
@@ -59,8 +49,6 @@ jobs:
           file: Dockerfile
           platforms: linux/amd64
           push: true
-          build-args: |
-            PNPM_STORE_DIR=${{ inputs.store-path }}
           tags: |
             maelstromeous/applications:digletbot-${{ inputs.version }}
             maelstromeous/applications:digletbot-latest
