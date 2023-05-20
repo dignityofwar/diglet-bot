@@ -26,10 +26,10 @@ jobs:
           fetch-depth: 2
           submodules: true
 
-      - name: Pull in pnpm cache
-        uses: actions/cache@v2
+      - uses: actions/cache@v3
+        name: Pull pnpm cache
         with:
-          path: ${{ github.workspace }}/pnpm-store
+          path: ${{ github.event.inputs.store-path }}
           key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
           restore-keys: |
             ${{ runner.os }}-pnpm-store-
