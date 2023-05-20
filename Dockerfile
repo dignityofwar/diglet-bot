@@ -12,7 +12,7 @@ run ls -lah /app
 
 RUN pnpm build
 
-run ls -lah dist
+RUN ls -lah dist
 
 
 ENTRYPOINT /app/entrypoint.sh
