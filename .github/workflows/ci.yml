@@ -8,12 +8,12 @@ jobs:
   release:
     needs: checkout
     name: Create Release
-    uses: ./.github/actions/release.yml
+    uses: ./.github/workflows/release.yml
     runs-on: ubuntu-latest
 
   deploy:
     needs: release
     with:
       version: ${{ needs.release.outputs.version }}
-    uses: ./.github/actions/build-publish.yml
+    uses: ./.github/workflows/build-publish.yml
     runs-on: ubuntu-latest
