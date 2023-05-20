@@ -5,13 +5,14 @@ on:
     branches: [main]
 
 jobs:
-  steps:
-    - release:
-      name: Create Release
-      uses: ./.github/actions/release
+  release:
+    name: Create Release
+    uses: ./.github/actions/release
+    runs-on: ubuntu-latest
 
-    - deploy:
-      needs: release
-      with:
-        version: ${{ needs.release.outputs.version }}
-      uses: ./.github/actions/build-publish
+  deploy:
+    needs: release
+    with:
+      version: ${{ needs.release.outputs.version }}
+    uses: ./.github/actions/build-publish
+    runs-on: ubuntu-latest
