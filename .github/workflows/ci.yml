@@ -14,3 +14,4 @@ jobs:
     with:
       version: ${{ needs.release.outputs.version }}
     uses: ./.github/workflows/build-publish.yml
+    secrets: inherit
