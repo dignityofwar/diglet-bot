@@ -28,7 +28,7 @@ export class AlbionApiService {
 
     // There should only be one
     if (foundPlayer.length !== 1) {
-      throw new Error('Found more than one player with the same name. Please supply your exact name');
+      throw new Error(`Found more than one character with the name "${characterName}". Please supply your exact character name.`);
     }
 
     // Check if the name matches

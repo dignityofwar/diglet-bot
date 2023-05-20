@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { ConfigModule as NestConfigModule } from '@nestjs/config';
 import DatabaseConfig from './database.config';
 import AppConfig from './app.config';
+import DiscordConfig from './discord.config';
 
 @Module({
   imports: [
@@ -13,6 +14,7 @@ import AppConfig from './app.config';
       load: [
         () => ({ app: AppConfig() }),
         () => ({ database: DatabaseConfig() }),
+        () => ({ discord: DiscordConfig() }),
       ],
     }),
   ],

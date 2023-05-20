@@ -6,11 +6,12 @@ import { DatabaseService } from '../../database/database.service';
 import { AlbionApiService } from '../services/albion.api.service';
 import { Inject, Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { PlayersResponseInterface } from '../interfaces/albion.api.interfaces';
 
 @Command({
   name: 'albion-register',
   type: ApplicationCommandType.ChatInput,
-  description: 'Register to the DIG Albion Online guild',
+  description: 'Register to the DIG Albion Online guild!',
 })
 @Injectable()
 export class AlbionRegisterCommand {
@@ -33,10 +34,19 @@ export class AlbionRegisterCommand {
       return `Please use the <#${registrationChannelId}> channel to register.`;
     }
 
-    // Get the character from the Albion Online API
-    const character = await this.albionApiService.getCharacter(dto.character);
+    let character: PlayersResponseInterface;
 
-    const gameGuildId = this.config.get('albion.guildGameId');
+    // Get the character from the Albion Online API
+    try {
+      character = await this.albionApiService.getCharacter(dto.character);
+    }
+    catch (err) {
+      if (err instanceof Error) {
+        return err.message;
+      }
+    }
+
+    const gameGuildId = this.config.get('app.albion.guildGameId');
 
     // Check if the character is in the guild
     if (!character.data.GuildId || character.data.GuildId !== gameGuildId) {
@@ -51,7 +61,7 @@ export class AlbionRegisterCommand {
       await guildMember?.setNickname(character.data.Name);
     }
     catch (err) {
-      return `Unable to set your nickname. If you're an admin this won't work as the bot has no power over you! Pinging <@${this.config.get('discord.devUserId')}}>!`;
+      return `Unable to set your nickname. If you're an admin this won't work as the bot has no power over you! Pinging <@${this.config.get('discord.devUserId')}>!`;
     }
 
     // Find the initiate role
