@@ -1,3 +1,3 @@
 #!/bin/sh
 
-cd /app && yarn start:prod
+cd /app && pnpm start:prod

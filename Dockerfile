@@ -2,12 +2,14 @@ FROM node:18
 
 WORKDIR /app
 
-COPY package.json yarn.lock ./
+RUN npm install -g pnpm
 
-RUN yarn install --frozen-lockfile
+COPY package.json pnpm-lock.yaml ./
+
+RUN pnpm install
 
 COPY . ./
 
-RUN npx prisma generate && yarn run build
+RUN pnpm build
 
 ENTRYPOINT /app/entrypoint.sh
