@@ -29,6 +29,12 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-pnpm-store-
 
+      - name: Show local directory
+        run: ls -la
+
+      - name: Show node_modules directory
+        run: ls -la node_modules
+
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v2
 
@@ -48,6 +54,7 @@ jobs:
         with:
           file: Dockerfile
           platforms: linux/amd64
+          context: .
           push: true
           tags: |
             maelstromeous/applications:digletbot-${{ inputs.version }}
