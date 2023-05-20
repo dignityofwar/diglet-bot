@@ -9,9 +9,14 @@ jobs:
     name: Create Release
     uses: ./.github/workflows/release.yml
 
-  deploy:
+  node:
     needs: release
+    uses: ./.github/workflows/node.yml
+
+  deploy:
+    needs: [release, node]
     with:
       version: ${{ needs.release.outputs.version }}
+      pnpm-cache: ${{ needs.node.outputs.pnpm-cache }}
     uses: ./.github/workflows/build-publish.yml
     secrets: inherit
