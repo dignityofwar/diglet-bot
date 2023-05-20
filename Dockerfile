@@ -6,6 +6,13 @@ WORKDIR /app
 
 RUN npm install -g pnpm
 
+RUN ls -lah
+
+run ls -lah /app
+
 RUN pnpm build
+
+run ls -lah dist
+
 
 ENTRYPOINT /app/entrypoint.sh
