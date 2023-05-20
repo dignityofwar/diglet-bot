@@ -6,6 +6,6 @@ RUN npm install -g pnpm
 
 COPY . ./
 
-RUN pnpm build
+RUN pnpm install && pnpm build
 
 ENTRYPOINT /app/entrypoint.sh
