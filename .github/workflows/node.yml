@@ -42,4 +42,4 @@ jobs:
         run: pnpm install
 
     outputs:
-      pnpm-cache: ${{ steps.pnpm-cache.outputs.STORE_PATH }}
+      store-path: ${{ steps.pnpm-cache.outputs.STORE_PATH }}

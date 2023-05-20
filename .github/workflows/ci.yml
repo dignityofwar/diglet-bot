@@ -12,11 +12,12 @@ jobs:
   node:
     needs: release
     uses: ./.github/workflows/node.yml
+    secrets: inherit
 
   deploy:
     needs: [release, node]
     with:
       version: ${{ needs.release.outputs.version }}
-      pnpm-cache: ${{ needs.node.outputs.pnpm-cache }}
+      store-path: ${{ needs.node.outputs.store-path }}
     uses: ./.github/workflows/build-publish.yml
     secrets: inherit
