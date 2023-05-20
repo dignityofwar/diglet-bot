@@ -9,11 +9,9 @@ jobs:
     needs: checkout
     name: Create Release
     uses: ./.github/workflows/release.yml
-    runs-on: ubuntu-latest
 
   deploy:
     needs: release
     with:
       version: ${{ needs.release.outputs.version }}
     uses: ./.github/workflows/build-publish.yml
-    runs-on: ubuntu-latest
