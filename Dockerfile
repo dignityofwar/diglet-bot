@@ -7,7 +7,7 @@ WORKDIR /app
 RUN npm install -g pnpm
 
 # Copy pnpm store from builder
-COPY --from=build  $PNPM_STORE_DIR /pnpm-store
+COPY $PNPM_STORE_DIR /pnpm-store
 
 COPY . ./
 
