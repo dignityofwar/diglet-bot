@@ -6,6 +6,7 @@ on:
     inputs:
       version:
         description: 'Version of the release'
+        type: string
         required: true
         default: '0.0.0'
 
