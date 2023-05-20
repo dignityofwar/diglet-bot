@@ -17,7 +17,7 @@ jobs:
   deploy:
     needs: [release, node]
     with:
-      version: ${{ jobs.release.outputs.version }}
-      store-path: ${{ jobs.node.outputs.store-path }}
+      version: ${{ needs.release.outputs.version }}
+      store-path: ${{ needs.node.outputs.store-path }}
     uses: ./.github/workflows/build-publish.yml
     secrets: inherit
