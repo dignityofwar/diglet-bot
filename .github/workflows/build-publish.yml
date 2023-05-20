@@ -59,6 +59,8 @@ jobs:
           file: Dockerfile
           platforms: linux/amd64
           push: true
+          build-args: |
+            PNPM_STORE_DIR=${{ inputs.store-path }}
           tags: |
             maelstromeous/applications:digletbot-${{ inputs.version }}
             maelstromeous/applications:digletbot-latest
