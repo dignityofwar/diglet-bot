@@ -5,7 +5,7 @@ on:
     branches: [main]
 
 jobs:
-  checkout:
+  ci:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout source code
@@ -13,15 +13,16 @@ jobs:
         with:
           fetch-depth: 2
           submodules: true
-  release:
-    needs: checkout
-    name: Create Release
-    uses: ./.github/actions/release
-    runs-on: ubuntu-latest
 
-  deploy:
-    needs: release
-    with:
-      version: ${{ needs.release.outputs.version }}
-    uses: ./.github/actions/build-publish
-    runs-on: ubuntu-latest
+      - release:
+        needs: checkout
+        name: Create Release
+        uses: ./.github/actions/release
+        runs-on: ubuntu-latest
+
+      - deploy:
+        needs: release
+        with:
+          version: ${{ needs.release.outputs.version }}
+        uses: ./.github/actions/build-publish
+        runs-on: ubuntu-latest
