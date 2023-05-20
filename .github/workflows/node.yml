@@ -6,7 +6,8 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-
+    outputs:
+      store-path: ${{ steps.pnpm-cache.outputs.STORE_PATH }}
     steps:
       - uses: actions/checkout@v3
         with:
@@ -40,6 +41,3 @@ jobs:
 
       - name: Install Dependencies
         run: pnpm install
-
-    outputs:
-      store-path: ${{ steps.pnpm-cache.outputs.STORE_PATH }}
