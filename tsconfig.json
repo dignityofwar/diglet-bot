@@ -18,6 +18,5 @@
     "forceConsistentCasingInFileNames": false,
     "noFallthroughCasesInSwitch": false,
     "useDefineForClassFields": true,
-    "resolveJsonModule": true
   }
 }
