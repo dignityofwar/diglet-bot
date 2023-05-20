@@ -5,7 +5,7 @@ on:
   workflow_call:
     outputs:
       version:
-        value: {{ jobs.release.outputs.version }}
+        value: ${{ jobs.release.outputs.version }}
         description: 'Version of the release'
 
 jobs:
