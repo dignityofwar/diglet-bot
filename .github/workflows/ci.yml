@@ -1,0 +1,18 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  runs-on: ubuntu-latest
+  steps:
+    - release:
+      name: Create Release
+      uses: ./.github/actions/release
+
+    - deploy:
+      needs: release
+      with:
+        version: ${{ needs.release.outputs.version }}
+      uses: ./.github/actions/build-publish

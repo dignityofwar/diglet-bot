@@ -1,26 +1,24 @@
 ---
-name: Build & Deploy Production
+name: Build & Publish
+
 on:
-  push:
-    branches: [main]
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version of the release'
+        required: true
+        default: '0.0.0'
+
 jobs:
   build-docker-images:
-    runs-on: ${{ matrix.os }}
-
-    strategy:
-      matrix:
-        os: [ubuntu-latest]
-        node: [20]
+    runs-on: ubuntu-latest
 
     steps:
       - name: Checkout
         uses: actions/checkout@v3
         with:
-          fetch-depth: 0
+          fetch-depth: 2
           submodules: true
-
-      - name: Set Short SHA variable
-        run: echo "SHORT_SHA=`echo ${GITHUB_SHA} | cut -c1-7`" >> $GITHUB_ENV
 
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v2
@@ -43,5 +41,5 @@ jobs:
           platforms: linux/amd64
           push: true
           tags: |
-            maelstromeous/applications:digletbot-${{ github.sha }}
+            maelstromeous/applications:digletbot-${{ github.event.inputs.version }}
             maelstromeous/applications:digletbot-latest

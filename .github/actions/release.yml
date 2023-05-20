@@ -1,0 +1,30 @@
+---
+name: Release
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout source code
+        uses: 'actions/checkout@v3'
+        with:
+          fetch-depth: 2
+          submodules: true
+
+      - name: Bump package version
+        id: version
+        uses: 'phips28/gh-action-bump-version@master'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          target-branch: 'main'
+
+      - name: Create new GitHub Release
+        uses: ncipollo/release-action@v1
+        with:
+          tag: ${{ steps.version.outputs.newTag }}
+
+    outputs:
+      version: ${{ steps.version.outputs.newTag }}
