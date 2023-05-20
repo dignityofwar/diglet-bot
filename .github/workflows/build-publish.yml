@@ -28,13 +28,13 @@ jobs:
 
       - name: Echo inputs
         run: |
-          echo "Version: ${{ github.event.inputs.version }}"
-          echo "Store Path: ${{ github.event.inputs.store-path }}"
+          echo "Version: ${{ inputs.version }}"
+          echo "Store Path: ${{ inputs.store-path }}"
 
       - uses: actions/cache@v3
         name: Pull pnpm cache
         with:
-          path: ${{ github.event.inputs.store-path }}
+          path: ${{ inputs.store-path }}
           key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
           restore-keys: |
             ${{ runner.os }}-pnpm-store-
@@ -60,5 +60,5 @@ jobs:
           platforms: linux/amd64
           push: true
           tags: |
-            maelstromeous/applications:digletbot-${{ github.event.inputs.version }}
+            maelstromeous/applications:digletbot-${{ inputs.version }}
             maelstromeous/applications:digletbot-latest
