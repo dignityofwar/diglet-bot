@@ -2,5 +2,5 @@ export default () => ({
   albion: {
     guildGameId: 'btPZRoLvTUqLC7URnDRgSQ',
   },
-  version: 'foo',
+  version: process.env.VERSION,
 });

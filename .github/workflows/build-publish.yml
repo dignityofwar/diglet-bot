@@ -56,6 +56,8 @@ jobs:
           platforms: linux/amd64
           context: .
           push: true
+          build-args: |
+            VERSION=${{ inputs.version }}
           tags: |
             maelstromeous/applications:digletbot-${{ inputs.version }}
             maelstromeous/applications:digletbot-latest
