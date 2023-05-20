@@ -6,7 +6,6 @@ on:
 
 jobs:
   release:
-    needs: checkout
     name: Create Release
     uses: ./.github/workflows/release.yml
 
