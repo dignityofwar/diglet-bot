@@ -45,6 +45,15 @@ interface SearchPlayerInterface extends PlayerDetailsInterface {
   gvgWon: null;
 }
 
+interface SearchGuildInterface {
+  Id: string;
+  Name: string;
+  AllianceId: string;
+  AllianceName: string;
+  KillFame: null; // Seems to always be null
+  DeathFame: number
+}
+
 interface PlayerDataInterface extends PlayerDetailsInterface {
   AverageItemPower: number; // Always seems to return 0
   Equipment: EquipmentInterface;
@@ -73,14 +82,7 @@ export interface PlayersResponseInterface {
 
 export interface SearchResponseInterface {
   data: {
-    guilds: [{
-      Id: string;
-      Name: string;
-      AllianceId: string;
-      AllianceName: string;
-      KillFame: null; // Seems to always be null
-      DeathFame: number
-    }]
-    players: [SearchPlayerInterface]
+    guilds: SearchGuildInterface[];
+    players: SearchPlayerInterface[]
   }
 }
