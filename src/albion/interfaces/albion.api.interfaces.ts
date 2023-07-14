@@ -32,6 +32,7 @@ interface PlayerDetailsInterface {
   GuildName: string | null;
   AllianceName: string; // Weirdly not null if it's empty, yay consistency
   AllianceId: string;
+  AllianceTag: string;
   Avatar: string;
   AvatarRing: string;
   DeathFame: number;
