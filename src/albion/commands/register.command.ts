@@ -34,9 +34,16 @@ export class AlbionRegisterCommand {
       return `Please use the <#${registrationChannelId}> channel to register.`;
     }
 
-    let character: PlayersResponseInterface;
+    // Find the initiate role
+    const initiateRoleId = this.config.get('discord.roles.albionInitiateRoleId');
+    const initiateRole = await interaction[0].guild?.roles.fetch(initiateRoleId);
+
+    if (!initiateRole) {
+      return `Unable to find the initiate role! Pinging <@${this.config.get('discord.devUserId')}>!`;
+    }
 
     // Get the character from the Albion Online API
+    let character: PlayersResponseInterface;
     try {
       character = await this.albionApiService.getCharacter(dto.character);
     }
@@ -62,14 +69,6 @@ export class AlbionRegisterCommand {
     }
     catch (err) {
       return `Unable to set your nickname. If you're an admin this won't work as the bot has no power over you! Pinging <@${this.config.get('discord.devUserId')}>!`;
-    }
-
-    // Find the initiate role
-    const initiateRoleId = this.config.get('discord.roles.albionInitiateRoleId');
-    const initiateRole = await interaction[0].guild?.roles.fetch(initiateRoleId);
-
-    if (!initiateRole) {
-      return `Unable to find the initiate role! Pinging <@${this.config.get('discord.devUserId')}>!`;
     }
 
     // Add the initiate role
