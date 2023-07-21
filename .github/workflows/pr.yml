@@ -1,0 +1,7 @@
+name: PR Tests
+on:
+  pull_request
+
+jobs:
+  test:
+    uses: ./.github/workflows/node.yml
