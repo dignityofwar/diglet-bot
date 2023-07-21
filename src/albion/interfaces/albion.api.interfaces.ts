@@ -32,6 +32,7 @@ interface PlayerDetailsInterface {
   GuildName: string | null;
   AllianceName: string; // Weirdly not null if it's empty, yay consistency
   AllianceId: string;
+  AllianceTag: string;
   Avatar: string;
   AvatarRing: string;
   DeathFame: number;
@@ -43,6 +44,15 @@ interface SearchPlayerInterface extends PlayerDetailsInterface {
   totalKills: null;
   gvgKills: null;
   gvgWon: null;
+}
+
+interface SearchGuildInterface {
+  Id: string;
+  Name: string;
+  AllianceId: string;
+  AllianceName: string;
+  KillFame: null; // Seems to always be null
+  DeathFame: number
 }
 
 interface PlayerDataInterface extends PlayerDetailsInterface {
@@ -73,14 +83,7 @@ export interface PlayersResponseInterface {
 
 export interface SearchResponseInterface {
   data: {
-    guilds: [{
-      Id: string;
-      Name: string;
-      AllianceId: string;
-      AllianceName: string;
-      KillFame: null; // Seems to always be null
-      DeathFame: number
-    }]
-    players: [SearchPlayerInterface]
+    guilds: SearchGuildInterface[];
+    players: SearchPlayerInterface[]
   }
 }
