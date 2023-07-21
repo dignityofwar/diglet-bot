@@ -10,6 +10,10 @@ export class AlbionApiService {
     const request = new AlbionAxiosFactory().createAlbionApiClient();
     const response: PlayersResponseInterface = await request.get(`/players/${characterId}`);
 
+    if (!response.data.Id) {
+      throw new Error('Character does not exist. Please ensure you have supplied your exact name.');
+    }
+
     if (response.data.Id !== characterId) {
       throw new Error('Character ID does not match.');
     }

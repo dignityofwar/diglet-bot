@@ -2,9 +2,8 @@ import { Command, EventParams, Handler, InteractionEvent } from '@discord-nestjs
 import { ApplicationCommandType, ChatInputCommandInteraction } from 'discord.js';
 import { SlashCommandPipe } from '@discord-nestjs/common';
 import { AlbionRegisterDto } from '../dto/albion.register.dto';
-import { DatabaseService } from '../../database/database.service';
 import { AlbionApiService } from '../services/albion.api.service';
-import { Inject, Injectable } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PlayersResponseInterface } from '../interfaces/albion.api.interfaces';
 
@@ -16,7 +15,6 @@ import { PlayersResponseInterface } from '../interfaces/albion.api.interfaces';
 @Injectable()
 export class AlbionRegisterCommand {
   constructor(
-    @Inject(DatabaseService) private readonly databaseService: DatabaseService,
     private readonly albionApiService: AlbionApiService,
     private readonly config: ConfigService
   ) {}
@@ -42,8 +40,9 @@ export class AlbionRegisterCommand {
       return `Unable to find the initiate role! Pinging <@${this.config.get('discord.devUserId')}>!`;
     }
 
-    // Get the character from the Albion Online API
     let character: PlayersResponseInterface;
+
+    // Get the character from the Albion Online API
     try {
       character = await this.albionApiService.getCharacter(dto.character);
     }
@@ -55,12 +54,12 @@ export class AlbionRegisterCommand {
 
     const gameGuildId = this.config.get('app.albion.guildGameId');
 
-    // Check if the character is in the guild
+    // Check if the character is in the Albion guild
     if (!character.data.GuildId || character.data.GuildId !== gameGuildId) {
-      return `Your character "${character}" is not in the guild. If you are in the guild, please ensure you have spelt the name **exactly** correct. If it still doesn't work, try again later as our data source may be out of date.`;
+      return `Your character "${character.data.Name}" is not in the guild. If you are in the guild, please ensure you have spelt the name **exactly** correct. If it still doesn't work, try again later as our data source may be out of date.`;
     }
 
-    // Get the guild member to be able to edit things about them
+    // Get the Discord guild member to be able to edit things about them
     const guildMember = await interaction[0].guild?.members.fetch(interaction[0].user.id);
 
     // Edit their nickname to match their ingame
