@@ -5,14 +5,13 @@ on:
     branches: [main]
 
 jobs:
+  node:
+    uses: ./.github/workflows/node.yml
+
   release:
+    needs: node
     name: Create Release
     uses: ./.github/workflows/release.yml
-
-  node:
-    needs: release
-    uses: ./.github/workflows/node.yml
-    secrets: inherit
 
   deploy:
     needs: [release, node]
