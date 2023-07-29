@@ -15,7 +15,7 @@ jobs:
     uses: ./.github/workflows/release.yml
 
   deploy:
-    name: Deploy app
+    name: Build & Publish container
     needs: [build, release]
     with:
       version: ${{ needs.release.outputs.version }}
