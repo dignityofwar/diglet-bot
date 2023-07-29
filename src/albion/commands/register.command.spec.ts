@@ -186,7 +186,7 @@ describe('AlbionRegisterCommand', () => {
 
     const response = await command.onAlbionRegisterCommand(dto, mockInteraction);
 
-    expect(response).toBe(`Thank you ${mockUser.username}, you've been verified as a [DIG] guild member! Please read the information within <#${expectedWelcomeChannelId}> to be fully acquainted with the guild! Don't forget to grab roles for areas of interest in the "Channels & Roles" menu right at the top of this server!`);
+    expect(response).toBe(`Thank you ${mockUser.username}, you've been verified as a [DIG] guild member! Please read the information within <#${expectedWelcomeChannelId}> to be fully acquainted with the guild! Don't forget to grab roles for areas of interest in <id:customize> under the Albion section!`);
   });
 
   it('should return a message if the character is not a member of the guild', async () => {

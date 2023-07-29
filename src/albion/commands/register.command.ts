@@ -79,6 +79,6 @@ export class AlbionRegisterCommand {
     }
 
     // Successful!
-    return `Thank you ${character.data.Name}, you've been verified as a [DIG] guild member! Please read the information within <#${this.config.get('discord.channels.albionWelcomeToAlbion')}> to be fully acquainted with the guild! Don't forget to grab roles for areas of interest in the "Channels & Roles" menu right at the top of this server!`;
+    return `Thank you ${character.data.Name}, you've been verified as a [DIG] guild member! Please read the information within <#${this.config.get('discord.channels.albionWelcomeToAlbion')}> to be fully acquainted with the guild! Don't forget to grab roles for areas of interest in <id:customize> under the Albion section!`;
   }
 }
