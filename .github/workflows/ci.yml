@@ -6,13 +6,16 @@ on:
 
 jobs:
   build:
+    name: Build & Test
     uses: ./.github/workflows/node.yml
 
   release:
+    name: Release app
     needs: build
     uses: ./.github/workflows/release.yml
 
   deploy:
+    name: Deploy app
     needs: [build, release]
     with:
       version: ${{ needs.release.outputs.version }}
