@@ -35,9 +35,9 @@ export class AlbionApiService {
       throw new Error('Character does not exist. Please ensure you have supplied your exact name.');
     }
 
-    // If there are multiple players found, they are duplicates
+    // If there are multiple players found, they are duplicates and must be manually verified
     if (foundPlayer.length > 1) {
-      throw new Error('Duplicate characters with exact name found. Please contact the Guild Masters as manual intervention is required.');
+      throw new Error(`Multiple characters with exact name "${characterName}" found. Please contact the Guild Masters as manual intervention is required.`);
     }
 
     return foundPlayer[0].Id;

@@ -61,19 +61,20 @@ describe('AlbionApiService', () => {
   });
 
   it('should throw an error if multiple characters are found with the exact same name', async () => {
+    const characterName = 'NightRaven2511';
     const searchResponse = {
       data: {
         guilds: [],
         players: [
           {
             'Id': 'xNyVq16xTCKyPKCPqboe4w',
-            'Name': 'NightRaven2511',
+            'Name': characterName,
             'GuildId': '',
             'GuildName': '',
           },
           {
             'Id': '2obpVpJrRfqa26SIXdXK4A',
-            'Name': 'NightRaven2511',
+            'Name': characterName,
             'GuildId': 'btPZRoLvTUqLC7URnDRgSQ',
             'GuildName': 'DIG - Dignity of War',
           },
@@ -85,8 +86,8 @@ describe('AlbionApiService', () => {
       get: jest.fn().mockResolvedValue(searchResponse),
     } as any);
 
-    await expect(service.getCharacter('NightRaven2511'))
+    await expect(service.getCharacter(characterName))
       .rejects
-      .toThrowError('Duplicate characters with exact name found. Please contact the Guild Masters as manual intervention is required.');
+      .toThrowError(`Multiple characters with exact name "${characterName}" found. Please contact the Guild Masters as manual intervention is required.`);
   });
 });

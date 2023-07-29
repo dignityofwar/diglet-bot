@@ -153,7 +153,7 @@ describe('AlbionRegisterCommand', () => {
     expect(response).toBe('Character does not exist. Please ensure you have supplied your exact name.');
   });
 
-  it('should return previously failing characters', async () => {
+  it('should correctly prevent characters outside of the guild from registering', async () => {
     albionApiService.getCharacter = jest.fn().mockImplementation(() => {
       return {
         data: {
@@ -181,13 +181,14 @@ describe('AlbionRegisterCommand', () => {
   });
 
   it('should return an error if there are duplicate players due to lack of uniqueness of characters in the game', async () => {
+    const errorMessage = `Multiple characters with exact name "${mockUser.username}" found. Please contact the Guild Masters as manual intervention is required.`;
     albionApiService.getCharacter = jest.fn().mockImplementation(() => {
-      throw new Error('Duplicate characters with exact name found. Please contact the Guild Masters as manual intervention is required.');
+      throw new Error(errorMessage);
     });
 
     const response = await command.onAlbionRegisterCommand(dto, mockInteraction);
 
-    expect(response).toBe('Duplicate characters with exact name found. Please contact the Guild Masters as manual intervention is required.');
+    expect(response).toBe(errorMessage);
   });
 
   it('should return a success message if the character is actually a member of the guild', async () => {
