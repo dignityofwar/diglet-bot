@@ -59,4 +59,34 @@ describe('AlbionApiService', () => {
       .resolves
       .toBe('hd8zVXIjRc6lnb_1FYIgpw');
   });
+
+  it('should throw an error if multiple characters are found with the exact same name', async () => {
+    const searchResponse = {
+      data: {
+        guilds: [],
+        players: [
+          {
+            'Id': 'xNyVq16xTCKyPKCPqboe4w',
+            'Name': 'NightRaven2511',
+            'GuildId': '',
+            'GuildName': '',
+          },
+          {
+            'Id': '2obpVpJrRfqa26SIXdXK4A',
+            'Name': 'NightRaven2511',
+            'GuildId': 'btPZRoLvTUqLC7URnDRgSQ',
+            'GuildName': 'DIG - Dignity of War',
+          },
+        ],
+      },
+    };
+
+    jest.spyOn(AlbionAxiosFactory.prototype, 'createAlbionApiClient').mockReturnValue({
+      get: jest.fn().mockResolvedValue(searchResponse),
+    } as any);
+
+    await expect(service.getCharacter('NightRaven2511'))
+      .rejects
+      .toThrowError('Duplicate characters with exact name found. Please contact the Guild Masters as manual intervention is required.');
+  });
 });

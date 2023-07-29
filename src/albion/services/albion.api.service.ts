@@ -35,15 +35,11 @@ export class AlbionApiService {
       throw new Error('Character does not exist. Please ensure you have supplied your exact name.');
     }
 
-    // Loop through each result and return the one that matches exactly based on name
-    const exactMatch = foundPlayer.filter((player) => {
-      return player.Name === characterName;
-    });
-
-    if (exactMatch.length === 0) {
-      throw new Error('Multiple Characters found with no exact matches. Please ensure you have supplied your exact character name.');
+    // If there are multiple players found, they are duplicates
+    if (foundPlayer.length > 1) {
+      throw new Error('Duplicate characters with exact name found. Please contact the Guild Masters as manual intervention is required.');
     }
 
-    return exactMatch[0].Id;
+    return foundPlayer[0].Id;
   }
 }

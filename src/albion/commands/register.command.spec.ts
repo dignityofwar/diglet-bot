@@ -180,8 +180,17 @@ describe('AlbionRegisterCommand', () => {
     expect(response).toBe('Your character "Wildererntner" is not in the guild. If you are in the guild, please ensure you have spelt the name **exactly** correct. If it still doesn\'t work, try again later as our data source may be out of date.');
   });
 
-  it('should return a success message if the character is actually a member of the guild', async () => {
+  it('should return an error if there are duplicate players due to lack of uniqueness of characters in the game', async () => {
+    albionApiService.getCharacter = jest.fn().mockImplementation(() => {
+      throw new Error('Duplicate characters with exact name found. Please contact the Guild Masters as manual intervention is required.');
+    });
 
+    const response = await command.onAlbionRegisterCommand(dto, mockInteraction);
+
+    expect(response).toBe('Duplicate characters with exact name found. Please contact the Guild Masters as manual intervention is required.');
+  });
+
+  it('should return a success message if the character is actually a member of the guild', async () => {
     albionApiService.getCharacter = jest.fn().mockImplementation(() => mockCharacter);
 
     const response = await command.onAlbionRegisterCommand(dto, mockInteraction);
@@ -190,7 +199,6 @@ describe('AlbionRegisterCommand', () => {
   });
 
   it('should return a message if the character is not a member of the guild', async () => {
-
     mockCharacter.data.GuildId = '1337';
 
     albionApiService.getCharacter = jest.fn().mockImplementation(() => mockCharacter);
