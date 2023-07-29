@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { Test, TestingModule } from '@nestjs/testing';
 import { AlbionRegisterCommand } from './register.command';
 import { AlbionApiService } from '../services/albion.api.service';

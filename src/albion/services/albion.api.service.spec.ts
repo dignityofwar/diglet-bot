@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { Test } from '@nestjs/testing';
 import { AlbionApiService } from './albion.api.service';
 import AlbionAxiosFactory from '../factories/albion.axios.factory';
