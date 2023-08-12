@@ -94,6 +94,6 @@ export class PS2VerifyCommand {
     this.ps2GameVerificationService.watch(character, guildMember);
 
     // Successful!
-    return `Your character "${character.name.first}" has been detected as a member of DIG. However, to fully verify you, you now need to kill yourself with a **VS Plasma Grenade**. You have 5 minutes to do this as of now!`;
+    return `Your character "${character.name.first}" has been detected as a member of DIG. However, to fully verify you, you now need to kill yourself with a **VS Plasma Grenade**. You have 5 minutes to do this as of now! Here's a tutorial on how to do it: https://youtu.be/toT1uQ2qwKA`;
   }
 }
