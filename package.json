@@ -10,6 +10,7 @@
     "lint": "eslint \"{src,apps,libs,test}/**/*.ts\" --fix",
     "seed:config": "ts-node ./node_modules/typeorm-seeding/dist/cli.js config",
     "seed:run": "ts-node ./node_modules/typeorm-seeding/dist/cli.js seed",
+    "dev": "nest start --watch",
     "start": "nest start",
     "start:dev": "nest start --watch",
     "start:debug": "nest start --debug --watch",
@@ -27,15 +28,19 @@
     "@nestjs/core": "9.4.0",
     "@nestjs/typeorm": "^9.0.1",
     "axios": "^1.4.0",
+    "bufferutil": "^4.0.7",
     "class-transformer": "0.5.1",
     "discord.js": "14.10.2",
     "lodash": "^4.17.21",
     "mysql2": "^3.3.1",
+    "ps2census": "^4.6.0",
     "reflect-metadata": "0.1.13",
     "rimraf": "5.0.0",
     "rxjs": "7.8.1",
     "typeorm": "^0.3.16",
-    "typeorm-seeding": "^1.6.1"
+    "typeorm-seeding": "^1.6.1",
+    "utf-8-validate": "^6.0.3",
+    "websocket-ts": "^1.1.1"
   },
   "devDependencies": {
     "@nestjs/cli": "9.4.2",

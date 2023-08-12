@@ -16,4 +16,5 @@ export class DatabaseService {
     }
     return record.value;
   }
+
 }
