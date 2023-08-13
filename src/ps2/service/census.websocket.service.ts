@@ -1,7 +1,7 @@
 import { Injectable, OnModuleInit, Logger, OnModuleDestroy } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { CensusCharacterWithOutfitInterface } from '../interfaces/CensusCharacterResponseInterface';
-import { CensusClient, Death } from 'ps2census';
+import { CensusClient } from 'ps2census';
 import { EventSubscription } from 'ps2census/dist/types/client/types';
 import { EventBusService } from './event.bus.service';
 import { EventConstants } from '../constants/EventConstants';
@@ -26,7 +26,7 @@ export class CensusWebsocketService implements OnModuleInit, OnModuleDestroy {
   onModuleInit() {
     this.eventBus.on('ps2.verification.service.ready', () => this.subscribe());
   }
-  onModuleDestroy(): any {
+  onModuleDestroy() {
     this.client.destroy();
   }
 

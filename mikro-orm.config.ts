@@ -1,4 +1,3 @@
-import { Options } from '@mikro-orm/core';
 import { SqlHighlighter } from '@mikro-orm/sql-highlighter';
 import { Logger } from '@nestjs/common';
 import { MySqlOptions } from '@mikro-orm/mysql/MySqlMikroORM';
