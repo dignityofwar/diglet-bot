@@ -1,20 +1,14 @@
 import { Injectable } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Config } from './entities/config.entity';
-import { Repository } from 'typeorm';
+import { MikroORM } from '@mikro-orm/core';
 
 @Injectable()
 export class DatabaseService {
-  @InjectRepository(Config)
-  private configRepository: Repository<Config>;
+  constructor(
+    private readonly orm: MikroORM,
+  ) {}
 
-  async getConfigItem(key: string): Promise<string> {
-    const record = await this.configRepository.findOneByOrFail({ key: key });
-
-    if (!record.value) {
-      throw new Error('Config item not found!');
-    }
-    return record.value;
+  async save<T>(entity: T): Promise<T> {
+    await this.orm.em.persistAndFlush(entity);
+    return entity;
   }
-
 }

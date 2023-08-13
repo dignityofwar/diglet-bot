@@ -1,18 +1,17 @@
 import { Module } from '@nestjs/common';
-import { TypeOrmModule } from '@nestjs/typeorm';
-import { ConfigService } from '@nestjs/config';
 import { DatabaseService } from './database.service';
-import { Config } from './entities/config.entity';
+import { MikroOrmModule } from '@mikro-orm/nestjs';
+import { PS2VerificationAttemptEntity } from './entities/ps2.verification.attempt.entity';
+import { PS2MembersEntity } from './entities/ps2.members.entity';
 
 @Module({
   imports: [
-    TypeOrmModule.forRootAsync({
-      inject: [ConfigService],
-      useFactory: (config: ConfigService) => config.get('database'),
+    MikroOrmModule.forRoot(),
+    MikroOrmModule.forFeature({
+      entities: [PS2VerificationAttemptEntity, PS2MembersEntity],
     }),
-    TypeOrmModule.forFeature([Config]),
   ],
   providers: [DatabaseService],
-  exports: [TypeOrmModule, DatabaseService],
+  exports: [MikroOrmModule, DatabaseService],
 })
 export class DatabaseModule {}
