@@ -6,6 +6,7 @@ import { GeneralModule } from './general/general.module';
 import { AlbionModule } from './albion/albion.module';
 import { ConfigModule } from './config/config.module';
 import { DatabaseModule } from './database/database.module';
+import { Ps2Module } from './ps2/ps2.module';
 
 @Module({
   imports: [
@@ -16,7 +17,7 @@ import { DatabaseModule } from './database/database.module';
       useFactory: (configService: ConfigService) => ({
         token: configService.get('TOKEN'),
         discordClientOptions: {
-          intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages, GatewayIntentBits.GuildPresences],
+          intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages, GatewayIntentBits.GuildPresences, GatewayIntentBits.GuildMessageReactions],
         },
         registerCommandOptions: [
           {
@@ -29,6 +30,7 @@ import { DatabaseModule } from './database/database.module';
     }),
     GeneralModule,
     AlbionModule,
+    Ps2Module,
   ],
 })
 export class AppModule {}
