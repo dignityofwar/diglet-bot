@@ -42,7 +42,6 @@ export interface CensusCharacterWithOutfitInterface {
     rank_ordinal: string;
   }
   monitoringStarted?: Date
-  discordId?: string
 }
 
 export interface CensusCharacterResponseInterface {

@@ -4,5 +4,4 @@ export const EventConstants = {
   PS2_VERIFICATION_SERVICE_READY: 'ps2.verification.service.ready',
   PS2_VERIFICATION_FAILED: 'ps2.verification.failed',
   PS2_VERIFICATION_SUCCESS: 'ps2.verification.success',
-  PS2_VERIFICATION_PENDFING: 'ps2.verification.pending',
 };
