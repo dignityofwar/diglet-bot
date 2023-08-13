@@ -88,7 +88,7 @@ export class PS2GameVerificationService implements OnApplicationBootstrap {
     // Tell the websocket service to start monitoring the character for deaths
     this.censusWebsocketService.watchCharacter(character);
 
-    await this.editMessage(`## Verification status: ⏳__Pending__\n\n⏳Please type **/suicide** in the in-game chat for character "${character.name.first}"...`, message);
+    await this.editMessage(`## Verification status: ⏳__Pending__\n\n⏳Please type **/suicide** in the in-game chat for character "${character.name.first}". Note this does not work in the warpgates or in the Sanctuary.`, message);
 
     // Store the messages to reference for later so we can edit the message and also reply to it etc.
     this.messagesMap.set(character.character_id, message);
