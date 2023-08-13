@@ -8,7 +8,7 @@ import { CensusApiService } from './service/census.api.service';
 import { PS2VerifyCommand } from './commands/verify.command';
 import { PS2GameVerificationService } from './service/ps2.game.verification.service';
 import { CensusWebsocketService } from './service/census.websocket.service';
-import { EventBusService } from './service/EventBusService';
+import { EventBusService } from './service/event.bus.service';
 
 @Module({
   imports: [DiscordModule.forFeature(), DatabaseModule, ConfigModule],

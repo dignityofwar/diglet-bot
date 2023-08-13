@@ -3,8 +3,7 @@ import { ConfigService } from '@nestjs/config';
 import { CensusCharacterWithOutfitInterface } from '../interfaces/CensusCharacterResponseInterface';
 import { CensusClient, Death } from 'ps2census';
 import { EventSubscription } from 'ps2census/dist/types/client/types';
-import { CensusWebsocketDeathEventInterface } from '../interfaces/CensusWebsocketDeathEventInterface';
-import { EventBusService } from './EventBusService';
+import { EventBusService } from './event.bus.service';
 import { EventConstants } from '../constants/EventConstants';
 
 @Injectable()

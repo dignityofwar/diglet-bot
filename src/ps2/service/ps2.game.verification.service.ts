@@ -4,7 +4,7 @@ import { ConfigService } from '@nestjs/config';
 import { Channel, Client, GuildMember, Message, TextChannel } from 'discord.js';
 import { InjectDiscordClient } from '@discord-nestjs/core';
 import { CensusCharacterWithOutfitInterface } from '../interfaces/CensusCharacterResponseInterface';
-import { EventBusService } from './EventBusService';
+import { EventBusService } from './event.bus.service';
 import { Death } from 'ps2census';
 import { EventConstants } from '../constants/EventConstants';
 
