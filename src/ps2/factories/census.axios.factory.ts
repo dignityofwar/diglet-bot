@@ -12,6 +12,7 @@ export default class CensusAxiosFactory {
       headers: {
         'Content-Type': 'application/json',
       },
+      timeout: 10000,
     });
   }
 }
