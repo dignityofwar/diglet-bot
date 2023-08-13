@@ -28,8 +28,12 @@ const config: MySqlOptions = {
       },
     },
   },
+  migrations: {
+    path: './src/database/migrations',
+  },
   logger: logger.log.bind(logger),
   forceUtcTimezone: true,
+  allowGlobalContext: true,
 };
 
 export default config;

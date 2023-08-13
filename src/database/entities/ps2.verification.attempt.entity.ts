@@ -10,18 +10,15 @@ export class PS2VerificationAttemptEntity extends BaseEntity {
     characterId: string;
 
   @Property()
-  @Unique()
-    guildMember: string;
+    guildMember: GuildMember;
 
-  @Property({
-    type: String,
-  })
-    guildMessage: string;
+  @Property()
+    guildMessage: Message;
 
   constructor(characterId: string, guildMember: GuildMember, guildMessage: Message) {
     super();
     this.characterId = characterId;
-    this.guildMember = JSON.stringify(guildMember);
-    this.guildMessage = JSON.stringify(guildMessage);
+    this.guildMember = guildMember;
+    this.guildMessage = guildMessage;
   }
 }

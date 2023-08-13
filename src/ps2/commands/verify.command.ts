@@ -56,23 +56,19 @@ export class PS2VerifyCommand {
       return `Your character "${character.name.first}" has not been detected in the [DIG] outfit. If you are in the outfit, please log out and in again, or wait 24 hours and try again as Census (the game's API) can be slow to update sometimes.`;
     }
 
-    // Now we need to send a message to the user with instructions on how to verify themselves in game.
-
-    // 1. Send a DM to the user with instructions on how to verify themselves in game.
-    // 2. Send a message to the verification channel with the user's name and character name.
-    // 3. Add a reaction to the message in the verification channel.
-    // 4. Wait for the user to perform the actions required
-    // 5. Once confirmed, add the role to the user and change their nickname to their character name.
-    // 6. Send a message to the user to confirm they have been verified.
-
-    // At this point the character is fully verified they exist and are in the outfit, and are legitimate via ingame verification.
-
     // Get the Discord guild member to be able to edit things about them
     const guildMember = await interaction[0].guild?.members.fetch(interaction[0].user.id);
+
+    // Check first if the registrsation is valid
+    const isValid = await this.ps2GameVerificationService.isValidRegistrationAttempt(character, guildMember);
+
+    if (isValid !== true) {
+      return isValid;
+    }
 
     this.ps2GameVerificationService.watch(character, guildMember);
 
     // Successful!
-    return `Your character "${character.name.first}" has been detected as a member of DIG. However, to fully verify you, you now need to kill yourself with a **VS Plasma Grenade**. You have 5 minutes to do this as of now! Here's a tutorial on how to do it: https://youtu.be/toT1uQ2qwKA`;
+    return `Your character "${character.name.first}" has been detected as a member of DIG. However, to fully verify you, you now need follow the below steps.`;
   }
 }

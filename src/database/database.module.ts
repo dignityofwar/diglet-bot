@@ -1,5 +1,4 @@
 import { Module } from '@nestjs/common';
-import { DatabaseService } from './database.service';
 import { MikroOrmModule } from '@mikro-orm/nestjs';
 import { PS2VerificationAttemptEntity } from './entities/ps2.verification.attempt.entity';
 import { PS2MembersEntity } from './entities/ps2.members.entity';
@@ -11,7 +10,7 @@ import { PS2MembersEntity } from './entities/ps2.members.entity';
       entities: [PS2VerificationAttemptEntity, PS2MembersEntity],
     }),
   ],
-  providers: [DatabaseService],
-  exports: [MikroOrmModule, DatabaseService],
+  providers: [],
+  exports: [MikroOrmModule],
 })
 export class DatabaseModule {}
