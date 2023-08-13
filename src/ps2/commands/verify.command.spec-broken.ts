@@ -9,6 +9,7 @@ import { PS2VerifyCommand } from './verify.command';
 import { CensusApiService } from '../service/census.api.service';
 import { PS2VerifyDto } from '../dto/PS2VerifyDto';
 import { CensusCharacterWithOutfitInterface } from '../interfaces/CensusCharacterResponseInterface';
+import { PS2GameVerificationService } from '../service/ps2.game.verification.service';
 
 const expectedChannelId = '1234567890';
 const expectedWelcomeChannelId = '5555444455555';
@@ -20,6 +21,7 @@ const expectedOutfitId = '37509488620604883';
 describe('PS2VerifyCommand', () => {
   let command: PS2VerifyCommand;
   let censusApiService: CensusApiService;
+  let ps2GameVerificationService: PS2GameVerificationService;
   let config: ConfigService;
 
   let mockUser: any;
@@ -31,6 +33,7 @@ describe('PS2VerifyCommand', () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         PS2VerifyCommand,
+        PS2GameVerificationService,
         ReflectMetadataProvider,
         {
           provide: CensusApiService,
@@ -49,6 +52,7 @@ describe('PS2VerifyCommand', () => {
 
     command = module.get<PS2VerifyCommand>(PS2VerifyCommand);
     censusApiService = module.get<CensusApiService>(CensusApiService);
+    ps2GameVerificationService = module.get<PS2GameVerificationService>(PS2GameVerificationService);
     config = module.get<ConfigService>(ConfigService);
 
     // Spy on the 'get' method of the ConfigService, and make it return a specific values based on the path
