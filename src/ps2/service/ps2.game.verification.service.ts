@@ -252,7 +252,7 @@ export class PS2GameVerificationService implements OnApplicationBootstrap {
     await this.editMessage('## Verification status: ✅ __Successful__', message);
 
     await this.unwatch(character);
-    message.channel.send(`<@${guildMember.id}> your in game character "${character.name.first}" has been successfully verified! Welcome to the [DIG] outfit! 🎉`);
+    message.channel.send(`<@${guildMember.id}> your in game character "${character.name.first}" has been successfully verified! Welcome to the [DIG] outfit! 🎉 \nYou can now see our private section <#${this.config.get('discord.channels.ps2Private')}>.\nInfo on how to be promoted to Zealot to use our Armory assets, visit <#${this.config.get('discord.channels.ps2HowToRankUp')}>.`);
   }
 
   private checkMonitoredCharacters() {
