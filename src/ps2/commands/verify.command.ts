@@ -1,7 +1,7 @@
 import { Command, EventParams, Handler, InteractionEvent } from '@discord-nestjs/core';
 import { ApplicationCommandType, ChatInputCommandInteraction } from 'discord.js';
 import { SlashCommandPipe } from '@discord-nestjs/common';
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { CensusCharacterWithOutfitInterface } from '../interfaces/CensusCharacterResponseInterface';
 import { CensusApiService } from '../service/census.api.service';
@@ -15,6 +15,8 @@ import { PS2GameVerificationService } from '../service/ps2.game.verification.ser
 })
 @Injectable()
 export class PS2VerifyCommand {
+  private readonly logger = new Logger(PS2VerifyCommand.name);
+
   constructor(
     private readonly censusService: CensusApiService,
     private readonly config: ConfigService,
@@ -26,20 +28,13 @@ export class PS2VerifyCommand {
     @InteractionEvent(SlashCommandPipe) dto: PS2VerifyDto,
     @EventParams() interaction: ChatInputCommandInteraction[],
   ): Promise<string> {
+    this.logger.debug(`Received PS2VerifyCommand with character ${dto.character}`);
     // Check if the command came from the correct channel ID
     const verifyChannelId = this.config.get('discord.channels.ps2Verify');
 
     // Check if channel is correct
     if (interaction[0].channelId !== verifyChannelId) {
       return `Please use the <#${verifyChannelId}> channel to register.`;
-    }
-
-    // Find the PS2/Verified role
-    const verifiedRoleId = this.config.get('discord.roles.ps2Verified');
-    const verifiedRole = await interaction[0].guild?.roles.fetch(verifiedRoleId);
-
-    if (!verifiedRole) {
-      return `Unable to find the PS2/Verified role! Pinging <@${this.config.get('discord.devUserId')}>!`;
     }
 
     let character: CensusCharacterWithOutfitInterface;
@@ -74,22 +69,6 @@ export class PS2VerifyCommand {
 
     // Get the Discord guild member to be able to edit things about them
     const guildMember = await interaction[0].guild?.members.fetch(interaction[0].user.id);
-
-    // Edit their nickname to match their ingame
-    try {
-      await guildMember?.setNickname(character.name.first);
-    }
-    catch (err) {
-      return `Unable to set your nickname. If you're an admin this won't work as the bot has no power over you! Pinging <@${this.config.get('discord.devUserId')}>!`;
-    }
-
-    // Add the PS2/verified role
-    try {
-      await guildMember?.roles.add(verifiedRole);
-    }
-    catch (err) {
-      return `Unable to add the PS2/Verified role to user! Pinging <@${this.config.get('discord.devUserId')}>!`;
-    }
 
     this.ps2GameVerificationService.watch(character, guildMember);
 
