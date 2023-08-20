@@ -141,7 +141,7 @@ export class PS2GameScanningService {
       }
 
       // Is the character still in the outfit?
-      if (character.outfit_info && character.outfit_info.outfit_id === this.config.get('app.ps2.outfitId')) {
+      if (character?.outfit_info && character?.outfit_info.outfit_id === this.config.get('app.ps2.outfitId')) {
         continue;
       }
 

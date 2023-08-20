@@ -33,7 +33,7 @@ export interface CensusCharacterWithOutfitInterface {
     count: string;
   }
   prestige_level: string;
-  outfit_info: {
+  outfit_info?: {
     outfit_id: string;
     character_id: string;
     member_since: string;
