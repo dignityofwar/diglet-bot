@@ -1,4 +1,4 @@
-import { Injectable, Logger, OnApplicationBootstrap, OnModuleInit } from '@nestjs/common';
+import { Injectable, Logger, OnApplicationBootstrap } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { PS2GameScanningService } from './ps2.game.scanning.service';
 import { InjectDiscordClient } from '@discord-nestjs/core';
