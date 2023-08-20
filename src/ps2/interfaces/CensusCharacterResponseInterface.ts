@@ -45,9 +45,7 @@ export interface CensusCharacterWithOutfitInterface {
 }
 
 export interface CensusCharacterResponseInterface {
-  data: {
-    character_list: CensusCharacterWithOutfitInterface[];
-    returned: number;
-  }
+  character_list: CensusCharacterWithOutfitInterface[];
+  returned: number;
   error?: string
 }
