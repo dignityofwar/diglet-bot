@@ -5,8 +5,8 @@ export class PS2ScanDto {
     name: 'dry-run',
     description:
       'If set to true, will output the results of the scan to #ps2-leadership but not execute.',
-    required: true,
+    required: false,
     type: ParamType.BOOLEAN,
   })
-    character: string;
+    dryRun = false;
 }

@@ -26,6 +26,10 @@ const rolesToRankProduction = {
     rank: '2',
     discordRoleId: '200994684263333888',
   },
+  '@PS2/Leader': {
+    rank: '1',
+    discordRoleId: '199665445635096576',
+  },
 };
 
 const rolesToRankDevelopment: RankMapInterface = {
@@ -48,6 +52,10 @@ const rolesToRankDevelopment: RankMapInterface = {
   '@PS2/Officer': {
     rank: '2',
     discordRoleId: '1142546051606257755',
+  },
+  '@PS2/Leader': {
+    rank: '1',
+    discordRoleId: '1142546013685559337',
   },
 };
 
