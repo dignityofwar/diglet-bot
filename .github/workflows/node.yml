@@ -36,5 +36,9 @@ jobs:
       - name: Install Dependencies
         run: pnpm install
 
+      - name: Check if app builds properly
+        run: pnpm build
+
       - name: Run tests
         run: pnpm test
+
