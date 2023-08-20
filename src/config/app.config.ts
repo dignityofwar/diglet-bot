@@ -8,19 +8,19 @@ export interface RankMapInterface {
 const rolesToRankProduction = {
   '@PS2/Verified': {
     ranks: null,
-    discordRoleId: '200994684263333888',
+    discordRoleId: '1140277291415515167',
   },
   '@PS2/Zealot': {
     ranks: ['6'],
-    discordRoleId: '200994684263333888',
+    discordRoleId: '708714959068201031',
   },
   '@PS2/SL': {
     ranks: ['4', '5'],
-    discordRoleId: '200994684263333888',
+    discordRoleId: '729027751901921280',
   },
   '@PS2/PL': {
     ranks: ['3'],
-    discordRoleId: '200994684263333888',
+    discordRoleId: '729027479913889852',
   },
   '@PS2/Officer': {
     ranks: ['2'],
