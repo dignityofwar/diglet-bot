@@ -3,7 +3,6 @@ import { BaseEntity } from './base.entity';
 
 export interface PS2MembersEntityInterface {
   discordId: string;
-  discordName: string;
   characterId: string;
   characterName: string;
 }
@@ -14,9 +13,6 @@ export class PS2MembersEntity extends BaseEntity {
   @Unique()
   @Index()
     discordId: string;
-
-  @Property()
-    discordName: string;
 
   @Property()
   @Unique()

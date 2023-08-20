@@ -41,15 +41,6 @@
           "nullable": false,
           "mappedType": "string"
         },
-        "discord_name": {
-          "name": "discord_name",
-          "type": "varchar(255)",
-          "unsigned": false,
-          "autoincrement": false,
-          "primary": false,
-          "nullable": false,
-          "mappedType": "string"
-        },
         "character_id": {
           "name": "character_id",
           "type": "varchar(255)",

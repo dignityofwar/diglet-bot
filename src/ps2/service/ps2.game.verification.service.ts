@@ -230,7 +230,6 @@ export class PS2GameVerificationService implements OnApplicationBootstrap {
       // Commit the successful verification attempt to the database so others can't claim the same character
       const ps2MemberEntity = this.ps2MembersRepository.create({
         discordId: guildMember.id,
-        discordName: guildMember.displayName,
         characterId: character.character_id,
         characterName: character.name.first,
       });
