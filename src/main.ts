@@ -7,5 +7,5 @@ async function bootstrap() {
 }
 
 bootstrap().then(() => {
-  console.log('Bot booted!');
+  console.log(`Bot booted! Version: ${process.env.VERSION}`);
 });
