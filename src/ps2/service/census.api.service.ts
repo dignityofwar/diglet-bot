@@ -7,8 +7,11 @@ import {
 
 @Injectable()
 export class CensusApiService implements OnModuleInit {
-  constructor(private readonly censusClientFactory: CensusAxiosFactory) {}
   private readonly logger = new Logger(CensusApiService.name);
+  private static readonly RETRY_ATTEMPTS = 3;
+  private static readonly RETRY_DELAY_MS = 1000;
+
+  constructor(private readonly censusClientFactory: CensusAxiosFactory) {}
 
   async onModuleInit() {
     // Check if our service ID is valid
@@ -17,57 +20,53 @@ export class CensusApiService implements OnModuleInit {
     }
 
     // Check if our service key is valid by doing a request to Census via Axios
+    this.logger.debug('Attempting to reach Census...');
+    const response: CensusCharacterResponseInterface = await this.requestWithRetries('https://census.daybreakgames.com/s:dignityofwar/get/ps2/character?name.first_lower=maelstrome26');
+
+    if (response.error) {
+      throw new Error(`PS2_CENSUS_SERVICE_ID env is not valid or Census is otherwise unavailable. Census returned: "${response.error}". Crashing the app.`);
+    }
+    this.logger.debug('Census responded!');
+  }
+
+  private async requestWithRetries<T>(url: string, tries = 0): Promise<T> {
     const request = this.censusClientFactory.createClient();
+    let lastError: Error | undefined;
+
+    if (tries === 3) {
+      throw new Error('Failed to perform request to Census after multiple retries.');
+    }
 
     try {
-      this.logger.debug('Attempting to reach Census...');
-      const response = await request.get('');
-
-      if (response.data.error) {
-        throw new Error(`PS2_CENSUS_SERVICE_ID env is not valid or Census is otherwise unavailable. Census returned: "${response.data.error}"`);
-      }
-      this.logger.debug('Census responded!');
-
+      const response = await request.get(url);
+      return response.data;
     }
     catch (err) {
-      throw new Error(`Unable to verify Census Service ID. Err: ${err.message}`);
+      lastError = err;
+      this.logger.warn(`Request failed (attempt ${tries + 1}/${CensusApiService.RETRY_ATTEMPTS}). Retrying in ${CensusApiService.RETRY_DELAY_MS} ms...`);
+      setTimeout(async () => {
+        return await this.requestWithRetries(url, tries + 1);
+      }, CensusApiService.RETRY_DELAY_MS);
     }
+
+    throw lastError || new Error('Failed to perform request after multiple retries.');
   }
 
   async getCharacter(characterName: string): Promise<CensusCharacterWithOutfitInterface> {
-    const request = this.censusClientFactory.createClient();
-    const response: CensusCharacterResponseInterface = await request.get(`character?name.first_lower=${characterName.toLowerCase()}&c:join=outfit_member^on:character_id^to:character_id^inject_at:outfit_info&c:join=outfit^on:outfit_id^to:outfit_id^inject_at:outfit_details`);
-
-    if (response.error) {
-      throw new Error(`Census responded with error: ${response.error}`);
-
-    }
-
-    if (response.data.returned === 0) {
-      throw new Error(`Character "${characterName}" does not exist. Please ensure you have supplied your exact name.`);
-    }
-
-    // It isn't possible to share a character name, so no length / duplication checks are required.
-
-    return response.data.character_list[0];
+    const url = `character?name.first_lower=${characterName.toLowerCase()}&c:join=outfit_member^on:character_id^to:character_id^inject_at:outfit_info&c:join=outfit^on:outfit_id^to:outfit_id^inject_at:outfit_details`;
+    const response: CensusCharacterResponseInterface = await this.requestWithRetries(url);
+    return response.character_list[0];
   }
 
   async getCharacterById(characterId: string): Promise<CensusCharacterWithOutfitInterface | null> {
-    const request = this.censusClientFactory.createClient();
-    const response: CensusCharacterResponseInterface = await request.get(`character?character_id=${characterId}&c:join=outfit_member^on:character_id^to:character_id^inject_at:outfit_info&c:join=outfit^on:outfit_id^to:outfit_id^inject_at:outfit_details`);
+    const url = `character?character_id=${characterId}&c:join=outfit_member^on:character_id^to:character_id^inject_at:outfit_info&c:join=outfit^on:outfit_id^to:outfit_id^inject_at:outfit_details`;
+    const response: CensusCharacterResponseInterface = await this.requestWithRetries(url);
 
-    if (response.error) {
-      throw new Error(`Census responded with error: ${response.error}`);
-
-    }
-
-    if (response.data.returned === 0 || !response.data.character_list || response.data.character_list.length === 0) {
-      this.logger.error('Census responded with nothing', response.data);
+    if (response.returned === 0 || !response.character_list || response.character_list.length === 0) {
+      this.logger.error('Census responded with nothing', response);
       return null;
     }
 
-    // It isn't possible to share a character name, so no length / duplication checks are required.
-
-    return response.data.character_list[0];
+    return response.character_list[0];
   }
 }
