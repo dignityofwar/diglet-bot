@@ -51,4 +51,23 @@ export class CensusApiService implements OnModuleInit {
 
     return response.data.character_list[0];
   }
+
+  async getCharacterById(characterId: string): Promise<CensusCharacterWithOutfitInterface | null> {
+    const request = this.censusClientFactory.createClient();
+    const response: CensusCharacterResponseInterface = await request.get(`character?character_id=${characterId}&c:join=outfit_member^on:character_id^to:character_id^inject_at:outfit_info&c:join=outfit^on:outfit_id^to:outfit_id^inject_at:outfit_details`);
+
+    if (response.error) {
+      throw new Error(`Census responded with error: ${response.error}`);
+
+    }
+
+    if (response.data.returned === 0 || !response.data.character_list || response.data.character_list.length === 0) {
+      this.logger.error('Census responded with nothing', response.data);
+      return null;
+    }
+
+    // It isn't possible to share a character name, so no length / duplication checks are required.
+
+    return response.data.character_list[0];
+  }
 }

@@ -9,9 +9,20 @@ import { PS2VerifyCommand } from './commands/verify.command';
 import { PS2GameVerificationService } from './service/ps2.game.verification.service';
 import { CensusWebsocketService } from './service/census.websocket.service';
 import { EventBusService } from './service/event.bus.service';
+import { PS2GameScanningService } from './service/ps2.game.scanning.service';
+import { PS2ScanCommand } from './commands/scan.command';
 
 @Module({
   imports: [DiscordModule.forFeature(), DatabaseModule, ConfigModule],
-  providers: [CensusAxiosFactory, CensusApiService, CensusWebsocketService, PS2VerifyCommand, PS2GameVerificationService, EventBusService],
+  providers: [
+    CensusAxiosFactory,
+    CensusApiService,
+    CensusWebsocketService,
+    PS2GameVerificationService,
+    PS2GameScanningService,
+    EventBusService,
+    PS2VerifyCommand,
+    PS2ScanCommand,
+  ],
 })
 export class Ps2Module {}

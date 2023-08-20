@@ -9,7 +9,7 @@
     "build": "nest build",
     "format": "prettier --write \"src/**/*.ts\"",
     "lint": "eslint \"{src,apps,libs,test}/**/*.ts\" --fix",
-    "migration:generate": "ts-node node_modules/@mikro-orm/cli/cli.js migration:generate",
+    "migration:create": "ts-node node_modules/@mikro-orm/cli/cli.js migration:create",
     "migration:up": "ts-node node_modules/@mikro-orm/cli/cli.js migration:up",
     "migration:down": "ts-node node_modules/@mikro-orm/cli/cli.js migration:down",
     "migration:list": "ts-node node_modules/@mikro-orm/cli/cli.js migration:list",
