@@ -1,60 +1,60 @@
 export interface RankMapInterface {
   [key: string]: {
-    rank: string | null; // Matches the rank in the census API
+    ranks: string[] | null; // Matches the rank in the census API
     discordRoleId: string;
   };
 }
 
 const rolesToRankProduction = {
   '@PS2/Verified': {
-    rank: null,
+    ranks: null,
     discordRoleId: '200994684263333888',
   },
   '@PS2/Zealot': {
-    rank: '6',
+    ranks: ['6'],
     discordRoleId: '200994684263333888',
   },
   '@PS2/SL': {
-    rank: '4',
+    ranks: ['4', '5'],
     discordRoleId: '200994684263333888',
   },
   '@PS2/PL': {
-    rank: '3',
+    ranks: ['3'],
     discordRoleId: '200994684263333888',
   },
   '@PS2/Officer': {
-    rank: '2',
+    ranks: ['2'],
     discordRoleId: '200994684263333888',
   },
   '@PS2/Leader': {
-    rank: '1',
+    ranks: ['1'],
     discordRoleId: '199665445635096576',
   },
 };
 
 const rolesToRankDevelopment: RankMapInterface = {
   '@PS2/Verified': {
-    rank: null,
+    ranks: null,
     discordRoleId: '1139909190664601611',
   },
   '@PS2/Zealot': {
-    rank: '6',
+    ranks: ['6'],
     discordRoleId: '1139909319886905496',
   },
   '@PS2/SL': {
-    rank: '4',
+    ranks: ['4', '5'],
     discordRoleId: '1142546129112805517',
   },
   '@PS2/PL': {
-    rank: '3',
+    ranks: ['3'],
     discordRoleId: '1142546081922682900',
   },
   '@PS2/Officer': {
-    rank: '2',
+    ranks: ['2'],
     discordRoleId: '1142546051606257755',
   },
   '@PS2/Leader': {
-    rank: '1',
+    ranks: ['1'],
     discordRoleId: '1142546013685559337',
   },
 };

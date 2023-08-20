@@ -203,7 +203,11 @@ export class PS2GameScanningService implements OnApplicationBootstrap {
       const rank = character.outfit_info?.rank_ordinal;
 
       // Line their rank up with the correct role(s)
-      const shouldHaveRoles = Object.values(rankMap).filter((role) => role.rank === rank);
+      const shouldHaveRoles = Object.values(rankMap).filter((role) => {
+        if (role.ranks) {
+          return role.ranks.includes(rank);
+        }
+      });
 
       shouldHaveRoles.forEach((role) => {
         // Get the role from the guild
@@ -226,7 +230,11 @@ export class PS2GameScanningService implements OnApplicationBootstrap {
       });
 
       // Now check if they have any roles they shouldn't have
-      const shouldNotHaveRoles = Object.values(rankMap).filter((role) => role.rank !== rank);
+      const shouldNotHaveRoles = Object.values(rankMap).filter((role) => {
+        if (role.ranks) {
+          return !role.ranks.includes(rank);
+        }
+      });
 
       shouldNotHaveRoles.forEach((role) => {
         // Get the role from the guild
