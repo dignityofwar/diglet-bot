@@ -1,6 +1,13 @@
 import { Entity, Index, Property, Unique } from '@mikro-orm/core';
 import { BaseEntity } from './base.entity';
 
+export interface PS2MembersEntityInterface {
+  discordId: string;
+  discordName: string;
+  characterId: string;
+  characterName: string;
+}
+
 @Entity()
 export class PS2MembersEntity extends BaseEntity {
   @Property()
@@ -9,13 +16,18 @@ export class PS2MembersEntity extends BaseEntity {
     discordId: string;
 
   @Property()
+    discordName: string;
+
+  @Property()
   @Unique()
   @Index()
     characterId: string;
 
-  constructor(discordId: string, characterId: string) {
+  @Property()
+    characterName: string;
+
+  constructor(options: PS2MembersEntityInterface) {
     super();
-    this.discordId = discordId;
-    this.characterId = characterId;
+    Object.assign(this, options);
   }
 }
