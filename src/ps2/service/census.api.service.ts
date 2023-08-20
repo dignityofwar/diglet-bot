@@ -44,9 +44,8 @@ export class CensusApiService implements OnModuleInit {
     catch (err) {
       lastError = err;
       this.logger.warn(`Request failed (attempt ${tries + 1}/${CensusApiService.RETRY_ATTEMPTS}). Retrying in ${CensusApiService.RETRY_DELAY_MS} ms...`);
-      setTimeout(async () => {
-        return await this.requestWithRetries(url, tries + 1);
-      }, CensusApiService.RETRY_DELAY_MS);
+      await new Promise(resolve => setTimeout(resolve, CensusApiService.RETRY_DELAY_MS));
+      return this.requestWithRetries(url, tries + 1);
     }
 
     throw lastError || new Error('Failed to perform request after multiple retries.');
