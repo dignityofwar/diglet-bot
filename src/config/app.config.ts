@@ -58,6 +58,8 @@ const rolesToRankDevelopment: RankMapInterface = {
     discordRoleId: '1142546013685559337',
   },
 };
+const rankMap = process.env.ENVIRONMENT === 'production' ? rolesToRankProduction : rolesToRankDevelopment as RankMapInterface;
+const pingRoles = [rankMap['@PS2/Officer'].discordRoleId, rankMap['@PS2/Leader'].discordRoleId];
 
 export default () => ({
   albion: {
@@ -66,7 +68,8 @@ export default () => ({
   ps2: {
     censusServiceId: process.env.PS2_CENSUS_SERVICE_ID,
     outfitId: '37509488620604883',
-    rankMap: process.env.ENVIRONMENT === 'production' ? rolesToRankProduction : rolesToRankDevelopment as RankMapInterface,
+    rankMap,
+    pingRoles,
   },
   version: process.env.VERSION,
 });

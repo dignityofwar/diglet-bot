@@ -67,7 +67,6 @@ export class PS2GameScanningService implements OnApplicationBootstrap {
       await this.checkForSuggestions(characters, outfitMembers, message);
     }
     catch (err) {
-      console.log(err);
       await message.edit('## ❌ An error occurred while scanning!');
       await message.channel.send(`Error: ${err.message}`);
       return this.reset();
@@ -101,6 +100,11 @@ export class PS2GameScanningService implements OnApplicationBootstrap {
         const fakeMessage = await message.channel.send('dummy'); // Send a fake message first so it doesn't ping people
         await fakeMessage.edit(suggestion.change);
       }
+    }
+
+    if (this.suggestionsCount > 0 && !dryRun) {
+      const pingRoles = this.config.get('app.ps2.pingRoles');
+      await message.channel.send(`🔔 <@&${pingRoles.join('>, <@&')}> Please review the above suggestions and make any necessary changes manually. To check again without pinging Leaders and Officers, run the \`/ps2-scan\` command with the \`dry-run\` flag set to \`true\`.`);
     }
 
     await message.edit(`ℹ️ There are currently ${outfitMembers.length} members on record.`);
@@ -156,7 +160,6 @@ export class PS2GameScanningService implements OnApplicationBootstrap {
         const hasRole = discordMember.roles.cache.has(rankMap.discordRoleId);
 
         if (!hasRole) {
-          console.log(`User <@${discordMember.id}> does not have role "${role.name} to remove.`);
           continue;
         }
 
@@ -196,12 +199,8 @@ export class PS2GameScanningService implements OnApplicationBootstrap {
       const character = this.charactersMap.get(member.characterId);
       const discordMember = await message.guild.members.fetch({ user: member.discordId, force: true });
 
-      console.log(`Checking roles of character ${character.name.first} (${character.character_id})`);
-
       // First get their rank
       const rank = character.outfit_info?.rank_ordinal;
-
-      console.log('rank', rank);
 
       // Line their rank up with the correct role(s)
       const shouldHaveRoles = Object.values(rankMap).filter((role) => role.rank === rank);
@@ -219,7 +218,7 @@ export class PS2GameScanningService implements OnApplicationBootstrap {
           suggestions.push({
             character,
             discordMember,
-            change: `- 😳 <@${discordMember.id}> is missing the role \`${guildRole.name}\``,
+            change: `- 😳 <@${discordMember.id}> is missing their rightful role of \`${guildRole.name}\``,
           });
           this.suggestionsMap.set(member.characterId, suggestions);
           this.suggestionsCount++;
@@ -248,8 +247,6 @@ export class PS2GameScanningService implements OnApplicationBootstrap {
           this.suggestionsCount++;
         }
       });
-
-      console.log('shouldHaveRoles', shouldHaveRoles);
     }
   }
 }
