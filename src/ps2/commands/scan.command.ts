@@ -25,7 +25,9 @@ export class PS2ScanCommand {
   ): Promise<string> {
     this.logger.debug('Received PS2ScanCommand');
 
-    this.ps2GameScanningService.startScan(interaction[0], dto.dryRun);
+    const message = await interaction[0].channel.send('Starting scan...');
+
+    this.ps2GameScanningService.startScan(message, dto.dryRun);
 
     return `Scan initiated. ${dto.dryRun ? '[DRY RUN, NO CHANGES WILL ACTUALLY BE PERFORMED]' : ''}`;
   }

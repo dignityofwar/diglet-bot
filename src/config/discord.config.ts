@@ -6,6 +6,7 @@ export default () => ({
     ps2Verify: process.env.CHANNEL_PS2_VERIFY,
     ps2Private: process.env.CHANNEL_PS2_PRIVATE,
     ps2HowToRankUp: process.env.CHANNEL_PS2_HOW_TO_RANK_UP,
+    ps2Scans: process.env.CHANNEL_PS2_SCANS,
   },
   roles: {
     albionInitiateRoleId: process.env.ROLE_ALBION_INITIATE,

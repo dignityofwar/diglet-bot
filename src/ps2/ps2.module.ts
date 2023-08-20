@@ -11,6 +11,7 @@ import { CensusWebsocketService } from './service/census.websocket.service';
 import { EventBusService } from './service/event.bus.service';
 import { PS2GameScanningService } from './service/ps2.game.scanning.service';
 import { PS2ScanCommand } from './commands/scan.command';
+import { PS2CronService } from './service/ps2.cron.service';
 
 @Module({
   imports: [DiscordModule.forFeature(), DatabaseModule, ConfigModule],
@@ -18,6 +19,7 @@ import { PS2ScanCommand } from './commands/scan.command';
     CensusAxiosFactory,
     CensusApiService,
     CensusWebsocketService,
+    PS2CronService,
     PS2GameVerificationService,
     PS2GameScanningService,
     EventBusService,

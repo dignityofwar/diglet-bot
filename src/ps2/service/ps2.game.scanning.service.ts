@@ -1,9 +1,9 @@
-import { Injectable, Logger, OnApplicationBootstrap } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@mikro-orm/nestjs';
 import { PS2MembersEntity } from '../../database/entities/ps2.members.entity';
 import { EntityRepository } from '@mikro-orm/core';
 import { CensusApiService } from './census.api.service';
-import { ChatInputCommandInteraction, GuildMember, Message } from 'discord.js';
+import { GuildMember, Message } from 'discord.js';
 import { CensusCharacterWithOutfitInterface } from '../interfaces/CensusCharacterResponseInterface';
 import { ConfigService } from '@nestjs/config';
 import { RankMapInterface } from '../../config/app.config';
@@ -15,7 +15,7 @@ interface ChangesInterface {
 }
 
 @Injectable()
-export class PS2GameScanningService implements OnApplicationBootstrap {
+export class PS2GameScanningService {
   private readonly logger = new Logger(PS2GameScanningService.name);
   private charactersMap: Map<string, CensusCharacterWithOutfitInterface> = new Map();
   private changesMap: Map<string, ChangesInterface> = new Map();
@@ -28,9 +28,6 @@ export class PS2GameScanningService implements OnApplicationBootstrap {
     @InjectRepository(PS2MembersEntity) private readonly ps2MembersRepository: EntityRepository<PS2MembersEntity>
   ) {
   }
-  async onApplicationBootstrap() {
-    // ...
-  }
 
   reset() {
     this.logger.log('Resetting maps...');
@@ -40,8 +37,8 @@ export class PS2GameScanningService implements OnApplicationBootstrap {
     this.suggestionsCount = 0;
   }
 
-  async startScan(interaction: ChatInputCommandInteraction, dryRun = false) {
-    const message = await interaction.channel.send('Starting scan...');
+  async startScan(originalMessage: Message, dryRun = false) {
+    const message = await originalMessage.edit('Starting scan...');
 
     // Pull the list of verified members from the database and check if they're still in the outfit
     // If they're not, remove the verified role from them and any other PS2 Roles
