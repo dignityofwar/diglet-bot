@@ -30,5 +30,7 @@ import { Ps2Module } from './ps2/ps2.module';
     }),
     GeneralModule,
     AlbionModule,
-
+    Ps2Module,
+  ],
+})
 export class AppModule {}
