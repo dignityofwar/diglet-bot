@@ -48,8 +48,13 @@ export class CensusApiService implements OnModuleInit {
   }
 
   async getCharacter(characterName: string): Promise<CensusCharacterWithOutfitInterface> {
-    const url = `character?name.first_lower=${characterName.toLowerCase()}&c:join=outfit_member^on:character_id^to:character_id^inject_at:outfit_info&c:join=outfit^on:outfit_id^to:outfit_id^inject_at:outfit_details`;
+    const url = `character?name.first_lower=${characterName.toLowerCase()}&c:join=outfit_member^on:cwharacter_id^to:character_id^inject_at:outfit_info&c:join=outfit^on:outfit_id^to:outfit_id^inject_at:outfit_details`;
     const response: CensusCharacterResponseInterface = await this.requestWithRetries(url);
+
+    if (response.returned === 0 || !response.character_list || response.character_list.length === 0) {
+      throw new Error(`Character **${characterName} does not exist.`);
+    }
+
     return response.character_list[0];
   }
 
