@@ -20,6 +20,7 @@ describe('PS2VerifyCommand', () => {
   let command: PS2VerifyCommand;
   let censusApiService: CensusApiService;
   let config: ConfigService;
+  let ps2GameVerificationService: PS2GameVerificationService;
 
   let mockUser: any;
   let mockCharacter: CensusCharacterWithOutfitInterface;
@@ -57,6 +58,7 @@ describe('PS2VerifyCommand', () => {
     command = module.get<PS2VerifyCommand>(PS2VerifyCommand);
     censusApiService = module.get<CensusApiService>(CensusApiService);
     config = module.get<ConfigService>(ConfigService);
+    ps2GameVerificationService = module.get<PS2GameVerificationService>(PS2GameVerificationService);
 
     // Spy on the 'get' method of the ConfigService, and make it return a specific values based on the path
     jest.spyOn(config, 'get').mockImplementation((key: string) => {
@@ -175,5 +177,22 @@ describe('PS2VerifyCommand', () => {
     const response = await command.onPS2VerifyCommand(dto, mockInteraction);
 
     expect(response).toBe('Your character "Maelstrome26" has not been detected in the [DIG] outfit. If you are in the outfit, please log out and in again, or wait 24 hours and try again as Census (the game\'s API) can be slow to update sometimes.');
+  });
+
+  it('should return any errors presented by the verification service', async () => {
+    const errorMessage = `Character **${dto.character}** has already been registered by user "Foobar". Please complete it before attempting again.`;
+    ps2GameVerificationService.isValidRegistrationAttempt = jest.fn().mockImplementation(() => errorMessage);
+
+    const response = await command.onPS2VerifyCommand(dto, mockInteraction);
+
+    expect(response).toBe(errorMessage);
+  });
+
+  it('should allow characters within the outfit to continue registering', async () => {
+    ps2GameVerificationService.isValidRegistrationAttempt = jest.fn().mockImplementation(() => true);
+
+    const response = await command.onPS2VerifyCommand(dto, mockInteraction);
+
+    expect(response).toBe(`Your character "${dto.character}" has been detected as a member of DIG. However, to fully verify you, you now need follow the below steps.`);
   });
 });
