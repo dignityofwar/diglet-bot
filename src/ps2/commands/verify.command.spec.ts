@@ -108,7 +108,6 @@ describe('PS2VerifyCommand', () => {
         first: 'Maelstrome26',
         first_lower: 'maelstrome26',
       },
-      faction_id: '1',
       outfit_info: {
         outfit_id: expectedOutfitId,
         character_id: expectedCharacterId,
@@ -194,5 +193,30 @@ describe('PS2VerifyCommand', () => {
     const response = await command.onPS2VerifyCommand(dto, mockInteraction);
 
     expect(response).toBe(`Your character "${dto.character}" has been detected as a member of DIG. However, to fully verify you, you now need follow the below steps.`);
+  });
+
+  it('should correctly handle edge case character', async () => {
+    censusApiService.getCharacter = jest.fn().mockImplementation(() => {
+      return {
+        'character_id': '5428660720835917857',
+        'name': {
+          'first': 'HARRYPOUSINI',
+          'first_lower': 'harrypousini',
+        },
+        'outfit_info': {
+          'outfit_id': '37509488620604883',
+          'character_id': '5428660720835917857',
+          'member_since': '1584546134',
+          'member_since_date': '2020-03-18 15:42:14.0',
+          'rank': 'Zealot',
+          'rank_ordinal': '6',
+        },
+      };
+    });
+    ps2GameVerificationService.isValidRegistrationAttempt = jest.fn().mockImplementation(() => true);
+
+    const response = await command.onPS2VerifyCommand(dto, mockInteraction);
+
+    expect(response).toBe('Your character "HARRYPOUSINI" has been detected as a member of DIG. However, to fully verify you, you now need follow the below steps.');
   });
 });
