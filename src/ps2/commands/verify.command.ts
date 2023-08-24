@@ -70,5 +70,7 @@ export class PS2VerifyCommand {
 
     // Successful!
     return `Your character "${character.name.first}" has been detected as a member of DIG. However, to fully verify you, you now need follow the below steps.`;
+
+    // Test signing
   }
 }
