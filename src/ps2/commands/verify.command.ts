@@ -18,7 +18,7 @@ export class PS2VerifyCommand {
   private readonly logger = new Logger(PS2VerifyCommand.name);
 
   constructor(
-    private readonly censusService: CensusApiService,
+    private readonly censusApiService: CensusApiService,
     private readonly config: ConfigService,
     private readonly ps2GameVerificationService: PS2GameVerificationService,
   ) {}
@@ -41,7 +41,7 @@ export class PS2VerifyCommand {
 
     // Get the character from the Albion Online API
     try {
-      character = await this.censusService.getCharacter(dto.character);
+      character = await this.censusApiService.getCharacter(dto.character);
     }
     catch (err) {
       if (err instanceof Error) {
@@ -59,7 +59,7 @@ export class PS2VerifyCommand {
     // Get the Discord guild member to be able to edit things about them
     const guildMember = await interaction[0].guild?.members.fetch(interaction[0].user.id);
 
-    // Check first if the registrsation is valid
+    // Check first if the registration is valid
     const isValid = await this.ps2GameVerificationService.isValidRegistrationAttempt(character, guildMember);
 
     if (isValid !== true) {
