@@ -1,4 +1,4 @@
-import { DiscordModule } from '@discord-nestjs/core';
+import { DiscordModule as DiscordJSModule } from '@discord-nestjs/core';
 import { Module } from '@nestjs/common';
 
 import { DatabaseModule } from '../database/database.module';
@@ -12,9 +12,15 @@ import { EventBusService } from './service/event.bus.service';
 import { PS2GameScanningService } from './service/ps2.game.scanning.service';
 import { PS2ScanCommand } from './commands/scan.command';
 import { PS2CronService } from './service/ps2.cron.service';
+import { DiscordModule } from '../discord/discord.module';
 
 @Module({
-  imports: [DiscordModule.forFeature(), DatabaseModule, ConfigModule],
+  imports: [
+    DiscordJSModule.forFeature(), // Needed for the command decorators to work
+    DiscordModule,
+    DatabaseModule,
+    ConfigModule,
+  ],
   providers: [
     CensusAxiosFactory,
     CensusApiService,

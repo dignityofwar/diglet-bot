@@ -1,9 +1,9 @@
 import { Injectable, Logger, OnApplicationBootstrap } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { PS2GameScanningService } from './ps2.game.scanning.service';
-import { InjectDiscordClient } from '@discord-nestjs/core';
-import { Client, TextChannel } from 'discord.js';
+import { TextChannel } from 'discord.js';
 import { ConfigService } from '@nestjs/config';
+import { DiscordService } from '../../discord/discord.service';
 
 @Injectable()
 export class PS2CronService implements OnApplicationBootstrap {
@@ -11,7 +11,7 @@ export class PS2CronService implements OnApplicationBootstrap {
   private channel: TextChannel;
 
   constructor(
-    @InjectDiscordClient() private readonly discordClient: Client,
+    private readonly discordService: DiscordService,
     private readonly config: ConfigService,
     private readonly ps2GameScanningService: PS2GameScanningService
   ) {}
@@ -22,7 +22,7 @@ export class PS2CronService implements OnApplicationBootstrap {
     const channelId = this.config.get('discord.channels.ps2Scans');
 
     // Check if the channel exists
-    this.channel = await this.discordClient.channels.fetch(channelId) as TextChannel;
+    this.channel = await this.discordService.getChannel(channelId) as TextChannel;
 
     if (!this.channel) {
       throw new Error(`Could not find channel with ID ${channelId}`);

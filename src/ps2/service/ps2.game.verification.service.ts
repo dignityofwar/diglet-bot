@@ -1,8 +1,7 @@
 import { Injectable, Logger, OnApplicationBootstrap } from '@nestjs/common';
 import { CensusWebsocketService } from './census.websocket.service';
 import { ConfigService } from '@nestjs/config';
-import { Channel, Client, GuildMember, Message, TextChannel } from 'discord.js';
-import { InjectDiscordClient } from '@discord-nestjs/core';
+import { Channel, GuildMember, Message, TextChannel } from 'discord.js';
 import { CensusCharacterWithOutfitInterface } from '../interfaces/CensusCharacterResponseInterface';
 import { EventBusService } from './event.bus.service';
 import { Death } from 'ps2census';
@@ -11,6 +10,7 @@ import { PS2VerificationAttemptEntity } from '../../database/entities/ps2.verifi
 import { InjectRepository } from '@mikro-orm/nestjs';
 import { EntityRepository } from '@mikro-orm/core';
 import { PS2MembersEntity } from '../../database/entities/ps2.members.entity';
+import { DiscordService } from '../../discord/discord.service';
 
 // This service exists to subscribe to the PS2 Census websocket service and listen for particular events concerning characters.
 // An long promise will be created, waiting for the character to do the actions performed.
@@ -29,7 +29,7 @@ export class PS2GameVerificationService implements OnApplicationBootstrap {
   private timeMessagesMap: Map<string, Message> = new Map();
 
   constructor(
-    @InjectDiscordClient() private readonly discordClient: Client,
+    private readonly discordService: DiscordService,
     private readonly config: ConfigService,
     private readonly censusWebsocketService: CensusWebsocketService,
     private readonly eventBus: EventBusService,
@@ -42,7 +42,7 @@ export class PS2GameVerificationService implements OnApplicationBootstrap {
     // Store the Discord guild channel and ensure we can send messages to it
     const verifyChannelId = this.config.get('discord.channels.ps2Verify');
 
-    this.verificationChannel = await this.discordClient.channels.fetch(verifyChannelId);
+    this.verificationChannel = await this.discordService.getChannel(verifyChannelId);
     if (!this.verificationChannel) {
       throw new Error(`Could not find channel with ID ${verifyChannelId}`);
     }
