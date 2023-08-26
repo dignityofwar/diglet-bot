@@ -217,7 +217,4 @@ describe('PS2GameVerificationService', () => {
 
     expect(response).toBe(`Character **"${mockCharacter.name.first}"** has already been registered by user \`@${mockGuildMember.displayName}\`. If you believe this to be in error, please contact the PS2 Leaders.`);
   });
-
-  // Really hard to do, for some reason the repository mock isn't being used, but it works in the above test??!?
-
 });
