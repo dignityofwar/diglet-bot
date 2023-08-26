@@ -12,9 +12,9 @@ export class DiscordService implements OnModuleInit {
     console.log('DiscordService initialized');
   }
 
-  getUser() {
-
-  }
+  // getUser() {
+  //
+  // }
 
   async getChannel(channelId: string): Promise<Channel> {
     return await this.discordClient.channels.fetch(channelId);
