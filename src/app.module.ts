@@ -33,6 +33,7 @@ import { ScheduleModule } from '@nestjs/schedule';
     AlbionModule,
     Ps2Module,
     ScheduleModule.forRoot(),
+    DiscordModule,
   ],
 })
 export class AppModule {}
