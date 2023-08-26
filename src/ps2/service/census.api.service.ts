@@ -36,6 +36,7 @@ export class CensusApiService implements OnModuleInit {
       const response = await request.get(url);
 
       if (response.data.error) {
+        // noinspection ExceptionCaughtLocallyJS
         throw new Error(`Census responded with an error: ${response.data.error}`);
       }
 
