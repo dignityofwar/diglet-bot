@@ -6,7 +6,7 @@ import { SnowflakeUtil } from 'discord.js';
 import { ReflectMetadataProvider } from '@discord-nestjs/core';
 import * as _ from 'lodash';
 import { CensusCharacterWithOutfitInterface } from '../interfaces/CensusCharacterResponseInterface';
-import { PS2GameVerificationService } from '../service/ps2.game.verification.service';
+import { PS2GameVerificationService } from './ps2.game.verification.service';
 import { DiscordService } from '../../discord/discord.service';
 import { CensusWebsocketService } from './census.websocket.service';
 import { EventBusService } from './event.bus.service';
@@ -29,21 +29,26 @@ describe('PS2GameVerificationService', () => {
 
   let mockGuildMember: any;
   let mockCharacter: CensusCharacterWithOutfitInterface;
-  let mockInteraction: any;
   let mockEntityManager: jest.Mocked<EntityManager>;
 
   beforeEach(async () => {
-    const methods = {
+    mockEntityManager = {
       find: jest.fn(),
       persistAndFlush: jest.fn(),
-    };
-
-    mockEntityManager = {
-      ...methods,
       getRepository: jest.fn().mockReturnValue({
         find: jest.fn(),
-        // Add other methods you want to mock
-      }) } as any;
+      }),
+    } as any;
+
+    const mockPS2VerificationAttemptRepository = {
+      find: jest.fn(),
+      // add other methods you might call
+    };
+
+    const mockPS2MembersRepository = {
+      find: jest.fn(),
+      // add other methods you might call
+    };
 
     const mockInit = jest.spyOn(MikroORM, 'init');
 
@@ -83,11 +88,11 @@ describe('PS2GameVerificationService', () => {
         },
         {
           provide: getRepositoryToken(PS2VerificationAttemptEntity),
-          useValue: mockEntityManager.getRepository(PS2VerificationAttemptEntity),
+          useValue: mockPS2VerificationAttemptRepository,
         },
         {
           provide: getRepositoryToken(PS2MembersEntity),
-          useValue: mockEntityManager.getRepository(PS2MembersEntity),
+          useValue: mockPS2MembersRepository,
         },
       ],
     }).compile();
@@ -95,8 +100,8 @@ describe('PS2GameVerificationService', () => {
     service = module.get<PS2GameVerificationService>(PS2GameVerificationService);
     config = module.get<ConfigService>(ConfigService);
     discordService = module.get<DiscordService>(DiscordService);
-    ps2VerificationAttemptRepository = mockEntityManager.getRepository(PS2VerificationAttemptEntity);
-    ps2MembersRepository = mockEntityManager.getRepository(PS2MembersEntity);
+    ps2VerificationAttemptRepository = module.get(getRepositoryToken(PS2VerificationAttemptEntity));
+    ps2MembersRepository = module.get(getRepositoryToken(PS2MembersEntity));
 
     // Spy on the 'get' method of the ConfigService, and make it return a specific values based on the path
     jest.spyOn(config, 'get').mockImplementation((key: string) => {
@@ -168,21 +173,6 @@ describe('PS2GameVerificationService', () => {
         rank_ordinal: '3',
       },
     } as any;
-
-    mockInteraction = [
-      {
-        channelId: verifyChannelId,
-        guild: {
-          roles: {
-            fetch: jest.fn().mockReturnValue({ id: expectedRoleId }),
-          },
-          members: {
-            fetch: jest.fn().mockReturnValue(mockGuildMember),
-          },
-        },
-        user: verifyChannelId,
-      },
-    ];
   });
 
   it('should be defined', () => {
@@ -202,15 +192,32 @@ describe('PS2GameVerificationService', () => {
     await expect(service.onApplicationBootstrap()).rejects.toThrow(`Channel with ID ${verifyChannelId} is not a text channel`);
   });
 
+  it('should return an error if there\'s an ongoing registration attempt', async () => {
+    ps2MembersRepository.find = jest.fn().mockResolvedValue([]);
+    ps2VerificationAttemptRepository.find = jest.fn().mockResolvedValue([{
+      guildMember: mockGuildMember,
+      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+      // @ts-ignore yeah I'm not supplying a type compatible object here, fuck that
+      guildMessage: {},
+      characterId: '5',
+    }]);
+
+    const response = await service.isValidRegistrationAttempt(mockCharacter, mockGuildMember);
+
+    expect(response).toBe(`Character **"${mockCharacter.name.first}"** already has a pending registration. Please complete it before attempting again. Pinging <@${config.get('discord.devUserId')}> in case there's a problem.`);
+  });
+
   it('should return an error if the character is already registered', async () => {
-    console.log(ps2MembersRepository);
     ps2MembersRepository.find = jest.fn().mockResolvedValue([{
       characterId: expectedCharacterId,
-      discordId: '123456789',
+      discordId: '1337',
     }]);
 
     const response = await service.isValidRegistrationAttempt(mockCharacter, mockGuildMember);
 
     expect(response).toBe(`Character **"${mockCharacter.name.first}"** has already been registered by user \`@${mockGuildMember.displayName}\`. If you believe this to be in error, please contact the PS2 Leaders.`);
   });
+
+  // Really hard to do, for some reason the repository mock isn't being used, but it works in the above test??!?
+
 });
