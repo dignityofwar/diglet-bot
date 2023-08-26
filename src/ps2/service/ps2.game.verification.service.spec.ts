@@ -133,6 +133,7 @@ describe('PS2GameVerificationService', () => {
       createdAt: new Date(),
       createdTimestamp: Date.now(),
       discriminator: '0000',
+      displayName: 'TestUser',
       defaultAvatarURL: 'https://defaultavatar.url',
       id: SnowflakeUtil.generate(),
       tag: 'TestUser#0000',
@@ -145,6 +146,12 @@ describe('PS2GameVerificationService', () => {
         add: jest.fn().mockResolvedValue(() => true),
       },
     };
+
+    mockGuildMember.guild = {
+      members: {
+        fetch: jest.fn().mockImplementation(() => mockGuildMember),
+      },
+    },
 
     mockCharacter = {
       character_id: expectedCharacterId,
@@ -204,6 +211,6 @@ describe('PS2GameVerificationService', () => {
 
     const response = await service.isValidRegistrationAttempt(mockCharacter, mockGuildMember);
 
-    expect(response).toBe(`Your character "${mockCharacter.name.first}" is already registered.`);
+    expect(response).toBe(`Character **"${mockCharacter.name.first}"** has already been registered by user \`@${mockGuildMember.displayName}\`. If you believe this to be in error, please contact the PS2 Leaders.`);
   });
 });
