@@ -192,6 +192,17 @@ describe('PS2GameVerificationService', () => {
     await expect(service.onApplicationBootstrap()).rejects.toThrow(`Channel with ID ${verifyChannelId} is not a text channel`);
   });
 
+  it('should return an error if the character is already registered', async () => {
+    ps2MembersRepository.find = jest.fn().mockResolvedValue([{
+      characterId: expectedCharacterId,
+      discordId: '1337',
+    }]);
+
+    const response = await service.isValidRegistrationAttempt(mockCharacter, mockGuildMember);
+
+    expect(response).toBe(`Character **"${mockCharacter.name.first}"** has already been registered by user \`@${mockGuildMember.displayName}\`. If you believe this to be in error, please contact the PS2 Leaders.`);
+  });
+
   it('should return an error if there\'s an ongoing registration attempt', async () => {
     ps2MembersRepository.find = jest.fn().mockResolvedValue([]);
     ps2VerificationAttemptRepository.find = jest.fn().mockResolvedValue([{
@@ -205,16 +216,5 @@ describe('PS2GameVerificationService', () => {
     const response = await service.isValidRegistrationAttempt(mockCharacter, mockGuildMember);
 
     expect(response).toBe(`Character **"${mockCharacter.name.first}"** already has a pending registration. Please complete it before attempting again. Pinging <@${config.get('discord.devUserId')}> in case there's a problem.`);
-  });
-
-  it('should return an error if the character is already registered', async () => {
-    ps2MembersRepository.find = jest.fn().mockResolvedValue([{
-      characterId: expectedCharacterId,
-      discordId: '1337',
-    }]);
-
-    const response = await service.isValidRegistrationAttempt(mockCharacter, mockGuildMember);
-
-    expect(response).toBe(`Character **"${mockCharacter.name.first}"** has already been registered by user \`@${mockGuildMember.displayName}\`. If you believe this to be in error, please contact the PS2 Leaders.`);
   });
 });
