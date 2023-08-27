@@ -156,7 +156,7 @@ describe('PS2GameVerificationService', () => {
       members: {
         fetch: jest.fn().mockImplementation(() => mockGuildMember),
       },
-    },
+    } as any;
 
     mockCharacter = {
       character_id: expectedCharacterId,
