@@ -283,7 +283,13 @@ export class PS2GameVerificationService implements OnApplicationBootstrap {
   private async editMessage(content: string, message: Message) {
     // Check if the message is still there
     if (message) {
-      return await message.edit(content);
+      try {
+        return await message.edit(content);
+      }
+      catch (err) {
+        this.logger.error(`Failed to edit message! ${err.message}`);
+        message.channel.send(`Failed to edit message! <@${this.config.get('discord.devUserId')}>`);
+      }
     }
 
     this.logger.error('Message was not found!');
@@ -292,7 +298,13 @@ export class PS2GameVerificationService implements OnApplicationBootstrap {
 
   private async deleteMessage(message: Message) {
     if (message) {
-      return await message.delete();
+      try {
+        return await message.delete();
+      }
+      catch (err) {
+        this.logger.error(`Failed to delete message! ${err.message}`);
+        message.channel.send(`Failed to delete message! <@${this.config.get('discord.devUserId')}>`);
+      }
     }
 
     this.logger.error('Message was not found!');
