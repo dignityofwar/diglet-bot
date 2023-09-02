@@ -112,9 +112,9 @@ export class PS2GameVerificationService implements OnApplicationBootstrap {
         \n2. At the top of the redeploy screen, click on the continent name (e.g. Sanctuary).
         \n3. Click on World Map.
         \n4. Go to VR Training.
-        \n5. Wait a few seconds, then type **/suicide** in the in-game chat for character \`${character.name.first}\`.
+        \n5. Wait a few seconds, then type **/suicide** in the in-game chat window.
         \nYour death won't be counted in your player's statistics.
-        \nYou can also perform this on any continent, as long as it's not in Sanctuary, any warpgate or flotilla.
+        \nYou can also perform this on any continent, as long as it's not in Sanctuary, any Warpgate or Flotilla (on Oshur).
         \n## Verification status for \`${character.name.first}\`: ⏳__Pending__`, message);
 
       // Store the messages to reference for later so we can edit the message and also reply to it etc.
