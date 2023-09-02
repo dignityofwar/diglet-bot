@@ -269,7 +269,7 @@ export class PS2GameVerificationService implements OnApplicationBootstrap {
     message.channel.send(`🎉 <@${guildMember.id}> your in game character **${character.name.first}** has been successfully verified! Welcome to the [DIG] outfit!
 🔓 You can now see our private section <#${this.config.get('discord.channels.ps2Private')}>. Should you leave the outfit, you will automatically lose this access.
 ℹ️ For info on how to be promoted to Zealot to use our Armory assets, please visit <#${this.config.get('discord.channels.ps2HowToRankUp')}>.
-ℹ️ Please note your nickname has been automatically changed to match your in game character name. You are free to change it, but please ensure it is still recognisable as you.
+ℹ️ Please note your Discord server nickname (not your username) has been automatically changed to match your character name. You are free to change it again, but please ensure it is still recognisable as you.
 =================`);
 
     this.logger.log(`Successfully verified ${character.name.first}!`);
