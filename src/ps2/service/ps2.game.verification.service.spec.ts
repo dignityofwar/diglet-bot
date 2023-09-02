@@ -195,12 +195,21 @@ describe('PS2GameVerificationService', () => {
   it('should return an error if the character is already registered', async () => {
     ps2MembersRepository.find = jest.fn().mockResolvedValue([{
       characterId: expectedCharacterId,
-      discordId: '1337',
     }]);
 
     const response = await service.isValidRegistrationAttempt(mockCharacter, mockGuildMember);
 
     expect(response).toBe(`Character **"${mockCharacter.name.first}"** has already been registered by user \`@${mockGuildMember.displayName}\`. If you believe this to be in error, please contact the PS2 Leaders.`);
+  });
+
+  it('should return an error if the discord user is already registered', async () => {
+    ps2MembersRepository.find = jest.fn()
+      .mockResolvedValueOnce([])
+      .mockResolvedValueOnce([{ discordId: '1337' }]);
+
+    const response = await service.isValidRegistrationAttempt(mockCharacter, mockGuildMember);
+
+    expect(response).toBe('You have already registered a character. We don\'t allow multiple characters to be registered to the same Discord user, as there is little point to it. If you believe this to be in error, or you have registered the wrong character, please contact the PS2 Leaders.');
   });
 
   it('should return an error if there\'s an ongoing registration attempt', async () => {

@@ -67,6 +67,11 @@ export class PS2GameVerificationService implements OnApplicationBootstrap {
       return `Character **"${character.name.first}"** has already been registered by user \`@${originalDiscordMember.displayName}\`. If you believe this to be in error, please contact the PS2 Leaders.`;
     }
 
+    const discordMember = await this.ps2MembersRepository.find({ discordId: member.id });
+    if (discordMember.length > 0) {
+      return 'You have already registered a character. We don\'t allow multiple characters to be registered to the same Discord user, as there is little point to it. If you believe this to be in error, or you have registered the wrong character, please contact the PS2 Leaders.';
+    }
+
     const ps2VerificationAttempt = await this.ps2VerificationAttemptRepository.find({ characterId: character.character_id });
     if (ps2VerificationAttempt.length > 0) {
       return `Character **"${character.name.first}"** already has a pending registration. Please complete it before attempting again. Pinging <@${this.config.get('discord.devUserId')}> in case there's a problem.`;
