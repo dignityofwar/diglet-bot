@@ -292,7 +292,7 @@ export class PS2GameVerificationService implements OnApplicationBootstrap {
       }
       catch (err) {
         this.logger.error(`Failed to edit message! ${err.message}`);
-        message.channel.send(`Failed to edit message! Content would have been:
+        await message.channel.send(`Failed to edit message! Content would have been:
         \n${content}
         \nPinging<@${this.config.get('discord.devUserId')}>`);
       }
@@ -309,7 +309,7 @@ export class PS2GameVerificationService implements OnApplicationBootstrap {
       }
       catch (err) {
         this.logger.error(`Failed to delete message! ${err.message}`);
-        message.channel.send(`Failed to delete message! Error received: "${err.message}"
+        await message.channel.send(`Failed to delete message! Error received: "${err.message}"
         \nMessage details:
         \n ${JSON.stringify(message)}
         \n Pinging <@${this.config.get('discord.devUserId')}>`);
