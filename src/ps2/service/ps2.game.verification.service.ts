@@ -123,8 +123,12 @@ export class PS2GameVerificationService implements OnApplicationBootstrap {
       await this.ps2VerificationAttemptRepository.removeAndFlush(verificationAttempt);
     }
 
+    for (const verificationAttempt of verificationAttempts) {
+      await (this.verificationChannel as TextChannel).send(`🗑️ Removed attempt for ${verificationAttempt.characterId} by ${verificationAttempt.guildMember.displayName}`);
+    }
+
     if (verificationAttempts.length > 0) {
-      await (this.verificationChannel as TextChannel).send(`🤖 Removed ${verificationAttempts.length} pending verification attempts. Any previous attempts must be restarted.`);
+      await (this.verificationChannel as TextChannel).send(`🤖 Removed ${verificationAttempts.length} pending verification attempts. Any previous attempts must be restarted. Pinging <@${this.config.get('discord.devUserId')}>.`);
     }
 
     return;
