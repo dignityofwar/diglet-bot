@@ -82,23 +82,10 @@ export class PS2GameVerificationService implements OnApplicationBootstrap {
     this.monitoringCharacters.set(character.character_id, character);
     this.logger.debug(`Added character ${character.name.first} to watch list`);
 
-    const message = await this.sendMessage(`Verification status for \`${character.name.first}\`: ⏳Setting up watcher for ${character.name.first} for verification...`);
-    const timeMessage = await this.sendMessage(`⏳ Time remaining for \`${character.name.first}\`: **${this.calculateTimeRemaining(deadline)}**`);
-
-    // Tell the websocket service to start monitoring the character for deaths
-    this.censusWebsocketService.watchCharacter(character);
-
-    await this.editMessage(`## Verification status for \`${character.name.first}\`: ⏳__Pending__\n
-    \n➡️ Deploy to a continent and to a base __outside__ of Warpgates / Flotillas. Then type **/suicide** in the in-game chat for character \`${character.name.first}\`. `, message);
-
-    // Store the messages to reference for later so we can edit the message and also reply to it etc.
-    this.messagesMap.set(character.character_id, message);
-    this.timeMessagesMap.set(character.character_id, timeMessage);
-
     // Store the GuildMember so we can ping them later
     this.guildMembersMap.set(character.character_id, guildMember);
 
-    // Save the attempt to the DB so we can load it up should the bot be rebooted
+    // Save the attempt to the DB, so we can load it up should the bot be rebooted
     const verificationAttemptEntity = this.ps2VerificationAttemptRepository.create(
       {
         characterId: character.character_id,
@@ -106,6 +93,23 @@ export class PS2GameVerificationService implements OnApplicationBootstrap {
       }
     );
     await this.ps2VerificationAttemptRepository.persistAndFlush(verificationAttemptEntity);
+
+    // Force the message to wait so the reply is sent first and messages are rendered in the proper order
+    setTimeout(async () => {
+      await this.sendMessage(`Your character **${character.name.first}** has been detected in [DIG]. However, to ensure the character belongs to you, you now need follow the below steps.`);
+      const message = await this.sendMessage(`Verification status for \`${character.name.first}\`: ⏳Setting up watcher for ${character.name.first} for verification...`);
+      const timeMessage = await this.sendMessage(`⏳ Time remaining for \`${character.name.first}\`: **${this.calculateTimeRemaining(deadline)}**`);
+
+      // Tell the websocket service to start monitoring the character for deaths
+      this.censusWebsocketService.watchCharacter(character);
+
+      await this.editMessage(`## Verification status for \`${character.name.first}\`: ⏳__Pending__\n
+    \n➡️ Deploy to a continent and to a base __outside__ of Warpgates / Flotillas. Then type **/suicide** in the in-game chat for character \`${character.name.first}\`. `, message);
+
+      // Store the messages to reference for later so we can edit the message and also reply to it etc.
+      this.messagesMap.set(character.character_id, message);
+      this.timeMessagesMap.set(character.character_id, timeMessage);
+    }, 2000);
 
     return true;
   }
@@ -262,10 +266,12 @@ export class PS2GameVerificationService implements OnApplicationBootstrap {
     await this.editMessage(`## Verification status for \`${character.name.first}\`: ✅ __Successful__`, message);
 
     await this.unwatch(character);
-    message.channel.send(`🎉 <@${guildMember.id}> your in game character "${character.name.first}" has been successfully verified! Welcome to the [DIG] outfit! 
-    \n🔓 You can now see our private section <#${this.config.get('discord.channels.ps2Private')}>. Should you leave the outfit, you will automatically lose this access.
-    \nℹ️ Info on how to be promoted to Zealot to use our Armory assets, visit <#${this.config.get('discord.channels.ps2HowToRankUp')}>.
-    \n=================`);
+    message.channel.send(`🎉 <@${guildMember.id}> your in game character "${character.name.first}" has been successfully verified! Welcome to the [DIG] outfit!
+🔓 You can now see our private section <#${this.config.get('discord.channels.ps2Private')}>. Should you leave the outfit, you will automatically lose this access.
+ℹ️ For info on how to be promoted to Zealot to use our Armory assets, please visit <#${this.config.get('discord.channels.ps2HowToRankUp')}>.
+=================`);
+
+    this.logger.log(`Successfully verified ${character.name.first}!`);
   }
 
   private checkMonitoredCharacters() {

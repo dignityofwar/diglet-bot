@@ -68,7 +68,7 @@ export class PS2VerifyCommand {
 
     await this.ps2GameVerificationService.watch(character, guildMember);
 
-    // Successful!
-    return `Your character **${character.name.first}** has been detected in [DIG]. However, to ensure the character belongs to you, you now need follow the below steps.`;
+    // Successful, but send nothing back as we send a separate message as the command may fail due to census being slow.
+    return '===================';
   }
 }
