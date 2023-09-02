@@ -151,6 +151,15 @@
           "nullable": false,
           "mappedType": "string"
         },
+        "character_name": {
+          "name": "character_name",
+          "type": "varchar(255)",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "mappedType": "string"
+        },
         "guild_member": {
           "name": "guild_member",
           "type": "varchar(255)",

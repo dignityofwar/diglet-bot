@@ -2,6 +2,13 @@ import { BaseEntity } from './base.entity';
 import { Entity, Index, Property, Unique } from '@mikro-orm/core';
 import { GuildMember, Message } from 'discord.js';
 
+interface PS2VerificationAttemptEntityOptions {
+  characterId: string;
+  characterName: string;
+  guildMember: GuildMember;
+  guildMessage: Message;
+}
+
 @Entity()
 export class PS2VerificationAttemptEntity extends BaseEntity {
   @Property()
@@ -10,15 +17,16 @@ export class PS2VerificationAttemptEntity extends BaseEntity {
     characterId: string;
 
   @Property()
+    characterName: string;
+
+  @Property()
     guildMember: GuildMember;
 
   @Property()
     guildMessage: Message;
 
-  constructor(characterId: string, guildMember: GuildMember, guildMessage: Message) {
+  constructor(options: PS2VerificationAttemptEntityOptions) {
     super();
-    this.characterId = characterId;
-    this.guildMember = guildMember;
-    this.guildMessage = guildMessage;
+    Object.assign(this, options);
   }
 }
