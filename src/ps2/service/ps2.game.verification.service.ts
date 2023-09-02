@@ -101,7 +101,7 @@ export class PS2GameVerificationService implements OnApplicationBootstrap {
 
     // Force the message to wait so the reply is sent first and messages are rendered in the proper order
     setTimeout(async () => {
-      await this.sendMessage(`Greetings ${guildMember.nickname || guildMember.displayName}! Your character **${character.name.first}** has been detected in [DIG]. However, to ensure the character belongs to you, you now need follow the below steps:`);
+      await this.sendMessage(`Greetings ${guildMember.nickname || guildMember.displayName}! Your character \`${character.name.first}\` has been detected in [DIG]. However, to ensure the character belongs to you, you now need follow the below steps:`);
       const message = await this.sendMessage(`Verification status for \`${character.name.first}\`: ⏳Setting up watcher for ${character.name.first} for verification...`);
       const timeMessage = await this.sendMessage(`⏳ Time remaining for \`${character.name.first}\`: **${this.calculateTimeRemaining(deadline)}**`);
 
