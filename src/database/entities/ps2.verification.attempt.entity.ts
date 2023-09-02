@@ -19,12 +19,6 @@ export class PS2VerificationAttemptEntity extends BaseEntity {
   @Property()
     characterName: string;
 
-  @Property()
-    guildMember: GuildMember;
-
-  @Property()
-    guildMessage: Message;
-
   constructor(options: PS2VerificationAttemptEntityOptions) {
     super();
     Object.assign(this, options);

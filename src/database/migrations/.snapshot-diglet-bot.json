@@ -159,24 +159,6 @@
           "primary": false,
           "nullable": false,
           "mappedType": "string"
-        },
-        "guild_member": {
-          "name": "guild_member",
-          "type": "varchar(255)",
-          "unsigned": false,
-          "autoincrement": false,
-          "primary": false,
-          "nullable": false,
-          "mappedType": "string"
-        },
-        "guild_message": {
-          "name": "guild_message",
-          "type": "varchar(255)",
-          "unsigned": false,
-          "autoincrement": false,
-          "primary": false,
-          "nullable": false,
-          "mappedType": "string"
         }
       },
       "name": "ps2verification_attempt_entity",

@@ -99,7 +99,10 @@ export class PS2GameVerificationService implements OnApplicationBootstrap {
 
     // Save the attempt to the DB so we can load it up should the bot be rebooted
     const verificationAttemptEntity = this.ps2VerificationAttemptRepository.create(
-      { characterId: character.character_id, guildMember, guildMessage: message.id }
+      {
+        characterId: character.character_id,
+        characterName: character.name.first,
+      }
     );
     await this.ps2VerificationAttemptRepository.persistAndFlush(verificationAttemptEntity);
 
