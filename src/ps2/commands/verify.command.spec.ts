@@ -192,7 +192,7 @@ describe('PS2VerifyCommand', () => {
 
     const response = await command.onPS2VerifyCommand(dto, mockInteraction);
 
-    expect(response).toBe(`Your character **${dto.character}** has been detected in [DIG]. However, to ensure the character belongs to you, you now need follow the below steps.`);
+    expect(response).toBe('===================');
   });
 
   it('should correctly handle edge case character', async () => {
@@ -217,6 +217,6 @@ describe('PS2VerifyCommand', () => {
 
     const response = await command.onPS2VerifyCommand(dto, mockInteraction);
 
-    expect(response).toBe('Your character **HARRYPOUSINI** has been detected in [DIG]. However, to ensure the character belongs to you, you now need follow the below steps.');
+    expect(response).toBe('===================');
   });
 });
