@@ -108,8 +108,14 @@ export class PS2GameVerificationService implements OnApplicationBootstrap {
       // Tell the websocket service to start monitoring the character for deaths
       this.censusWebsocketService.watchCharacter(character);
 
-      await this.editMessage(`## Verification status for \`${character.name.first}\`: ⏳__Pending__\n
-    \n➡️ Deploy to a continent and to a base __outside__ of Warpgates / Flotillas. Then type **/suicide** in the in-game chat for character \`${character.name.first}\`. `, message);
+      await this.editMessage(`1. Redeploy.
+        \n2. At the top of the redeploy screen, click on the continent name (e.g. Sanctuary).
+        \n3. Click on World Map.
+        \n4. Go to VR Training.
+        \n5. Wait a few seconds, then type **/suicide** in the in-game chat for character \`${character.name.first}\`.
+        \nYour death won't be counted in your player's statistics.
+        \nYou can also perform this on any continent, as long as it's not in Sanctuary, any warpgate or flotilla.
+        \n## Verification status for \`${character.name.first}\`: ⏳__Pending__`, message);
 
       // Store the messages to reference for later so we can edit the message and also reply to it etc.
       this.messagesMap.set(character.character_id, message);
