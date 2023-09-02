@@ -59,7 +59,7 @@ export class CensusApiService implements OnModuleInit {
     const response: CensusCharacterResponseInterface = await this.requestWithRetries(url);
 
     if (response.returned === 0 || !response.character_list || response.character_list.length === 0) {
-      throw new Error(`Character **${characterName}** does not exist.`);
+      throw new Error(`Character \`${characterName}\` does not exist. Please ensure you have spelt it correctly.`);
     }
 
     return response.character_list[0];

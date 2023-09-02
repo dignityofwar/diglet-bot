@@ -75,7 +75,7 @@ describe('CensusApiService', () => {
 
   test('should throw an error if a character doesn\'t exist', async () => {
     const name = 'IDoNotExist101010101010101';
-    await expect(service.getCharacter(name)).rejects.toThrowError(`Character **${name}** does not exist.`);
+    await expect(service.getCharacter(name)).rejects.toThrowError(`Character \`${name}\` does not exist. Please ensure you have spelt it correctly.`);
   }, 10000);
 
   test('should return a character, and also returns outfit details (by ID)', async () => {

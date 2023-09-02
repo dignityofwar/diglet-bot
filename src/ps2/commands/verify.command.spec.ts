@@ -150,12 +150,12 @@ describe('PS2VerifyCommand', () => {
 
   it('should return a message if the character could not be found', async () => {
     censusApiService.getCharacter = jest.fn().mockImplementation(() => {
-      throw new Error(`Character "${dto.character}" does not exist. Please ensure you have supplied your exact name.`);
+      throw new Error(`Character \`${dto.character}\` does not exist. Please ensure you have supplied your exact name.`);
     });
 
     const response = await command.onPS2VerifyCommand(dto, mockInteraction);
 
-    expect(response).toBe(`Character "${dto.character}" does not exist. Please ensure you have supplied your exact name.`);
+    expect(response).toBe(`Character \`${dto.character}\` does not exist. Please ensure you have supplied your exact name.`);
   });
 
   it('should correctly prevent characters outside of the outfit from registering', async () => {
@@ -175,7 +175,7 @@ describe('PS2VerifyCommand', () => {
 
     const response = await command.onPS2VerifyCommand(dto, mockInteraction);
 
-    expect(response).toBe('Your character "Maelstrome26" has not been detected in the [DIG] outfit. If you are in the outfit, please log out and in again, or wait 24 hours and try again as Census (the game\'s API) can be slow to update sometimes.');
+    expect(response).toBe('Your character **Maelstrome26** has not been detected in the [DIG]. If you are in the outfit, please log out and in again, or wait 24 hours and try again as Census (the game\'s API) can be slow to update sometimes.');
   });
 
   it('should return any errors presented by the verification service', async () => {
@@ -192,7 +192,7 @@ describe('PS2VerifyCommand', () => {
 
     const response = await command.onPS2VerifyCommand(dto, mockInteraction);
 
-    expect(response).toBe(`Your character "${dto.character}" has been detected as a member of DIG. However, to fully verify you, you now need follow the above steps.`);
+    expect(response).toBe(`Your character **${dto.character}** has been detected in [DIG]. However, to ensure the character belongs to you, you now need follow the below steps.`);
   });
 
   it('should correctly handle edge case character', async () => {
@@ -217,6 +217,6 @@ describe('PS2VerifyCommand', () => {
 
     const response = await command.onPS2VerifyCommand(dto, mockInteraction);
 
-    expect(response).toBe('Your character "HARRYPOUSINI" has been detected as a member of DIG. However, to fully verify you, you now need follow the above steps.');
+    expect(response).toBe('Your character **HARRYPOUSINI** has been detected in [DIG]. However, to ensure the character belongs to you, you now need follow the below steps.');
   });
 });

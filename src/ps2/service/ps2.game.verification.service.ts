@@ -82,13 +82,14 @@ export class PS2GameVerificationService implements OnApplicationBootstrap {
     this.monitoringCharacters.set(character.character_id, character);
     this.logger.debug(`Added character ${character.name.first} to watch list`);
 
-    const message = await this.sendMessage(`Verification status for ${character.name.first}: ⏳Setting up watcher for ${character.name.first} for verification...`);
-    const timeMessage = await this.sendMessage(`Time remaining: ⏳**${this.calculateTimeRemaining(deadline)}**`);
+    const message = await this.sendMessage(`Verification status for \`${character.name.first}\`: ⏳Setting up watcher for ${character.name.first} for verification...`);
+    const timeMessage = await this.sendMessage(`⏳ Time remaining for \`${character.name.first}\`: **${this.calculateTimeRemaining(deadline)}**`);
 
     // Tell the websocket service to start monitoring the character for deaths
     this.censusWebsocketService.watchCharacter(character);
 
-    await this.editMessage(`## Verification status for ${character.name.first}: ⏳__Pending__\n\n⏳Deploy to a continent and to a base outside of Warpgates / Flotillas. Then type **/suicide** in the in-game chat for character "${character.name.first}". `, message);
+    await this.editMessage(`## Verification status for \`${character.name.first}\`: ⏳__Pending__\n
+    \n➡️ Deploy to a continent and to a base __outside__ of Warpgates / Flotillas. Then type **/suicide** in the in-game chat for character \`${character.name.first}\`. `, message);
 
     // Store the messages to reference for later so we can edit the message and also reply to it etc.
     this.messagesMap.set(character.character_id, message);
@@ -168,7 +169,7 @@ export class PS2GameVerificationService implements OnApplicationBootstrap {
     const isSuicide = deathEvent.attacker_character_id === deathEvent.character_id;
 
     if (!isSuicide) {
-      await this.editMessage(`## Verification status for ${character.name.first}: ⏳__Pending__\n\n⚠️ Death for character "${character.name.first}" detected, but it wasn't a suicide. Type **/suicide** in the game chat for the quickest way to do this.`, message);
+      await this.editMessage(`## Verification status for \`${character.name.first}\`: ⏳__Pending__\n\n⚠️ Death for character "${character.name.first}" detected, but it wasn't a suicide. Type **/suicide** in the game chat for the quickest way to do this.`, message);
       return;
     }
 
@@ -180,7 +181,7 @@ export class PS2GameVerificationService implements OnApplicationBootstrap {
     this.logger.debug('Handling failed verification');
     const message = this.messagesMap.get(character.character_id);
     message.channel.sendTyping();
-    await this.editMessage(`## Verification status for ${character.name.first}: ❌ __FAILED__\n\nReason: ${failureReason}`, message);
+    await this.editMessage(`## Verification status for \`${character.name.first}\`: ❌ __FAILED__\n\nReason: ${failureReason}`, message);
 
     if (isError) {
       message.channel.send(failureReason);
@@ -200,7 +201,7 @@ export class PS2GameVerificationService implements OnApplicationBootstrap {
       }
     }
 
-    message.channel.send(`<@${guildMember.id}> your in game character "${character.name.first}" could not be verified! Please read the reason as to why above. Feel free to contact the PS2 Leaders for assistance.`);
+    message.channel.send(`😔 <@${guildMember.id}> your in game character "${character.name.first}" could not be verified! Please read the reason as to why above. Feel free to contact the PS2 Leaders for assistance.`);
   }
 
   private async handleSuccessfulVerification(character: CensusCharacterWithOutfitInterface) {
@@ -258,10 +259,13 @@ export class PS2GameVerificationService implements OnApplicationBootstrap {
       await this.handleFailedVerification(character, `${errorMessage} Pinging <@${this.config.get('discord.devUserId')}>! Error: ${err.message}`, guildMember, true);
     }
 
-    await this.editMessage(`## Verification status for ${character.name.first}: ✅ __Successful__`, message);
+    await this.editMessage(`## Verification status for \`${character.name.first}\`: ✅ __Successful__`, message);
 
     await this.unwatch(character);
-    message.channel.send(`<@${guildMember.id}> your in game character "${character.name.first}" has been successfully verified! Welcome to the [DIG] outfit! 🎉 \nYou can now see our private section <#${this.config.get('discord.channels.ps2Private')}>.\nInfo on how to be promoted to Zealot to use our Armory assets, visit <#${this.config.get('discord.channels.ps2HowToRankUp')}>.`);
+    message.channel.send(`🎉 <@${guildMember.id}> your in game character "${character.name.first}" has been successfully verified! Welcome to the [DIG] outfit! 
+    \n🔓 You can now see our private section <#${this.config.get('discord.channels.ps2Private')}>. Should you leave the outfit, you will automatically lose this access.
+    \nℹ️ Info on how to be promoted to Zealot to use our Armory assets, visit <#${this.config.get('discord.channels.ps2HowToRankUp')}>.
+    \n=================`);
   }
 
   private checkMonitoredCharacters() {
@@ -282,7 +286,9 @@ export class PS2GameVerificationService implements OnApplicationBootstrap {
         return;
       }
       const timeRemaining = this.calculateTimeRemaining(deadline);
-      if (timeMessage) {await this.editMessage(`Time remaining: ⏳ **${timeRemaining}**`, timeMessage);}
+      if (timeMessage) {
+        await this.editMessage(`⏳ Time remaining for \`${character.name.first}\`:  **${timeRemaining}**`, timeMessage);
+      }
       this.logger.debug(`${character.name.first} still pending verification (${timeRemaining} remaining)`);
     });
   }
