@@ -222,9 +222,9 @@ export class PS2GameVerificationService implements OnApplicationBootstrap {
 
   private async handleVerification(deathEvent: Death) {
     this.logger.debug('Handling verification');
-    const character = this.monitoringCharacters.get(deathEvent.character_id);
-    const message = this.messagesMap.get(character.character_id);
-    const guildMember = this.guildMembersMap.get(character.character_id);
+    const character = this.monitoringCharacters.get(deathEvent.character_id) ?? null;
+    const message = this.messagesMap.get(character.character_id) ?? null;
+    const guildMember = this.guildMembersMap.get(character.character_id) ?? null;
 
     if (!character) {
       this.logger.error(`Could not find character with ID ${deathEvent.character_id}`);
@@ -245,12 +245,19 @@ export class PS2GameVerificationService implements OnApplicationBootstrap {
 
   private async handleFailedVerification(character: CensusCharacterWithOutfitInterface, failureReason: string, guildMember: GuildMember, isError = false, unwatch = true) {
     this.logger.debug('Handling failed verification');
-    const message = this.messagesMap.get(character.character_id);
-    message.channel.sendTyping();
+
+    const message = this.messagesMap.get(character.character_id) ?? null;
+
+    // Fucked
+    if (!message) {
+      throw new Error('Message vanished, cannot proceed.');
+    }
+
+    await message.channel.sendTyping();
     await this.editMessage(`## Verification status for \`${character.name.first}\`: ❌ __FAILED__\n\nReason: ${failureReason}`, message);
 
     if (isError) {
-      message.channel.send(failureReason);
+      await message.channel.send(failureReason);
     }
 
     if (unwatch) {
@@ -262,17 +269,23 @@ export class PS2GameVerificationService implements OnApplicationBootstrap {
       }
       catch (err) {
         // Fucked
-        message.channel.send(`Failed to remove the verification attempt from the database. Pinging <@${this.config.get('discord.devUserId')}>!`);
+        await message.channel.send(`Failed to remove the verification attempt from the database. Pinging <@${this.config.get('discord.devUserId')}>!`);
         return;
       }
     }
 
-    message.channel.send(`😔 <@${guildMember.id}> your in game character "${character.name.first}" could not be verified! Please read the reason as to why above. Feel free to contact the PS2 Leaders for assistance.`);
+    await message.channel.send(`😔 <@${guildMember.id}> your in game character "${character.name.first}" could not be verified! Please read the reason as to why above. Feel free to contact the PS2 Leaders for assistance.`);
   }
 
   private async handleSuccessfulVerification(character: CensusCharacterWithOutfitInterface) {
     this.logger.debug('Handling successful verification');
-    const message = this.messagesMap.get(character.character_id);
+    const message = this.messagesMap.get(character.character_id) ?? null;
+
+    // Fucked
+    if (!message) {
+      throw new Error('Message vanished, cannot proceed');
+    }
+
     await message.channel.sendTyping();
     const guildMember = this.guildMembersMap.get(character.character_id);
 
@@ -306,7 +319,7 @@ export class PS2GameVerificationService implements OnApplicationBootstrap {
     await this.editMessage(`## Verification status for \`${character.name.first}\`: ✅ __Successful__!`, message);
 
     await this.unwatch(character);
-    message.channel.send(`### 🎉 <@${guildMember.id}> your in game character **${character.name.first}** has been successfully verified! Welcome to the [DIG] outfit!
+    await message.channel.send(`### 🎉 <@${guildMember.id}> your in game character **${character.name.first}** has been successfully verified! Welcome to the [DIG] outfit!
 🔓 You can now see our private section <#${this.config.get('discord.channels.ps2Private')}>. Should you leave the outfit, you will automatically lose this access.
 ℹ️ For info on how to be promoted to Zealot to use our Armory assets, please visit <#${this.config.get('discord.channels.ps2HowToRankUp')}>.
 ️📝 Please note your Discord server nickname (not your username) has been automatically changed to match your character's name. You are free to change it again, but please ensure it is still a resemblance of your character name.
