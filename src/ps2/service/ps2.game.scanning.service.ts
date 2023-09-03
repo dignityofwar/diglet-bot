@@ -37,6 +37,33 @@ export class PS2GameScanningService {
     this.suggestionsCount = 0;
   }
 
+  async gatherCharacters(outfitMembers, statusMessage: Message, tries = 0) {
+    const characterPromises: Promise<CensusCharacterWithOutfitInterface>[] = [];
+    tries++;
+    const length = outfitMembers.length;
+
+    await statusMessage.edit(`Gathering ${length} characters from Census... (attempt #${tries})`);
+
+    for (const member of outfitMembers) {
+      characterPromises.push(this.censusService.getCharacterById(member.characterId));
+    }
+
+    try {
+      return await Promise.all(characterPromises);
+    }
+    catch (err) {
+      if (tries === 3) {
+        await statusMessage.edit(`## ❌ An error occurred while gathering ${length} characters! Giving up after 3 tries.`);
+        await statusMessage.channel.send(`Error: ${err.message}`);
+        return null;
+      }
+
+      await statusMessage.edit(`## ⚠️ Couldn't gather ${length} characters from Census, likely due to Census timeout issues. Retrying in 10s (attempt #${tries})...`);
+      await new Promise(resolve => setTimeout(resolve, 10000));
+      return this.gatherCharacters(outfitMembers, statusMessage, tries);
+    }
+  }
+
   async startScan(originalMessage: Message, dryRun = false) {
     const message = await originalMessage.edit('Starting scan...');
 
@@ -46,15 +73,20 @@ export class PS2GameScanningService {
 
     const outfitMembers = await this.ps2MembersRepository.findAll();
     const length = outfitMembers.length;
-    const characterPromises: Promise<CensusCharacterWithOutfitInterface>[] = [];
 
-    for (const member of outfitMembers) {
-      characterPromises.push(this.censusService.getCharacterById(member.characterId));
+    let characters: Array<CensusCharacterWithOutfitInterface | null>;
+
+    try {
+      characters = await this.gatherCharacters(outfitMembers, message);
+    }
+    catch (err) {
+      return this.reset();
     }
 
-    await message.edit(`Gathering ${length} characters from Census...`);
-
-    const characters: Array<CensusCharacterWithOutfitInterface | null> = await Promise.all(characterPromises);
+    if (!characters) {
+      await message.edit('## ❌ No characters were gathered from Census!');
+      return this.reset();
+    }
 
     try {
       await message.edit(`Checking ${length} characters for membership status...`);
