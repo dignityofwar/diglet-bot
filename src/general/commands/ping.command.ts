@@ -1,6 +1,7 @@
 import { Command, Handler } from '@discord-nestjs/core';
 import { ApplicationCommandType, ChatInputCommandInteraction } from 'discord.js';
 import { ConfigService } from '@nestjs/config';
+import { Logger } from '@nestjs/common';
 
 @Command({
   name: 'ping',
@@ -8,6 +9,7 @@ import { ConfigService } from '@nestjs/config';
   description: 'Return a ping from the bot',
 })
 export class PingCommand {
+  private readonly logger = new Logger(PingCommand.name);
   constructor(
     private readonly config: ConfigService
   ) {}
@@ -19,6 +21,6 @@ export class PingCommand {
       content,
     });
 
-    console.log('Ping command executed!');
+    this.logger.log('Ping command executed!');
   }
 }
