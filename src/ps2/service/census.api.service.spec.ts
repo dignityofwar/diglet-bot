@@ -4,7 +4,6 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { ReflectMetadataProvider } from '@discord-nestjs/core';
 import { ConfigService } from '@nestjs/config';
 import * as _ from 'lodash';
-import { AxiosInstance } from 'axios';
 
 describe('CensusApiService', () => {
   let config: ConfigService;
