@@ -32,8 +32,6 @@ export class PS2VerifyManualCommand {
     // Check if the command came from the correct channel ID
     const verifyChannelId = this.config.get('discord.channels.ps2Verify');
 
-    console.log('dto', dto);
-
     // Check if channel is correct
     if (interaction[0].channelId !== verifyChannelId) {
       return `Please use the <#${verifyChannelId}> channel to register.`;
