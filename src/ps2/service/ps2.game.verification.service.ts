@@ -103,14 +103,14 @@ export class PS2GameVerificationService implements OnApplicationBootstrap {
 
     // Force the message to wait so the reply is sent first and messages are rendered in the proper order
     setTimeout(async () => {
-      await this.sendMessage(`Greetings ${guildMember.nickname || guildMember.displayName}! Your character \`${character.name.first}\` has been detected in [DIG]. However, to ensure the character belongs to you, you now need follow the below steps:`);
       const message = await this.sendMessage(`Verification status for \`${character.name.first}\`: ⏳Setting up watcher for ${character.name.first} for verification...`);
       const timeMessage = await this.sendMessage(`⏳ Time remaining for \`${character.name.first}\`: **${this.calculateTimeRemaining(deadline)}**`);
 
       // Tell the websocket service to start monitoring the character for deaths
       this.censusWebsocketService.watchCharacter(character);
 
-      await this.editMessage(`1. Redeploy.
+      await this.editMessage(`Greetings ${guildMember.nickname || guildMember.displayName}! Your character \`${character.name.first}\` has been detected in [DIG]. However, to ensure the character belongs to you, you now need follow the below steps:
+        \n1. Redeploy.
         \n2. At the top of the redeploy screen, click on the continent name (e.g. Sanctuary).
         \n3. Click on World Map.
         \n4. Go to VR Training.
