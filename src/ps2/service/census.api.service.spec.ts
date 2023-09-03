@@ -33,6 +33,7 @@ describe('CensusApiService', () => {
         app: {
           ps2: {
             censusServiceId: 'dignityofwar',
+            censusTimeout: 10000,
           },
         },
       };
