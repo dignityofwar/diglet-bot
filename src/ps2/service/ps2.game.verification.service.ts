@@ -303,7 +303,7 @@ export class PS2GameVerificationService implements OnApplicationBootstrap {
     catch (err) {
       const errorMessage = 'Failed to save PS2 member to the database!';
       this.logger.error(`Failed to save PS2 member to the database! ${err.message}`);
-      await this.handleFailedVerification(character, `${errorMessage} Pinging <@${this.config.get('discord.devUserId')}>! Error: ${err.message}`, guildMember, true);
+      return await this.handleFailedVerification(character, `${errorMessage} Pinging <@${this.config.get('discord.devUserId')}>! Error: ${err.message}`, guildMember, true);
     }
 
     try {
@@ -313,7 +313,7 @@ export class PS2GameVerificationService implements OnApplicationBootstrap {
     catch (err) {
       const errorMessage = 'Failed to delete PS2 member verification attempt from the database!';
       this.logger.error(errorMessage);
-      await this.handleFailedVerification(character, `${errorMessage} Pinging <@${this.config.get('discord.devUserId')}>! Error: ${err.message}`, guildMember, true);
+      return await this.handleFailedVerification(character, `${errorMessage} Pinging <@${this.config.get('discord.devUserId')}>! Error: ${err.message}`, guildMember, true);
     }
 
     await this.editMessage(`## Verification status for \`${character.name.first}\`: ✅ __Successful__!`, message);
