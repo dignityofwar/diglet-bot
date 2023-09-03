@@ -31,8 +31,10 @@ export class CensusApiService implements OnModuleInit {
 
   private async requestWithRetries<T>(url: string, tries = 0): Promise<T> {
     const request = this.censusClientFactory.createClient();
+    tries = tries + 1;
 
     try {
+      this.logger.verbose(`Performing request to Census: ${url}, attempt [${tries}/${CensusApiService.RETRY_ATTEMPTS}]`);
       const response = await request.get(url);
 
       if (response.data.error) {
@@ -43,14 +45,14 @@ export class CensusApiService implements OnModuleInit {
       return response.data;
     }
     catch (err) {
-      if (tries === 3) {
-        throw new Error(`Failed to perform request to Census after multiple retries. Final error: ${err.message}`);
+      if (tries === CensusApiService.RETRY_ATTEMPTS) {
+        throw new Error(`Failed to perform request to Census after ${CensusApiService.RETRY_ATTEMPTS} retries. Final error: ${err.message}`);
       }
 
-      this.logger.warn(`Request failed (attempt ${tries + 1}/${CensusApiService.RETRY_ATTEMPTS}). Retrying in ${CensusApiService.RETRY_DELAY_MS} ms...`);
+      this.logger.warn(`Request failed (attempt ${tries}/${CensusApiService.RETRY_ATTEMPTS}). Retrying in ${CensusApiService.RETRY_DELAY_MS} ms...`);
 
       await new Promise(resolve => setTimeout(resolve, CensusApiService.RETRY_DELAY_MS));
-      return this.requestWithRetries(url, tries + 1);
+      return this.requestWithRetries(url, tries);
     }
   }
 

@@ -12,7 +12,7 @@ export default class CensusAxiosFactory {
       headers: {
         'Content-Type': 'application/json',
       },
-      timeout: 10000,
+      timeout: this.config.get('app.ps2.censusTimeout'),
     });
   }
 }

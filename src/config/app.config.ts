@@ -67,6 +67,7 @@ export default () => ({
   },
   ps2: {
     censusServiceId: process.env.PS2_CENSUS_SERVICE_ID,
+    censusTimeout: 10000,
     outfitId: '37509488620604883',
     rankMap,
     pingRoles,
