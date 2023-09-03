@@ -30,11 +30,15 @@ export class PS2MembersEntity extends BaseEntity {
   @Property()
     manual = false;
 
-  @Property()
-    manualCreatedByDiscordId: null | string;
+  @Property({
+    default: null,
+  })
+    manualCreatedByDiscordId: null | string = null;
 
-  @Property()
-    manualCreatedByDiscordName: null | string;
+  @Property({
+    default: null,
+  })
+    manualCreatedByDiscordName: null | string = null;
 
   constructor(options: PS2MembersEntityInterface) {
     super();
