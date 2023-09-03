@@ -1,4 +1,4 @@
-import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
+import { Injectable, OnModuleInit } from '@nestjs/common';
 import { InjectDiscordClient } from '@discord-nestjs/core';
 import { Channel, Client, GuildMember } from 'discord.js';
 import { ConfigService } from '@nestjs/config';
@@ -7,7 +7,6 @@ import { ConfigService } from '@nestjs/config';
 export class DiscordService implements OnModuleInit {
   constructor(
     @InjectDiscordClient() private readonly discordClient: Client,
-    private readonly config: ConfigService,
   ) {}
 
   async onModuleInit() {
