@@ -35,7 +35,6 @@ export class CensusApiService implements OnModuleInit {
     tries = tries + 1;
 
     try {
-      this.logger.verbose(`Performing request to Census: ${url}, attempt [${tries}/${CensusApiService.RETRY_ATTEMPTS}]`);
       const response = await request.get(url);
 
       if (response.data.error) {
