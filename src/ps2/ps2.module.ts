@@ -13,6 +13,7 @@ import { PS2GameScanningService } from './service/ps2.game.scanning.service';
 import { PS2ScanCommand } from './commands/scan.command';
 import { PS2CronService } from './service/ps2.cron.service';
 import { DiscordModule } from '../discord/discord.module';
+import { PS2VerifyManualCommand } from './commands/verify.manual.command';
 
 @Module({
   imports: [
@@ -30,6 +31,7 @@ import { DiscordModule } from '../discord/discord.module';
     PS2GameScanningService,
     EventBusService,
     PS2VerifyCommand,
+    PS2VerifyManualCommand,
     PS2ScanCommand,
   ],
 })

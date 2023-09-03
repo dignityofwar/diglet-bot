@@ -5,11 +5,16 @@ export interface PS2MembersEntityInterface {
   discordId: string;
   characterId: string;
   characterName: string;
+  manual: boolean;
+  manualCreatedByDiscordId?: string;
+  manualCreatedByDiscordName?: string;
 }
 
 @Entity()
 export class PS2MembersEntity extends BaseEntity {
-  @Property()
+  @Property({
+    nullable: false,
+  })
   @Unique()
   @Index()
     discordId: string;
@@ -21,6 +26,15 @@ export class PS2MembersEntity extends BaseEntity {
 
   @Property()
     characterName: string;
+
+  @Property()
+    manual = false;
+
+  @Property()
+    manualCreatedByDiscordId: null | string;
+
+  @Property()
+    manualCreatedByDiscordName: null | string;
 
   constructor(options: PS2MembersEntityInterface) {
     super();

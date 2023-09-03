@@ -50,6 +50,8 @@ export class PS2GameVerificationService implements OnApplicationBootstrap {
       throw new Error(`Channel with ID ${verifyChannelId} is not a text channel`);
     }
 
+    // We purposefully don't check if the verified role exists, as the bot could technically belong to multiple servers, and we'd have to start injecting the guild ID into the config service, which is a bit of a pain.
+
     await this.init();
 
     this.eventBus.on(EventConstants.PS2_CENSUS_DEATH, (character) => this.handleVerification(character));
@@ -121,6 +123,55 @@ export class PS2GameVerificationService implements OnApplicationBootstrap {
       this.messagesMap.set(character.character_id, message);
       this.timeMessagesMap.set(character.character_id, timeMessage);
     }, 2000);
+
+    return true;
+  }
+
+  public async forceAdd(
+    character: CensusCharacterWithOutfitInterface,
+    targetMember: GuildMember,
+    createdByMember: GuildMember
+  ) {
+    await this.applyDiscordChanges(character, targetMember);
+
+    const entity = this.ps2MembersRepository.create({
+      discordId: targetMember.id,
+      characterId: character.character_id,
+      characterName: character.name.first,
+      manual: true,
+      manualCreatedByDiscordId: createdByMember.id,
+      manualCreatedByDiscordName: createdByMember.nickname || createdByMember.displayName,
+    });
+
+    await this.ps2MembersRepository.upsert(entity);
+
+    await this.sendMessage(`🎉 <@${targetMember.id}> your in game character **${character.name.first}** has been manually verified! Welcome to the [DIG] outfit!
+🔓 You can now see our private section <#${this.config.get('discord.channels.ps2Private')}>. Should you leave the outfit, you will automatically lose this access.
+ℹ️ For info on how to be promoted to Zealot to use our Armory assets, please visit <#${this.config.get('discord.channels.ps2HowToRankUp')}>.
+️📝 Please note your Discord server nickname (not your username) has been automatically changed to match your character's name. You are free to change it again, but please ensure it is still a resemblance of your character name.
+===================`);
+
+    return true;
+  }
+
+  public async forceRemove(
+    character: CensusCharacterWithOutfitInterface,
+    targetMember: GuildMember,
+    createdByMember: GuildMember
+  ) {
+    await this.applyDiscordChanges(character, targetMember, true);
+
+    const entity = await this.ps2MembersRepository.findOne({ discordId: targetMember.id });
+
+    if (!entity || !entity.id) {
+      await this.sendMessage(`ERROR: Could not find members record for Discord ID ${targetMember.id}! Pinging <@${this.config.get('discord.devUserId')}>!`);
+      return 'ERROR';
+    }
+
+    await this.ps2MembersRepository.removeAndFlush(entity);
+
+    await this.sendMessage(`🗑️ <@${targetMember.id}> your verification status has been manually removed by <@${createdByMember.id}>! You will need to re-verify yourself should you wish to regain full membership.
+===================`);
 
     return true;
   }
@@ -225,29 +276,7 @@ export class PS2GameVerificationService implements OnApplicationBootstrap {
     await message.channel.sendTyping();
     const guildMember = this.guildMembersMap.get(character.character_id);
 
-    // Edit their nickname to match their ingame
-    try {
-      await guildMember?.setNickname(character.name.first);
-    }
-    catch (err) {
-      return await this.handleFailedVerification(character, `Unable to set your nickname. If you're an admin this won't work as the bot has no power over you! Pinging <@${this.config.get('discord.devUserId')}>!`, guildMember, true);
-    }
-
-    // Find the PS2/Verified role, it may have changed since the bot started
-    const verifiedRoleId = this.config.get('discord.roles.ps2Verified');
-    const verifiedRole = await message.guild.roles.fetch(verifiedRoleId);
-
-    if (!verifiedRole) {
-      return await this.handleFailedVerification(character, `Unable to find the PS2/Verified role! Pinging <@${this.config.get('discord.devUserId')}>!`, guildMember, true);
-    }
-
-    // Add the PS2/verified role to the Discord user
-    try {
-      await guildMember?.roles.add(verifiedRole);
-    }
-    catch (err) {
-      return await this.handleFailedVerification(character, `Unable to add the PS2/Verified role to user! Pinging <@${this.config.get('discord.devUserId')}>!`, guildMember, true);
-    }
+    await this.applyDiscordChanges(character, guildMember);
 
     try {
       // Commit the successful verification attempt to the database so others can't claim the same character
@@ -284,6 +313,38 @@ export class PS2GameVerificationService implements OnApplicationBootstrap {
 ===================`);
 
     this.logger.log(`Successfully verified ${character.name.first}!`);
+  }
+
+  private async applyDiscordChanges(character: CensusCharacterWithOutfitInterface, guildMember: GuildMember, remove = false) {
+    // Add the PS2/verified role to the Discord user
+    const verifiedRoleId = this.config.get('discord.roles.ps2Verified');
+    const verifyRole = await this.discordService.getRole(guildMember, verifiedRoleId);
+
+    if (!verifyRole) {
+      throw new Error(`Could not find role with ID ${verifiedRoleId}`);
+    }
+
+    try {
+      if (remove) {
+        await guildMember?.roles.remove(verifyRole);
+      }
+      else {
+        await guildMember?.roles.add(verifyRole);
+      }
+    }
+    catch (err) {
+      return await this.handleFailedVerification(character, `Unable to add/remove the PS2/Verified role to user! Pinging <@${this.config.get('discord.devUserId')}>!`, guildMember, true);
+    }
+
+    // Edit their nickname to match their ingame
+    try {
+      if (!remove) {
+        await guildMember?.setNickname(character.name.first);
+      }
+    }
+    catch (err) {
+      await this.sendMessage(`Unable to set nickname for user \`${guildMember.nickname || guildMember.displayName}\`. If you're an admin or staff this won't work as the bot has no power over you! Pinging <@${this.config.get('discord.devUserId')}>!`);
+    }
   }
 
   private checkMonitoredCharacters() {

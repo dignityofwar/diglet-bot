@@ -58,6 +58,34 @@
           "primary": false,
           "nullable": false,
           "mappedType": "string"
+        },
+        "manual": {
+          "name": "manual",
+          "type": "varchar(255)",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "default": "false",
+          "mappedType": "string"
+        },
+        "manual_created_by_discord_id": {
+          "name": "manual_created_by_discord_id",
+          "type": "varchar(255)",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "mappedType": "string"
+        },
+        "manual_created_by_discord_name": {
+          "name": "manual_created_by_discord_name",
+          "type": "varchar(255)",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "mappedType": "string"
         }
       },
       "name": "ps2members_entity",
