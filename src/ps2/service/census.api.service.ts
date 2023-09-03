@@ -5,6 +5,7 @@ import {
   CensusCharacterWithOutfitInterface,
 } from '../interfaces/CensusCharacterResponseInterface';
 import { ConfigService } from '@nestjs/config';
+import { CensusOutfitInterface, CensusOutfitResponseInterface } from '../interfaces/CensusOutfitResponseInterface';
 
 @Injectable()
 export class CensusApiService implements OnModuleInit {
@@ -57,7 +58,7 @@ export class CensusApiService implements OnModuleInit {
   }
 
   async getCharacter(characterName: string): Promise<CensusCharacterWithOutfitInterface> {
-    const url = `character?name.first_lower=${characterName.toLowerCase()}&c:join=outfit_member^on:character_id^to:character_id^inject_at:outfit_info&c:join=outfit^on:outfit_id^to:outfit_id^inject_at:outfit_details`;
+    const url = `character?name.first_lower=${characterName.toLowerCase()}&c:join=outfit_member^inject_at:outfit_info`;
     const response: CensusCharacterResponseInterface = await this.requestWithRetries(url);
 
     if (response.returned === 0 || !response.character_list || response.character_list.length === 0) {
@@ -68,7 +69,7 @@ export class CensusApiService implements OnModuleInit {
   }
 
   async getCharacterById(characterId: string): Promise<CensusCharacterWithOutfitInterface | null> {
-    const url = `character?character_id=${characterId}&c:join=outfit_member^on:character_id^to:character_id^inject_at:outfit_info&c:join=outfit^on:outfit_id^to:outfit_id^inject_at:outfit_details`;
+    const url = `character?character_id=${characterId}&c:join=outfit_member^inject_at:outfit_info`;
     const response: CensusCharacterResponseInterface = await this.requestWithRetries(url);
 
     if (response.returned === 0 || !response.character_list || response.character_list.length === 0) {
@@ -76,5 +77,17 @@ export class CensusApiService implements OnModuleInit {
     }
 
     return response.character_list[0];
+  }
+
+  async getOutfit(outfitId: string): Promise<CensusOutfitInterface | null> {
+    const url = `outfit/${this.config.get('app.ps2.outfitId')}?c:resolve=rank`;
+
+    const response: CensusOutfitResponseInterface = await this.requestWithRetries(url);
+
+    if (response.returned === 0 || !response.outfit_list || response.outfit_list.length === 0) {
+      throw new Error(`Outfit with ID **${outfitId}** does not exist.`);
+    }
+
+    return response.outfit_list[0];
   }
 }

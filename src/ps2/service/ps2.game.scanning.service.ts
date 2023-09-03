@@ -187,6 +187,9 @@ export class PS2GameScanningService {
 
     const rankMap: RankMapInterface = this.config.get('app.ps2.rankMap');
 
+    // Get the ranks from Census for the names
+    const outfit = await this.censusService.getOutfit(this.config.get('app.ps2.outfitId'));
+
     for (const member of outfitMembers) {
       // If already in the change set, they have been removed so don't bother checking
       if (this.changesMap.has(member.characterId)) {
@@ -198,6 +201,9 @@ export class PS2GameScanningService {
 
       // First get their rank
       const rank = character.outfit_info?.rank_ordinal;
+
+      // Find the rank name
+      const rankIngame = outfit.ranks.find((ps2Rank) => ps2Rank.ordinal === rank);
 
       // Line their rank up with the correct role(s)
       const shouldHaveRoles = Object.values(rankMap).filter((role) => {
@@ -219,7 +225,7 @@ export class PS2GameScanningService {
           suggestions.push({
             character,
             discordMember,
-            change: `- 😳 <@${discordMember.id}> is missing their rightful role of \`${guildRole.name}\``,
+            change: `- 😳 <@${discordMember.id}> is missing their rightful role of \`${guildRole.name}\`, as they have "${rankIngame.name}" in-game!`,
           });
           this.suggestionsMap.set(member.characterId, suggestions);
           this.suggestionsCount++;
@@ -243,10 +249,11 @@ export class PS2GameScanningService {
         if (hasRole) {
           // Get all current suggestions, if any
           const suggestions = this.suggestionsMap.get(member.characterId) || [];
+
           suggestions.push({
             character,
             discordMember,
-            change: `- 🤔 <@${discordMember.id}> has the role \`${guildRole.name}\` when their rank suggests they shouldn't!`,
+            change: `- 🤔 <@${discordMember.id}> has the role \`${guildRole.name}\` when their in-game rank of "${rankIngame.name}" suggests they shouldn't!`,
           });
           this.suggestionsMap.set(member.characterId, suggestions);
           this.suggestionsCount++;
