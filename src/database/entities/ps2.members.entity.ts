@@ -31,11 +31,13 @@ export class PS2MembersEntity extends BaseEntity {
     manual = false;
 
   @Property({
+    nullable: true,
     default: null,
   })
     manualCreatedByDiscordId: null | string = null;
 
   @Property({
+    nullable: true,
     default: null,
   })
     manualCreatedByDiscordName: null | string = null;

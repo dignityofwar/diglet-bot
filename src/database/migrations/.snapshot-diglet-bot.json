@@ -75,7 +75,8 @@
           "unsigned": false,
           "autoincrement": false,
           "primary": false,
-          "nullable": false,
+          "nullable": true,
+          "default": "null",
           "mappedType": "string"
         },
         "manual_created_by_discord_name": {
@@ -84,7 +85,8 @@
           "unsigned": false,
           "autoincrement": false,
           "primary": false,
-          "nullable": false,
+          "nullable": true,
+          "default": "null",
           "mappedType": "string"
         }
       },
