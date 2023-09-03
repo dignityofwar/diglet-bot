@@ -66,9 +66,9 @@ export class PS2VerifyCommand {
       return isValid;
     }
 
-    await this.ps2GameVerificationService.watch(character, guildMember);
+    this.ps2GameVerificationService.watch(character, guildMember);
 
     // Successful, but send nothing back as we send a separate message as the command may fail due to census being slow.
-    return '===================';
+    return '==================\nVerification started, if the bot hasn\'t responded within 30 seconds, please try again.';
   }
 }

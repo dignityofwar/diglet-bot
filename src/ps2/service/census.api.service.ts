@@ -46,6 +46,7 @@ export class CensusApiService implements OnModuleInit {
     }
     catch (err) {
       if (tries === CensusApiService.RETRY_ATTEMPTS) {
+        this.logger.error(`Failed to perform request to Census after ${CensusApiService.RETRY_ATTEMPTS} retries. Final error: ${err.message}`);
         throw new Error(`Failed to perform request to Census after ${CensusApiService.RETRY_ATTEMPTS} retries. Final error: ${err.message}`);
       }
 

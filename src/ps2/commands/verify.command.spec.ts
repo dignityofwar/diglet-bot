@@ -192,7 +192,7 @@ describe('PS2VerifyCommand', () => {
 
     const response = await command.onPS2VerifyCommand(dto, mockInteraction);
 
-    expect(response).toBe('===================');
+    expect(response).toBe('==================\nVerification started, if the bot hasn\'t responded within 30 seconds, please try again.');
   });
 
   it('should correctly handle edge case character', async () => {
@@ -217,6 +217,6 @@ describe('PS2VerifyCommand', () => {
 
     const response = await command.onPS2VerifyCommand(dto, mockInteraction);
 
-    expect(response).toBe('===================');
+    expect(response).toBe('==================\nVerification started, if the bot hasn\'t responded within 30 seconds, please try again.');
   });
 });
