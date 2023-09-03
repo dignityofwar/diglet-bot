@@ -301,7 +301,7 @@ export class PS2GameVerificationService implements OnApplicationBootstrap {
       await this.ps2MembersRepository.upsert(ps2MemberEntity);
     }
     catch (err) {
-      const errorMessage = `Failed to save PS2 member to the database! ${err.message}`;
+      const errorMessage = 'Failed to save PS2 member to the database!';
       this.logger.error(`Failed to save PS2 member to the database! ${err.message}`);
       await this.handleFailedVerification(character, `${errorMessage} Pinging <@${this.config.get('discord.devUserId')}>! Error: ${err.message}`, guildMember, true);
     }
@@ -311,7 +311,7 @@ export class PS2GameVerificationService implements OnApplicationBootstrap {
       await this.ps2VerificationAttemptRepository.removeAndFlush(entity);
     }
     catch (err) {
-      const errorMessage = `Failed to delete PS2 member verification attempt from the database! ${err.message}`;
+      const errorMessage = 'Failed to delete PS2 member verification attempt from the database!';
       this.logger.error(errorMessage);
       await this.handleFailedVerification(character, `${errorMessage} Pinging <@${this.config.get('discord.devUserId')}>! Error: ${err.message}`, guildMember, true);
     }
