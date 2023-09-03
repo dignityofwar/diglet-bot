@@ -19,5 +19,5 @@ export interface CensusOutfitInterface {
 export interface RanksInterface {
   ordinal: string;
   name: string;
-  description: string; // Uncontrolable by the outfit leaders
+  description: string; // Uncontrollable by the outfit leaders
 }
