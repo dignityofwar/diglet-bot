@@ -1,7 +1,6 @@
 import { Injectable, OnModuleInit } from '@nestjs/common';
 import { InjectDiscordClient } from '@discord-nestjs/core';
 import { Channel, Client, GuildMember } from 'discord.js';
-import { ConfigService } from '@nestjs/config';
 
 @Injectable()
 export class DiscordService implements OnModuleInit {
@@ -12,10 +11,6 @@ export class DiscordService implements OnModuleInit {
   async onModuleInit() {
     console.log('DiscordService initialized');
   }
-
-  // getUser() {
-  //
-  // }
 
   async getChannel(channelId: string): Promise<Channel> {
     return await this.discordClient.channels.fetch(channelId);
