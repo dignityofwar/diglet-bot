@@ -10,6 +10,10 @@ const rolesToRankProduction = {
     ranks: null,
     discordRoleId: '1140277291415515167',
   },
+  '@PS2/DIGlet': {
+    ranks: ['8'],
+    discordRoleId: '912802327163990066',
+  },
   '@PS2/Zealot': {
     ranks: ['6'],
     discordRoleId: '708714959068201031',
