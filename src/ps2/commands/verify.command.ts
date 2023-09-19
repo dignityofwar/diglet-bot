@@ -53,7 +53,7 @@ export class PS2VerifyCommand {
 
     // Check if the character is in the PS2 Outfit
     if (!character?.outfit_info || character?.outfit_info.outfit_id !== outfitId) {
-      return `Your character **${character.name.first}** has not been detected in the [DIG]. If you are in the outfit, please log out and in again, or wait 24 hours and try again as Census (the game's API) can be slow to update sometimes.`;
+      return `Your character **${character.name.first}** has not been detected in the [DIG] outfit. If you are in the outfit, please log out and in again, or wait 24 hours and try again as Census (the game's API) can be slow to update sometimes.`;
     }
 
     // Get the Discord guild member to be able to edit things about them
