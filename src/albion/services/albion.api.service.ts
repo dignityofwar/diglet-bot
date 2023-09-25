@@ -10,10 +10,6 @@ export class AlbionApiService {
     const request = new AlbionAxiosFactory().createAlbionApiClient();
     const response: PlayersResponseInterface = await request.get(`/players/${characterId}`);
 
-    if (!response.data.Id) {
-      throw new Error('Character does not exist. Please ensure you have supplied your exact name.');
-    }
-
     if (response.data.Id !== characterId) {
       throw new Error('Character ID does not match.');
     }
@@ -21,7 +17,7 @@ export class AlbionApiService {
     return response;
   }
 
-  async getCharacterId(characterName: string): Promise<string> {
+  private async getCharacterId(characterName: string): Promise<string> {
     const request = new AlbionAxiosFactory().createAlbionApiClient();
     const response: SearchResponseInterface = await request.get(`/search?q=${characterName}`);
 
@@ -32,7 +28,7 @@ export class AlbionApiService {
 
     // If there were no players found
     if (foundPlayer.length === 0) {
-      throw new Error('Character does not exist. Please ensure you have supplied your exact name.');
+      throw new Error(`Character "${characterName}" does not exist. Please ensure you have supplied your exact name.`);
     }
 
     // If there are multiple players found, they are duplicates and must be manually verified

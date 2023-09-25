@@ -32,18 +32,19 @@ describe('AlbionApiService', () => {
 
     await expect(service.getCharacter('who.dis'))
       .rejects
-      .toThrowError('Character does not exist. Please ensure you have supplied your exact name.');
+      .toThrowError('Character "who.dis" does not exist. Please ensure you have supplied your exact name.');
   });
 
   it('should return a character based on exact match amongst partial matches', async () => {
+    const properResult = {
+      'Id': 'hd8zVXIjRc6lnb_1FYIgpw',
+      'Name': 'Maelstrome',
+    };
     const searchResponse = {
       data: {
         guilds: [],
         players: [
-          {
-            'Id': 'hd8zVXIjRc6lnb_1FYIgpw',
-            'Name': 'Maelstrome',
-          },
+          properResult,
           {
             'Id': 'tOuPzciNRAKEZLEbnkXjJw',
             'Name': 'Maelstrome26',
@@ -53,12 +54,37 @@ describe('AlbionApiService', () => {
     };
 
     jest.spyOn(AlbionAxiosFactory.prototype, 'createAlbionApiClient').mockReturnValue({
-      get: jest.fn().mockResolvedValue(searchResponse),
+      get: jest.fn().mockResolvedValueOnce(searchResponse).mockResolvedValueOnce({
+        data: properResult,
+      }),
     } as any);
 
-    await expect(service.getCharacterId('Maelstrome'))
+    await expect(service.getCharacter('Maelstrome'))
       .resolves
-      .toBe('hd8zVXIjRc6lnb_1FYIgpw');
+      .toStrictEqual({ data: properResult });
+  });
+
+  it('should throw an error when the API returns a different character ID than expected', async () => {
+    const properResult = {
+      'Id': 'hd8zVXIjRc6lnb_1FYIgpw',
+      'Name': 'Maelstrome',
+    };
+    const searchResponse = {
+      data: {
+        guilds: [],
+        players: [properResult],
+      },
+    };
+
+    jest.spyOn(AlbionAxiosFactory.prototype, 'createAlbionApiClient').mockReturnValue({
+      get: jest.fn().mockResolvedValueOnce(searchResponse).mockResolvedValueOnce({
+        data: { Id: '1234567', Name: 'Maelstrome' },
+      }),
+    } as any);
+
+    await expect(service.getCharacter('Maelstrome'))
+      .rejects
+      .toThrowError('Character ID does not match.');
   });
 
   it('should throw an error if multiple characters are found with the exact same name', async () => {
