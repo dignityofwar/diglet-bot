@@ -15,7 +15,25 @@ export class DiscordService implements OnModuleInit {
   async getChannel(channelId: string): Promise<Channel> {
     return await this.discordClient.channels.fetch(channelId);
   }
-  async getRole(guildMember: GuildMember, roleId: string) {
+
+  async getGuildMember(guildMember: GuildMember, memberId: string): Promise<GuildMember | null> {
+    const serverId = guildMember.guild.id;
+    const server = this.discordClient.guilds.cache.get(serverId);
+
+    try {
+      return await server.members.fetch(memberId);
+    }
+    catch (err) {
+      console.log(err);
+      return null;
+    }
+  }
+
+  async getGuildRole(guildId: string, roleId: string) {
+    return await this.discordClient.guilds.cache.get(guildId).roles.fetch(roleId);
+  }
+
+  async getMemberRole(guildMember: GuildMember, roleId: string) {
     const serverId = guildMember.guild.id;
     return await this.discordClient.guilds.cache.get(serverId).roles.fetch(roleId);
   }
