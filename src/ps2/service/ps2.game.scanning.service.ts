@@ -6,7 +6,7 @@ import { CensusApiService } from './census.api.service';
 import { GuildMember, Message } from 'discord.js';
 import { CensusCharacterWithOutfitInterface } from '../interfaces/CensusCharacterResponseInterface';
 import { ConfigService } from '@nestjs/config';
-import { RankMapInterface } from '../../config/app.config';
+import { RankMapInterface } from '../../config/ps2.app.config';
 
 interface ChangesInterface {
   character: CensusCharacterWithOutfitInterface,
@@ -132,7 +132,7 @@ export class PS2GameScanningService {
     }
 
     if (this.suggestionsCount > 0 && !dryRun) {
-      const pingRoles = this.config.get('app.ps2.pingRoles');
+      const pingRoles = this.config.get('ps2.pingRoles');
       await message.channel.send(`🔔 <@&${pingRoles.join('>, <@&')}> Please review the above suggestions and make any necessary changes manually. To check again without pinging Leaders and Officers, run the \`/ps2-scan\` command with the \`dry-run\` flag set to \`true\`.`);
     }
 
@@ -173,14 +173,14 @@ export class PS2GameScanningService {
       }
 
       // Is the character still in the outfit?
-      if (character?.outfit_info && character?.outfit_info.outfit_id === this.config.get('app.ps2.outfitId')) {
+      if (character?.outfit_info && character?.outfit_info.outfit_id === this.config.get('ps2.outfitId')) {
         continue;
       }
 
       // If not in the outfit, strip 'em
       this.logger.log(`User ${character.name.first} has left the outfit`);
 
-      const rankMaps: RankMapInterface = this.config.get('app.ps2.rankMap');
+      const rankMaps: RankMapInterface = this.config.get('ps2.rankMap');
 
       // Remove all private roles from the user
       for (const rankMap of Object.values(rankMaps)) {
@@ -217,10 +217,10 @@ export class PS2GameScanningService {
   async checkForSuggestions(characters: CensusCharacterWithOutfitInterface[], outfitMembers: PS2MembersEntity[], message: Message) {
     // Check if there are any characters in the outfit that have invalid discord permissions
 
-    const rankMap: RankMapInterface = this.config.get('app.ps2.rankMap');
+    const rankMap: RankMapInterface = this.config.get('ps2.rankMap');
 
     // Get the ranks from Census for the names
-    const outfit = await this.censusService.getOutfit(this.config.get('app.ps2.outfitId'));
+    const outfit = await this.censusService.getOutfit(this.config.get('ps2.outfitId'));
 
     for (const member of outfitMembers) {
       // If already in the change set, they have been removed so don't bother checking

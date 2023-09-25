@@ -63,7 +63,7 @@ export class PS2VerifyManualCommand {
       return 'Member manually unverified.';
     }
 
-    const outfitId = this.config.get('app.ps2.outfitId');
+    const outfitId = this.config.get('ps2.outfitId');
 
     // Check if the character is in the PS2 Outfit
     if (!character?.outfit_info || character?.outfit_info.outfit_id !== outfitId) {
