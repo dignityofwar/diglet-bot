@@ -78,6 +78,7 @@ export class Migration20230925183448 extends Migration {
 
     // For each member, scan the API for their character ID
     for (const member of members) {
+      // eslint-disable-next-line no-async-promise-executor
       const promise = new Promise(async (resolve) => {
         await service.getCharacter(member.characterName).then((response) => {
           if (response.data.GuildId !== 'btPZRoLvTUqLC7URnDRgSQ') {
