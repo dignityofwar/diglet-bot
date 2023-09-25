@@ -69,7 +69,7 @@ export class PS2GameScanningService {
 
     // Pull the list of verified members from the database and check if they're still in the outfit
     // If they're not, remove the verified role from them and any other PS2 Roles
-    // Also send a message to the #ps2-leadership channel to denote this has happened
+    // Also send a message to the #ps2-scans channel to denote this has happened
 
     const outfitMembers = await this.ps2MembersRepository.findAll();
     const length = outfitMembers.length;
