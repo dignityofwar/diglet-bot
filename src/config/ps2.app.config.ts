@@ -1,4 +1,4 @@
-export interface RankMapInterface {
+export interface PS2RankMapInterface {
   [key: string]: {
     ranks: string[] | null; // Matches the rank in the census API
     discordRoleId: string;
@@ -36,7 +36,7 @@ const rolesToRankProduction = {
   },
 };
 
-const rolesToRankDevelopment: RankMapInterface = {
+const rolesToRankDevelopment: PS2RankMapInterface = {
   '@PS2/Verified': {
     ranks: null,
     discordRoleId: '1139909190664601611',
@@ -62,7 +62,7 @@ const rolesToRankDevelopment: RankMapInterface = {
     discordRoleId: '1142546013685559337',
   },
 };
-const rankMap = process.env.ENVIRONMENT === 'production' ? rolesToRankProduction : rolesToRankDevelopment as RankMapInterface;
+const rankMap = process.env.ENVIRONMENT === 'production' ? rolesToRankProduction : rolesToRankDevelopment as PS2RankMapInterface;
 const pingRoles = [rankMap['@PS2/Officer'].discordRoleId, rankMap['@PS2/Leader'].discordRoleId];
 
 export default () => ({
