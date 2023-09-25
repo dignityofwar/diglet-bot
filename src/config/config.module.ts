@@ -1,7 +1,9 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule as NestConfigModule } from '@nestjs/config';
+import AlbionAppConfig from './albion.app.config';
 import AppConfig from './app.config';
 import DiscordConfig from './discord.config';
+import Ps2Config from './ps2.app.config';
 
 @Module({
   imports: [
@@ -11,8 +13,10 @@ import DiscordConfig from './discord.config';
         process.env.NODE_ENV ? `.${process.env.NODE_ENV}` : ''
       }`,
       load: [
+        () => ({ albion: AlbionAppConfig() }),
         () => ({ app: AppConfig() }),
         () => ({ discord: DiscordConfig() }),
+        () => ({ ps2: Ps2Config() }),
       ],
     }),
   ],

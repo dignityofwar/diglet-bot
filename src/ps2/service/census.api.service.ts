@@ -20,7 +20,7 @@ export class CensusApiService implements OnModuleInit {
 
   async onModuleInit(character = 'Maelstrome26') {
     // Check if our service ID is valid
-    if (!this.config.get('app.ps2.censusServiceId')) {
+    if (!this.config.get('ps2.censusServiceId')) {
       throw new Error('PS2_CENSUS_SERVICE_ID is not defined.');
     }
 
@@ -80,7 +80,7 @@ export class CensusApiService implements OnModuleInit {
   }
 
   async getOutfit(outfitId: string): Promise<CensusOutfitInterface | null> {
-    const url = `outfit/${this.config.get('app.ps2.outfitId')}?c:resolve=rank`;
+    const url = `outfit/${this.config.get('ps2.outfitId')}?c:resolve=rank`;
 
     const response: CensusOutfitResponseInterface = await this.requestWithRetries(url);
 
