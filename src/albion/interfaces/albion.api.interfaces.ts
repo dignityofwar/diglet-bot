@@ -1,5 +1,5 @@
 // Seemingly this interface appears to always return null
-interface EquipmentInterface {
+interface AlbionEquipmentInterface {
   MainHand: string | null;
   OffHand: string | null;
   Head: string | null;
@@ -12,20 +12,20 @@ interface EquipmentInterface {
   Food: string | null;
 }
 
-interface AreaStatisticsInterface {
+interface AlbionAreaStatisticsInterface {
   Total: number;
   Royal: number;
   Outlands: number;
   Avalon: number;
 }
 
-interface StatisticsInterface extends AreaStatisticsInterface {
+interface AlbionStatisticsInterface extends AlbionAreaStatisticsInterface {
   Hellgate: number;
   CorruptedDungeon: number;
   Mists: number;
 }
 
-interface PlayerDetailsInterface {
+interface AlbionPlayerDetailsInterface {
   Id: string;
   Name: string;
   GuildId: string;
@@ -40,13 +40,13 @@ interface PlayerDetailsInterface {
   FameRatio: number;
 }
 
-interface SearchPlayerInterface extends PlayerDetailsInterface {
+interface AlbionSearchPlayerInterface extends AlbionPlayerDetailsInterface {
   totalKills: null;
   gvgKills: null;
   gvgWon: null;
 }
 
-interface SearchGuildInterface {
+interface AlbionSearchGuildInterface {
   Id: string;
   Name: string;
   AllianceId: string;
@@ -55,21 +55,21 @@ interface SearchGuildInterface {
   DeathFame: number
 }
 
-interface PlayerDataInterface extends PlayerDetailsInterface {
+interface AlbionPlayerDataInterface extends AlbionPlayerDetailsInterface {
   AverageItemPower: number; // Always seems to return 0
-  Equipment: EquipmentInterface;
+  Equipment: AlbionEquipmentInterface;
   Inventory: [];
   LifetimeStatistics: {
-    PvE: StatisticsInterface;
+    PvE: AlbionStatisticsInterface;
     Gathering: {
-      Fiber: AreaStatisticsInterface;
-      Hide: AreaStatisticsInterface;
-      Ore: AreaStatisticsInterface;
-      Rock: AreaStatisticsInterface;
-      Wood: AreaStatisticsInterface;
-      All: AreaStatisticsInterface;
+      Fiber: AlbionAreaStatisticsInterface;
+      Hide: AlbionAreaStatisticsInterface;
+      Ore: AlbionAreaStatisticsInterface;
+      Rock: AlbionAreaStatisticsInterface;
+      Wood: AlbionAreaStatisticsInterface;
+      All: AlbionAreaStatisticsInterface;
     };
-    Crafting: AreaStatisticsInterface;
+    Crafting: AlbionAreaStatisticsInterface;
     CrystalLeague: number;
     FishingFame: number
     FarmingFame: number
@@ -77,13 +77,13 @@ interface PlayerDataInterface extends PlayerDetailsInterface {
   }
 }
 
-export interface PlayersResponseInterface {
-  data: PlayerDataInterface
+export interface AlbionPlayersResponseInterface {
+  data: AlbionPlayerDataInterface
 }
 
-export interface SearchResponseInterface {
+export interface AlbionSearchResponseInterface {
   data: {
-    guilds: SearchGuildInterface[];
-    players: SearchPlayerInterface[]
+    guilds: AlbionSearchGuildInterface[];
+    players: AlbionSearchPlayerInterface[]
   }
 }

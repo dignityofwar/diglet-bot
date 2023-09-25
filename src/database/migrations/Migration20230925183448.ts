@@ -1,6 +1,6 @@
 import { Migration } from '@mikro-orm/migrations';
 import { AlbionApiService } from '../../albion/services/albion.api.service';
-import { PlayersResponseInterface } from '../../albion/interfaces/albion.api.interfaces';
+import { AlbionPlayersResponseInterface } from '../../albion/interfaces/albion.api.interfaces';
 
 export class Migration20230925183448 extends Migration {
 
@@ -96,7 +96,7 @@ export class Migration20230925183448 extends Migration {
     }
 
     const characters = await Promise.all(promises);
-    const validCharacters: PlayersResponseInterface[] = characters.filter((character) => {
+    const validCharacters: AlbionPlayersResponseInterface[] = characters.filter((character) => {
       return character !== null && character.data.GuildId === 'btPZRoLvTUqLC7URnDRgSQ';
     });
 

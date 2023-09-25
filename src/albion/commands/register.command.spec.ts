@@ -7,7 +7,7 @@ import { AlbionRegisterDto } from '../dto/albion.register.dto';
 
 import { SnowflakeUtil } from 'discord.js';
 import { ReflectMetadataProvider } from '@discord-nestjs/core';
-import { PlayersResponseInterface } from '../interfaces/albion.api.interfaces';
+import { AlbionPlayersResponseInterface } from '../interfaces/albion.api.interfaces';
 import * as _ from 'lodash';
 
 const expectedChannelId = '1234567890';
@@ -22,7 +22,7 @@ describe('AlbionRegisterCommand', () => {
   let config: ConfigService;
 
   let mockUser: any;
-  let mockCharacter: PlayersResponseInterface;
+  let mockCharacter: AlbionPlayersResponseInterface;
   let mockInteraction: any;
   const dto: AlbionRegisterDto = { character: 'Maelstrome26' };
 

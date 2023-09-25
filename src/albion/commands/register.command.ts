@@ -5,7 +5,7 @@ import { AlbionRegisterDto } from '../dto/albion.register.dto';
 import { AlbionApiService } from '../services/albion.api.service';
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { PlayersResponseInterface } from '../interfaces/albion.api.interfaces';
+import { AlbionPlayersResponseInterface } from '../interfaces/albion.api.interfaces';
 
 @Command({
   name: 'albion-register',
@@ -40,7 +40,7 @@ export class AlbionRegisterCommand {
       return `Unable to find the initiate role! Pinging <@${this.config.get('discord.devUserId')}>!`;
     }
 
-    let character: PlayersResponseInterface;
+    let character: AlbionPlayersResponseInterface;
 
     // Get the character from the Albion Online API
     try {
