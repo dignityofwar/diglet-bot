@@ -1,7 +1,7 @@
-import { PlayersResponseInterface } from '../../interfaces/albion.api.interfaces';
+import { AlbionPlayersResponseInterface } from '../../interfaces/albion.api.interfaces';
 
 export class AlbionApiService {
-  async getCharacter(characterName: string): Promise<PlayersResponseInterface> {
+  async getCharacter(characterName: string): Promise<AlbionPlayersResponseInterface> {
     this.getCharacterId(characterName);
 
     // If it didn't die, return a mock response
