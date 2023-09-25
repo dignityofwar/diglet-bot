@@ -63,10 +63,8 @@ describe('PS2VerifyCommand', () => {
     // Spy on the 'get' method of the ConfigService, and make it return a specific values based on the path
     jest.spyOn(config, 'get').mockImplementation((key: string) => {
       const data = {
-        app: {
-          ps2: {
-            outfitId: expectedOutfitId,
-          },
+        ps2: {
+          outfitId: expectedOutfitId,
         },
         discord: {
           channels: {

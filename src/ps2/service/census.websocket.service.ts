@@ -32,7 +32,7 @@ export class CensusWebsocketService implements OnModuleInit, OnModuleDestroy {
 
   private subscribe() {
     // Connect to the external WebSocket service.
-    const client = new CensusClient(this.config.get('app.ps2.censusServiceId'), 'ps2', {
+    const client = new CensusClient(this.config.get('ps2.censusServiceId'), 'ps2', {
       streamManager: {
         subscription: this.subscription,
         endpoint: 'wss://push.nanite-systems.net/streaming',

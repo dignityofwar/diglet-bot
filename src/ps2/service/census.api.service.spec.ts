@@ -29,11 +29,9 @@ describe('CensusApiService', () => {
 
     jest.spyOn(config, 'get').mockImplementation((key: string) => {
       const data = {
-        app: {
-          ps2: {
-            censusServiceId: 'dignityofwar',
-            censusTimeout: 10000,
-          },
+        ps2: {
+          censusServiceId: 'dignityofwar',
+          censusTimeout: 10000,
         },
       };
 
