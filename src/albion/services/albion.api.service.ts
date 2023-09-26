@@ -1,18 +1,14 @@
 import { Injectable } from '@nestjs/common';
 import AlbionAxiosFactory from '../factories/albion.axios.factory';
-import { PlayersResponseInterface, SearchResponseInterface } from '../interfaces/albion.api.interfaces';
+import { AlbionPlayersResponseInterface, AlbionSearchResponseInterface } from '../interfaces/albion.api.interfaces';
 
 @Injectable()
 export class AlbionApiService {
-  async getCharacter(characterName: string): Promise<PlayersResponseInterface> {
+  async getCharacter(characterName: string): Promise<AlbionPlayersResponseInterface> {
     const characterId = await this.getCharacterId(characterName);
 
     const request = new AlbionAxiosFactory().createAlbionApiClient();
-    const response: PlayersResponseInterface = await request.get(`/players/${characterId}`);
-
-    if (!response.data.Id) {
-      throw new Error('Character does not exist. Please ensure you have supplied your exact name.');
-    }
+    const response: AlbionPlayersResponseInterface = await request.get(`/players/${characterId}`);
 
     if (response.data.Id !== characterId) {
       throw new Error('Character ID does not match.');
@@ -21,9 +17,20 @@ export class AlbionApiService {
     return response;
   }
 
-  async getCharacterId(characterName: string): Promise<string> {
+  async getCharacterById(characterId: string): Promise<AlbionPlayersResponseInterface> {
     const request = new AlbionAxiosFactory().createAlbionApiClient();
-    const response: SearchResponseInterface = await request.get(`/search?q=${characterName}`);
+    const response: AlbionPlayersResponseInterface = await request.get(`/players/${characterId}`);
+
+    if (response.data.Id !== characterId) {
+      throw new Error('Character ID does not match requested ID.');
+    }
+
+    return response;
+  }
+
+  private async getCharacterId(characterName: string): Promise<string> {
+    const request = new AlbionAxiosFactory().createAlbionApiClient();
+    const response: AlbionSearchResponseInterface = await request.get(`/search?q=${characterName}`);
 
     // Loop through the players response to find the character name
     const foundPlayer = response.data.players.filter((player) => {
@@ -32,7 +39,7 @@ export class AlbionApiService {
 
     // If there were no players found
     if (foundPlayer.length === 0) {
-      throw new Error('Character does not exist. Please ensure you have supplied your exact name.');
+      throw new Error(`Character "${characterName}" does not exist. Please ensure you have supplied your exact name.`);
     }
 
     // If there are multiple players found, they are duplicates and must be manually verified

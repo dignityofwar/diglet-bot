@@ -6,7 +6,7 @@ import { CensusApiService } from './census.api.service';
 import { GuildMember, Message } from 'discord.js';
 import { CensusCharacterWithOutfitInterface } from '../interfaces/CensusCharacterResponseInterface';
 import { ConfigService } from '@nestjs/config';
-import { RankMapInterface } from '../../config/ps2.app.config';
+import { PS2RankMapInterface } from '../../config/ps2.app.config';
 
 interface ChangesInterface {
   character: CensusCharacterWithOutfitInterface,
@@ -69,7 +69,7 @@ export class PS2GameScanningService {
 
     // Pull the list of verified members from the database and check if they're still in the outfit
     // If they're not, remove the verified role from them and any other PS2 Roles
-    // Also send a message to the #ps2-leadership channel to denote this has happened
+    // Also send a message to the #ps2-scans channel to denote this has happened
 
     const outfitMembers = await this.ps2MembersRepository.findAll();
     const length = outfitMembers.length;
@@ -180,7 +180,7 @@ export class PS2GameScanningService {
       // If not in the outfit, strip 'em
       this.logger.log(`User ${character.name.first} has left the outfit`);
 
-      const rankMaps: RankMapInterface = this.config.get('ps2.rankMap');
+      const rankMaps: PS2RankMapInterface = this.config.get('ps2.rankMap');
 
       // Remove all private roles from the user
       for (const rankMap of Object.values(rankMaps)) {
@@ -217,7 +217,7 @@ export class PS2GameScanningService {
   async checkForSuggestions(characters: CensusCharacterWithOutfitInterface[], outfitMembers: PS2MembersEntity[], message: Message) {
     // Check if there are any characters in the outfit that have invalid discord permissions
 
-    const rankMap: RankMapInterface = this.config.get('ps2.rankMap');
+    const rankMap: PS2RankMapInterface = this.config.get('ps2.rankMap');
 
     // Get the ranks from Census for the names
     const outfit = await this.censusService.getOutfit(this.config.get('ps2.outfitId'));

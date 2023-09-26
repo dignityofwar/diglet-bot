@@ -1,11 +1,12 @@
 import { Command, EventParams, Handler, InteractionEvent } from '@discord-nestjs/core';
-import { ApplicationCommandType, ChatInputCommandInteraction } from 'discord.js';
+import { ApplicationCommandType, ChatInputCommandInteraction, GuildMember } from 'discord.js';
 import { SlashCommandPipe } from '@discord-nestjs/common';
 import { AlbionRegisterDto } from '../dto/albion.register.dto';
 import { AlbionApiService } from '../services/albion.api.service';
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { PlayersResponseInterface } from '../interfaces/albion.api.interfaces';
+import { AlbionPlayersResponseInterface } from '../interfaces/albion.api.interfaces';
+import { AlbionVerifyService } from '../services/albion.verify.service';
 
 @Command({
   name: 'albion-register',
@@ -15,8 +16,9 @@ import { PlayersResponseInterface } from '../interfaces/albion.api.interfaces';
 @Injectable()
 export class AlbionRegisterCommand {
   constructor(
+    private readonly config: ConfigService,
     private readonly albionApiService: AlbionApiService,
-    private readonly config: ConfigService
+    private readonly albionVerifyService: AlbionVerifyService,
   ) {}
 
   @Handler()
@@ -32,17 +34,17 @@ export class AlbionRegisterCommand {
       return `Please use the <#${registrationChannelId}> channel to register.`;
     }
 
-    // Find the initiate role
-    const initiateRoleId = this.config.get('discord.roles.albionInitiateRoleId');
-    const initiateRole = await interaction[0].guild?.roles.fetch(initiateRoleId);
-
-    if (!initiateRole) {
-      return `Unable to find the initiate role! Pinging <@${this.config.get('discord.devUserId')}>!`;
+    try {
+      await this.albionVerifyService.testRolesExist(interaction);
+    }
+    catch (err) {
+      return `⛔️ **ERROR:** Required Roles do not exist! Pinging <@${this.config.get('discord.devUserId')}>! Err: ${err.message}`;
     }
 
-    let character: PlayersResponseInterface;
+    const gameGuildId = this.config.get('albion.guildGameId');
 
     // Get the character from the Albion Online API
+    let character: AlbionPlayersResponseInterface;
     try {
       character = await this.albionApiService.getCharacter(dto.character);
     }
@@ -52,33 +54,25 @@ export class AlbionRegisterCommand {
       }
     }
 
-    const gameGuildId = this.config.get('albion.guildGameId');
-
     // Check if the character is in the Albion guild
-    if (!character.data.GuildId || character.data.GuildId !== gameGuildId) {
-      return `Your character "${character.data.Name}" is not in the guild. If you are in the guild, please ensure you have spelt the name **exactly** correct. If it still doesn't work, try again later as our data source may be out of date.`;
+    if (character.data.GuildId !== gameGuildId) {
+      return `⛔️ **ERROR:** Your character **${character.data.Name}** is not in the guild. If you are in the guild, please ensure you have spelt the name **exactly** correct. If it still doesn't work, try again later as our data source may be out of date.`;
     }
 
-    // Get the Discord guild member to be able to edit things about them
-    const guildMember = await interaction[0].guild?.members.fetch(interaction[0].user.id);
+    // Check if valid registration attempt
+    const isValid = await this.albionVerifyService.isValidRegistrationAttempt(character, interaction[0].member as GuildMember);
 
-    // Edit their nickname to match their ingame
-    try {
-      await guildMember?.setNickname(character.data.Name);
-    }
-    catch (err) {
-      return `Unable to set your nickname. If you're an admin this won't work as the bot has no power over you! Pinging <@${this.config.get('discord.devUserId')}>!`;
+    if (isValid !== true) {
+      return isValid;
     }
 
-    // Add the initiate role
-    try {
-      await guildMember?.roles.add(initiateRole);
-    }
-    catch (err) {
-      return `Unable to add the initiate role to user! Pinging <@${this.config.get('discord.devUserId')}>!`;
-    }
+    // If valid, handle the verification of the character
+    await this.albionVerifyService.handleVerification(character, interaction[0]);
 
     // Successful!
-    return `Thank you ${character.data.Name}, you've been verified as a [DIG] guild member! Please read the information within <#${this.config.get('discord.channels.albionWelcomeToAlbion')}> to be fully acquainted with the guild! Don't forget to grab roles for areas of interest in <id:customize> under the Albion section!`;
+    return `## ✅ Thank you **${character.data.Name}**, you've been verified as a [DIG] guild member! 🎉
+    \n* ➡️ Please read the information within <#${this.config.get('discord.channels.albionWelcomeToAlbion')}> to be fully acquainted with the guild!
+    \n* 👉️ Grab opt-in roles of interest in <id:customize> under the Albion section! It is _important_ you do this, otherwise you may miss content.
+    \n* ℹ️ Your Discord server nickname has been automatically changed to match your character name. You are free to change this back should you want to, but please make sure it resembles your in-game name.`;
   }
 }

@@ -66,6 +66,11 @@ export class PS2GameVerificationService implements OnApplicationBootstrap {
     if (ps2Member.length > 0) {
       // Get the original Discord user
       const originalDiscordMember = await member.guild.members.fetch(ps2Member[0].discordId);
+
+      if (!originalDiscordMember) {
+        return `Character **"${character.name.first}"** has already been registered, but the user who registered it has left the server. If you believe this to be in error, please contact the PS2 Leaders.`;
+      }
+
       return `Character **"${character.name.first}"** has already been registered by user \`@${originalDiscordMember.displayName}\`. If you believe this to be in error, please contact the PS2 Leaders.`;
     }
 
@@ -221,7 +226,7 @@ export class PS2GameVerificationService implements OnApplicationBootstrap {
   }
 
   private async handleVerification(deathEvent: Death) {
-    this.logger.debug('Handling verification');
+    this.logger.debug('Handling PS2 verification');
     const character = this.monitoringCharacters.get(deathEvent.character_id) ?? null;
     const message = this.messagesMap.get(character.character_id) ?? null;
     const guildMember = this.guildMembersMap.get(character.character_id) ?? null;
@@ -331,7 +336,7 @@ export class PS2GameVerificationService implements OnApplicationBootstrap {
   private async applyDiscordChanges(character: CensusCharacterWithOutfitInterface, guildMember: GuildMember, remove = false) {
     // Add the PS2/verified role to the Discord user
     const verifiedRoleId = this.config.get('discord.roles.ps2Verified');
-    const verifyRole = await this.discordService.getRole(guildMember, verifiedRoleId);
+    const verifyRole = await this.discordService.getMemberRole(guildMember, verifiedRoleId);
 
     if (!verifyRole) {
       throw new Error(`Could not find role with ID ${verifiedRoleId}`);
