@@ -56,7 +56,7 @@ export class AlbionRegisterCommand {
 
     // Check if the character is in the Albion guild
     if (character.data.GuildId !== gameGuildId) {
-      return `Your character **${character.data.Name}** is not in the guild. If you are in the guild, please ensure you have spelt the name **exactly** correct. If it still doesn't work, try again later as our data source may be out of date.`;
+      return `⛔️ **ERROR:** Your character **${character.data.Name}** is not in the guild. If you are in the guild, please ensure you have spelt the name **exactly** correct. If it still doesn't work, try again later as our data source may be out of date.`;
     }
 
     // Check if valid registration attempt

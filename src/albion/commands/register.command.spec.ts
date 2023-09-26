@@ -140,9 +140,7 @@ describe('AlbionRegisterCommand', () => {
   it('should return a message if command did not come from the correct channel', async () => {
     mockInteraction[0].channelId = '1234';
 
-    const response = await command.onAlbionRegisterCommand(dto, mockInteraction);
-
-    expect(response).toBe(`Please use the <#${expectedChannelId}> channel to register.`);
+    expect(await command.onAlbionRegisterCommand(dto, mockInteraction)).toBe(`Please use the <#${expectedChannelId}> channel to register.`);
   });
 
   it('should return an error if the roles are not found', async () => {
@@ -155,71 +153,36 @@ describe('AlbionRegisterCommand', () => {
 
   it('should return a message if the character could not be found', async () => {
     albionApiService.getCharacter = jest.fn().mockImplementation(() => {
-      throw new Error('Character does not exist. Please ensure you have supplied your exact name.');
+      throw new Error('Some error');
     });
 
-    const response = await command.onAlbionRegisterCommand(dto, mockInteraction);
-
-    expect(response).toBe('Character does not exist. Please ensure you have supplied your exact name.');
-  });
-
-  it('should correctly prevent characters outside of the guild from registering', async () => {
-    albionApiService.getCharacter = jest.fn().mockImplementation(() => {
-      return {
-        data: {
-          'Id': 'iQxOa5DJTvmxu9oy7pDIiA',
-          'Name': 'Wildererntner',
-          'GuildId': '2rzN1ma_T9ejhkFPq0t-Uw',
-          'GuildName': 'Lacking DPS',
-          'AllianceId': '',
-          'AllianceName': null,
-          'Avatar': '',
-          'AvatarRing': '',
-          'KillFame': 35159669,
-          'DeathFame': 27246434,
-          'FameRatio': 1.29,
-          'totalKills': null,
-          'gvgKills': null,
-          'gvgWon': null,
-        },
-      };
-    });
-
-    const response = await command.onAlbionRegisterCommand(dto, mockInteraction);
-
-    expect(response).toBe('Your character **Wildererntner** is not in the guild. If you are in the guild, please ensure you have spelt the name **exactly** correct. If it still doesn\'t work, try again later as our data source may be out of date.');
+    expect(await command.onAlbionRegisterCommand(dto, mockInteraction)).toBe('Some error');
   });
 
   it('should return an error if there are duplicate players due to lack of uniqueness of characters in the game', async () => {
-    const errorMessage = `Multiple characters with exact name "${mockUser.username}" found. Please contact the Guild Masters as manual intervention is required.`;
+    const errorMessage = `⛔️ **ERROR:** Multiple characters with exact name "${mockUser.username}" found. Please contact the Guild Masters as manual intervention is required.`;
     albionApiService.getCharacter = jest.fn().mockImplementation(() => {
       throw new Error(errorMessage);
     });
 
-    const response = await command.onAlbionRegisterCommand(dto, mockInteraction);
-
-    expect(response).toBe(errorMessage);
+    expect(await command.onAlbionRegisterCommand(dto, mockInteraction)).toBe(errorMessage);
   });
 
-  it('should accept errors from the verify service for invalid registration attempts and return the error to the user', async () => {
+  it('should return invalid registration attempt errors', async () => {
     albionApiService.getCharacter = jest.fn().mockImplementation(() => mockCharacter);
     albionVerifyService.isValidRegistrationAttempt = jest.fn().mockImplementation(() => {
-      return 'Some error denoting that the verification attempt could not proceed.';
+      return 'Some error with validation';
     });
 
-    const response = await command.onAlbionRegisterCommand(dto, mockInteraction);
-
-    expect(response).toBe('Some error denoting that the verification attempt could not proceed.');
+    expect(await command.onAlbionRegisterCommand(dto, mockInteraction)).toBe('Some error with validation');
   });
 
-  it('should return a message if the character is not a member of the guild', async () => {
+  it('should return an error if the character is not a member of the guild', async () => {
     mockCharacter.data.GuildId = '1337';
 
     albionApiService.getCharacter = jest.fn().mockImplementation(() => mockCharacter);
 
-    const response = await command.onAlbionRegisterCommand(dto, mockInteraction);
-
-    expect(response).toBe(`Your character **${mockCharacter.data.Name}** is not in the guild. If you are in the guild, please ensure you have spelt the name **exactly** correct. If it still doesn't work, try again later as our data source may be out of date.`);
+    expect(await command.onAlbionRegisterCommand(dto, mockInteraction)).toBe(`⛔️ **ERROR:** Your character **${mockCharacter.data.Name}** is not in the guild. If you are in the guild, please ensure you have spelt the name **exactly** correct. If it still doesn't work, try again later as our data source may be out of date.`);
   });
 
   it('should return the success message if the character has successfully been registered', async () => {
@@ -227,9 +190,7 @@ describe('AlbionRegisterCommand', () => {
     albionVerifyService.isValidRegistrationAttempt = jest.fn().mockImplementation(() => true);
     albionVerifyService.handleVerification = jest.fn().mockImplementation(() => true);
 
-    const response = await command.onAlbionRegisterCommand(dto, mockInteraction);
-
-    expect(response).toBe(`## ✅ Thank you **${mockUser.username}**, you've been verified as a [DIG] guild member! 🎉
+    expect(await command.onAlbionRegisterCommand(dto, mockInteraction)).toBe(`## ✅ Thank you **${mockUser.username}**, you've been verified as a [DIG] guild member! 🎉
     
 * ➡️ Please read the information within <#5555444455555> to be fully acquainted with the guild!
     
