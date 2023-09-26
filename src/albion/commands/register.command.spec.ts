@@ -54,10 +54,8 @@ describe('AlbionRegisterCommand', () => {
     // Spy on the 'get' method of the ConfigService, and make it return a specific values based on the path
     jest.spyOn(config, 'get').mockImplementation((key: string) => {
       const data = {
-        app: {
-          albion: {
-            guildGameId: expectedGuildId,
-          },
+        albion: {
+          guildGameId: expectedGuildId,
         },
         discord: {
           devUserId: expectedDevUserId,

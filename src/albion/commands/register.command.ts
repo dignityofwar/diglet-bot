@@ -52,7 +52,7 @@ export class AlbionRegisterCommand {
       }
     }
 
-    const gameGuildId = this.config.get('app.albion.guildGameId');
+    const gameGuildId = this.config.get('albion.guildGameId');
 
     // Check if the character is in the Albion guild
     if (!character.data.GuildId || character.data.GuildId !== gameGuildId) {
