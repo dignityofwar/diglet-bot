@@ -152,7 +152,7 @@ describe('AlbionVerifyService', () => {
         discord: {
           devUserId: expectedDevUserId,
           channels: {
-            albionVerify: expectedChannelId,
+            albionRegistration: expectedChannelId,
           },
           roles: {
             albionInitiateRoleId: '123456789',

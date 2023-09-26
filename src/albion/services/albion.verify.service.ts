@@ -22,7 +22,7 @@ export class AlbionVerifyService implements OnApplicationBootstrap {
 
   async onApplicationBootstrap() {
     // Store the Discord guild channel and ensure we can send messages to it
-    const verifyChannelId = this.config.get('discord.channels.albionVerify');
+    const verifyChannelId = this.config.get('discord.channels.albionRegistration');
 
     this.verificationChannel = await this.discordService.getChannel(verifyChannelId);
     if (!this.verificationChannel) {

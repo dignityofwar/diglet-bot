@@ -1,7 +1,7 @@
 export default () => ({
   devUserId: process.env.DISCORD_DEVUSER_ID,
   channels: {
-    albionVerify: process.env.CHANNEL_ALBION_REGISTER,
+    albionRegistration: process.env.CHANNEL_ALBION_REGISTRATION,
     albionWelcomeToAlbion: process.env.CHANNEL_ALBION_WELCOME,
     ps2Verify: process.env.CHANNEL_PS2_VERIFY,
     ps2Private: process.env.CHANNEL_PS2_PRIVATE,
