@@ -70,6 +70,7 @@ export class Migration20230925183448 extends Migration {
       { discordId: '1154445549794246657', characterName: 'BlackJackal69', characterId: '', valid: false },
       { discordId: '979133043052781608', characterName: 'Antanas39', characterId: '', valid: false },
       { discordId: '286599456160219139', characterName: 'buracu', characterId: '', valid: false },
+      { discordId: '301005621812264961', characterName: 'Ztirith', characterId: '', valid: false },
     ];
 
     console.log(`Checking ${members.length} members to see if they're valid...`);
@@ -113,7 +114,7 @@ export class Migration20230925183448 extends Migration {
         return;
       }
 
-      const sql = `insert into \`albion_members_entity\` (\`discord_id\`, \`character_id\`, \`character_name\`, \`manual\`, \`manual_created_by_discord_id\`, \`manual_created_by_discord_name\`, \`created_at\`, \`updated_at\`) values ('${member.discordId}', '${char.data.Id}', '${member.characterName}', '0', '', '', now(), now());`;
+      const sql = `insert into \`albion_members_entity\` (\`discord_id\`, \`character_id\`, \`character_name\`, \`manual\`, \`manual_created_by_discord_id\`, \`manual_created_by_discord_name\`, \`created_at\`, \`updated_at\`) values ('${member.discordId}', '${char.data.Id}', '${member.characterName}', '1', '90078072660852736', 'Maelstrome', now(), now());`;
       // console.log(sql);
       this.addSql(sql);
     });
