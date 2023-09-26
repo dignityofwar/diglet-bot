@@ -1,11 +1,12 @@
 import { Migration } from '@mikro-orm/migrations';
 import { AlbionApiService } from '../../albion/services/albion.api.service';
 import { AlbionPlayersResponseInterface } from '../../albion/interfaces/albion.api.interfaces';
+import { ConfigService } from '@nestjs/config';
 
 export class Migration20230925183448 extends Migration {
 
   async up(): Promise<void> {
-    const service = new AlbionApiService();
+    const service = new AlbionApiService(new ConfigService());
 
     this.addSql('create table `albion_members_entity` (`id` int unsigned not null auto_increment primary key, `created_at` datetime not null, `updated_at` datetime not null, `discord_id` varchar(255) not null, `character_id` varchar(255) not null, `character_name` varchar(255) not null, `manual` varchar(255) not null default false, `manual_created_by_discord_id` varchar(255) null default null, `manual_created_by_discord_name` varchar(255) null default null) default character set utf8mb4 engine = InnoDB;');
     this.addSql('alter table `albion_members_entity` add index `albion_members_entity_discord_id_index`(`discord_id`);');
