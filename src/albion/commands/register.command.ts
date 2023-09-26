@@ -35,7 +35,7 @@ export class AlbionRegisterCommand {
     }
 
     try {
-      await this.albionVerifyService.testRolesExist(interaction);
+      await this.albionVerifyService.testRolesExist(interaction[0].member as GuildMember);
     }
     catch (err) {
       return `⛔️ **ERROR:** Required Roles do not exist! Pinging <@${this.config.get('discord.devUserId')}>! Err: ${err.message}`;
