@@ -6,7 +6,7 @@ import { AlbionApiService } from '../services/albion.api.service';
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { AlbionPlayersResponseInterface } from '../interfaces/albion.api.interfaces';
-import { AlbionVerifyService } from '../services/albion.verify.service';
+import { AlbionRegistrationService } from '../services/albion.registration.service';
 
 @Command({
   name: 'albion-register',
@@ -18,7 +18,7 @@ export class AlbionRegisterCommand {
   constructor(
     private readonly config: ConfigService,
     private readonly albionApiService: AlbionApiService,
-    private readonly albionVerifyService: AlbionVerifyService,
+    private readonly albionVerifyService: AlbionRegistrationService,
   ) {}
 
   @Handler()

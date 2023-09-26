@@ -9,7 +9,7 @@ import { SnowflakeUtil } from 'discord.js';
 import { ReflectMetadataProvider } from '@discord-nestjs/core';
 import { AlbionPlayersResponseInterface } from '../interfaces/albion.api.interfaces';
 import * as _ from 'lodash';
-import { AlbionVerifyService } from '../services/albion.verify.service';
+import { AlbionRegistrationService } from '../services/albion.registration.service';
 
 const expectedChannelId = '1234567890';
 const expectedWelcomeChannelId = '5555444455555';
@@ -20,7 +20,7 @@ const expectedGuildId = '56666666666';
 describe('AlbionRegisterCommand', () => {
   let command: AlbionRegisterCommand;
   let albionApiService: AlbionApiService;
-  let albionVerifyService: AlbionVerifyService;
+  let albionVerifyService: AlbionRegistrationService;
   let config: ConfigService;
 
   let mockUser: any;
@@ -41,7 +41,7 @@ describe('AlbionRegisterCommand', () => {
           },
         },
         {
-          provide: AlbionVerifyService,
+          provide: AlbionRegistrationService,
           useValue: {
             isValidRegistrationAttempt: jest.fn(),
             handleVerification: jest.fn(),
@@ -58,7 +58,7 @@ describe('AlbionRegisterCommand', () => {
 
     command = module.get<AlbionRegisterCommand>(AlbionRegisterCommand);
     albionApiService = module.get<AlbionApiService>(AlbionApiService);
-    albionVerifyService = module.get<AlbionVerifyService>(AlbionVerifyService);
+    albionVerifyService = module.get<AlbionRegistrationService>(AlbionRegistrationService);
     config = module.get<ConfigService>(ConfigService);
 
     albionVerifyService.testRolesExist = jest.fn().mockImplementation(() => true);

@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { Test } from '@nestjs/testing';
-import { AlbionVerifyService } from './albion.verify.service';
+import { AlbionRegistrationService } from './albion.registration.service';
 import { DiscordService } from '../../discord/discord.service';
 import { ReflectMetadataProvider } from '@discord-nestjs/core';
 import * as _ from 'lodash';
@@ -16,8 +16,8 @@ const expectedRoleId = '987654321';
 const expectedDevUserId = '1234575897';
 const expectedGuildId = '56666666666';
 
-describe('AlbionVerifyService', () => {
-  let service: AlbionVerifyService;
+describe('AlbionRegistrationService', () => {
+  let service: AlbionRegistrationService;
   let discordService: DiscordService;
   let config: ConfigService;
   let albionMembersRepository: EntityRepository<AlbionMembersEntity>;
@@ -116,7 +116,7 @@ describe('AlbionVerifyService', () => {
 
     const moduleRef = await Test.createTestingModule({
       providers: [
-        AlbionVerifyService,
+        AlbionRegistrationService,
         ReflectMetadataProvider,
         {
           provide: DiscordService,
@@ -138,7 +138,7 @@ describe('AlbionVerifyService', () => {
       ],
     }).compile();
 
-    service = moduleRef.get<AlbionVerifyService>(AlbionVerifyService);
+    service = moduleRef.get<AlbionRegistrationService>(AlbionRegistrationService);
     discordService = moduleRef.get<DiscordService>(DiscordService);
     config = moduleRef.get<ConfigService>(ConfigService);
     albionMembersRepository = moduleRef.get(getRepositoryToken(AlbionMembersEntity));

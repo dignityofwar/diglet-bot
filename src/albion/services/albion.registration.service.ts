@@ -8,8 +8,8 @@ import { Channel, GuildMember, Interaction } from 'discord.js';
 import { AlbionPlayersResponseInterface } from '../interfaces/albion.api.interfaces';
 
 @Injectable()
-export class AlbionVerifyService implements OnApplicationBootstrap {
-  private readonly logger = new Logger(AlbionVerifyService.name);
+export class AlbionRegistrationService implements OnApplicationBootstrap {
+  private readonly logger = new Logger(AlbionRegistrationService.name);
 
   private verificationChannel: Channel;
 
