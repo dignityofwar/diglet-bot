@@ -9,6 +9,7 @@ import { SnowflakeUtil } from 'discord.js';
 import { ReflectMetadataProvider } from '@discord-nestjs/core';
 import { AlbionPlayersResponseInterface } from '../interfaces/albion.api.interfaces';
 import * as _ from 'lodash';
+import { AlbionVerifyService } from '../services/albion.verify.service';
 
 const expectedChannelId = '1234567890';
 const expectedWelcomeChannelId = '5555444455555';
@@ -19,6 +20,7 @@ const expectedGuildId = '56666666666';
 describe('AlbionRegisterCommand', () => {
   let command: AlbionRegisterCommand;
   let albionApiService: AlbionApiService;
+  let albionVerifyService: AlbionVerifyService;
   let config: ConfigService;
 
   let mockUser: any;
@@ -39,6 +41,13 @@ describe('AlbionRegisterCommand', () => {
           },
         },
         {
+          provide: AlbionVerifyService,
+          useValue: {
+            isValidRegistrationAttempt: jest.fn(),
+            handleVerification: jest.fn(),
+          },
+        },
+        {
           provide: ConfigService,
           useValue: {
             get: jest.fn(),
@@ -49,6 +58,7 @@ describe('AlbionRegisterCommand', () => {
 
     command = module.get<AlbionRegisterCommand>(AlbionRegisterCommand);
     albionApiService = module.get<AlbionApiService>(AlbionApiService);
+    albionVerifyService = module.get<AlbionVerifyService>(AlbionVerifyService);
     config = module.get<ConfigService>(ConfigService);
 
     // Spy on the 'get' method of the ConfigService, and make it return a specific values based on the path
@@ -134,14 +144,6 @@ describe('AlbionRegisterCommand', () => {
     expect(response).toBe(`Please use the <#${expectedChannelId}> channel to register.`);
   });
 
-  it('should return a message if the initiate role could not be found', async () => {
-    mockInteraction[0].guild.roles.fetch = jest.fn().mockReturnValue(null);
-
-    const response = await command.onAlbionRegisterCommand(dto, mockInteraction);
-
-    expect(response).toBe(`Unable to find the initiate role! Pinging <@${expectedDevUserId}>!`);
-  });
-
   it('should return a message if the character could not be found', async () => {
     albionApiService.getCharacter = jest.fn().mockImplementation(() => {
       throw new Error('Character does not exist. Please ensure you have supplied your exact name.');
@@ -176,7 +178,7 @@ describe('AlbionRegisterCommand', () => {
 
     const response = await command.onAlbionRegisterCommand(dto, mockInteraction);
 
-    expect(response).toBe('Your character "Wildererntner" is not in the guild. If you are in the guild, please ensure you have spelt the name **exactly** correct. If it still doesn\'t work, try again later as our data source may be out of date.');
+    expect(response).toBe('Your character **Wildererntner** is not in the guild. If you are in the guild, please ensure you have spelt the name **exactly** correct. If it still doesn\'t work, try again later as our data source may be out of date.');
   });
 
   it('should return an error if there are duplicate players due to lack of uniqueness of characters in the game', async () => {
@@ -190,12 +192,15 @@ describe('AlbionRegisterCommand', () => {
     expect(response).toBe(errorMessage);
   });
 
-  it('should return a success message if the character is actually a member of the guild', async () => {
+  it('should accept errors from the verify service for invalid registration attempts and return the error to the user', async () => {
     albionApiService.getCharacter = jest.fn().mockImplementation(() => mockCharacter);
+    albionVerifyService.isValidRegistrationAttempt = jest.fn().mockImplementation(() => {
+      return 'Some error denoting that the verification attempt could not proceed.';
+    });
 
     const response = await command.onAlbionRegisterCommand(dto, mockInteraction);
 
-    expect(response).toBe(`Thank you ${mockUser.username}, you've been verified as a [DIG] guild member! Please read the information within <#${expectedWelcomeChannelId}> to be fully acquainted with the guild! Don't forget to grab roles for areas of interest in <id:customize> under the Albion section!`);
+    expect(response).toBe('Some error denoting that the verification attempt could not proceed.');
   });
 
   it('should return a message if the character is not a member of the guild', async () => {
@@ -205,6 +210,22 @@ describe('AlbionRegisterCommand', () => {
 
     const response = await command.onAlbionRegisterCommand(dto, mockInteraction);
 
-    expect(response).toBe(`Your character "${mockCharacter.data.Name}" is not in the guild. If you are in the guild, please ensure you have spelt the name **exactly** correct. If it still doesn't work, try again later as our data source may be out of date.`);
+    expect(response).toBe(`Your character **${mockCharacter.data.Name}** is not in the guild. If you are in the guild, please ensure you have spelt the name **exactly** correct. If it still doesn't work, try again later as our data source may be out of date.`);
+  });
+
+  it('should return the success message if the character has successfully been registered', async () => {
+    albionApiService.getCharacter = jest.fn().mockImplementation(() => mockCharacter);
+    albionVerifyService.isValidRegistrationAttempt = jest.fn().mockImplementation(() => true);
+    albionVerifyService.handleVerification = jest.fn().mockImplementation(() => true);
+
+    const response = await command.onAlbionRegisterCommand(dto, mockInteraction);
+
+    expect(response).toBe(`## ✅ Thank you **${mockUser.username}**, you've been verified as a [DIG] guild member! 🎉
+    
+* ➡️ Please read the information within <#5555444455555> to be fully acquainted with the guild!
+    
+* 👉️ Grab opt-in roles of interest in <id:customize> under the Albion section! It is _important_ you do this, otherwise you may miss content.
+    
+* ℹ️ Your Discord server nickname has been automatically changed to match your character name. You are free to change this back should you want to, but please make sure it resembles your in-game name.`);
   });
 });
