@@ -88,7 +88,7 @@ describe('AlbionRegisterCommand', () => {
       return result;
     });
 
-    // A mock instance of User
+    // A mock instance of a Discord User
     mockUser = {
       createdAt: new Date(),
       createdTimestamp: Date.now(),

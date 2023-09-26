@@ -22,7 +22,7 @@ export class AlbionVerifyService implements OnApplicationBootstrap {
 
   async onApplicationBootstrap() {
     // Store the Discord guild channel and ensure we can send messages to it
-    const verifyChannelId = this.config.get('discord.channels.ps2Verify');
+    const verifyChannelId = this.config.get('discord.channels.albionVerify');
 
     this.verificationChannel = await this.discordService.getChannel(verifyChannelId);
     if (!this.verificationChannel) {
@@ -40,10 +40,7 @@ export class AlbionVerifyService implements OnApplicationBootstrap {
 
     const guildMember = await this.albionMembersRepository.find({ characterId: character.data.Id });
 
-    console.log(guildMember);
-
     if (guildMember.length > 0) {
-      console.warn(`Character ${character.data.Name} has already been registered by user ${guildMember[0].discordId}`);
       // Get the original Discord user, if possible
       const originalDiscordMember = await this.discordService.getGuildMember(member, guildMember[0].discordId);
 
@@ -69,12 +66,14 @@ export class AlbionVerifyService implements OnApplicationBootstrap {
 
     // Check if the character is in the Albion guild
     if (!character.data.GuildId || character.data.GuildId !== gameGuildId) {
-      return `Your character "${character.data.Name}" is not in the guild. If you are in the guild, please ensure you have spelt the name **exactly** correct. If it still doesn't work, try again later as our data source may be out of date.`;
+      return `⛔️ **ERROR:** Your character **${character.data.Name}** is not in the guild. If your character is in the guild, please ensure you have spelt the name **exactly** correct.`;
     }
 
     const guildMember = interaction.member as GuildMember;
-    const initiateRole = await guildMember.guild.roles.fetch(this.config.get('discord.roles.albionInitiateRoleId'));
-    const verifiedRole = await guildMember.guild.roles.fetch(this.config.get('discord.roles.albionVerifiedRoleId'));
+
+    // Roles can be safely assumed to be present as it's checked at command level.
+    const initiateRole = await this.discordService.getMemberRole(guildMember, this.config.get('discord.roles.albionInitiateRoleId'));
+    const verifiedRole = await this.discordService.getMemberRole(guildMember, this.config.get('discord.roles.albionVerifiedRoleId'));
 
     // Add the initiate and verified roles
     try {
@@ -82,24 +81,28 @@ export class AlbionVerifyService implements OnApplicationBootstrap {
       await guildMember?.roles.add(verifiedRole);
     }
     catch (err) {
-      return `Unable to add the initiate and verified roles to user! Pinging <@${this.config.get('discord.devUserId')}>!`;
+      return `⛔️ **ERROR:** Unable to add the \`@ALB/Initiate\` or \`@ALB/Registered\` roles to user! Pinging <@${this.config.get('discord.devUserId')}>!`;
     }
 
-    // Add the member to the database
-    const entity = this.albionMembersRepository.create({
-      discordId: guildMember.id,
-      characterId: character.data.Id,
-      characterName: character.data.Name,
-    });
-
-    await this.albionMembersRepository.upsert(entity);
+    try {
+      // Add the member to the database
+      const entity = this.albionMembersRepository.create({
+        discordId: guildMember.id,
+        characterId: character.data.Id,
+        characterName: character.data.Name,
+      });
+      await this.albionMembersRepository.upsert(entity);
+    }
+    catch (err) {
+      return `⛔️ **ERROR:** Unable to add you to the database! Pinging <@${this.config.get('discord.devUserId')}>! Err: ${err.message}`;
+    }
 
     // Edit their nickname to match their ingame
     try {
       await guildMember?.setNickname(character.data.Name);
     }
     catch (err) {
-      return `Unable to set your nickname. If you're an admin this won't work as the bot has no power over you! Pinging <@${this.config.get('discord.devUserId')}>!`;
+      return `⛔️ **ERROR:** Unable to set your nickname. If you're Staff this won't work as the bot has no power over you! Pinging <@${this.config.get('discord.devUserId')}>!`;
     }
   }
 }
