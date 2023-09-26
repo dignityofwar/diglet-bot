@@ -135,13 +135,20 @@ describe('AlbionRegisterCommand', () => {
     expect(command).toBeDefined();
   });
 
-  // Here is an example test case
   it('should return a message if command did not come from the correct channel', async () => {
     mockInteraction[0].channelId = '1234';
 
     const response = await command.onAlbionRegisterCommand(dto, mockInteraction);
 
     expect(response).toBe(`Please use the <#${expectedChannelId}> channel to register.`);
+  });
+
+  it('should return an error if the roles are not found', async () => {
+    albionVerifyService.testRolesExist = jest.fn().mockImplementation(() => {
+      throw new Error('Role no exist bro');
+    });
+
+    expect(await command.onAlbionRegisterCommand(dto, mockInteraction)).toBe(`⛔️ **ERROR:** Required Roles do not exist! Pinging <@${expectedDevUserId}>! Err: Role no exist bro`);
   });
 
   it('should return a message if the character could not be found', async () => {

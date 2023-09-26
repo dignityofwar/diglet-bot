@@ -34,11 +34,17 @@ export class AlbionRegisterCommand {
       return `Please use the <#${registrationChannelId}> channel to register.`;
     }
 
+    try {
+      await this.albionVerifyService.testRolesExist(interaction);
+    }
+    catch (err) {
+      return `⛔️ **ERROR:** Required Roles do not exist! Pinging <@${this.config.get('discord.devUserId')}>! Err: ${err.message}`;
+    }
+
     const gameGuildId = this.config.get('albion.guildGameId');
 
-    let character: AlbionPlayersResponseInterface;
-
     // Get the character from the Albion Online API
+    let character: AlbionPlayersResponseInterface;
     try {
       character = await this.albionApiService.getCharacter(dto.character);
     }

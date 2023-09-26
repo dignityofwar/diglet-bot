@@ -35,6 +35,12 @@ export class AlbionVerifyService implements OnApplicationBootstrap {
     // We purposefully don't check if the verified role exists, as the bot could technically belong to multiple servers, and we'd have to start injecting the guild ID into the config service, which is a bit of a pain.
   }
 
+  public async testRolesExist(interaction): Promise<void> {
+    const guildMember = interaction.member as GuildMember;
+    await this.discordService.getMemberRole(guildMember, this.config.get('discord.roles.albionInitiateRoleId'));
+    await this.discordService.getMemberRole(guildMember, this.config.get('discord.roles.albionVerifiedRoleId'));
+  }
+
   public async isValidRegistrationAttempt(character: AlbionPlayersResponseInterface, member: GuildMember): Promise<string | true> {
     this.logger.debug('Checking if registration attempt is valid');
 
