@@ -156,25 +156,25 @@ describe('AlbionRegisterCommand', () => {
       throw new Error('Some error');
     });
 
-    expect(await command.onAlbionRegisterCommand(dto, mockInteraction)).toBe('Some error');
+    expect(await command.onAlbionRegisterCommand(dto, mockInteraction)).toBe('⛔️ **ERROR:** Some error');
   });
 
   it('should return an error if there are duplicate players due to lack of uniqueness of characters in the game', async () => {
-    const errorMessage = `⛔️ **ERROR:** Multiple characters with exact name "${mockUser.username}" found. Please contact the Guild Masters as manual intervention is required.`;
+    const errorMessage = `Multiple characters with exact name "${mockUser.username}" found. Please contact the Guild Masters as manual intervention is required.`;
     albionApiService.getCharacter = jest.fn().mockImplementation(() => {
       throw new Error(errorMessage);
     });
 
-    expect(await command.onAlbionRegisterCommand(dto, mockInteraction)).toBe(errorMessage);
+    expect(await command.onAlbionRegisterCommand(dto, mockInteraction)).toBe(`⛔️ **ERROR:** ${errorMessage}`);
   });
 
   it('should return invalid registration attempt errors', async () => {
     albionApiService.getCharacter = jest.fn().mockImplementation(() => mockCharacter);
     albionVerifyService.isValidRegistrationAttempt = jest.fn().mockImplementation(() => {
-      return 'Some error with validation';
+      throw new Error('Some error with validation');
     });
 
-    expect(await command.onAlbionRegisterCommand(dto, mockInteraction)).toBe('Some error with validation');
+    expect(await command.onAlbionRegisterCommand(dto, mockInteraction)).toBe('⛔️ **ERROR:** Some error with validation');
   });
 
   it('should return an error if the character is not a member of the guild', async () => {

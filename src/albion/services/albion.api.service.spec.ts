@@ -2,16 +2,39 @@
 import { Test } from '@nestjs/testing';
 import { AlbionApiService } from './albion.api.service';
 import AlbionAxiosFactory from '../factories/albion.axios.factory';
+import { ConfigService } from '@nestjs/config';
+import _ from 'lodash';
+
+const guildId = '123564534343434343';
 
 describe('AlbionApiService', () => {
   let service: AlbionApiService;
+  let config: ConfigService;
 
   beforeEach(async () => {
     const moduleRef = await Test.createTestingModule({
-      providers: [AlbionApiService],
+      providers: [AlbionApiService, ConfigService],
     }).compile();
 
     service = moduleRef.get<AlbionApiService>(AlbionApiService);
+    config = moduleRef.get<ConfigService>(ConfigService);
+
+    // Spy on the 'get' method of the ConfigService, and make it return a specific values based on the path
+    jest.spyOn(config, 'get').mockImplementation((key: string) => {
+      const data = {
+        albion: {
+          guildGameId: guildId,
+        },
+      };
+
+      const result = _.get(data, key);
+
+      if (!result) {
+        throw new Error(`Unexpected config key: ${key}`);
+      }
+
+      return result;
+    });
   });
 
   afterEach(() => {
@@ -87,8 +110,15 @@ describe('AlbionApiService', () => {
       .toThrowError('Character ID does not match.');
   });
 
-  it('should throw an error if multiple characters are found with the exact same name', async () => {
+  it('should handle a character having duplicates, as long as only one of them is in the guild', async () => {
     const characterName = 'NightRaven2511';
+    const properResult = {
+      'Id': '2obpVpJrRfqa26SIXdXK4A',
+      'Name': characterName,
+      'GuildId': guildId,
+      'GuildName': 'DIG - Dignity of War',
+    };
+
     const searchResponse = {
       data: {
         guilds: [],
@@ -99,22 +129,59 @@ describe('AlbionApiService', () => {
             'GuildId': '',
             'GuildName': '',
           },
-          {
-            'Id': '2obpVpJrRfqa26SIXdXK4A',
-            'Name': characterName,
-            'GuildId': 'btPZRoLvTUqLC7URnDRgSQ',
-            'GuildName': 'DIG - Dignity of War',
-          },
+          properResult,
         ],
       },
     };
 
     jest.spyOn(AlbionAxiosFactory.prototype, 'createAlbionApiClient').mockReturnValue({
-      get: jest.fn().mockResolvedValue(searchResponse),
+      get: jest.fn()
+        .mockResolvedValueOnce(searchResponse)
+        .mockResolvedValueOnce({ data: properResult }),
+    } as any);
+
+    await expect(service.getCharacter(characterName))
+      .resolves
+      .toStrictEqual({ data: properResult });
+  });
+  it('should throw error when multiple characters of the same name in the guild', async () => {
+    const characterName = 'NightRaven2511';
+    const properResult = {
+      'Id': '2obpVpJrRfqa26SIXdXK4A',
+      'Name': characterName,
+      'GuildId': guildId,
+      'GuildName': 'DIG - Dignity of War',
+    };
+    const duplicate = {
+      'Id': '33rfgegdDGDgfgffdfHHH',
+      'Name': characterName,
+      'GuildId': guildId,
+      'GuildName': 'DIG - Dignity of War',
+    };
+
+    const searchResponse = {
+      data: {
+        guilds: [],
+        players: [
+          {
+            'Id': 'xNyVq16xTCKyPKCPqboe4w',
+            'Name': characterName,
+            'GuildId': '',
+            'GuildName': '',
+          },
+          properResult,
+          duplicate,
+        ],
+      },
+    };
+
+    jest.spyOn(AlbionAxiosFactory.prototype, 'createAlbionApiClient').mockReturnValue({
+      get: jest.fn()
+        .mockResolvedValueOnce(searchResponse),
     } as any);
 
     await expect(service.getCharacter(characterName))
       .rejects
-      .toThrowError(`Multiple characters with exact name "${characterName}" found. Please contact the Guild Masters as manual intervention is required.`);
+      .toThrowError('Multiple characters for "NightRaven2511" were found within the guild. This is an unsupported use case for this registration system. Congrats you broke it. Please contact the Albion Guild Masters.');
   });
 });

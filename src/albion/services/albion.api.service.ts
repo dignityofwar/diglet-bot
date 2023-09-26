@@ -1,9 +1,14 @@
 import { Injectable } from '@nestjs/common';
 import AlbionAxiosFactory from '../factories/albion.axios.factory';
 import { AlbionPlayersResponseInterface, AlbionSearchResponseInterface } from '../interfaces/albion.api.interfaces';
+import { ConfigService } from '@nestjs/config';
 
 @Injectable()
 export class AlbionApiService {
+  constructor(
+    private readonly config: ConfigService,
+  ) {}
+
   async getCharacter(characterName: string): Promise<AlbionPlayersResponseInterface> {
     const characterId = await this.getCharacterId(characterName);
 
@@ -12,17 +17,6 @@ export class AlbionApiService {
 
     if (response.data.Id !== characterId) {
       throw new Error('Character ID does not match.');
-    }
-
-    return response;
-  }
-
-  async getCharacterById(characterId: string): Promise<AlbionPlayersResponseInterface> {
-    const request = new AlbionAxiosFactory().createAlbionApiClient();
-    const response: AlbionPlayersResponseInterface = await request.get(`/players/${characterId}`);
-
-    if (response.data.Id !== characterId) {
-      throw new Error('Character ID does not match requested ID.');
     }
 
     return response;
@@ -42,9 +36,22 @@ export class AlbionApiService {
       throw new Error(`Character "${characterName}" does not exist. Please ensure you have supplied your exact name.`);
     }
 
-    // If there are multiple players found, they are duplicates and must be manually verified
     if (foundPlayer.length > 1) {
-      throw new Error(`Multiple characters with exact name "${characterName}" found. Please contact the Guild Masters as manual intervention is required.`);
+      // If there are multiple players found, we need to loop them to check if any of them are in the guild, and return that character
+      const foundPlayerInGuild = foundPlayer.filter((player) => {
+        return player.GuildId === this.config.get('albion.guildGameId');
+      });
+
+      if (foundPlayerInGuild.length === 0) {
+        throw new Error(`Multiple characters for "${characterName}" were found, none of them are a guild member.`);
+      }
+
+      if (foundPlayerInGuild.length === 1) {
+        return foundPlayerInGuild[0].Id;
+      }
+      else {
+        throw new Error(`Multiple characters for "${characterName}" were found within the guild. This is an unsupported use case for this registration system. Congrats you broke it. Please contact the Albion Guild Masters.`);
+      }
     }
 
     return foundPlayer[0].Id;

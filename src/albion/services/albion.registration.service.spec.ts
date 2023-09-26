@@ -200,7 +200,7 @@ describe('AlbionRegistrationService', () => {
     }]);
     discordService.getGuildMember = jest.fn().mockResolvedValue(null);
 
-    await expect(service.isValidRegistrationAttempt(mockCharacter, mockDiscordGuildMember)).resolves.toBe(`⛔️ **ERROR:** Character **${mockCharacter.data.Name}** has already been registered, but the user who registered it has left the server. If you believe this to be in error, please contact the Albion Guild Masters.`);
+    await expect(service.isValidRegistrationAttempt(mockCharacter, mockDiscordGuildMember)).rejects.toThrowError(`Character **${mockCharacter.data.Name}** has already been registered, but the user who registered it has left the server. If you believe this to be in error, please contact the Albion Guild Masters.`);
   });
   it('validation should return an error if the character has already been registered by another person (but still on server)', async () => {
     albionMembersRepository.find = jest.fn().mockResolvedValue([{
@@ -208,7 +208,7 @@ describe('AlbionRegistrationService', () => {
     }]);
     discordService.getGuildMember = jest.fn().mockResolvedValue(mockDiscordGuildMember);
 
-    await expect(service.isValidRegistrationAttempt(mockCharacter, mockDiscordGuildMember)).resolves.toBe(`⛔️ **ERROR:** Character **${mockCharacter.data.Name}** has already been registered by user \`@${mockDiscordGuildMember.displayName}\`. If you believe this to be in error, please contact the Albion Guild Masters.`);
+    await expect(service.isValidRegistrationAttempt(mockCharacter, mockDiscordGuildMember)).rejects.toThrowError(`Character **${mockCharacter.data.Name}** has already been registered by user \`@${mockDiscordGuildMember.displayName}\`. If you believe this to be in error, please contact the Albion Guild Masters.`);
   });
   it('validation should return an error if the user has already registered a character themselves', async () => {
     const discordMemberEntry = {
@@ -219,7 +219,7 @@ describe('AlbionRegistrationService', () => {
       .mockResolvedValueOnce([])
       .mockResolvedValueOnce([discordMemberEntry]);
 
-    await expect(service.isValidRegistrationAttempt(mockCharacter, mockDiscordGuildMember)).resolves.toBe(`⛔️ **ERROR:** You have already registered a character named **${discordMemberEntry.characterName}**. We don't allow multiple characters to be registered to the same Discord user, as there is little point to it. If you believe this to be in error, or you have registered the wrong character, please contact the Albion Guild Masters.`);
+    await expect(service.isValidRegistrationAttempt(mockCharacter, mockDiscordGuildMember)).rejects.toThrowError(`You have already registered a character named **${discordMemberEntry.characterName}**. We don't allow multiple characters to be registered to the same Discord user, as there is little point to it. If you believe this to be in error, or you have registered the wrong character, please contact the Albion Guild Masters.`);
   });
   it('validation should return true if no existing registration was found', async () => {
     albionMembersRepository.find = jest.fn()
@@ -234,7 +234,7 @@ describe('AlbionRegistrationService', () => {
     service.isValidRegistrationAttempt = jest.fn().mockImplementation(() => true);
     mockCharacter.data.GuildId = 'utter nonsense';
 
-    await expect(service.handleVerification(mockCharacter, mockInteraction)).resolves.toBe(`⛔️ **ERROR:** Your character **${mockCharacter.data.Name}** is not in the guild. If your character is in the guild, please ensure you have spelt the name **exactly** correct.`);
+    await expect(service.handleVerification(mockCharacter, mockInteraction)).rejects.toThrowError(`Your character **${mockCharacter.data.Name}** is not in the guild. If your character is in the guild, please ensure you have spelt the name **exactly** correct.`);
   });
   it('should handle discord role adding errors', async () => {
     service.isValidRegistrationAttempt = jest.fn().mockImplementation(() => true);
@@ -246,7 +246,7 @@ describe('AlbionRegistrationService', () => {
       .mockImplementation(() => {
         throw new Error('Unable to add role');
       });
-    await expect(service.handleVerification(mockCharacter, mockInteraction)).resolves.toBe(`⛔️ **ERROR:** Unable to add the \`@ALB/Initiate\` or \`@ALB/Registered\` roles to user! Pinging <@${expectedDevUserId}>!`);
+    await expect(service.handleVerification(mockCharacter, mockInteraction)).rejects.toThrowError(`Unable to add the \`@ALB/Initiate\` or \`@ALB/Registered\` roles to user! Pinging <@${expectedDevUserId}>!`);
   });
   it('should return thrown exception upon database error', async () => {
     service.isValidRegistrationAttempt = jest.fn().mockImplementation(() => true);
@@ -257,7 +257,7 @@ describe('AlbionRegistrationService', () => {
     albionMembersRepository.upsert = jest.fn().mockImplementation(() => {
       throw new Error('Database done goofed');
     });
-    await expect(service.handleVerification(mockCharacter, mockInteraction)).resolves.toBe(`⛔️ **ERROR:** Unable to add you to the database! Pinging <@${expectedDevUserId}>! Err: Database done goofed`);
+    await expect(service.handleVerification(mockCharacter, mockInteraction)).rejects.toThrowError(`Unable to add you to the database! Pinging <@${expectedDevUserId}>! Err: Database done goofed`);
   });
   it('should handle discord nickname permission errors', async () => {
     service.isValidRegistrationAttempt = jest.fn().mockImplementation(() => true);
@@ -268,6 +268,6 @@ describe('AlbionRegistrationService', () => {
     mockInteraction.member.setNickname = jest.fn().mockImplementation(() => {
       throw new Error('Unable to set nickname');
     });
-    await expect(service.handleVerification(mockCharacter, mockInteraction)).resolves.toBe(`⛔️ **ERROR:** Unable to set your nickname. If you're Staff this won't work as the bot has no power over you! Pinging <@${expectedDevUserId}>!`);
+    await expect(service.handleVerification(mockCharacter, mockInteraction)).rejects.toThrowError(`Unable to set your nickname. If you're Staff this won't work as the bot has no power over you! Pinging <@${expectedDevUserId}>!`);
   });
 });

@@ -50,7 +50,7 @@ export class AlbionRegisterCommand {
     }
     catch (err) {
       if (err instanceof Error) {
-        return err.message;
+        return `⛔️ **ERROR:** ${err.message}`;
       }
     }
 
@@ -59,15 +59,14 @@ export class AlbionRegisterCommand {
       return `⛔️ **ERROR:** Your character **${character.data.Name}** is not in the guild. If you are in the guild, please ensure you have spelt the name **exactly** correct. If it still doesn't work, try again later as our data source may be out of date.`;
     }
 
-    // Check if valid registration attempt
-    const isValid = await this.albionVerifyService.isValidRegistrationAttempt(character, interaction[0].member as GuildMember);
-
-    if (isValid !== true) {
-      return isValid;
-    }
-
     // If valid, handle the verification of the character
-    await this.albionVerifyService.handleVerification(character, interaction[0]);
+    try {
+      await this.albionVerifyService.isValidRegistrationAttempt(character, interaction[0].member as GuildMember);
+      await this.albionVerifyService.handleVerification(character, interaction[0]);
+    }
+    catch (err) {
+      return `⛔️ **ERROR:** ${err.message}`;
+    }
 
     // Successful!
     return `## ✅ Thank you **${character.data.Name}**, you've been verified as a [DIG] guild member! 🎉

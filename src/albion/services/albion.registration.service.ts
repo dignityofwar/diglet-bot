@@ -50,15 +50,15 @@ export class AlbionRegistrationService implements OnApplicationBootstrap {
       const originalDiscordMember = await this.discordService.getGuildMember(member, guildMember[0].discordId);
 
       if (originalDiscordMember === null) {
-        return `⛔️ **ERROR:** Character **${character.data.Name}** has already been registered, but the user who registered it has left the server. If you believe this to be in error, please contact the Albion Guild Masters.`;
+        throw new Error(`Character **${character.data.Name}** has already been registered, but the user who registered it has left the server. If you believe this to be in error, please contact the Albion Guild Masters.`);
       }
 
-      return `⛔️ **ERROR:** Character **${character.data.Name}** has already been registered by user \`@${originalDiscordMember.displayName}\`. If you believe this to be in error, please contact the Albion Guild Masters.`;
+      throw new Error(`Character **${character.data.Name}** has already been registered by user \`@${originalDiscordMember.displayName}\`. If you believe this to be in error, please contact the Albion Guild Masters.`);
     }
 
     const discordMember = await this.albionMembersRepository.find({ discordId: member.id });
     if (discordMember.length > 0) {
-      return `⛔️ **ERROR:** You have already registered a character named **${discordMember[0].characterName}**. We don't allow multiple characters to be registered to the same Discord user, as there is little point to it. If you believe this to be in error, or you have registered the wrong character, please contact the Albion Guild Masters.`;
+      throw new Error(`You have already registered a character named **${discordMember[0].characterName}**. We don't allow multiple characters to be registered to the same Discord user, as there is little point to it. If you believe this to be in error, or you have registered the wrong character, please contact the Albion Guild Masters.`);
     }
 
     return true;
@@ -71,7 +71,7 @@ export class AlbionRegistrationService implements OnApplicationBootstrap {
 
     // Check if the character is in the Albion guild
     if (!character.data.GuildId || character.data.GuildId !== gameGuildId) {
-      return `⛔️ **ERROR:** Your character **${character.data.Name}** is not in the guild. If your character is in the guild, please ensure you have spelt the name **exactly** correct.`;
+      throw new Error(`Your character **${character.data.Name}** is not in the guild. If your character is in the guild, please ensure you have spelt the name **exactly** correct.`);
     }
 
     const guildMember = interaction.member as GuildMember;
@@ -86,7 +86,7 @@ export class AlbionRegistrationService implements OnApplicationBootstrap {
       await guildMember?.roles.add(verifiedRole);
     }
     catch (err) {
-      return `⛔️ **ERROR:** Unable to add the \`@ALB/Initiate\` or \`@ALB/Registered\` roles to user! Pinging <@${this.config.get('discord.devUserId')}>!`;
+      throw new Error(`Unable to add the \`@ALB/Initiate\` or \`@ALB/Registered\` roles to user! Pinging <@${this.config.get('discord.devUserId')}>!`);
     }
 
     try {
@@ -99,7 +99,7 @@ export class AlbionRegistrationService implements OnApplicationBootstrap {
       await this.albionMembersRepository.upsert(entity);
     }
     catch (err) {
-      return `⛔️ **ERROR:** Unable to add you to the database! Pinging <@${this.config.get('discord.devUserId')}>! Err: ${err.message}`;
+      throw new Error(`Unable to add you to the database! Pinging <@${this.config.get('discord.devUserId')}>! Err: ${err.message}`);
     }
 
     // Edit their nickname to match their ingame
@@ -107,7 +107,7 @@ export class AlbionRegistrationService implements OnApplicationBootstrap {
       await guildMember?.setNickname(character.data.Name);
     }
     catch (err) {
-      return `⛔️ **ERROR:** Unable to set your nickname. If you're Staff this won't work as the bot has no power over you! Pinging <@${this.config.get('discord.devUserId')}>!`;
+      throw new Error(`Unable to set your nickname. If you're Staff this won't work as the bot has no power over you! Pinging <@${this.config.get('discord.devUserId')}>!`);
     }
   }
 }
