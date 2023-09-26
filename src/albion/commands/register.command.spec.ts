@@ -61,6 +61,8 @@ describe('AlbionRegisterCommand', () => {
     albionVerifyService = module.get<AlbionVerifyService>(AlbionVerifyService);
     config = module.get<ConfigService>(ConfigService);
 
+    albionVerifyService.testRolesExist = jest.fn().mockImplementation(() => true);
+
     // Spy on the 'get' method of the ConfigService, and make it return a specific values based on the path
     jest.spyOn(config, 'get').mockImplementation((key: string) => {
       const data = {
