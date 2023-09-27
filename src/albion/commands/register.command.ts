@@ -34,14 +34,7 @@ export class AlbionRegisterCommand {
       return `Please use the <#${registrationChannelId}> channel to register.`;
     }
 
-    try {
-      await this.albionVerifyService.testRolesExist(interaction[0].member as GuildMember);
-    }
-    catch (err) {
-      return `⛔️ **ERROR:** Required Roles do not exist! Pinging <@${this.config.get('discord.devUserId')}>! Err: ${err.message}`;
-    }
-
-    const gameGuildId = this.config.get('albion.guildGameId');
+    const member = interaction[0].member as GuildMember;
 
     // Get the character from the Albion Online API
     let character: AlbionPlayersResponseInterface;
@@ -54,15 +47,9 @@ export class AlbionRegisterCommand {
       }
     }
 
-    // Check if the character is in the Albion guild
-    if (character.data.GuildId !== gameGuildId) {
-      return `⛔️ **ERROR:** Your character **${character.data.Name}** is not in the guild. If you are in the guild, please ensure you have spelt the name **exactly** correct. If it still doesn't work, try again later as our data source may be out of date.`;
-    }
-
-    // If valid, handle the verification of the character
+    // Start processing the character
     try {
-      await this.albionVerifyService.isValidRegistrationAttempt(character, interaction[0].member as GuildMember);
-      await this.albionVerifyService.handleVerification(character, interaction[0]);
+      await this.albionVerifyService.handleRegistration(character, member);
     }
     catch (err) {
       return `⛔️ **ERROR:** ${err.message}`;

@@ -61,8 +61,6 @@ describe('AlbionRegisterCommand', () => {
     albionVerifyService = module.get<AlbionRegistrationService>(AlbionRegistrationService);
     config = module.get<ConfigService>(ConfigService);
 
-    albionVerifyService.testRolesExist = jest.fn().mockImplementation(() => true);
-
     // Spy on the 'get' method of the ConfigService, and make it return a specific values based on the path
     jest.spyOn(config, 'get').mockImplementation((key: string) => {
       const data = {
@@ -143,14 +141,6 @@ describe('AlbionRegisterCommand', () => {
     expect(await command.onAlbionRegisterCommand(dto, mockInteraction)).toBe(`Please use the <#${expectedChannelId}> channel to register.`);
   });
 
-  it('should return an error if the roles are not found', async () => {
-    albionVerifyService.testRolesExist = jest.fn().mockImplementation(() => {
-      throw new Error('Role no exist bro');
-    });
-
-    expect(await command.onAlbionRegisterCommand(dto, mockInteraction)).toBe(`⛔️ **ERROR:** Required Roles do not exist! Pinging <@${expectedDevUserId}>! Err: Role no exist bro`);
-  });
-
   it('should return a message if the character could not be found', async () => {
     albionApiService.getCharacter = jest.fn().mockImplementation(() => {
       throw new Error('Some error');
@@ -168,27 +158,18 @@ describe('AlbionRegisterCommand', () => {
     expect(await command.onAlbionRegisterCommand(dto, mockInteraction)).toBe(`⛔️ **ERROR:** ${errorMessage}`);
   });
 
-  it('should return invalid registration attempt errors', async () => {
+  it('should return errors from the registration process', async () => {
     albionApiService.getCharacter = jest.fn().mockImplementation(() => mockCharacter);
-    albionVerifyService.isValidRegistrationAttempt = jest.fn().mockImplementation(() => {
-      throw new Error('Some error with validation');
+    albionVerifyService.handleRegistration = jest.fn().mockImplementation(() => {
+      throw new Error('Some error handling registration');
     });
 
-    expect(await command.onAlbionRegisterCommand(dto, mockInteraction)).toBe('⛔️ **ERROR:** Some error with validation');
-  });
-
-  it('should return an error if the character is not a member of the guild', async () => {
-    mockCharacter.data.GuildId = '1337';
-
-    albionApiService.getCharacter = jest.fn().mockImplementation(() => mockCharacter);
-
-    expect(await command.onAlbionRegisterCommand(dto, mockInteraction)).toBe(`⛔️ **ERROR:** Your character **${mockCharacter.data.Name}** is not in the guild. If you are in the guild, please ensure you have spelt the name **exactly** correct. If it still doesn't work, try again later as our data source may be out of date.`);
+    expect(await command.onAlbionRegisterCommand(dto, mockInteraction)).toBe('⛔️ **ERROR:** Some error handling registration');
   });
 
   it('should return the success message if the character has successfully been registered', async () => {
     albionApiService.getCharacter = jest.fn().mockImplementation(() => mockCharacter);
-    albionVerifyService.isValidRegistrationAttempt = jest.fn().mockImplementation(() => true);
-    albionVerifyService.handleVerification = jest.fn().mockImplementation(() => true);
+    albionVerifyService.handleRegistration = jest.fn().mockImplementation(() => true);
 
     expect(await command.onAlbionRegisterCommand(dto, mockInteraction)).toBe(`## ✅ Thank you **${mockUser.username}**, you've been verified as a [DIG] guild member! 🎉
     
