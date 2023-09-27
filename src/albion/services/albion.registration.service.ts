@@ -83,8 +83,14 @@ export class AlbionRegistrationService implements OnApplicationBootstrap {
     await this.validateRegistrationAttempt(character, guildMember);
 
     // Roles can be safely assumed to be present as it's checked at command level.
-    const initiateRole = await this.discordService.getMemberRole(guildMember, this.config.get('discord.roles.albionInitiateRoleId'));
-    const verifiedRole = await this.discordService.getMemberRole(guildMember, this.config.get('discord.roles.albionVerifiedRoleId'));
+    const initiateRole = await this.discordService.getMemberRole(
+      guildMember,
+      this.config.get('discord.roles.albionInitiateRoleId')
+    );
+    const verifiedRole = await this.discordService.getMemberRole(
+      guildMember,
+      this.config.get('discord.roles.albionVerifiedRoleId')
+    );
 
     // Add the initiate and verified roles
     try {
