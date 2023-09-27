@@ -141,21 +141,11 @@ describe('AlbionRegisterCommand', () => {
     expect(await command.onAlbionRegisterCommand(dto, mockInteraction)).toBe(`Please use the <#${expectedChannelId}> channel to register.`);
   });
 
-  it('should return a message if the character could not be found', async () => {
+  it('should return errors upon character API failure', async () => {
     albionApiService.getCharacter = jest.fn().mockImplementation(() => {
-      throw new Error('Some error');
+      throw new Error('Some error fetching character');
     });
-
-    expect(await command.onAlbionRegisterCommand(dto, mockInteraction)).toBe('⛔️ **ERROR:** Some error');
-  });
-
-  it('should return an error if there are duplicate players due to lack of uniqueness of characters in the game', async () => {
-    const errorMessage = `Multiple characters with exact name "${mockUser.username}" found. Please contact the Guild Masters as manual intervention is required.`;
-    albionApiService.getCharacter = jest.fn().mockImplementation(() => {
-      throw new Error(errorMessage);
-    });
-
-    expect(await command.onAlbionRegisterCommand(dto, mockInteraction)).toBe(`⛔️ **ERROR:** ${errorMessage}`);
+    expect(await command.onAlbionRegisterCommand(dto, mockInteraction)).toBe('⛔️ **ERROR:** Some error fetching character');
   });
 
   it('should return errors from the registration process', async () => {

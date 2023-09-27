@@ -38,17 +38,10 @@ export class AlbionRegisterCommand {
 
     // Get the character from the Albion Online API
     let character: AlbionPlayersResponseInterface;
-    try {
-      character = await this.albionApiService.getCharacter(dto.character);
-    }
-    catch (err) {
-      if (err instanceof Error) {
-        return `⛔️ **ERROR:** ${err.message}`;
-      }
-    }
 
     // Start processing the character
     try {
+      character = await this.albionApiService.getCharacter(dto.character);
       await this.albionVerifyService.handleRegistration(character, member);
     }
     catch (err) {
