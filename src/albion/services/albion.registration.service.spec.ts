@@ -22,9 +22,7 @@ describe('AlbionRegistrationService', () => {
   let config: ConfigService;
   let albionMembersRepository: EntityRepository<AlbionMembersEntity>;
 
-  let mockUser: any;
-  let mockDiscordGuildMember: any;
-  let mockInteraction: any;
+  let mockDiscordUser: any;
   let mockCharacter: AlbionPlayersResponseInterface;
   let mockEntityManager: jest.Mocked<EntityManager>;
 
@@ -49,31 +47,6 @@ describe('AlbionRegistrationService', () => {
       em: mockEntityManager,
     } as any));
 
-    // A mock instance of a Discord GuildMember
-    mockDiscordGuildMember = {
-      createdAt: new Date(),
-      createdTimestamp: Date.now(),
-      discriminator: '0000',
-      displayName: 'TestUser',
-      defaultAvatarURL: 'https://defaultavatar.url',
-      id: SnowflakeUtil.generate(),
-      tag: 'TestUser#0000',
-      username: 'TestUser',
-      fetch: jest.fn(),
-      fetchFlags: jest.fn(),
-      toString: jest.fn().mockReturnValue('<@userId>'), // Mocked
-      setNickname: jest.fn().mockResolvedValue(() => true),
-      roles: {
-        add: jest.fn().mockResolvedValue(() => true),
-      },
-    };
-
-    mockDiscordGuildMember.guild = {
-      members: {
-        fetch: jest.fn().mockImplementation(() => mockDiscordGuildMember),
-      },
-    } as any;
-
     mockCharacter = {
       data: {
         Id: '123456789',
@@ -83,7 +56,7 @@ describe('AlbionRegistrationService', () => {
     } as any;
 
     // A mock instance of a Discord User
-    mockUser = {
+    mockDiscordUser = {
       createdAt: new Date(),
       createdTimestamp: Date.now(),
       discriminator: '0000',
@@ -100,19 +73,11 @@ describe('AlbionRegistrationService', () => {
       },
     };
 
-    mockInteraction = {
-      channelId: expectedChannelId,
-      guild: {
-        roles: {
-          fetch: jest.fn().mockReturnValue({ id: expectedRoleId }),
-        },
-        members: {
-          fetch: jest.fn().mockReturnValue(mockUser),
-        },
+    mockDiscordUser.guild = {
+      members: {
+        fetch: jest.fn().mockImplementation(() => mockDiscordUser),
       },
-      user: mockUser,
-      member: mockUser,
-    };
+    } as any;
 
     const moduleRef = await Test.createTestingModule({
       providers: [
@@ -200,74 +165,72 @@ describe('AlbionRegistrationService', () => {
     }]);
     discordService.getGuildMember = jest.fn().mockResolvedValue(null);
 
-    await expect(service.isValidRegistrationAttempt(mockCharacter, mockDiscordGuildMember)).rejects.toThrowError(`Character **${mockCharacter.data.Name}** has already been registered, but the user who registered it has left the server. If you believe this to be in error, please contact the Albion Guild Masters.`);
+    await expect(service.validateRegistrationAttempt(mockCharacter, mockDiscordUser)).rejects.toThrowError(`Character **${mockCharacter.data.Name}** has already been registered, but the user who registered it has left the server. If you believe this to be in error, please contact the Albion Guild Masters.`);
   });
   it('validation should return an error if the character has already been registered by another person (but still on server)', async () => {
     albionMembersRepository.find = jest.fn().mockResolvedValue([{
       discordId: '123456789',
     }]);
-    discordService.getGuildMember = jest.fn().mockResolvedValue(mockDiscordGuildMember);
+    discordService.getGuildMember = jest.fn().mockResolvedValue(mockDiscordUser);
 
-    await expect(service.isValidRegistrationAttempt(mockCharacter, mockDiscordGuildMember)).rejects.toThrowError(`Character **${mockCharacter.data.Name}** has already been registered by user \`@${mockDiscordGuildMember.displayName}\`. If you believe this to be in error, please contact the Albion Guild Masters.`);
+    await expect(service.validateRegistrationAttempt(mockCharacter, mockDiscordUser)).rejects.toThrowError(`Character **${mockCharacter.data.Name}** has already been registered by user \`@${mockDiscordUser.displayName}\`. If you believe this to be in error, please contact the Albion Guild Masters.`);
   });
   it('validation should return an error if the user has already registered a character themselves', async () => {
     const discordMemberEntry = {
-      discordId: mockDiscordGuildMember.id,
+      discordId: mockDiscordUser.id,
       characterName: 'TestCharacter',
     };
     albionMembersRepository.find = jest.fn()
       .mockResolvedValueOnce([])
       .mockResolvedValueOnce([discordMemberEntry]);
 
-    await expect(service.isValidRegistrationAttempt(mockCharacter, mockDiscordGuildMember)).rejects.toThrowError(`You have already registered a character named **${discordMemberEntry.characterName}**. We don't allow multiple characters to be registered to the same Discord user, as there is little point to it. If you believe this to be in error, or you have registered the wrong character, please contact the Albion Guild Masters.`);
+    await expect(service.validateRegistrationAttempt(mockCharacter, mockDiscordUser)).rejects.toThrowError(`You have already registered a character named **${discordMemberEntry.characterName}**. We don't allow multiple characters to be registered to the same Discord user, as there is little point to it. If you believe this to be in error, or you have registered the wrong character, please contact the Albion Guild Masters.`);
   });
   it('validation should return true if no existing registration was found', async () => {
     albionMembersRepository.find = jest.fn()
       .mockResolvedValueOnce([])
       .mockResolvedValueOnce([]);
 
-    await expect(service.isValidRegistrationAttempt(mockCharacter, mockDiscordGuildMember)).resolves.toBe(true);
+    await expect(service.validateRegistrationAttempt(mockCharacter, mockDiscordUser)).resolves.toBe(true);
   });
-
-  // Verification handling
   it('should handle characters that are not in the guild', async () => {
-    service.isValidRegistrationAttempt = jest.fn().mockImplementation(() => true);
     mockCharacter.data.GuildId = 'utter nonsense';
 
-    await expect(service.handleVerification(mockCharacter, mockInteraction)).rejects.toThrowError(`Your character **${mockCharacter.data.Name}** is not in the guild. If your character is in the guild, please ensure you have spelt the name **exactly** correct.`);
+    await expect(service.validateRegistrationAttempt(mockCharacter, mockDiscordUser)).rejects.toThrowError(`Your character **${mockCharacter.data.Name}** is not in the guild. Please ensure you have spelt the name **exactly** correct.`);
   });
+
+  // Registration handling
   it('should handle discord role adding errors', async () => {
-    service.isValidRegistrationAttempt = jest.fn().mockImplementation(() => true);
+    service.validateRegistrationAttempt = jest.fn().mockImplementation(() => true);
     discordService.getMemberRole = jest.fn().mockReturnValue({
       id: expectedRoleId,
     });
-    mockInteraction.member.roles.add = jest.fn()
+    mockDiscordUser.roles.add = jest.fn()
       .mockResolvedValueOnce(true)
       .mockImplementation(() => {
         throw new Error('Unable to add role');
       });
-    await expect(service.handleVerification(mockCharacter, mockInteraction)).rejects.toThrowError(`Unable to add the \`@ALB/Initiate\` or \`@ALB/Registered\` roles to user! Pinging <@${expectedDevUserId}>!`);
+    await expect(service.handleRegistration(mockCharacter, mockDiscordUser)).rejects.toThrowError(`Unable to add the \`@ALB/Initiate\` or \`@ALB/Registered\` roles to user! Pinging <@${expectedDevUserId}>!`);
   });
   it('should return thrown exception upon database error', async () => {
-    service.isValidRegistrationAttempt = jest.fn().mockImplementation(() => true);
+    service.validateRegistrationAttempt = jest.fn().mockImplementation(() => true);
     discordService.getMemberRole = jest.fn().mockReturnValue({
       id: expectedRoleId,
     });
-    mockInteraction.member.roles.add = jest.fn().mockReturnValue(true);
     albionMembersRepository.upsert = jest.fn().mockImplementation(() => {
       throw new Error('Database done goofed');
     });
-    await expect(service.handleVerification(mockCharacter, mockInteraction)).rejects.toThrowError(`Unable to add you to the database! Pinging <@${expectedDevUserId}>! Err: Database done goofed`);
+    await expect(service.handleRegistration(mockCharacter, mockDiscordUser)).rejects.toThrowError(`Unable to add you to the database! Pinging <@${expectedDevUserId}>! Err: Database done goofed`);
   });
   it('should handle discord nickname permission errors', async () => {
-    service.isValidRegistrationAttempt = jest.fn().mockImplementation(() => true);
+    service.validateRegistrationAttempt = jest.fn().mockImplementation(() => true);
     discordService.getMemberRole = jest.fn().mockReturnValue({
       id: expectedRoleId,
     });
-    mockInteraction.member.roles.add = jest.fn().mockReturnValue(true);
-    mockInteraction.member.setNickname = jest.fn().mockImplementation(() => {
+    mockDiscordUser.roles.add = jest.fn().mockReturnValue(true);
+    mockDiscordUser.setNickname = jest.fn().mockImplementation(() => {
       throw new Error('Unable to set nickname');
     });
-    await expect(service.handleVerification(mockCharacter, mockInteraction)).rejects.toThrowError(`Unable to set your nickname. If you're Staff this won't work as the bot has no power over you! Pinging <@${expectedDevUserId}>!`);
+    await expect(service.handleRegistration(mockCharacter, mockDiscordUser)).rejects.toThrowError(`Unable to set your nickname. If you're Staff this won't work as the bot has no power over you! Pinging <@${expectedDevUserId}>!`);
   });
 });
