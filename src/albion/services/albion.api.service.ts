@@ -16,7 +16,7 @@ export class AlbionApiService {
     const response: AlbionPlayersResponseInterface = await request.get(`/players/${characterId}`);
 
     if (response.data.Id !== characterId) {
-      throw new Error('Character ID does not match.');
+      throw new Error(`Character ID \`${characterId}\` does not match API response consistently.`);
     }
 
     return response;
@@ -33,7 +33,7 @@ export class AlbionApiService {
 
     // If there were no players found
     if (foundPlayer.length === 0) {
-      throw new Error(`Character "${characterName}" does not exist. Please ensure you have supplied your exact name.`);
+      throw new Error(`Character **${characterName}** does not exist. Please ensure you have supplied your exact name.`);
     }
 
     if (foundPlayer.length > 1) {
@@ -43,14 +43,14 @@ export class AlbionApiService {
       });
 
       if (foundPlayerInGuild.length === 0) {
-        throw new Error(`Multiple characters for "${characterName}" were found, none of them are a guild member.`);
+        throw new Error(`Multiple characters for **${characterName}** were found, none of them are a guild member.`);
       }
 
       if (foundPlayerInGuild.length === 1) {
         return foundPlayerInGuild[0].Id;
       }
       else {
-        throw new Error(`Multiple characters for "${characterName}" were found within the guild. This is an unsupported use case for this registration system. Congrats you broke it. Please contact the Albion Guild Masters.`);
+        throw new Error(`Multiple characters for **${characterName}** were found within the guild. This is an unsupported use case for this registration system. Congrats you broke it. Please contact the Albion Guild Masters.`);
       }
     }
 

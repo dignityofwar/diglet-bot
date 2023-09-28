@@ -55,7 +55,7 @@ describe('AlbionApiService', () => {
 
     await expect(service.getCharacter('who.dis'))
       .rejects
-      .toThrowError('Character "who.dis" does not exist. Please ensure you have supplied your exact name.');
+      .toThrowError('Character **who.dis** does not exist. Please ensure you have supplied your exact name.');
   });
 
   it('should return a character based on exact match amongst partial matches', async () => {
@@ -88,8 +88,9 @@ describe('AlbionApiService', () => {
   });
 
   it('should throw an error when the API returns a different character ID than expected', async () => {
+    const id = 'hd8zVXIjRc6lnb_1FYIgpw';
     const properResult = {
-      'Id': 'hd8zVXIjRc6lnb_1FYIgpw',
+      'Id': id,
       'Name': 'Maelstrome',
     };
     const searchResponse = {
@@ -107,7 +108,7 @@ describe('AlbionApiService', () => {
 
     await expect(service.getCharacter('Maelstrome'))
       .rejects
-      .toThrowError('Character ID does not match.');
+      .toThrowError(`Character ID \`${id}\` does not match API response consistently.`);
   });
 
   it('should handle a character having duplicates, as long as only one of them is in the guild', async () => {
@@ -143,6 +144,40 @@ describe('AlbionApiService', () => {
     await expect(service.getCharacter(characterName))
       .resolves
       .toStrictEqual({ data: properResult });
+  });
+  it('should throw error when multiple characters are found and none are in the guild', async () => {
+    const characterName = 'NightRaven2511';
+    const properResult = {
+      'Id': '2obpVpJrRfqa26SIXdXK4A',
+      'Name': characterName,
+      'GuildId': '',
+      'GuildName': '',
+    };
+
+    const searchResponse = {
+      data: {
+        guilds: [],
+        players: [
+          {
+            'Id': 'xNyVq16xTCKyPKCPqboe4w',
+            'Name': characterName,
+            'GuildId': '',
+            'GuildName': '',
+          },
+          properResult,
+        ],
+      },
+    };
+
+    jest.spyOn(AlbionAxiosFactory.prototype, 'createAlbionApiClient').mockReturnValue({
+      get: jest.fn()
+        .mockResolvedValueOnce(searchResponse)
+        .mockResolvedValueOnce({ data: properResult }),
+    } as any);
+
+    await expect(service.getCharacter(characterName))
+      .rejects
+      .toThrowError(`Multiple characters for **${characterName}** were found, none of them are a guild member.`);
   });
   it('should throw error when multiple characters of the same name in the guild', async () => {
     const characterName = 'NightRaven2511';
@@ -182,6 +217,6 @@ describe('AlbionApiService', () => {
 
     await expect(service.getCharacter(characterName))
       .rejects
-      .toThrowError('Multiple characters for "NightRaven2511" were found within the guild. This is an unsupported use case for this registration system. Congrats you broke it. Please contact the Albion Guild Masters.');
+      .toThrowError('Multiple characters for **NightRaven2511** were found within the guild. This is an unsupported use case for this registration system. Congrats you broke it. Please contact the Albion Guild Masters.');
   });
 });
