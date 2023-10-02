@@ -36,7 +36,7 @@ export class AlbionRegistrationService implements OnApplicationBootstrap {
   }
 
   async validateRegistrationAttempt(character: AlbionPlayersResponseInterface, guildMember: GuildMember): Promise<string | true> {
-    this.logger.debug('Checking if registration attempt is valid');
+    this.logger.debug(`Checking if registration attempt for "${character.data.Name}" is valid`);
 
     // 1. Check if the roles to apply exist
     try {
@@ -74,11 +74,13 @@ export class AlbionRegistrationService implements OnApplicationBootstrap {
       this.throwError(`You have already registered a character named **${discordMember[0].characterName}**. We don't allow multiple characters to be registered to the same Discord user, as there is little point to it. If you believe this to be in error, or you have registered the wrong character, please contact the Albion Guild Masters.`);
     }
 
+    console.log(`Registration attempt for "${character.data.Name}" is valid`);
+
     return true;
   }
 
   async handleRegistration(character: AlbionPlayersResponseInterface, guildMember: GuildMember) {
-    this.logger.debug('Handling Albion character registration');
+    this.logger.debug(`Handling Albion character "${character.data.Name}" registration`);
 
     await this.validateRegistrationAttempt(character, guildMember);
 
@@ -98,7 +100,7 @@ export class AlbionRegistrationService implements OnApplicationBootstrap {
       await guildMember.roles.add(verifiedRole);
     }
     catch (err) {
-      this.throwError(`Unable to add the \`@ALB/Initiate\` or \`@ALB/Registered\` roles to user! Pinging <@${this.config.get('discord.devUserId')}>!`);
+      this.throwError(`Unable to add the \`@ALB/Initiate\` or \`@ALB/Registered\` roles to user "${guildMember.displayName}"! Pinging <@${this.config.get('discord.devUserId')}>!`);
     }
 
     try {
