@@ -69,12 +69,14 @@ export class AlbionScanningService {
       return this.reset();
     }
 
+    let suggestions: string;
+
     try {
       await message.edit(`Checking ${length} characters for membership status...`);
       await this.removeLeavers(characters, guildMembers, message, dryRun);
 
       await message.edit(`Checking ${length} characters for role inconsistencies...`);
-      await this.checkForSuggestions(guildMembers, message);
+      suggestions = await this.generateSuggestions(guildMembers, message);
     }
     catch (err) {
       await message.edit('## ❌ An error occurred while scanning!');
@@ -222,6 +224,33 @@ export class AlbionScanningService {
     }
   }
 
+  async generateSuggestions(
+    guildMembers: AlbionMembersEntity[],
+    message: Message
+  ) {
+    const suggestions: string[] = [];
+    for (const member of guildMembers) {
+      // If already in the change set, they have been removed so don't bother checking
+      if (this.changesMap.has(member.characterId)) {
+        continue;
+      }
+
+      const discordMember = await message.guild.members.fetch({ user: member.discordId, force: true });
+
+      // Get the role inconsistencies
+      const inconsistencies = await this.checkRoleInconsistencies(discordMember);
+
+      // Construct the strings
+      inconsistencies.forEach((inconsistency) => {
+        const emoji = inconsistency.action === 'add' ? '➕' : '➖';
+        suggestions.push(`- ${emoji} <@${member.discordId}> requires role **${inconsistency.name}** to be ${inconsistency.action === 'add' ? 'added' : 'removed'}.`);
+      });
+    }
+
+    // Now smush it all into one big string
+    return suggestions.join('\n');
+  }
+
   async checkRoleInconsistencies(discordMember: GuildMember): Promise<RoleInconsistencyResult[]> {
     const roleMap: AlbionRoleMapInterface[] = this.config.get('albion.roleMap');
 
@@ -261,23 +290,5 @@ export class AlbionScanningService {
     });
 
     return result;
-  }
-
-  async checkForSuggestions(
-    guildMembers: AlbionMembersEntity[],
-    message: Message
-  ) {
-    for (const member of guildMembers) {
-      // If already in the change set, they have been removed so don't bother checking
-      if (this.changesMap.has(member.characterId)) {
-        continue;
-      }
-
-      const character = this.charactersMap.get(member.characterId);
-      const discordMember = await message.guild.members.fetch({ user: member.discordId, force: true });
-
-      const inconsistencies = await this.checkRoleInconsistencies(discordMember);
-
-    }
   }
 }

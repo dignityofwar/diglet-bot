@@ -246,28 +246,36 @@ describe('AlbionScanningService', () => {
     });
   };
 
-  const runRolePriorityTest = async (hasRoles: string[], expectedInconsistencies: RoleInconsistencyResult[]) => {
-    setupMocks(hasRoles);
-    const result = await service.checkRoleInconsistencies(mockDiscordUser);
-    expect(result).toEqual(expectedInconsistencies);
-  };
-
   // Suggestions tests
-  // it('should properly report back inconsistencies', async () => {
-  //   service.checkRoleInconsistencies = jest.fn().mockImplementation(() => {
-  //     return {
-  //       inconsistentRoles: [
-  //         { id: '1158467574678429696', name: '@ALB/Master' },
-  //         { id: '1139909152701947944', name: '@ALB/Initiate' },
-  //       ],
-  //     };
-  //   });
-  //
-  //   expect(await service.checkRoleInconsistencies(mockDiscordUser)).toEqual(
-  // });
+  it('should generate multiple suggestions for a single user for a Master', async () => {
+    service.checkRoleInconsistencies = jest.fn().mockImplementation(() => {
+      return [
+        { id: captainRoleId, name: captainName, action: 'remove' },
+        { id: squireRoleId, name: squireName, action: 'add' },
+        { id: initiateRoleId, name: initiateName, action: 'remove' },
+      ];
+    });
+
+    expect(await service.generateSuggestions([mockAlbionMember], mockDiscordMessage)).toEqual(`- ➖ <@${mockAlbionMember.id}> requires role **${captainName}** to be removed.\n- ➕ <@${mockAlbionMember.id}> requires role **${squireName}** to be added.\n- ➖ <@${mockAlbionMember.id}> requires role **${initiateName}** to be removed.`);
+  });
+
+  it('should generate suggestions for a multiple users with varying inconsistencies', async () => {
+    service.checkRoleInconsistencies = jest.fn().mockImplementationOnce(() => {
+      return [
+        { id: captainRoleId, name: captainName, action: 'remove' },
+      ];
+    }).mockImplementationOnce(() => {
+      return [
+        { id: squireRoleId, name: squireName, action: 'add' },
+      ];
+    });
+    const mockAlbionMember2 = _.cloneDeep(mockAlbionMember);
+    mockAlbionMember2.discordId = '1234567891';
+
+    expect(await service.generateSuggestions([mockAlbionMember, mockAlbionMember2], mockDiscordMessage)).toEqual(`- ➖ <@${mockAlbionMember.discordId}> requires role **${captainName}** to be removed.\n- ➕ <@${mockAlbionMember2.discordId}> requires role **${squireName}** to be added.`);
+  });
 
   // Inconsistency scanner tests
-
   const testCases = [
     {
       title: 'Captain having Initiate and missing Squire',
