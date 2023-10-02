@@ -161,7 +161,7 @@ describe('AlbionRegisterCommand', () => {
     albionApiService.getCharacter = jest.fn().mockImplementation(() => mockCharacter);
     albionVerifyService.handleRegistration = jest.fn().mockImplementation(() => true);
 
-    expect(await command.onAlbionRegisterCommand(dto, mockInteraction)).toBe(`## ✅ Thank you **${mockUser.username}**, you've been verified as a [DIG] guild member! 🎉
+    expect(await command.onAlbionRegisterCommand(dto, mockInteraction)).toBe(`## ✅ Thank you **${mockUser.displayName}**, you've been verified as a [DIG] guild member! 🎉
     
 * ➡️ Please read the information within <#5555444455555> to be fully acquainted with the guild!
     

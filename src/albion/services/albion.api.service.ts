@@ -1,6 +1,10 @@
 import { Injectable } from '@nestjs/common';
 import AlbionAxiosFactory from '../factories/albion.axios.factory';
-import { AlbionPlayersResponseInterface, AlbionSearchResponseInterface } from '../interfaces/albion.api.interfaces';
+import {
+  AlbionPlayerInterface,
+  AlbionPlayersResponseInterface,
+  AlbionSearchResponseInterface,
+} from '../interfaces/albion.api.interfaces';
 import { ConfigService } from '@nestjs/config';
 
 @Injectable()
@@ -9,7 +13,7 @@ export class AlbionApiService {
     private readonly config: ConfigService,
   ) {}
 
-  async getCharacter(characterName: string): Promise<AlbionPlayersResponseInterface> {
+  async getCharacter(characterName: string): Promise<AlbionPlayerInterface> {
     const characterId = await this.getCharacterId(characterName);
 
     const request = new AlbionAxiosFactory().createAlbionApiClient();
@@ -19,7 +23,7 @@ export class AlbionApiService {
       this.throwError(`Character ID \`${characterId}\` does not match API response consistently.`);
     }
 
-    return response;
+    return response.data;
   }
 
   private async getCharacterId(characterName: string): Promise<string> {

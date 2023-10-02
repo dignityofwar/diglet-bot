@@ -84,7 +84,7 @@ describe('AlbionApiService', () => {
 
     await expect(service.getCharacter('Maelstrome'))
       .resolves
-      .toStrictEqual({ data: properResult });
+      .toStrictEqual(properResult);
   });
 
   it('should throw an error when the API returns a different character ID than expected', async () => {
@@ -143,7 +143,7 @@ describe('AlbionApiService', () => {
 
     await expect(service.getCharacter(characterName))
       .resolves
-      .toStrictEqual({ data: properResult });
+      .toStrictEqual(properResult);
   });
   it('should throw error when multiple characters are found and none are in the guild', async () => {
     const characterName = 'NightRaven2511';
