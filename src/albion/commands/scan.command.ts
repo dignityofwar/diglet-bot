@@ -2,14 +2,14 @@ import { Command, EventParams, Handler, InteractionEvent } from '@discord-nestjs
 import { ApplicationCommandType, ChatInputCommandInteraction } from 'discord.js';
 import { SlashCommandPipe } from '@discord-nestjs/common';
 import { Injectable, Logger } from '@nestjs/common';
-import { PS2GameScanningService } from '../service/ps2.game.scanning.service';
 import { ConfigService } from '@nestjs/config';
 import { AlbionScanDto } from '../dto/albion.scan.dto';
+import { AlbionScanningService } from '../services/albion.scanning.service';
 
 @Command({
   name: 'albion-scan',
   type: ApplicationCommandType.ChatInput,
-  description: 'Trigger a scan of verified DIG outfit members to ensure they\'re valid members',
+  description: 'Trigger a scan of verified DIG Guild members to ensure they\'re valid members',
 })
 @Injectable()
 export class AlbionScanCommand {
@@ -17,7 +17,7 @@ export class AlbionScanCommand {
 
   constructor(
     private readonly config: ConfigService,
-    private readonly ps2GameScanningService: PS2GameScanningService,
+    private readonly albionScanningService: AlbionScanningService,
   ) {}
 
   @Handler()
@@ -37,7 +37,7 @@ export class AlbionScanCommand {
 
     const message = await interaction[0].channel.send('Starting scan...');
 
-    this.ps2GameScanningService.startScan(message, dto.dryRun);
+    this.albionScanningService.startScan(message, dto.dryRun);
 
     return `Scan initiated. ${dto.dryRun ? '[DRY RUN, NO CHANGES WILL ACTUALLY BE PERFORMED]' : ''}`;
   }

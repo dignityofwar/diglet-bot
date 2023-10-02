@@ -6,9 +6,10 @@ import { DatabaseModule } from '../database/database.module';
 import { ConfigModule } from '../config/config.module';
 import { AlbionRegistrationService } from './services/albion.registration.service';
 import { DiscordModule } from '../discord/discord.module';
+import { AlbionScanningService } from './services/albion.scanning.service';
 
 @Module({
   imports: [DiscordJSModule.forFeature(), DiscordModule, DatabaseModule, ConfigModule],
-  providers: [AlbionApiService, AlbionRegisterCommand, AlbionRegistrationService],
+  providers: [AlbionApiService, AlbionRegisterCommand, AlbionRegistrationService, AlbionScanningService],
 })
 export class AlbionModule {}
