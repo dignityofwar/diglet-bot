@@ -1,6 +1,6 @@
 {
   "name": "digbot-nest",
-  "version": "0.19.6",
+  "version": "0.19.7",
   "private": true,
   "license": "UNLICENSED",
   "scripts": {

@@ -55,7 +55,7 @@ interface AlbionSearchGuildInterface {
   DeathFame: number
 }
 
-interface AlbionPlayerDataInterface extends AlbionPlayerDetailsInterface {
+export interface AlbionPlayerInterface extends AlbionPlayerDetailsInterface {
   AverageItemPower: number; // Always seems to return 0
   Equipment: AlbionEquipmentInterface;
   Inventory: [];
@@ -78,7 +78,7 @@ interface AlbionPlayerDataInterface extends AlbionPlayerDetailsInterface {
 }
 
 export interface AlbionPlayersResponseInterface {
-  data: AlbionPlayerDataInterface
+  data: AlbionPlayerInterface
 }
 
 export interface AlbionSearchResponseInterface {

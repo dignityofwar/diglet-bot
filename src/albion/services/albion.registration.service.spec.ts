@@ -8,7 +8,7 @@ import { ConfigService } from '@nestjs/config';
 import { EntityManager, EntityRepository, MikroORM } from '@mikro-orm/core';
 import { getRepositoryToken } from '@mikro-orm/nestjs';
 import { AlbionMembersEntity } from '../../database/entities/albion.members.entity';
-import { AlbionPlayersResponseInterface } from '../interfaces/albion.api.interfaces';
+import { AlbionPlayerInterface } from '../interfaces/albion.api.interfaces';
 import { SnowflakeUtil } from 'discord.js';
 
 const expectedChannelId = '1234567890';
@@ -23,7 +23,7 @@ describe('AlbionRegistrationService', () => {
   let albionMembersRepository: EntityRepository<AlbionMembersEntity>;
 
   let mockDiscordUser: any;
-  let mockCharacter: AlbionPlayersResponseInterface;
+  let mockCharacter: AlbionPlayerInterface;
   let mockEntityManager: jest.Mocked<EntityManager>;
 
   beforeEach(async () => {
@@ -48,11 +48,9 @@ describe('AlbionRegistrationService', () => {
     } as any));
 
     mockCharacter = {
-      data: {
-        Id: '123456789',
-        Name: 'TestCharacter',
-        GuildId: expectedGuildId,
-      },
+      Id: '123456789',
+      Name: 'TestCharacter',
+      GuildId: expectedGuildId,
     } as any;
 
     // A mock instance of a Discord User
@@ -178,7 +176,7 @@ describe('AlbionRegistrationService', () => {
     }]);
     discordService.getGuildMember = jest.fn().mockResolvedValue(null);
 
-    await expect(service.validateRegistrationAttempt(mockCharacter, mockDiscordUser)).rejects.toThrowError(`Character **${mockCharacter.data.Name}** has already been registered, but the user who registered it has left the server. If you believe this to be in error, please contact the Albion Guild Masters.`);
+    await expect(service.validateRegistrationAttempt(mockCharacter, mockDiscordUser)).rejects.toThrowError(`Character **${mockCharacter.Name}** has already been registered, but the user who registered it has left the server. If you believe this to be in error, please contact the Albion Guild Masters.`);
   });
   it('validation should return an error if the character has already been registered by another person (but still on server)', async () => {
     albionMembersRepository.find = jest.fn().mockResolvedValue([{
@@ -186,7 +184,7 @@ describe('AlbionRegistrationService', () => {
     }]);
     discordService.getGuildMember = jest.fn().mockResolvedValue(mockDiscordUser);
 
-    await expect(service.validateRegistrationAttempt(mockCharacter, mockDiscordUser)).rejects.toThrowError(`Character **${mockCharacter.data.Name}** has already been registered by user \`@${mockDiscordUser.displayName}\`. If you believe this to be in error, please contact the Albion Guild Masters.`);
+    await expect(service.validateRegistrationAttempt(mockCharacter, mockDiscordUser)).rejects.toThrowError(`Character **${mockCharacter.Name}** has already been registered by user \`@${mockDiscordUser.displayName}\`. If you believe this to be in error, please contact the Albion Guild Masters.`);
   });
   it('validation should return an error if the user has already registered a character themselves', async () => {
     const discordMemberEntry = {
@@ -207,9 +205,9 @@ describe('AlbionRegistrationService', () => {
     await expect(service.validateRegistrationAttempt(mockCharacter, mockDiscordUser)).resolves.toBe(true);
   });
   it('should handle characters that are not in the guild', async () => {
-    mockCharacter.data.GuildId = 'utter nonsense';
+    mockCharacter.GuildId = 'utter nonsense';
 
-    await expect(service.validateRegistrationAttempt(mockCharacter, mockDiscordUser)).rejects.toThrowError(`Your character **${mockCharacter.data.Name}** is not in the guild. Please ensure you have spelt the name **exactly** correct **and** you are a member of the guild in the game before trying again.`);
+    await expect(service.validateRegistrationAttempt(mockCharacter, mockDiscordUser)).rejects.toThrowError(`Your character **${mockCharacter.Name}** is not in the guild. Please ensure you have spelt the name **exactly** correct **and** you are a member of the guild in the game before trying again.`);
   });
 
   // Registration handling

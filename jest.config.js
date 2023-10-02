@@ -14,4 +14,5 @@ module.exports = {
     '**/*.(t|j)s',
   ],
   coverageDirectory: 'coverage',
+  setupFilesAfterEnv: ['./jest-preload.js'],
 };

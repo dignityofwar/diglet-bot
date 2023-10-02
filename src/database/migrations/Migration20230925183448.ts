@@ -1,6 +1,6 @@
 import { Migration } from '@mikro-orm/migrations';
 import { AlbionApiService } from '../../albion/services/albion.api.service';
-import { AlbionPlayersResponseInterface } from '../../albion/interfaces/albion.api.interfaces';
+import { AlbionPlayerInterface } from '../../albion/interfaces/albion.api.interfaces';
 import { ConfigService } from '@nestjs/config';
 
 export class Migration20230925183448 extends Migration {
@@ -83,7 +83,7 @@ export class Migration20230925183448 extends Migration {
       // eslint-disable-next-line no-async-promise-executor
       const promise = new Promise(async (resolve) => {
         await service.getCharacter(member.characterName).then((response) => {
-          if (response.data.GuildId !== 'btPZRoLvTUqLC7URnDRgSQ') {
+          if (response.GuildId !== 'btPZRoLvTUqLC7URnDRgSQ') {
             console.error(`Character ${member.characterName} does not belong to the guild any longer`);
             return resolve(null);
           }
@@ -98,8 +98,8 @@ export class Migration20230925183448 extends Migration {
     }
 
     const characters = await Promise.all(promises);
-    const validCharacters: AlbionPlayersResponseInterface[] = characters.filter((character) => {
-      return character !== null && character.data.GuildId === 'btPZRoLvTUqLC7URnDRgSQ';
+    const validCharacters: AlbionPlayerInterface[] = characters.filter((character) => {
+      return character !== null && character.GuildId === 'btPZRoLvTUqLC7URnDRgSQ';
     });
 
     console.log(`Found ${validCharacters.length} valid members`);
@@ -107,7 +107,7 @@ export class Migration20230925183448 extends Migration {
     // Insert the members into the database
     members.forEach((member) => {
       const char = validCharacters.filter((character) => {
-        return character.data.Name === member.characterName;
+        return character.Name === member.characterName;
       })[0];
 
       if (!char) {
@@ -115,7 +115,7 @@ export class Migration20230925183448 extends Migration {
         return;
       }
 
-      const sql = `insert into \`albion_members_entity\` (\`discord_id\`, \`character_id\`, \`character_name\`, \`manual\`, \`manual_created_by_discord_id\`, \`manual_created_by_discord_name\`, \`created_at\`, \`updated_at\`) values ('${member.discordId}', '${char.data.Id}', '${member.characterName}', '1', '90078072660852736', 'Maelstrome', now(), now());`;
+      const sql = `insert into \`albion_members_entity\` (\`discord_id\`, \`character_id\`, \`character_name\`, \`manual\`, \`manual_created_by_discord_id\`, \`manual_created_by_discord_name\`, \`created_at\`, \`updated_at\`) values ('${member.discordId}', '${char.Id}', '${member.characterName}', '1', '90078072660852736', 'Maelstrome', now(), now());`;
       // console.log(sql);
       this.addSql(sql);
     });
