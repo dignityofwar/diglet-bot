@@ -60,6 +60,7 @@ describe('AlbionRegistrationService', () => {
       createdAt: new Date(),
       createdTimestamp: Date.now(),
       discriminator: '0000',
+      displayName: 'mockuser',
       defaultAvatarURL: 'https://defaultavatar.url',
       id: SnowflakeUtil.generate(),
       tag: 'TestUser#0000',
@@ -208,7 +209,7 @@ describe('AlbionRegistrationService', () => {
   it('should handle characters that are not in the guild', async () => {
     mockCharacter.data.GuildId = 'utter nonsense';
 
-    await expect(service.validateRegistrationAttempt(mockCharacter, mockDiscordUser)).rejects.toThrowError(`Your character **${mockCharacter.data.Name}** is not in the guild. Please ensure you have spelt the name **exactly** correct.`);
+    await expect(service.validateRegistrationAttempt(mockCharacter, mockDiscordUser)).rejects.toThrowError(`Your character **${mockCharacter.data.Name}** is not in the guild. Please ensure you have spelt the name **exactly** correct **and** you are a member of the guild in the game before trying again.`);
   });
 
   // Registration handling
@@ -222,7 +223,7 @@ describe('AlbionRegistrationService', () => {
       .mockImplementation(() => {
         throw new Error('Unable to add role');
       });
-    await expect(service.handleRegistration(mockCharacter, mockDiscordUser)).rejects.toThrowError(`Unable to add the \`@ALB/Initiate\` or \`@ALB/Registered\` roles to user! Pinging <@${expectedDevUserId}>!`);
+    await expect(service.handleRegistration(mockCharacter, mockDiscordUser)).rejects.toThrowError(`Unable to add the \`@ALB/Initiate\` or \`@ALB/Registered\` roles to user "${mockDiscordUser.displayName}"! Pinging <@${expectedDevUserId}>!`);
   });
   it('should return thrown exception upon database error', async () => {
     service.validateRegistrationAttempt = jest.fn().mockImplementation(() => true);

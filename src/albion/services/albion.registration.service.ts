@@ -52,7 +52,7 @@ export class AlbionRegistrationService implements OnApplicationBootstrap {
 
     // Check if the character is in the Albion guild
     if (character.data.GuildId !== gameGuildId) {
-      this.throwError(`Your character **${character.data.Name}** is not in the guild. Please ensure you have spelt the name **exactly** correct. If it still doesn't work, try again later as our data source may be out of date.`);
+      this.throwError(`Your character **${character.data.Name}** is not in the guild. Please ensure you have spelt the name **exactly** correct **and** you are a member of the guild in the game before trying again. If it still doesn't work, try again later as our data source may be out of date.`);
     }
 
     // 3. Check if the character has already been registered
