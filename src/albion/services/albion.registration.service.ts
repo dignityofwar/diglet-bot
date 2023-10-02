@@ -26,10 +26,10 @@ export class AlbionRegistrationService implements OnApplicationBootstrap {
 
     this.verificationChannel = await this.discordService.getChannel(verifyChannelId);
     if (!this.verificationChannel) {
-      throw new Error(`Could not find channel with ID ${verifyChannelId}`);
+      this.throwError(`Could not find channel with ID ${verifyChannelId}`);
     }
     if (!this.verificationChannel.isTextBased()) {
-      throw new Error(`Channel with ID ${verifyChannelId} is not a text channel`);
+      this.throwError(`Channel with ID ${verifyChannelId} is not a text channel`);
     }
 
     // We purposefully don't check if the verified role exists, as the bot could technically belong to multiple servers, and we'd have to start injecting the guild ID into the config service, which is a bit of a pain.
@@ -44,7 +44,7 @@ export class AlbionRegistrationService implements OnApplicationBootstrap {
       await this.discordService.getMemberRole(guildMember, this.config.get('discord.roles.albionVerifiedRoleId'));
     }
     catch (err) {
-      throw new Error (`Required Roles do not exist! Pinging <@${this.config.get('discord.devUserId')}>! Err: ${err.message}`);
+      this.throwError(`Required Roles do not exist! Pinging <@${this.config.get('discord.devUserId')}>! Err: ${err.message}`);
     }
 
     // 2. Check if the user is in the guild
@@ -52,7 +52,7 @@ export class AlbionRegistrationService implements OnApplicationBootstrap {
 
     // Check if the character is in the Albion guild
     if (character.data.GuildId !== gameGuildId) {
-      throw new Error(`Your character **${character.data.Name}** is not in the guild. Please ensure you have spelt the name **exactly** correct. If it still doesn't work, try again later as our data source may be out of date.`);
+      this.throwError(`Your character **${character.data.Name}** is not in the guild. Please ensure you have spelt the name **exactly** correct. If it still doesn't work, try again later as our data source may be out of date.`);
     }
 
     // 3. Check if the character has already been registered
@@ -63,15 +63,15 @@ export class AlbionRegistrationService implements OnApplicationBootstrap {
       const originalDiscordMember = await this.discordService.getGuildMember(guildMember, foundMember[0].discordId);
 
       if (originalDiscordMember === null) {
-        throw new Error(`Character **${character.data.Name}** has already been registered, but the user who registered it has left the server. If you believe this to be in error, please contact the Albion Guild Masters.`);
+        this.throwError(`Character **${character.data.Name}** has already been registered, but the user who registered it has left the server. If you believe this to be in error, please contact the Albion Guild Masters.`);
       }
 
-      throw new Error(`Character **${character.data.Name}** has already been registered by user \`@${originalDiscordMember.displayName}\`. If you believe this to be in error, please contact the Albion Guild Masters.`);
+      this.throwError(`Character **${character.data.Name}** has already been registered by user \`@${originalDiscordMember.displayName}\`. If you believe this to be in error, please contact the Albion Guild Masters.`);
     }
 
     const discordMember = await this.albionMembersRepository.find({ discordId: guildMember.id });
     if (discordMember.length > 0) {
-      throw new Error(`You have already registered a character named **${discordMember[0].characterName}**. We don't allow multiple characters to be registered to the same Discord user, as there is little point to it. If you believe this to be in error, or you have registered the wrong character, please contact the Albion Guild Masters.`);
+      this.throwError(`You have already registered a character named **${discordMember[0].characterName}**. We don't allow multiple characters to be registered to the same Discord user, as there is little point to it. If you believe this to be in error, or you have registered the wrong character, please contact the Albion Guild Masters.`);
     }
 
     return true;
@@ -98,7 +98,7 @@ export class AlbionRegistrationService implements OnApplicationBootstrap {
       await guildMember.roles.add(verifiedRole);
     }
     catch (err) {
-      throw new Error(`Unable to add the \`@ALB/Initiate\` or \`@ALB/Registered\` roles to user! Pinging <@${this.config.get('discord.devUserId')}>!`);
+      this.throwError(`Unable to add the \`@ALB/Initiate\` or \`@ALB/Registered\` roles to user! Pinging <@${this.config.get('discord.devUserId')}>!`);
     }
 
     try {
@@ -111,7 +111,7 @@ export class AlbionRegistrationService implements OnApplicationBootstrap {
       await this.albionMembersRepository.upsert(entity);
     }
     catch (err) {
-      throw new Error(`Unable to add you to the database! Pinging <@${this.config.get('discord.devUserId')}>! Err: ${err.message}`);
+      this.throwError(`Unable to add you to the database! Pinging <@${this.config.get('discord.devUserId')}>! Err: ${err.message}`);
     }
 
     // Edit their nickname to match their ingame
@@ -119,7 +119,12 @@ export class AlbionRegistrationService implements OnApplicationBootstrap {
       await guildMember?.setNickname(character.data.Name);
     }
     catch (err) {
-      throw new Error(`Unable to set your nickname. If you're Staff this won't work as the bot has no power over you! Pinging <@${this.config.get('discord.devUserId')}>!`);
+      this.throwError(`Unable to set your nickname. If you're Staff this won't work as the bot has no power over you! Pinging <@${this.config.get('discord.devUserId')}>!`);
     }
+  }
+
+  private throwError(error: string) {
+    console.error(error);
+    throw new Error(error);
   }
 }
