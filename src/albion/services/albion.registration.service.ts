@@ -5,7 +5,7 @@ import { InjectRepository } from '@mikro-orm/nestjs';
 import { AlbionMembersEntity } from '../../database/entities/albion.members.entity';
 import { EntityRepository } from '@mikro-orm/core';
 import { Channel, GuildMember } from 'discord.js';
-import { AlbionPlayerInterface, AlbionPlayersResponseInterface } from '../interfaces/albion.api.interfaces';
+import { AlbionPlayerInterface } from '../interfaces/albion.api.interfaces';
 
 @Injectable()
 export class AlbionRegistrationService implements OnApplicationBootstrap {

@@ -1,9 +1,6 @@
 import { Migration } from '@mikro-orm/migrations';
 import { AlbionApiService } from '../../albion/services/albion.api.service';
-import {
-  AlbionPlayerInterface,
-  AlbionPlayersResponseInterface,
-} from '../../albion/interfaces/albion.api.interfaces';
+import { AlbionPlayerInterface } from '../../albion/interfaces/albion.api.interfaces';
 import { ConfigService } from '@nestjs/config';
 
 export class Migration20230925183448 extends Migration {

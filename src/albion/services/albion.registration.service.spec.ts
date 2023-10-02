@@ -8,7 +8,7 @@ import { ConfigService } from '@nestjs/config';
 import { EntityManager, EntityRepository, MikroORM } from '@mikro-orm/core';
 import { getRepositoryToken } from '@mikro-orm/nestjs';
 import { AlbionMembersEntity } from '../../database/entities/albion.members.entity';
-import { AlbionPlayerInterface, AlbionPlayersResponseInterface } from '../interfaces/albion.api.interfaces';
+import { AlbionPlayerInterface } from '../interfaces/albion.api.interfaces';
 import { SnowflakeUtil } from 'discord.js';
 
 const expectedChannelId = '1234567890';
