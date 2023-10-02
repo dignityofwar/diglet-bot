@@ -241,7 +241,7 @@ export class AlbionScanningService {
     if (!highestPriorityRole) return result; // return object with empty arrays if no highest priority role is found
 
     roleMap.forEach((role) => {
-      const shouldHaveRole = role.priority === highestPriorityRole!.priority || (role.priority > highestPriorityRole!.priority && role.keep);
+      const shouldHaveRole = role.priority === highestPriorityRole?.priority || (role.priority > highestPriorityRole?.priority && role.keep);
       const hasRole = discordMember.roles.cache.has(role.discordRoleId);
 
       if (shouldHaveRole && !hasRole) {
