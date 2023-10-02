@@ -267,126 +267,105 @@ describe('AlbionScanningService', () => {
   // });
 
   // Inconsistency scanner tests
-  it('should correctly calculate rank inconsistencies (Captain having Initiate and missing Squire)', async () => {
-    await runRolePriorityTest([captainRoleId, initiateRoleId], [
-      {
-        id: squireRoleId,
-        name: squireName,
-        action: 'add',
-      },
-      {
-        id: initiateRoleId,
-        name: initiateName,
-        action: 'remove',
-      },
-    ]);
-  });
-  it('should correctly calculate rank inconsistencies (Guild Master having Initiate, Captain and General when they shouldn\'t)', async () => {
-    await runRolePriorityTest([guildMasterRoleId, initiateRoleId, captainRoleId, generalRoleId, squireRoleId], [
-      {
-        id: generalRoleId,
-        name: generalName,
-        action: 'remove',
-      },
-      {
-        id: captainRoleId,
-        name: captainName,
-        action: 'remove',
-      },
-      {
-        id: initiateRoleId,
-        name: initiateName,
-        action: 'remove',
-      },
-    ]);
-  });
-  // Add tests
-  it('should identify Guild Master requires Squire', async () => {
-    await runRolePriorityTest([guildMasterRoleId], [
-      {
-        id: squireRoleId,
-        name: squireName,
-        action: 'add',
-      },
-    ]);
-  });
-  it('should identify Master requires Squire', async () => {
-    await runRolePriorityTest([masterRoleId], [
-      {
-        id: squireRoleId,
-        name: squireName,
-        action: 'add',
-      },
-    ]);
-  });
-  it('should identify General requires Squire', async () => {
-    await runRolePriorityTest([generalRoleId], [
-      {
-        id: squireRoleId,
-        name: squireName,
-        action: 'add',
-      },
-    ]);
-  });
-  it('should identify Captain requires Squire', async () => {
-    await runRolePriorityTest([captainRoleId], [
-      {
-        id: squireRoleId,
-        name: squireName,
-        action: 'add',
-      },
-    ]);
-  });
-  it('should identify Squire has no extra roles', async () => {
-    await runRolePriorityTest([squireRoleId], []);
-  });
-  it('should identify Initiate has no extra roles', async () => {
-    await runRolePriorityTest([squireRoleId], []);
-  });
-  // Removals
-  it('should correctly identify that Guild Masters should not have Initiate and should have Squire', async () => {
-    await runRolePriorityTest([guildMasterRoleId, squireRoleId, initiateRoleId], [
-      {
-        id: initiateRoleId,
-        name: initiateName,
-        action: 'remove',
-      },
-    ]);
-  });
-  it('should correctly identify that Masters should not have Initiate and should have Squire', async () => {
-    await runRolePriorityTest([masterRoleId, squireRoleId, initiateRoleId], [
-      {
-        id: initiateRoleId,
-        name: initiateName,
-        action: 'remove',
-      },
-    ]);
-  });
-  it('should correctly identify that Generals should not have Initiate and should have Squire', async () => {
-    await runRolePriorityTest([generalRoleId, squireRoleId, initiateRoleId], [
-      {
-        id: initiateRoleId,
-        name: initiateName,
-        action: 'remove',
-      },
-    ]);
-  });
-  it('should correctly identify that Captains should not have Initiate and should have Squire', async () => {
-    await runRolePriorityTest([captainRoleId, squireRoleId, initiateRoleId], [
-      {
-        id: initiateRoleId,
-        name: initiateName,
-        action: 'remove',
-      },
-    ]);
-  });
-  it('should correctly identify that Squires should not have Initiate', async () => {
-    await runRolePriorityTest([squireRoleId, initiateRoleId], [
-      {
-        id: initiateRoleId,
-        name: initiateName,
-        action: 'remove',
-      },
-    ]);
+
+  const testCases = [
+    {
+      title: 'Captain having Initiate and missing Squire',
+      roles: [captainRoleId, initiateRoleId],
+      expected: [
+        { id: squireRoleId, name: squireName, action: 'add' },
+        { id: initiateRoleId, name: initiateName, action: 'remove' },
+      ],
+    },
+    {
+      title: 'Guild Master having Initiate, Captain and General when they shouldn\'t',
+      roles: [guildMasterRoleId, initiateRoleId, captainRoleId, generalRoleId, squireRoleId],
+      expected: [
+        { id: generalRoleId, name: generalName, action: 'remove' },
+        { id: captainRoleId, name: captainName, action: 'remove' },
+        { id: initiateRoleId, name: initiateName, action: 'remove' },
+      ],
+    },
+    {
+      title: 'Guild Master requires Squire',
+      roles: [guildMasterRoleId],
+      expected: [
+        { id: squireRoleId, name: squireName, action: 'add' },
+      ],
+    },
+    {
+      title: 'Master requires Squire',
+      roles: [masterRoleId],
+      expected: [
+        { id: squireRoleId, name: squireName, action: 'add' },
+      ],
+    },
+    {
+      title: 'General requires Squire',
+      roles: [generalRoleId],
+      expected: [
+        { id: squireRoleId, name: squireName, action: 'add' },
+      ],
+    },
+    {
+      title: 'Captain requires Squire',
+      roles: [captainRoleId],
+      expected: [
+        { id: squireRoleId, name: squireName, action: 'add' },
+      ],
+    },
+    {
+      title: 'Squire has no extra roles',
+      roles: [squireRoleId],
+      expected: [],
+    },
+    {
+      title: 'Initiate has no extra roles',
+      roles: [initiateRoleId],
+      expected: [],
+    },
+    {
+      title: 'Guild Masters should not have Initiate and should have Squire',
+      roles: [guildMasterRoleId, squireRoleId, initiateRoleId],
+      expected: [
+        { id: initiateRoleId, name: initiateName, action: 'remove' },
+      ],
+    },
+    {
+      title: 'Masters should not have Initiate and should have Squire',
+      roles: [masterRoleId, squireRoleId, initiateRoleId],
+      expected: [
+        { id: initiateRoleId, name: initiateName, action: 'remove' },
+      ],
+    },
+    {
+      title: 'Generals should not have Initiate and should have Squire',
+      roles: [generalRoleId, squireRoleId, initiateRoleId],
+      expected: [
+        { id: initiateRoleId, name: initiateName, action: 'remove' },
+      ],
+    },
+    {
+      title: 'Captains should not have Initiate and should have Squire',
+      roles: [captainRoleId, squireRoleId, initiateRoleId],
+      expected: [
+        { id: initiateRoleId, name: initiateName, action: 'remove' },
+      ],
+    },
+    {
+      title: 'Squires should not have Initiate',
+      roles: [squireRoleId, initiateRoleId],
+      expected: [
+        { id: initiateRoleId, name: initiateName, action: 'remove' },
+      ],
+    },
+  ];
+
+  testCases.forEach(testCase => {
+    it(`should correctly detect ${testCase.title}`, async () => {
+      setupMocks(testCase.roles);
+      const result = await service.checkRoleInconsistencies(mockDiscordUser);
+      expect(result).toEqual(testCase.expected);
+    });
   });
 });
