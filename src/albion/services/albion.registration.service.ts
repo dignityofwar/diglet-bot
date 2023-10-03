@@ -74,7 +74,7 @@ export class AlbionRegistrationService implements OnApplicationBootstrap {
       this.throwError(`You have already registered a character named **${discordMember[0].characterName}**. We don't allow multiple characters to be registered to the same Discord user, as there is little point to it. If you believe this to be in error, or you have registered the wrong character, please contact the Albion Guild Masters.`);
     }
 
-    console.log(`Registration attempt for "${character.Name}" is valid`);
+    this.logger.debug(`Registration attempt for "${character.Name}" is valid`);
 
     return true;
   }
