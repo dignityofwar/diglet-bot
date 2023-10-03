@@ -238,14 +238,6 @@ describe('AlbionScanningService', () => {
     { id: '1139909152701947944', name: '@ALB/Initiate' },
   ];
 
-  const setupMocks = (hasRoles: string[]) => {
-    mockDiscordUser.roles.cache.has.mockImplementation((roleId: string) => hasRoles.includes(roleId));
-    mockDiscordUser.guild.roles.cache.get = jest.fn().mockImplementation((roleId: string) => {
-      const role = roles.find(r => r.id === roleId);
-      return role ? { id: role.id, name: role.name } : null;
-    });
-  };
-
   // Suggestions tests
   it('should generate multiple suggestions for a single user for a Master', async () => {
     service.checkRoleInconsistencies = jest.fn().mockImplementation(() => {
@@ -369,9 +361,17 @@ describe('AlbionScanningService', () => {
     },
   ];
 
+  const setupRoleTestMocks = (hasRoles: string[]) => {
+    mockDiscordUser.roles.cache.has.mockImplementation((roleId: string) => hasRoles.includes(roleId));
+    mockDiscordUser.guild.roles.cache.get = jest.fn().mockImplementation((roleId: string) => {
+      const role = roles.find(r => r.id === roleId);
+      return role ? { id: role.id, name: role.name } : null;
+    });
+  };
+
   testCases.forEach(testCase => {
     it(`should correctly detect ${testCase.title}`, async () => {
-      setupMocks(testCase.roles);
+      setupRoleTestMocks(testCase.roles);
       const result = await service.checkRoleInconsistencies(mockDiscordUser);
       expect(result).toEqual(testCase.expected);
     });
