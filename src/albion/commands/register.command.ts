@@ -3,7 +3,7 @@ import { ApplicationCommandType, ChatInputCommandInteraction, GuildMember } from
 import { SlashCommandPipe } from '@discord-nestjs/common';
 import { AlbionRegisterDto } from '../dto/albion.register.dto';
 import { AlbionApiService } from '../services/albion.api.service';
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { AlbionPlayerInterface } from '../interfaces/albion.api.interfaces';
 import { AlbionRegistrationService } from '../services/albion.registration.service';
@@ -15,6 +15,8 @@ import { AlbionRegistrationService } from '../services/albion.registration.servi
 })
 @Injectable()
 export class AlbionRegisterCommand {
+  private readonly logger = new Logger(AlbionRegisterCommand.name);
+
   constructor(
     private readonly config: ConfigService,
     private readonly albionApiService: AlbionApiService,
@@ -45,8 +47,11 @@ export class AlbionRegisterCommand {
       await this.albionVerifyService.handleRegistration(character, member);
     }
     catch (err) {
+      this.logger.error(err.message);
       return `⛔️ **ERROR:** ${err.message}`;
     }
+
+    this.logger.log(`Registration for ${character.Name} was successful, returning success response.`);
 
     // Successful!
     return `## ✅ Thank you **${character.Name}**, you've been verified as a [DIG] guild member! 🎉
