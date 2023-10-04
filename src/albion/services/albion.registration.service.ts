@@ -126,7 +126,7 @@ export class AlbionRegistrationService implements OnApplicationBootstrap {
   }
 
   private throwError(error: string) {
-    console.error(error);
+    this.logger.error(error);
     throw new Error(error);
   }
 }
