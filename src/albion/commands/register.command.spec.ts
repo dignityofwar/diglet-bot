@@ -65,7 +65,7 @@ describe('AlbionRegisterCommand', () => {
     jest.spyOn(config, 'get').mockImplementation((key: string) => {
       const data = {
         albion: {
-          guildGameId: expectedGuildId,
+          guildId: expectedGuildId,
         },
         discord: {
           devUserId: expectedDevUserId,

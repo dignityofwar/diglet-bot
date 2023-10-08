@@ -48,10 +48,10 @@ export class AlbionRegistrationService implements OnApplicationBootstrap {
     }
 
     // 2. Check if the user is in the guild
-    const gameGuildId = this.config.get('albion.guildGameId');
+    const guildId = this.config.get('albion.guildId');
 
     // Check if the character is in the Albion guild
-    if (character.GuildId !== gameGuildId) {
+    if (character.GuildId !== guildId) {
       this.throwError(`Your character **${character.Name}** is not in the guild. Please ensure you have spelt the name **exactly** correct **and** you are a member of the guild in the game before trying again. If it still doesn't work, try again later as our data source may be out of date.`);
     }
 

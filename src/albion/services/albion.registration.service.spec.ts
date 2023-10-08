@@ -111,7 +111,7 @@ describe('AlbionRegistrationService', () => {
     jest.spyOn(config, 'get').mockImplementation((key: string) => {
       const data = {
         albion: {
-          guildGameId: expectedGuildId,
+          guildId: expectedGuildId,
         },
         discord: {
           devUserId: expectedDevUserId,
@@ -243,5 +243,51 @@ describe('AlbionRegistrationService', () => {
       throw new Error('Unable to set nickname');
     });
     await expect(service.handleRegistration(mockCharacter, mockDiscordUser)).rejects.toThrowError(`Unable to set your nickname. If you're Staff this won't work as the bot has no power over you! Pinging <@${expectedDevUserId}>!`);
+  });
+
+  // Edge case handling
+  it('should correctly handle edge case names for new characters', async () => {
+    const edgeCaseCharacters = [{
+      'Id': 'jTFos2u5QQ6OjhYV9C6DMw',
+      'Name': 'R4L2E1',
+      'GuildId': 'btPZRoLvTUqLC7URnDRgSQ',
+    }];
+
+    jest.spyOn(config, 'get').mockImplementation((key: string) => {
+      const data = {
+        albion: {
+          guildId: 'btPZRoLvTUqLC7URnDRgSQ',
+        },
+        discord: {
+          devUserId: expectedDevUserId,
+          channels: {
+            albionRegistration: expectedChannelId,
+          },
+          roles: {
+            albionInitiateRoleId: '123456789',
+            albionVerifiedRoleId: '123456789',
+          },
+        },
+      };
+
+      const result = _.get(data, key);
+
+      if (!result) {
+        throw new Error(`Unexpected config key: ${key}`);
+      }
+
+      return result;
+    });
+
+    discordService.getMemberRole = jest.fn().mockReturnValue({
+      id: expectedRoleId,
+    });
+    albionMembersRepository.find = jest.fn().mockResolvedValue([]);
+
+    for (const character of edgeCaseCharacters) {
+      const newMockCharacter = character as AlbionPlayerInterface;
+
+      await expect(service.validateRegistrationAttempt(newMockCharacter, mockDiscordUser)).resolves.toBe(true);
+    }
   });
 });

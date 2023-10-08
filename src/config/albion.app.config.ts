@@ -16,5 +16,5 @@ export interface AlbionRoleMapInterface {
 // };
 
 export default () => ({
-  guildGameId: 'btPZRoLvTUqLC7URnDRgSQ',
+  guildId: 'btPZRoLvTUqLC7URnDRgSQ',
 });
