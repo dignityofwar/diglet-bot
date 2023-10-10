@@ -23,7 +23,7 @@ describe('AlbionApiService', () => {
     jest.spyOn(config, 'get').mockImplementation((key: string) => {
       const data = {
         albion: {
-          guildGameId: guildId,
+          guildId: guildId,
         },
       };
 
@@ -218,5 +218,38 @@ describe('AlbionApiService', () => {
     await expect(service.getCharacter(characterName))
       .rejects
       .toThrowError('Multiple characters for **NightRaven2511** were found within the guild. This is an unsupported use case for this registration system. Congrats you broke it. Please contact the Albion Guild Masters.');
+  });
+
+  it('should return a character with all uppercase letters', async () => {
+    const searchResponse = {
+      data: {
+        'guilds': [],
+        'players': [
+          {
+            'Id': 'jTFos2u5QQ6OjhYV9C6DMw',
+            'Name': 'R4L2E1',
+            'GuildId': 'btPZRoLvTUqLC7URnDRgSQ',
+            'GuildName': 'DIG - Dignity of War',
+          },
+        ],
+      },
+    };
+    const playerResponse = {
+      data: {
+        'Id': 'jTFos2u5QQ6OjhYV9C6DMw',
+        'Name': 'R4L2E1',
+        'GuildId': 'btPZRoLvTUqLC7URnDRgSQ',
+        'GuildName': 'DIG - Dignity of War',
+      },
+    };
+
+    jest.spyOn(AlbionAxiosFactory.prototype, 'createAlbionApiClient').mockReturnValue({
+      get: jest.fn()
+        .mockResolvedValueOnce(searchResponse)
+        .mockResolvedValueOnce(playerResponse),
+    } as any);
+
+    const result = await service.getCharacter('R4L2E1');
+    expect(result.Name).toBe('R4L2E1');
   });
 });

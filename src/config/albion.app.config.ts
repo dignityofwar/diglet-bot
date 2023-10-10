@@ -85,7 +85,7 @@ const roleMap = process.env.ENVIRONMENT === 'production' ? rolesToRankProduction
 const pingRoles = [roleMap['@ALB/Master'].discordRoleId, roleMap['@ALB/Guildmaster'].discordRoleId];
 
 export default () => ({
-  guildGameId: 'btPZRoLvTUqLC7URnDRgSQ',
+  guildId: 'btPZRoLvTUqLC7URnDRgSQ',
   roleMap,
   pingRoles,
 });
