@@ -26,8 +26,6 @@ export class AlbionScanningService {
   private readonly logger = new Logger(AlbionScanningService.name);
   private charactersMap: Map<string, AlbionPlayerInterface> = new Map();
   private changesMap: Map<string, ChangesInterface> = new Map();
-  private suggestionsMap: Map<string, ChangesInterface[]> = new Map();
-  private suggestionsCount = 0;
 
   constructor(
     private readonly albionApiService: AlbionApiService,
@@ -40,8 +38,6 @@ export class AlbionScanningService {
     this.logger.log('Resetting maps...');
     this.charactersMap.clear();
     this.changesMap.clear();
-    this.suggestionsMap.clear();
-    this.suggestionsCount = 0;
   }
 
   async startScan(message: Message, dryRun = false) {
@@ -97,13 +93,13 @@ export class AlbionScanningService {
       await fakeMessage.edit(change.change);
     }
 
-    if (this.suggestionsMap.size === 0) {
+    if (suggestions.length > 0) {
       await message.channel.send('✅ There are currently no inconsistencies between ranks and roles.');
       this.logger.log('No suggestions were made.');
     }
     else {
-      await message.channel.send(`## 👀 ${this.suggestionsCount} manual correction(s) to make`);
-      this.logger.log(`Sending ${this.suggestionsCount} suggestions to channel...`);
+      await message.channel.send(`## 👀 ${suggestions.length} manual correction(s) to make`);
+      this.logger.log(`Sending ${suggestions.length} suggestions to channel...`);
     }
 
     for (const suggestion of suggestions) {
@@ -115,7 +111,7 @@ export class AlbionScanningService {
       await fakeMessage.edit(suggestion);
     }
 
-    if (this.suggestionsCount > 0 && !dryRun) {
+    if (suggestions.length > 0 && !dryRun) {
       const pingRoles = this.config.get('albion.pingRoles');
       await message.channel.send(`🔔 <@&${pingRoles.join('>, <@&')}> Please review the above suggestions and make any necessary changes manually. To check again without pinging Guildmasters or Masters, run the \`/albion-scan\` command with the \`dry-run\` flag set to \`true\`.`);
     }
