@@ -64,11 +64,12 @@ export class AlbionScanningService {
       return this.reset();
     }
 
+    let leavers: string[];
     let suggestions: string[];
 
     try {
       await message.edit(`Checking ${length} characters for membership status...`);
-      await this.removeLeavers(characters, guildMembers, message, dryRun);
+      leavers = await this.removeLeavers(characters, guildMembers, message, dryRun);
 
       await message.edit(`Checking ${length} characters for role inconsistencies...`);
       suggestions = await this.generateSuggestions(guildMembers, message);
@@ -79,13 +80,13 @@ export class AlbionScanningService {
       return this.reset();
     }
 
-    if (this.changesMap.size === 0) {
-      await message.channel.send('✅ No automatic changes were performed.');
-      this.logger.log('No changes were made.');
+    if (leavers.length === 0) {
+      await message.channel.send('✅ No leavers were detected.');
+      this.logger.log('No leavers were detected.');
     }
     else {
-      await message.channel.send(`## 📝 ${this.changesMap.size} change(s) made`);
-      this.logger.log(`Sending ${this.changesMap.size} changes to channel...`);
+      await message.channel.send(`## 📝 ${leavers.length} leavers detected!`);
+      this.logger.log(`Sending ${leavers.length} changes to channel...`);
     }
 
     for (const change of this.changesMap.values()) {
@@ -137,7 +138,7 @@ export class AlbionScanningService {
     }
     catch (err) {
       if (tries === 3) {
-        await statusMessage.edit(`## ❌ An error occurred while gathering data for ${length} characters! Giving up after 3 tries! Pinging <@${this.config.get('app.discord.ownerId')}>!`);
+        await statusMessage.edit(`## ❌ An error occurred while gathering data for ${length} characters! Giving up after 3 tries! Pinging <@${this.config.get('discord.devUserId')}>!`);
         await statusMessage.channel.send(`Error: ${err.message}`);
         return null;
       }
@@ -148,15 +149,22 @@ export class AlbionScanningService {
     }
   }
 
-  async removeLeavers(characters: AlbionPlayerInterface[], guildMembers: AlbionMembersEntity[], message: Message, dryRun = false) {
-    // Save all the characters to a map we can easily pick out later
+  async removeLeavers(
+    characters: AlbionPlayerInterface[],
+    guildMembers: AlbionMembersEntity[],
+    message: Message,
+    dryRun = false
+  ): Promise<string[]> {
+    // Save all the characters to a map we can easily pick out later via character ID
+    const charactersMap = new Map<string, AlbionPlayerInterface>();
+    const changes: string[] = [];
     for (const character of characters) {
-      this.charactersMap.set(character.Id, character);
+      charactersMap.set(character.Id, character);
     }
 
     // Do the checks
     for (const member of guildMembers) {
-      const character = this.charactersMap.get(member.characterId);
+      const character = charactersMap.get(member.characterId);
 
       let discordMember: GuildMember | null = null;
 
@@ -171,11 +179,7 @@ export class AlbionScanningService {
           await this.albionMembersRepository.removeAndFlush(member);
         }
 
-        this.changesMap.set(member.characterId, {
-          character,
-          discordMember: null,
-          change: `- 🫥️ Discord member for Character **${character.Name}** has left the DIG server. Their registration status has been removed.`,
-        });
+        changes.push(`- 🫥️ Discord member for Character **${character.Name}** has left the DIG server. Their registration status has been removed.`);
         continue;
       }
 
@@ -204,21 +208,24 @@ export class AlbionScanningService {
             await discordMember.roles.remove(roleMap.discordRoleId);
           }
           catch (err) {
-            await message.channel.send(`ERROR: Unable to remove role "${role.name}" from ${character.Name} (${character.Id}). Pinging <@${this.config.get('app.discord.ownerId')}>!`);
+            await message.channel.send(`ERROR: Unable to remove role "${role.name}" from ${character.Name} (${character.Id}). Pinging <@${this.config.get('discord.devUserId')}>!`);
           }
         }
       }
 
       if (!dryRun) {
-        await this.albionMembersRepository.removeAndFlush(member);
+        try {
+          await this.albionMembersRepository.removeAndFlush(member);
+        }
+        catch (err) {
+          await message.channel.send(`ERROR: Unable to remove Albion Character "${character.Name}" (${character.Id}) from registration database! Pinging <@${this.config.get('discord.devUserId')}>!`);
+        }
       }
 
-      this.changesMap.set(member.characterId, {
-        character,
-        discordMember,
-        change: `- 👋 <@${discordMember.id}>'s character **${character.Name}** has left the Guild. Their roles and registration status have been stripped.`,
-      });
+      changes.push(`- 👋 <@${discordMember.id}>'s character **${character.Name}** has left the Guild. Their roles and registration status have been stripped.`);
     }
+
+    return changes;
   }
 
   async generateSuggestions(

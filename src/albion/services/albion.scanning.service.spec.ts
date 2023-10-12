@@ -40,6 +40,8 @@ describe('AlbionScanningService', () => {
   let mockDiscordMessage: any;
   let mockEntityManager: jest.Mocked<EntityManager>;
   let mockAlbionMember: AlbionMembersEntity;
+  let mockAlbionMembersRepository: EntityRepository<AlbionMembersEntity>;
+  let mockCharacter: AlbionPlayerInterface;
 
   beforeEach(async () => {
     mockEntityManager = {
@@ -50,11 +52,12 @@ describe('AlbionScanningService', () => {
       }),
     } as any;
 
-    const mockAlbionMembersRepository = {
+    mockAlbionMembersRepository = {
       find: jest.fn(),
       create: jest.fn(),
       upsert: jest.fn(),
-    };
+      removeAndFlush: jest.fn(),
+    } as any;
     const mockInit = jest.spyOn(MikroORM, 'init');
 
     // Now you can set your mock implementation
@@ -71,6 +74,7 @@ describe('AlbionScanningService', () => {
       fetch: jest.fn(),
       roles: {
         add: jest.fn(),
+        remove: jest.fn(),
         cache: {
           has: jest.fn(),
           get: jest.fn(),
@@ -89,24 +93,6 @@ describe('AlbionScanningService', () => {
       },
     } as any;
 
-    mockDiscordMessage = {
-      edit: jest.fn(),
-      send: jest.fn(),
-      channel: {
-        send: jest.fn(),
-      },
-      guild: {
-        roles: {
-          cache: {
-            get: jest.fn(),
-          },
-        },
-        members: {
-          fetch: jest.fn().mockImplementation(() => mockDiscordUser),
-        },
-      },
-    };
-
     mockAlbionMember = {
       id: 123456789,
       discordId: '123456789',
@@ -118,6 +104,34 @@ describe('AlbionScanningService', () => {
       createdAt: new Date(),
       updatedAt: new Date(),
     } as AlbionMembersEntity;
+
+    mockCharacter = {
+      AverageItemPower: 1337,
+      Id: '123456789',
+      Name: 'TestUser',
+      GuildId: expectedGuildId,
+    } as any;
+
+    mockDiscordMessage = {
+      roles: {
+        cache: {
+          has: jest.fn(),
+        },
+      },
+      guild: {
+        members: {
+          fetch: jest.fn().mockImplementation(() => mockDiscordUser),
+        },
+        roles: {
+          cache: {
+            get: jest.fn(),
+          },
+        },
+      },
+      channel: {
+        send: jest.fn(),
+      },
+    } as any;
 
     const moduleRef = await Test.createTestingModule({
       providers: [
@@ -232,17 +246,55 @@ describe('AlbionScanningService', () => {
     { id: '1155987100928323594', name: '@ALB/Registered' },
   ];
 
-  // Suggestions tests
-  it('should generate multiple suggestions for a single user for a Master', async () => {
-    service.checkRoleInconsistencies = jest.fn().mockImplementation(() => {
-      return [
-        { id: captainRoleId, name: captainName, action: 'removed' },
-        { id: squireRoleId, name: squireName, action: 'added' },
-        { id: initiateRoleId, name: initiateName, action: 'removed' },
-      ];
+  // Remove leavers handling
+  it('should properly handle server leavers', async () => {
+
+    mockDiscordMessage.guild.members.fetch = jest.fn().mockRejectedValueOnce(new Error('User not found'));
+
+    const result = await service.removeLeavers([mockCharacter], [mockAlbionMember], mockDiscordMessage);
+
+    expect(result).toEqual([`- 🫥️ Discord member for Character **${mockCharacter.Name}** has left the DIG server. Their registration status has been removed.`]);
+  });
+  it('should properly handle guild leavers', async () => {
+    // Mock the Albion API response to denote the character has left the guild
+    mockCharacter.GuildId = 'foobar';
+
+    const result = await service.removeLeavers([mockCharacter], [mockAlbionMember], mockDiscordMessage);
+
+    expect(result).toEqual([`- 👋 <@${mockDiscordUser.id}>'s character **${mockCharacter.Name}** has left the Guild. Their roles and registration status have been stripped.`]);
+  });
+  it('should properly handle guild leavers and handle role errors', async () => {
+    // Mock the Albion API response to denote the character has left the guild
+    mockCharacter.GuildId = 'foobar';
+
+    mockDiscordUser.roles.cache.has = jest.fn().mockImplementation(() => true);
+    mockDiscordUser.roles.remove = jest.fn().mockRejectedValueOnce(new Error('Operation went boom'));
+    mockDiscordMessage.guild.roles.cache.get = jest.fn().mockImplementation(() => {
+      return {
+        name: 'foobar',
+      };
     });
 
-    expect(await service.generateSuggestions([mockAlbionMember], mockDiscordMessage)).toEqual(`- ➖ <@${mockAlbionMember.id}> requires role **${captainName}** to be removed.\n- ➕ <@${mockAlbionMember.id}> requires role **${squireName}** to be added.\n- ➖ <@${mockAlbionMember.id}> requires role **${initiateName}** to be removed.`);
+    await service.removeLeavers([mockCharacter], [mockAlbionMember], mockDiscordMessage);
+
+    expect(mockDiscordMessage.channel.send).toHaveBeenCalledWith(`ERROR: Unable to remove role "foobar" from ${mockCharacter.Name} (${mockCharacter.Id}). Pinging <@${expectedDevUserId}>!`);
+  });
+  it('should properly handle guild leavers and handle database errors', async () => {
+    // Mock the Albion API response to denote the character has left the guild
+    mockCharacter.GuildId = 'foobar';
+
+    mockDiscordUser.roles.cache.has = jest.fn().mockImplementation(() => true);
+    mockDiscordMessage.guild.roles.cache.get = jest.fn().mockImplementation(() => {
+      return {
+        name: 'foobar',
+      };
+    });
+
+    mockAlbionMembersRepository.removeAndFlush = jest.fn().mockRejectedValueOnce(new Error('Operation went boom'));
+
+    await service.removeLeavers([mockCharacter], [mockAlbionMember], mockDiscordMessage);
+
+    expect(mockDiscordMessage.channel.send).toHaveBeenCalledWith(`ERROR: Unable to remove Albion Character "${mockCharacter.Name}" (${mockCharacter.Id}) from registration database! Pinging <@${expectedDevUserId}>!`);
   });
 
   // Inconsistency scanner tests
