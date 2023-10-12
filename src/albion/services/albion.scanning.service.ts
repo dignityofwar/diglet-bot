@@ -94,8 +94,8 @@ export class AlbionScanningService {
       await fakeMessage.edit(change.change);
     }
 
-    if (suggestions.length > 0) {
-      await message.channel.send('✅ There are currently no inconsistencies between ranks and roles.');
+    if (suggestions.length === 0) {
+      await message.channel.send('✅ No Discord changes are required.');
       this.logger.log('No suggestions were made.');
     }
     else {
