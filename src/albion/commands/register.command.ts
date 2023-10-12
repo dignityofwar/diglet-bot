@@ -20,7 +20,7 @@ export class AlbionRegisterCommand {
   constructor(
     private readonly config: ConfigService,
     private readonly albionApiService: AlbionApiService,
-    private readonly albionVerifyService: AlbionRegistrationService,
+    private readonly albionRegistrationService: AlbionRegistrationService,
   ) {}
 
   @Handler()
@@ -44,7 +44,7 @@ export class AlbionRegisterCommand {
     // Start processing the character
     try {
       character = await this.albionApiService.getCharacter(dto.character);
-      await this.albionVerifyService.handleRegistration(character, member);
+      await this.albionRegistrationService.handleRegistration(character, member);
     }
     catch (err) {
       this.logger.error(err.message);

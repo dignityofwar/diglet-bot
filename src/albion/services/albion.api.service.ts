@@ -15,7 +15,14 @@ export class AlbionApiService {
 
   async getCharacter(characterName: string): Promise<AlbionPlayerInterface> {
     const characterId = await this.getCharacterId(characterName);
+    return await this.queryCharacter(characterId);
+  }
 
+  async getCharacterById(characterId: string): Promise<AlbionPlayerInterface> {
+    return await this.queryCharacter(characterId);
+  }
+
+  private async queryCharacter(characterId: string): Promise<AlbionPlayerInterface> {
     const request = new AlbionAxiosFactory().createAlbionApiClient();
     const response: AlbionPlayersResponseInterface = await request.get(`/players/${characterId}`);
 

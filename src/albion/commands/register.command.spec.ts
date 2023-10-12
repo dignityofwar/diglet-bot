@@ -20,7 +20,7 @@ const expectedGuildId = '56666666666';
 describe('AlbionRegisterCommand', () => {
   let command: AlbionRegisterCommand;
   let albionApiService: AlbionApiService;
-  let albionVerifyService: AlbionRegistrationService;
+  let albionRegistrationService: AlbionRegistrationService;
   let config: ConfigService;
 
   let mockUser: any;
@@ -58,7 +58,7 @@ describe('AlbionRegisterCommand', () => {
 
     command = module.get<AlbionRegisterCommand>(AlbionRegisterCommand);
     albionApiService = module.get<AlbionApiService>(AlbionApiService);
-    albionVerifyService = module.get<AlbionRegistrationService>(AlbionRegistrationService);
+    albionRegistrationService = module.get<AlbionRegistrationService>(AlbionRegistrationService);
     config = module.get<ConfigService>(ConfigService);
 
     // Spy on the 'get' method of the ConfigService, and make it return a specific values based on the path
@@ -150,7 +150,7 @@ describe('AlbionRegisterCommand', () => {
 
   it('should return errors from the registration process', async () => {
     albionApiService.getCharacter = jest.fn().mockImplementation(() => mockCharacter);
-    albionVerifyService.handleRegistration = jest.fn().mockImplementation(() => {
+    albionRegistrationService.handleRegistration = jest.fn().mockImplementation(() => {
       throw new Error('Some error handling registration');
     });
 
@@ -159,7 +159,7 @@ describe('AlbionRegisterCommand', () => {
 
   it('should return the success message if the character has successfully been registered', async () => {
     albionApiService.getCharacter = jest.fn().mockImplementation(() => mockCharacter);
-    albionVerifyService.handleRegistration = jest.fn().mockImplementation(() => true);
+    albionRegistrationService.handleRegistration = jest.fn().mockImplementation(() => true);
 
     expect(await command.onAlbionRegisterCommand(dto, mockInteraction)).toBe(`## ✅ Thank you **${mockUser.displayName}**, you've been verified as a [DIG] guild member! 🎉
     

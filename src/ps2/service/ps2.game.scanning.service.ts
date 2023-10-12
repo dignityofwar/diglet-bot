@@ -197,7 +197,7 @@ export class PS2GameScanningService {
             await discordMember.roles.remove(rankMap.discordRoleId);
           }
           catch (err) {
-            await message.channel.send(`ERROR: Unable to remove role "${role.name}" from ${character.name.first} (${character.character_id}). Pinging <@${this.config.get('app.discord.ownerId')}>!`);
+            await message.channel.send(`ERROR: Unable to remove role "${role.name}" from ${character.name.first} (${character.character_id}). Pinging <@${this.config.get('discord.devUserId')}>!`);
           }
         }
       }

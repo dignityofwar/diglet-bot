@@ -41,7 +41,7 @@ export class AlbionRegistrationService implements OnApplicationBootstrap {
     // 1. Check if the roles to apply exist
     try {
       await this.discordService.getMemberRole(guildMember, this.config.get('discord.roles.albionInitiateRoleId'));
-      await this.discordService.getMemberRole(guildMember, this.config.get('discord.roles.albionVerifiedRoleId'));
+      await this.discordService.getMemberRole(guildMember, this.config.get('discord.roles.albionRegisteredRoleId'));
     }
     catch (err) {
       this.throwError(`Required Roles do not exist! Pinging <@${this.config.get('discord.devUserId')}>! Err: ${err.message}`);
@@ -91,7 +91,7 @@ export class AlbionRegistrationService implements OnApplicationBootstrap {
     );
     const verifiedRole = await this.discordService.getMemberRole(
       guildMember,
-      this.config.get('discord.roles.albionVerifiedRoleId')
+      this.config.get('discord.roles.albionRegisteredRoleId')
     );
 
     // Add the initiate and verified roles
