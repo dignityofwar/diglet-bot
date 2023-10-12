@@ -80,9 +80,16 @@ const rolesToRankDevelopment: AlbionRoleMapInterface[] = [
     priority: 6,
     keep: false,
   },
+  {
+    name: '@ALB/Registered',
+    discordRoleId: '1155987100928323594',
+    priority: 6,
+    keep: true,
+  },
 ];
 const roleMap = process.env.ENVIRONMENT === 'production' ? rolesToRankProduction : rolesToRankDevelopment as AlbionRoleMapInterface[];
-const pingRoles = [roleMap['@ALB/Master'].discordRoleId, roleMap['@ALB/Guildmaster'].discordRoleId];
+const findRole = (roleName: string) => roleMap.filter((role) => role.name === roleName)[0];
+const pingRoles = [findRole('@ALB/Guildmaster').discordRoleId, findRole('@ALB/Master').discordRoleId];
 
 export default () => ({
   guildId: 'btPZRoLvTUqLC7URnDRgSQ',

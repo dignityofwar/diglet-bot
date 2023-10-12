@@ -1,10 +1,8 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@mikro-orm/nestjs';
-import { PS2MembersEntity } from '../../database/entities/ps2.members.entity';
 import { EntityRepository } from '@mikro-orm/core';
-import { GuildMember, Message, Role } from 'discord.js';
+import { GuildMember, Message } from 'discord.js';
 import { ConfigService } from '@nestjs/config';
-import { PS2RankMapInterface } from '../../config/ps2.app.config';
 import { AlbionApiService } from './albion.api.service';
 import { AlbionMembersEntity } from '../../database/entities/albion.members.entity';
 import { AlbionPlayerInterface } from '../interfaces/albion.api.interfaces';
@@ -19,7 +17,8 @@ interface ChangesInterface {
 export interface RoleInconsistencyResult {
   id: string,
   name: string,
-  action: 'add' | 'remove'
+  action: 'added' | 'removed', // For testing purposes
+  message: string
 }
 
 @Injectable()
@@ -69,7 +68,7 @@ export class AlbionScanningService {
       return this.reset();
     }
 
-    let suggestions: string;
+    let suggestions: string[];
 
     try {
       await message.edit(`Checking ${length} characters for membership status...`);
@@ -107,16 +106,18 @@ export class AlbionScanningService {
       this.logger.log(`Sending ${this.suggestionsCount} suggestions to channel...`);
     }
 
-    for (const change of this.suggestionsMap.values()) {
-      for (const suggestion of change) {
-        const fakeMessage = await message.channel.send('dummy'); // Send a fake message first so it doesn't ping people
-        await fakeMessage.edit(suggestion.change);
+    for (const suggestion of suggestions) {
+      if (!suggestion) {
+        this.logger.error('Attempted to send empty suggestion!');
+        continue;
       }
+      const fakeMessage = await message.channel.send('dummy'); // Send a fake message first so it doesn't ping people
+      await fakeMessage.edit(suggestion);
     }
 
     if (this.suggestionsCount > 0 && !dryRun) {
-      const pingRoles = this.config.get('ps2.pingRoles');
-      await message.channel.send(`🔔 <@&${pingRoles.join('>, <@&')}> Please review the above suggestions and make any necessary changes manually. To check again without pinging Leaders and Officers, run the \`/ps2-scan\` command with the \`dry-run\` flag set to \`true\`.`);
+      const pingRoles = this.config.get('albion.pingRoles');
+      await message.channel.send(`🔔 <@&${pingRoles.join('>, <@&')}> Please review the above suggestions and make any necessary changes manually. To check again without pinging Guildmasters or Masters, run the \`/albion-scan\` command with the \`dry-run\` flag set to \`true\`.`);
     }
 
     await message.edit(`ℹ️ There are currently ${guildMembers.length} members on record.`);
@@ -129,7 +130,7 @@ export class AlbionScanningService {
     tries++;
     const length = guildMembers.length;
 
-    await statusMessage.edit(`Gathering ${length} characters from Census... (attempt #${tries})`);
+    await statusMessage.edit(`Gathering ${length} characters from ALB API... (attempt #${tries})`);
 
     for (const member of guildMembers) {
       characterPromises.push(this.albionApiService.getCharacterById(member.characterId));
@@ -140,12 +141,12 @@ export class AlbionScanningService {
     }
     catch (err) {
       if (tries === 3) {
-        await statusMessage.edit(`## ❌ An error occurred while gathering ${length} characters! Giving up after 3 tries.`);
+        await statusMessage.edit(`## ❌ An error occurred while gathering data for ${length} characters! Giving up after 3 tries! Pinging <@${this.config.get('app.discord.ownerId')}>!`);
         await statusMessage.channel.send(`Error: ${err.message}`);
         return null;
       }
 
-      await statusMessage.edit(`## ⚠️ Couldn't gather ${length} characters from Census, likely due to Census timeout issues. Retrying in 10s (attempt #${tries})...`);
+      await statusMessage.edit(`## ⚠️ Couldn't gather ${length} characters from ALB API. Retrying in 10s (attempt #${tries})...`);
       await new Promise(resolve => setTimeout(resolve, 10000));
       return this.gatherCharacters(guildMembers, statusMessage, tries);
     }
@@ -183,11 +184,11 @@ export class AlbionScanningService {
       }
 
       // Is the character still in the Guild?
-      if (character?.GuildId && character?.GuildId === this.config.get('albion.guildGameId')) {
+      if (character?.GuildId && character?.GuildId === this.config.get('albion.guildId')) {
         continue;
       }
 
-      // If not in the outfit, strip 'em
+      // If not in the guild, strip 'em
       this.logger.log(`User ${character.Name} has left the Guild`);
 
       const roleMaps: AlbionRoleMapInterface = this.config.get('albion.roleMap');
@@ -219,7 +220,7 @@ export class AlbionScanningService {
       this.changesMap.set(member.characterId, {
         character,
         discordMember,
-        change: `- 👋 <@${discordMember.id}>'s character **${character.Name}** has left the outfit. Their roles and verification status have been stripped.`,
+        change: `- 👋 <@${discordMember.id}>'s character **${character.Name}** has left the Guild. Their roles and registration status have been stripped.`,
       });
     }
   }
@@ -227,7 +228,7 @@ export class AlbionScanningService {
   async generateSuggestions(
     guildMembers: AlbionMembersEntity[],
     message: Message
-  ) {
+  ): Promise<string[]> {
     const suggestions: string[] = [];
     for (const member of guildMembers) {
       // If already in the change set, they have been removed so don't bother checking
@@ -242,20 +243,18 @@ export class AlbionScanningService {
 
       // Construct the strings
       inconsistencies.forEach((inconsistency) => {
-        const emoji = inconsistency.action === 'add' ? '➕' : '➖';
-        suggestions.push(`- ${emoji} <@${member.discordId}> requires role **${inconsistency.name}** to be ${inconsistency.action === 'add' ? 'added' : 'removed'}.`);
+        suggestions.push(inconsistency.message);
       });
     }
 
-    // Now smush it all into one big string
-    return suggestions.join('\n');
+    return suggestions;
   }
 
   async checkRoleInconsistencies(discordMember: GuildMember): Promise<RoleInconsistencyResult[]> {
     const roleMap: AlbionRoleMapInterface[] = this.config.get('albion.roleMap');
 
     let highestPriorityRole: AlbionRoleMapInterface | null = null;
-    const result: RoleInconsistencyResult[] = [];
+    const inconsistencies: RoleInconsistencyResult[] = [];
 
     roleMap.forEach((role) => {
       const hasRole = discordMember.roles.cache.has(role.discordRoleId);
@@ -267,28 +266,38 @@ export class AlbionScanningService {
       }
     });
 
-    if (!highestPriorityRole) return result; // return object with empty arrays if no highest priority role is found
+    if (!highestPriorityRole) return inconsistencies; // return object with empty arrays if no highest priority role is found
 
     roleMap.forEach((role) => {
       const shouldHaveRole = role.priority === highestPriorityRole?.priority || (role.priority > highestPriorityRole?.priority && role.keep);
       const hasRole = discordMember.roles.cache.has(role.discordRoleId);
 
+      let changed = false;
+      let emoji = '➕';
+      let action = 'added' as 'added' | 'removed';
+      let reason = `their highest role is **${highestPriorityRole.name}**, and the role is marked as "keep".`;
+
       if (shouldHaveRole && !hasRole) {
-        result.push({
-          id: role.discordRoleId,
-          name: role.name,
-          action: 'add' }
-        );
+        changed = true;
       }
+
       if (!shouldHaveRole && hasRole && !role.keep) {
-        result.push({
+        changed = true;
+        emoji = '➖';
+        action = 'removed';
+        reason = `their highest role is **${highestPriorityRole.name}**, and the role is not marked as "keep".`;
+      }
+
+      if (changed) {
+        inconsistencies.push({
           id: role.discordRoleId,
           name: role.name,
-          action: 'remove' }
-        );
+          action,
+          message: `- ${emoji} <@${discordMember.id}> requires role **${role.name}** to be ${action} because ${reason}`,
+        });
       }
     });
 
-    return result;
+    return inconsistencies;
   }
 }

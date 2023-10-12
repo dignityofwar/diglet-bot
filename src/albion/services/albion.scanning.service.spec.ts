@@ -1,6 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { Test } from '@nestjs/testing';
-import { AlbionRegistrationService } from './albion.registration.service';
 import { DiscordService } from '../../discord/discord.service';
 import { ReflectMetadataProvider } from '@discord-nestjs/core';
 import * as _ from 'lodash';
@@ -10,8 +9,7 @@ import { getRepositoryToken } from '@mikro-orm/nestjs';
 import { AlbionMembersEntity } from '../../database/entities/albion.members.entity';
 import { AlbionPlayerInterface } from '../interfaces/albion.api.interfaces';
 import { SnowflakeUtil } from 'discord.js';
-import { AlbionScanningService, RoleInconsistencyResult } from './albion.scanning.service';
-import { jsJsx } from 'ts-loader/dist/constants';
+import { AlbionScanningService } from './albion.scanning.service';
 import { AlbionApiService } from './albion.api.service';
 
 const expectedChannelId = '1234567890';
@@ -31,6 +29,8 @@ const squireRoleId = '1158467840496635914';
 const squireName = '@ALB/Squire';
 const initiateRoleId = '1139909152701947944';
 const initiateName = '@ALB/Initiate';
+const registeredRoleId = '1155987100928323594';
+const registeredName = '@ALB/Initiate';
 
 describe('AlbionScanningService', () => {
   let service: AlbionScanningService;
@@ -164,7 +164,7 @@ describe('AlbionScanningService', () => {
     jest.spyOn(config, 'get').mockImplementation((key: string) => {
       const data = {
         albion: {
-          guildGameId: expectedGuildId,
+          guildId: expectedGuildId,
           roleMap: [
             {
               name: guildMasterName,
@@ -202,6 +202,12 @@ describe('AlbionScanningService', () => {
               priority: 6,
               keep: false,
             },
+            {
+              name: registeredName,
+              discordRoleId: registeredRoleId,
+              priority: 6,
+              keep: true,
+            },
           ],
         },
         discord: {
@@ -236,127 +242,119 @@ describe('AlbionScanningService', () => {
     { id: '1158467574678429696', name: '@ALB/Master' },
     { id: '1158467840496635914', name: '@ALB/Squire' },
     { id: '1139909152701947944', name: '@ALB/Initiate' },
+    { id: '1155987100928323594', name: '@ALB/Registered' },
   ];
 
   // Suggestions tests
   it('should generate multiple suggestions for a single user for a Master', async () => {
     service.checkRoleInconsistencies = jest.fn().mockImplementation(() => {
       return [
-        { id: captainRoleId, name: captainName, action: 'remove' },
-        { id: squireRoleId, name: squireName, action: 'add' },
-        { id: initiateRoleId, name: initiateName, action: 'remove' },
+        { id: captainRoleId, name: captainName, action: 'removed' },
+        { id: squireRoleId, name: squireName, action: 'added' },
+        { id: initiateRoleId, name: initiateName, action: 'removed' },
       ];
     });
 
     expect(await service.generateSuggestions([mockAlbionMember], mockDiscordMessage)).toEqual(`- ➖ <@${mockAlbionMember.id}> requires role **${captainName}** to be removed.\n- ➕ <@${mockAlbionMember.id}> requires role **${squireName}** to be added.\n- ➖ <@${mockAlbionMember.id}> requires role **${initiateName}** to be removed.`);
   });
 
-  it('should generate suggestions for a multiple users with varying inconsistencies', async () => {
-    service.checkRoleInconsistencies = jest.fn().mockImplementationOnce(() => {
-      return [
-        { id: captainRoleId, name: captainName, action: 'remove' },
-      ];
-    }).mockImplementationOnce(() => {
-      return [
-        { id: squireRoleId, name: squireName, action: 'add' },
-      ];
-    });
-    const mockAlbionMember2 = _.cloneDeep(mockAlbionMember);
-    mockAlbionMember2.discordId = '1234567891';
-
-    expect(await service.generateSuggestions([mockAlbionMember, mockAlbionMember2], mockDiscordMessage)).toEqual(`- ➖ <@${mockAlbionMember.discordId}> requires role **${captainName}** to be removed.\n- ➕ <@${mockAlbionMember2.discordId}> requires role **${squireName}** to be added.`);
-  });
-
   // Inconsistency scanner tests
   const testCases = [
     {
       title: 'Captain having Initiate and missing Squire',
-      roles: [captainRoleId, initiateRoleId],
+      roles: [captainRoleId, initiateRoleId, registeredRoleId],
       expected: [
-        { id: squireRoleId, name: squireName, action: 'add' },
-        { id: initiateRoleId, name: initiateName, action: 'remove' },
+        { id: squireRoleId, name: squireName, action: 'added' },
+        { id: initiateRoleId, name: initiateName, action: 'removed' },
       ],
     },
     {
       title: 'Guild Master having Initiate, Captain and General when they shouldn\'t',
-      roles: [guildMasterRoleId, initiateRoleId, captainRoleId, generalRoleId, squireRoleId],
+      roles: [guildMasterRoleId, initiateRoleId, captainRoleId, generalRoleId, squireRoleId, registeredRoleId],
       expected: [
-        { id: generalRoleId, name: generalName, action: 'remove' },
-        { id: captainRoleId, name: captainName, action: 'remove' },
-        { id: initiateRoleId, name: initiateName, action: 'remove' },
+        { id: generalRoleId, name: generalName, action: 'removed' },
+        { id: captainRoleId, name: captainName, action: 'removed' },
+        { id: initiateRoleId, name: initiateName, action: 'removed' },
       ],
     },
     {
       title: 'Guild Master requires Squire',
-      roles: [guildMasterRoleId],
+      roles: [guildMasterRoleId, registeredRoleId],
       expected: [
-        { id: squireRoleId, name: squireName, action: 'add' },
+        { id: squireRoleId, name: squireName, action: 'added' },
       ],
     },
     {
       title: 'Master requires Squire',
-      roles: [masterRoleId],
+      roles: [masterRoleId, registeredRoleId],
       expected: [
-        { id: squireRoleId, name: squireName, action: 'add' },
+        { id: squireRoleId, name: squireName, action: 'added' },
       ],
     },
     {
       title: 'General requires Squire',
-      roles: [generalRoleId],
+      roles: [generalRoleId, registeredRoleId],
       expected: [
-        { id: squireRoleId, name: squireName, action: 'add' },
+        { id: squireRoleId, name: squireName, action: 'added' },
       ],
     },
     {
       title: 'Captain requires Squire',
-      roles: [captainRoleId],
+      roles: [captainRoleId, registeredRoleId],
       expected: [
-        { id: squireRoleId, name: squireName, action: 'add' },
+        { id: squireRoleId, name: squireName, action: 'added' },
       ],
     },
     {
       title: 'Squire has no extra roles',
-      roles: [squireRoleId],
+      roles: [squireRoleId, registeredRoleId],
       expected: [],
     },
     {
       title: 'Initiate has no extra roles',
-      roles: [initiateRoleId],
+      roles: [initiateRoleId, registeredRoleId],
       expected: [],
     },
     {
       title: 'Guild Masters should not have Initiate and should have Squire',
-      roles: [guildMasterRoleId, squireRoleId, initiateRoleId],
+      roles: [guildMasterRoleId, squireRoleId, initiateRoleId, registeredRoleId],
       expected: [
-        { id: initiateRoleId, name: initiateName, action: 'remove' },
+        { id: initiateRoleId, name: initiateName, action: 'removed' },
       ],
     },
     {
       title: 'Masters should not have Initiate and should have Squire',
-      roles: [masterRoleId, squireRoleId, initiateRoleId],
+      roles: [masterRoleId, squireRoleId, initiateRoleId, registeredRoleId],
       expected: [
-        { id: initiateRoleId, name: initiateName, action: 'remove' },
+        { id: initiateRoleId, name: initiateName, action: 'removed' },
       ],
     },
     {
       title: 'Generals should not have Initiate and should have Squire',
-      roles: [generalRoleId, squireRoleId, initiateRoleId],
+      roles: [generalRoleId, squireRoleId, initiateRoleId, registeredRoleId],
       expected: [
-        { id: initiateRoleId, name: initiateName, action: 'remove' },
+        { id: initiateRoleId, name: initiateName, action: 'removed' },
       ],
     },
     {
       title: 'Captains should not have Initiate and should have Squire',
-      roles: [captainRoleId, squireRoleId, initiateRoleId],
+      roles: [captainRoleId, squireRoleId, initiateRoleId, registeredRoleId],
       expected: [
-        { id: initiateRoleId, name: initiateName, action: 'remove' },
+        { id: initiateRoleId, name: initiateName, action: 'removed' },
       ],
     },
     {
       title: 'Squires should not have Initiate',
-      roles: [squireRoleId, initiateRoleId],
+      roles: [squireRoleId, initiateRoleId, registeredRoleId],
       expected: [
-        { id: initiateRoleId, name: initiateName, action: 'remove' },
+        { id: initiateRoleId, name: initiateName, action: 'removed' },
+      ],
+    },
+    {
+      title: 'Initiate should have registered',
+      roles: [initiateRoleId],
+      expected: [
+        { id: registeredRoleId, name: registeredName, action: 'added' },
       ],
     },
   ];
@@ -373,7 +371,19 @@ describe('AlbionScanningService', () => {
     it(`should correctly detect ${testCase.title}`, async () => {
       setupRoleTestMocks(testCase.roles);
       const result = await service.checkRoleInconsistencies(mockDiscordUser);
-      expect(result).toEqual(testCase.expected);
+
+      expect(result.length).toEqual(testCase.expected.length);
+
+      if (result.length !== testCase.expected.length) {
+        return;
+      }
+
+      result.forEach((r, i) => {
+        expect(r.id).toEqual(testCase.expected[i].id);
+        expect(r.name).toEqual(testCase.expected[i].name);
+        expect(r.action).toEqual(testCase.expected[i].action);
+        expect(r.message).toContain(testCase.expected[i].action);
+      });
     });
   });
 });

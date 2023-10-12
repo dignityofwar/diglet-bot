@@ -21,11 +21,11 @@ export class AlbionScanCommand {
   ) {}
 
   @Handler()
-  async onPS2ScanCommand(
+  async onAlbionScanCommand(
     @InteractionEvent(SlashCommandPipe) dto: AlbionScanDto,
     @EventParams() interaction: ChatInputCommandInteraction[],
   ): Promise<string> {
-    this.logger.debug('Received PS2ScanCommand');
+    this.logger.debug('Received Albion Scan Command');
 
     // Check if the command came from the correct channel ID
     const scanChannelId = this.config.get('discord.channels.albionScans');
@@ -35,10 +35,10 @@ export class AlbionScanCommand {
       return `Please use the <#${scanChannelId}> channel to perform Scans.`;
     }
 
-    const message = await interaction[0].channel.send('Starting scan...');
+    const message = await interaction[0].channel.send('Starting Albion Members scan...');
 
     this.albionScanningService.startScan(message, dto.dryRun);
 
-    return `Scan initiated. ${dto.dryRun ? '[DRY RUN, NO CHANGES WILL ACTUALLY BE PERFORMED]' : ''}`;
+    return `Albion Scan initiated. ${dto.dryRun ? '[DRY RUN, NO CHANGES WILL ACTUALLY BE PERFORMED]' : ''}`;
   }
 }

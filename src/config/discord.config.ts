@@ -3,6 +3,7 @@ export default () => ({
   channels: {
     albionRegistration: process.env.CHANNEL_ALBION_REGISTRATION,
     albionWelcomeToAlbion: process.env.CHANNEL_ALBION_WELCOME,
+    albionScans: process.env.CHANNEL_ALBION_SCANS,
     ps2Verify: process.env.CHANNEL_PS2_VERIFY,
     ps2Private: process.env.CHANNEL_PS2_PRIVATE,
     ps2HowToRankUp: process.env.CHANNEL_PS2_HOW_TO_RANK_UP,
@@ -10,7 +11,7 @@ export default () => ({
   },
   roles: {
     albionInitiateRoleId: process.env.ROLE_ALBION_INITIATE,
-    albionVerifiedRoleId: process.env.ROLE_ALBION_VERIFIED,
+    albionRegisteredRoleId: process.env.ROLE_ALBION_VERIFIED,
     ps2Verified: process.env.ROLE_PS2_VERIFIED,
     ps2Zealot: process.env.ROLE_PS2_ZEALOT,
   },
