@@ -120,7 +120,7 @@ describe('AlbionRegistrationService', () => {
           },
           roles: {
             albionInitiateRoleId: '123456789',
-            albionVerifiedRoleId: '123456789',
+            albionRegisteredRoleId: '123456789',
           },
         },
       };
@@ -265,7 +265,7 @@ describe('AlbionRegistrationService', () => {
           },
           roles: {
             albionInitiateRoleId: '123456789',
-            albionVerifiedRoleId: '123456789',
+            albionRegisteredRoleId: '123456789',
           },
         },
       };
