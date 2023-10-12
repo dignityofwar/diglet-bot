@@ -34,14 +34,10 @@ const registeredName = '@ALB/Initiate';
 
 describe('AlbionScanningService', () => {
   let service: AlbionScanningService;
-  let albionApiService: AlbionApiService;
-  let discordService: DiscordService;
   let config: ConfigService;
-  let albionMembersRepository: EntityRepository<AlbionMembersEntity>;
 
   let mockDiscordUser: any;
   let mockDiscordMessage: any;
-  let mockCharacter: AlbionPlayerInterface;
   let mockEntityManager: jest.Mocked<EntityManager>;
   let mockAlbionMember: AlbionMembersEntity;
 
@@ -65,12 +61,6 @@ describe('AlbionScanningService', () => {
     mockInit.mockResolvedValue(Promise.resolve({
       em: mockEntityManager,
     } as any));
-
-    mockCharacter = {
-      Id: '123456789',
-      Name: 'TestCharacter',
-      GuildId: expectedGuildId,
-    } as any;
 
     // A mock instance of a Discord User
     mockDiscordUser = {
@@ -155,10 +145,7 @@ describe('AlbionScanningService', () => {
     }).compile();
 
     service = moduleRef.get<AlbionScanningService>(AlbionScanningService);
-    albionApiService = moduleRef.get<AlbionApiService>(AlbionApiService);
-    discordService = moduleRef.get<DiscordService>(DiscordService);
     config = moduleRef.get<ConfigService>(ConfigService);
-    albionMembersRepository = moduleRef.get(getRepositoryToken(AlbionMembersEntity));
 
     // Spy on the 'get' method of the ConfigService, and make it return a specific values based on the path
     jest.spyOn(config, 'get').mockImplementation((key: string) => {
