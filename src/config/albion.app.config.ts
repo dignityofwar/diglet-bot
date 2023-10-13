@@ -95,4 +95,5 @@ export default () => ({
   guildId: 'btPZRoLvTUqLC7URnDRgSQ',
   roleMap,
   pingRoles,
+  scanExcludeUsers: ['387671683684761601'], // Discord IDs
 });

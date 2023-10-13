@@ -254,6 +254,12 @@ export class AlbionScanningService {
   }
 
   async checkRoleInconsistencies(discordMember: GuildMember): Promise<RoleInconsistencyResult[]> {
+    // If the user is excluded from role inconsistency checks, skip them
+    const excludedUsers: string[] = this.config.get('albion.scanExcludedUsers');
+    if (excludedUsers.includes(discordMember.id)) {
+      return [];
+    }
+
     const roleMap: AlbionRoleMapInterface[] = this.config.get('albion.roleMap');
 
     let highestPriorityRole: AlbionRoleMapInterface | null = null;

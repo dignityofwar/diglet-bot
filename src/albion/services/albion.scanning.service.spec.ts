@@ -15,6 +15,7 @@ import { AlbionApiService } from './albion.api.service';
 const expectedChannelId = '1234567890';
 const expectedDevUserId = '1234575897';
 const expectedGuildId = '56666666666';
+const excludedScanUserId = '1337';
 
 // Role constants
 const guildMasterRoleId = '1158467537550454895';
@@ -166,6 +167,7 @@ describe('AlbionScanningService', () => {
       const data = {
         albion: {
           guildId: expectedGuildId,
+          scanExcludedUsers: [excludedScanUserId],
           roleMap: [
             {
               name: guildMasterName,
@@ -424,5 +426,14 @@ describe('AlbionScanningService', () => {
         expect(r.message).toContain(testCase.expected[i].action);
       });
     });
+  });
+  it('should ensure certain people are excluded from scanning', async () => {
+    mockDiscordUser.id = excludedScanUserId;
+    setupRoleTestMocks([guildMasterRoleId, squireRoleId, initiateRoleId, registeredRoleId]); // Should require they remove initiate rank
+    expect((await service.checkRoleInconsistencies(mockDiscordUser)).length).toEqual(0);
+  });
+  it('should still process non excluded users', async () => {
+    setupRoleTestMocks([guildMasterRoleId, squireRoleId, initiateRoleId, registeredRoleId]); // Should require they remove initiate rank
+    expect((await service.checkRoleInconsistencies(mockDiscordUser)).length).toEqual(1);
   });
 });
