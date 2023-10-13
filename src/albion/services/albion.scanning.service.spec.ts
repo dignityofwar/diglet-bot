@@ -31,7 +31,7 @@ const squireName = '@ALB/Squire';
 const initiateRoleId = '1139909152701947944';
 const initiateName = '@ALB/Initiate';
 const registeredRoleId = '1155987100928323594';
-const registeredName = '@ALB/Initiate';
+const registeredName = '@ALB/Registered';
 
 describe('AlbionScanningService', () => {
   let service: AlbionScanningService;
@@ -392,9 +392,24 @@ describe('AlbionScanningService', () => {
       ],
     },
     {
-      title: 'Initiate should have registered',
+      title: 'Squires should have registered role',
+      roles: [squireRoleId],
+      expected: [
+        { id: registeredRoleId, name: registeredName, action: 'added' },
+      ],
+    },
+    {
+      title: 'Initiate should have registered role',
       roles: [initiateRoleId],
       expected: [
+        { id: registeredRoleId, name: registeredName, action: 'added' },
+      ],
+    },
+    {
+      title: 'Registered people should have at least registered and initiate',
+      roles: [],
+      expected: [
+        { id: initiateRoleId, name: initiateName, action: 'added' },
         { id: registeredRoleId, name: registeredName, action: 'added' },
       ],
     },

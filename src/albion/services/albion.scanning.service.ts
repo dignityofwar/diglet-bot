@@ -275,7 +275,27 @@ export class AlbionScanningService {
       }
     });
 
-    if (!highestPriorityRole) return inconsistencies; // return object with empty arrays if no highest priority role is found
+    // If no roles were found, they must have at least registered and initiate
+    if (!highestPriorityRole) {
+      const initiateRole = roleMap.filter((role) => role.name === '@ALB/Initiate')[0];
+      const registeredRole = roleMap.filter((role) => role.name === '@ALB/Registered')[0];
+      const emoji = '⚠️';
+      const action = 'added';
+      const reason = 'they have no roles but are registered!';
+      inconsistencies.push({
+        id: initiateRole.discordRoleId,
+        name: initiateRole.name,
+        action,
+        message: `- ${emoji} <@${discordMember.id}> requires role **${initiateRole.name}** to be ${action} because ${reason}`,
+      });
+      inconsistencies.push({
+        id: registeredRole.discordRoleId,
+        name: registeredRole.name,
+        action,
+        message: `- ${emoji} <@${discordMember.id}> requires role **${registeredRole.name}** to be ${action} because ${reason}`,
+      });
+      return inconsistencies;
+    }
 
     roleMap.forEach((role) => {
       const shouldHaveRole = role.priority === highestPriorityRole?.priority || (role.priority > highestPriorityRole?.priority && role.keep);
