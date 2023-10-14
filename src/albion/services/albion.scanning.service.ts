@@ -7,6 +7,7 @@ import { AlbionApiService } from './albion.api.service';
 import { AlbionMembersEntity } from '../../database/entities/albion.members.entity';
 import { AlbionPlayerInterface } from '../interfaces/albion.api.interfaces';
 import { AlbionRoleMapInterface } from '../../config/albion.app.config';
+import { AlbionUtilities } from '../utilities/albion.utilities';
 
 interface ChangesInterface {
   character: AlbionPlayerInterface,
@@ -30,6 +31,7 @@ export class AlbionScanningService {
   constructor(
     private readonly albionApiService: AlbionApiService,
     private readonly config: ConfigService,
+    private readonly albionUtilities: AlbionUtilities,
     @InjectRepository(AlbionMembersEntity) private readonly albionMembersRepository: EntityRepository<AlbionMembersEntity>
   ) {
   }
@@ -260,20 +262,9 @@ export class AlbionScanningService {
       return [];
     }
 
-    const roleMap: AlbionRoleMapInterface[] = this.config.get('albion.roleMap');
-
-    let highestPriorityRole: AlbionRoleMapInterface | null = null;
     const inconsistencies: RoleInconsistencyResult[] = [];
-
-    roleMap.forEach((role) => {
-      const hasRole = discordMember.roles.cache.has(role.discordRoleId);
-
-      if (!hasRole) return;
-
-      if (!highestPriorityRole || role.priority < highestPriorityRole.priority) {
-        highestPriorityRole = role;
-      }
-    });
+    const highestPriorityRole = this.albionUtilities.getHighestAlbionRole(discordMember);
+    const roleMap: AlbionRoleMapInterface[] = this.config.get('albion.roleMap');
 
     // If no roles were found, they must have at least registered and initiate
     if (!highestPriorityRole) {

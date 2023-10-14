@@ -68,6 +68,20 @@ export class AlbionApiService {
     return foundPlayer[0].Id;
   }
 
+  async getAllGuildMembers(guildId: string): Promise<AlbionPlayerInterface[]> {
+    const request = new AlbionAxiosFactory().createAlbionApiClient();
+    const response: AlbionPlayersResponseInterface = await request.get(`/guilds/${guildId}/members`);
+    const data = response.data;
+
+    const members: AlbionPlayerInterface[] = [];
+
+    for (const member in data) {
+      members.push(data[member]);
+    }
+
+    return members;
+  }
+
   private throwError(error: string) {
     console.error(error);
     throw new Error(error);

@@ -174,7 +174,7 @@ describe('AlbionRegistrationService', () => {
     albionMembersRepository.find = jest.fn().mockResolvedValue([{
       discordId: '123456789',
     }]);
-    discordService.getGuildMember = jest.fn().mockResolvedValue(null);
+    discordService.getOtherGuildMember = jest.fn().mockResolvedValue(null);
 
     await expect(service.validateRegistrationAttempt(mockCharacter, mockDiscordUser)).rejects.toThrowError(`Character **${mockCharacter.Name}** has already been registered, but the user who registered it has left the server. If you believe this to be in error, please contact the Albion Guild Masters.`);
   });
@@ -182,7 +182,7 @@ describe('AlbionRegistrationService', () => {
     albionMembersRepository.find = jest.fn().mockResolvedValue([{
       discordId: '123456789',
     }]);
-    discordService.getGuildMember = jest.fn().mockResolvedValue(mockDiscordUser);
+    discordService.getOtherGuildMember = jest.fn().mockResolvedValue(mockDiscordUser);
 
     await expect(service.validateRegistrationAttempt(mockCharacter, mockDiscordUser)).rejects.toThrowError(`Character **${mockCharacter.Name}** has already been registered by user \`@${mockDiscordUser.displayName}\`. If you believe this to be in error, please contact the Albion Guild Masters.`);
   });

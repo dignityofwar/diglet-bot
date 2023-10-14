@@ -31,7 +31,7 @@ import { ScheduleModule } from '@nestjs/schedule';
     }),
     GeneralModule,
     AlbionModule,
-    Ps2Module,
+    // Ps2Module,
     ScheduleModule.forRoot(),
     DiscordModule,
   ],
