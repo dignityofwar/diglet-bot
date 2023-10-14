@@ -1,8 +1,10 @@
-import { Command, EventParams, Handler } from '@discord-nestjs/core';
+import { Command, EventParams, Handler, InteractionEvent } from '@discord-nestjs/core';
 import { ApplicationCommandType, ChatInputCommandInteraction } from 'discord.js';
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { AlbionReportsService } from '../services/albion.reports.service';
+import { SlashCommandPipe } from '@discord-nestjs/common';
+import { AlbionReportsDto } from '../dto/albion.reports.dto';
 
 @Command({
   name: 'albion-reports',
@@ -20,6 +22,7 @@ export class AlbionReportsCommand {
 
   @Handler()
   async onAlbionReportsCommand(
+    @InteractionEvent(SlashCommandPipe) dto: AlbionReportsDto,
     @EventParams() interaction: ChatInputCommandInteraction[],
   ): Promise<string> {
     this.logger.debug('Received Albion Reports Command');
@@ -29,12 +32,18 @@ export class AlbionReportsCommand {
 
     // Check if channel is correct
     if (interaction[0].channelId !== scanChannelId) {
-      return `Please use the <#${scanChannelId}> channel to perform Reports.`;
+      return `Please use the <#${scanChannelId}> channel to generate Reports.`;
     }
 
     const message = await interaction[0].channel.send('Starting Albion Members Report...');
 
-    this.albionReportsService.getRegistrationReport(message);
+    if (dto.fullReport) {
+
+      this.albionReportsService.fullReport(message);
+    }
+    if (dto.squireCandidates) {
+      this.albionReportsService.squireCandidates(message);
+    }
 
     return 'Albion Report Initiated...';
   }

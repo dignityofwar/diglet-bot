@@ -20,7 +20,9 @@ export class AlbionReportsService {
     private readonly albionUtilities: AlbionUtilities
   ) {}
 
-  async getRegistrationReport(message: Message) {
+  async fullReport(message: Message) {
+    this.logger.log('Full Report started');
+
     await message.edit('Getting Guild members from the API...');
 
     // Get total number of members with the Albion Online role
@@ -136,6 +138,59 @@ export class AlbionReportsService {
     this.logger.log('Report generated');
   }
 
+  async squireCandidates(message: Message) {
+    this.logger.log('Squire Candidate Report started');
+
+    await message.edit('Loading Registrations...');
+
+    // Get all registered members from database
+    const registered = await this.albionMembersRepository.findAll();
+
+    await message.edit('Gathering Squires...');
+
+    const membersSorted = registered.sort((a, b) => a.characterName.localeCompare(b.characterName));
+
+    const membersReport = {
+      candidates: [],
+      errors: [],
+    };
+
+    for (const member of membersSorted) {
+      const unix = new Date(member.createdAt).getTime() / 1000;
+      const diffInDays = Math.floor((Date.now() - new Date(member.createdAt).getTime()) / 1000 / 60 / 60 / 24);
+
+      const discordRelativeCode = `<t:${unix}:R>`;
+      const discordMember = await this.discordService.getGuildMemberFromId(message.guildId, member.discordId);
+
+      // Get their highest albion role
+      const highestRole = this.albionUtilities.getHighestAlbionRole(discordMember);
+
+      if (!highestRole) {
+        const line = `- Unable to find highest Albion role for ${discordMember.displayName}!`;
+        this.logger.warn(`Unable to find highest Albion role for ${discordMember.displayName}!`);
+        membersReport.errors.push(line);
+        continue;
+      }
+
+      if (highestRole.name === '@ALB/Initiate' && diffInDays >= 14) {
+        membersReport.candidates.push(`- ${member.characterName} - registered ${discordRelativeCode}`);
+      }
+    }
+
+    await message.channel.send('# Squire Candidates\nCandidates based on Initiates who have been registered for 14 days or more.');
+    if (membersReport.candidates.length > 0) {
+      await this.bufferMessages(membersReport.candidates, message);
+    }
+    else {
+      await message.channel.send('No Candidates found!');
+    }
+
+    if (membersReport.errors.length > 0) {
+      await message.channel.send('# Errors');
+      await this.bufferMessages(membersReport.errors, message);
+    }
+  }
+
   async bufferMessages(membersReportArray: string[], message: Message) {
     // We need to split the message up due to character limits. Split up each message into 10 initiates each message
     let count = 0;
@@ -152,9 +207,8 @@ export class AlbionReportsService {
       }
     }
 
-    console.log('buffer', messagesInBuffer);
-
     for (const bufferedMessage of messagesInBuffer) {
+      this.logger.debug(`Sending buffered message: ${bufferedMessage}`);
       await message.channel.send(bufferedMessage);
     }
   }
