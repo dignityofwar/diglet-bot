@@ -189,6 +189,9 @@ export class AlbionReportsService {
       await message.channel.send('# Errors');
       await this.bufferMessages(membersReport.errors, message);
     }
+    await message.delete();
+
+    this.logger.log('Squire Candidate Report generated');
   }
 
   async bufferMessages(membersReportArray: string[], message: Message) {
