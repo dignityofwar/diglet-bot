@@ -60,9 +60,15 @@ export class AlbionRegistrationService implements OnApplicationBootstrap {
 
     if (foundMember.length > 0) {
       // Get the original Discord user, if possible
-      const originalDiscordMember = await this.discordService.getGuildMember(guildMember, foundMember[0].discordId);
+      let originalDiscordMember;
+      try {
+        originalDiscordMember = await this.discordService.getOtherGuildMember(guildMember, foundMember[0].discordId);
+      }
+      catch (err) {
+        this.logger.warn(`Unable to find original Discord user for character "${character.Name}"! Err: ${err.message}`);
+      }
 
-      if (originalDiscordMember === null) {
+      if (!originalDiscordMember) {
         this.throwError(`Character **${character.Name}** has already been registered, but the user who registered it has left the server. If you believe this to be in error, please contact the Albion Guild Masters.`);
       }
 

@@ -12,6 +12,7 @@ export default () => ({
   roles: {
     albionInitiateRoleId: process.env.ROLE_ALBION_INITIATE,
     albionRegisteredRoleId: process.env.ROLE_ALBION_VERIFIED,
+    albionBaseRole: process.env.ROLE_ALBION_BASE,
     ps2Verified: process.env.ROLE_PS2_VERIFIED,
     ps2Zealot: process.env.ROLE_PS2_ZEALOT,
   },

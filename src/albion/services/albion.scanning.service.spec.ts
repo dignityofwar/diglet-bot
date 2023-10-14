@@ -11,6 +11,7 @@ import { AlbionPlayerInterface } from '../interfaces/albion.api.interfaces';
 import { SnowflakeUtil } from 'discord.js';
 import { AlbionScanningService } from './albion.scanning.service';
 import { AlbionApiService } from './albion.api.service';
+import { AlbionUtilities } from '../utilities/albion.utilities';
 
 const expectedChannelId = '1234567890';
 const expectedDevUserId = '1234575897';
@@ -139,6 +140,7 @@ describe('AlbionScanningService', () => {
         AlbionScanningService,
         ReflectMetadataProvider,
         AlbionApiService,
+        AlbionUtilities,
         {
           provide: DiscordService,
           useValue: {
