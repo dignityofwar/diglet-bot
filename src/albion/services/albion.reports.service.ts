@@ -7,6 +7,7 @@ import { ConfigService } from '@nestjs/config';
 import { AlbionUtilities } from '../utilities/albion.utilities';
 import { Message } from 'discord.js';
 import { AlbionApiService } from './albion.api.service';
+import { AlbionPlayerInterface } from '../interfaces/albion.api.interfaces';
 
 export class AlbionReportsService {
   private readonly logger = new Logger(AlbionReportsService.name);
@@ -23,7 +24,7 @@ export class AlbionReportsService {
     await message.edit('Getting Guild members from the API...');
 
     // Get total number of members with the Albion Online role
-    let albionMembers;
+    let albionMembers: AlbionPlayerInterface[] = [];
 
     try {
       albionMembers = await this.albionApiService.getAllGuildMembers(this.config.get('albion.guildId'));
