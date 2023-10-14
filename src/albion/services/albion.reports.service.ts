@@ -49,7 +49,7 @@ export class AlbionReportsService {
 
     const membersReport = {
       initiates: [],
-      squire: [],
+      squires: [],
       leadership: [],
       errors: [],
     };
@@ -89,7 +89,7 @@ export class AlbionReportsService {
           membersReport.initiates.push(line);
           break;
         case '@ALB/Squire':
-          membersReport.squire.push(line);
+          membersReport.squires.push(line);
           break;
         case '@ALB/Captain':
         case '@ALB/General':
@@ -103,44 +103,59 @@ export class AlbionReportsService {
     const regPercent = Math.round((metrics.totalRegistered / metrics.totalMembers) * 100);
     const unregPercent = Math.round((metrics.totalUnregistered / metrics.totalMembers) * 100);
 
-    const fields = [
-      {
-        name: 'Metrics',
-        value: `🧑‍🤝‍🧑 Total Guild members: ${metrics.totalMembers}\n📝 Total registered: ${metrics.totalRegistered} (${regPercent}%)\nℹ️ Total unregistered: ${metrics.totalUnregistered} (${unregPercent}%)`,
-      },
-      {
-        name: 'Initiates',
-        value: membersReport.initiates.length > 0 ? membersReport.initiates.join('\n -') : 'No initiates found',
-      },
-      {
-        name: 'Squires',
-        value: membersReport.squire.length > 0 ? membersReport.squire.join('\n -') : 'No squires found',
-      },
-      {
-        name: 'Leadership',
-        value: membersReport.leadership.length > 0 ? membersReport.leadership.join('\n -') : 'No leadership found',
-      },
-    ];
+    await message.channel.send(`# Metrics \n🧑‍🤝‍🧑Total Guild members: ${metrics.totalMembers}\n📝 Total registered: ${metrics.totalRegistered} (${regPercent}%)\nℹ️ Total unregistered: ${metrics.totalUnregistered} (${unregPercent}%)`);
 
-    if (membersReport.errors.length > 0) {
-      fields.push({
-        name: 'Errors',
-        value: membersReport.errors.join('\n -'),
-      });
+    await message.channel.send('# Initiates');
+    if (membersReport.initiates.length > 0) {
+      await this.bufferMessages(membersReport.initiates, message);
+    }
+    else {
+      await message.channel.send('No Initiates found!');
+    }
+    await message.channel.send('# Squires');
+    if (membersReport.squires.length > 0) {
+      await this.bufferMessages(membersReport.squires, message);
+    }
+    else {
+      await message.channel.send('No Squires found!');
+    }
+    await message.channel.send('# Leadership');
+    if (membersReport.leadership.length > 0) {
+      await this.bufferMessages(membersReport.leadership, message);
+    }
+    else {
+      await message.channel.send('No Leadership found!');
     }
 
-    await message.channel.send({
-      embeds: [
-        {
-          title: 'Albion Registration Report',
-          description: `This report was generated on <t:${Math.floor(Date.now() / 1000)}:f> (<t:${Math.floor(Date.now() / 1000)}:R>)`,
-          fields,
-        },
-      ],
-    });
+    if (membersReport.errors.length > 0) {
+      await message.channel.send(`# Errors\n${membersReport.errors.join('\n')}`);
+    }
 
     await message.delete();
 
     this.logger.log('Report generated');
+  }
+
+  async bufferMessages(membersReportArray: string[], message: Message) {
+    // We need to split the message up due to character limits. Split up each message into 10 initiates each message
+    let count = 0;
+    let messageBuffer = '';
+    const messagesInBuffer = [];
+    for (const initiate of membersReportArray) {
+      count++;
+
+      messageBuffer += `${initiate}\n`;
+
+      if (count % 10 === 0 || count === membersReportArray.length) {
+        messagesInBuffer.push(messageBuffer);
+        messageBuffer = '';
+      }
+    }
+
+    console.log('buffer', messagesInBuffer);
+
+    for (const bufferedMessage of messagesInBuffer) {
+      await message.channel.send(bufferedMessage);
+    }
   }
 }
