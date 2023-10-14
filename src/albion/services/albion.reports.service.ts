@@ -103,7 +103,7 @@ export class AlbionReportsService {
     const regPercent = Math.round((metrics.totalRegistered / metrics.totalMembers) * 100);
     const unregPercent = Math.round((metrics.totalUnregistered / metrics.totalMembers) * 100);
 
-    await message.channel.send(`# Metrics \n🧑‍🤝‍🧑Total Guild members: ${metrics.totalMembers}\n📝 Total registered: ${metrics.totalRegistered} (${regPercent}%)\nℹ️ Total unregistered: ${metrics.totalUnregistered} (${unregPercent}%)`);
+    await message.channel.send(`# Metrics \n🧑‍🤝‍🧑 Total Guild members: ${metrics.totalMembers}\n📝 Total registered: ${metrics.totalRegistered} (${regPercent}%)\nℹ️ Total unregistered: ${metrics.totalUnregistered} (${unregPercent}%)`);
 
     await message.channel.send('# Initiates');
     if (membersReport.initiates.length > 0) {
