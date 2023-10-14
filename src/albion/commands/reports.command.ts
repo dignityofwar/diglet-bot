@@ -1,4 +1,4 @@
-import { Command, EventParams, Handler, InteractionEvent } from '@discord-nestjs/core';
+import { Command, EventParams, Handler } from '@discord-nestjs/core';
 import { ApplicationCommandType, ChatInputCommandInteraction } from 'discord.js';
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';

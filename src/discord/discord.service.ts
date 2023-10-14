@@ -1,6 +1,6 @@
 import { Injectable, OnModuleInit } from '@nestjs/common';
 import { InjectDiscordClient } from '@discord-nestjs/core';
-import { Channel, Client, Collection, GuildMember, Role } from 'discord.js';
+import { Channel, Client, Collection, GuildMember } from 'discord.js';
 
 @Injectable()
 export class DiscordService implements OnModuleInit {
