@@ -219,7 +219,7 @@ describe('AlbionRegistrationService', () => {
   it('should handle characters that are not in the guild', async () => {
     mockCharacter.GuildId = 'utter nonsense';
 
-    await expect(service.validateRegistrationAttempt(mockCharacter, mockDiscordUser)).rejects.toThrowError(`The character **${mockCharacter.Name}** is not in the guild. Please ensure you have spelt the name **exactly** correct (case sensitive) **and** you are a member of the DIG guild in the game before trying again. If you are a member, please wait 30 minutes. If you are still having issues, please contact the Albion Guild Masters.`);
+    await expect(service.validateRegistrationAttempt(mockCharacter, mockDiscordUser)).rejects.toThrowError(`The character **${mockCharacter.Name}** is not in the guild. Please ensure you have spelt the name **exactly** correct (case sensitive) **and** you are a member of the DIG guild in the game before trying again. If you have just joined us, please wait 30 minutes. If you are still having issues, please contact the Albion Guild Masters.`);
   });
 
   // Registration handling
