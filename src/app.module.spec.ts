@@ -1,4 +1,4 @@
-import { Test, TestingModule } from '@nestjs/testing';
+import { Test } from '@nestjs/testing';
 import { AppModule } from './app.module';
 import { ModuleMetadata } from '@nestjs/common';
 import { Ps2Module } from './ps2/ps2.module';
@@ -9,10 +9,13 @@ import { DatabaseModule } from './database/database.module';
 import { DiscordModule } from '@discord-nestjs/core';
 
 describe('AppModule', () => {
-  let module: TestingModule;
-
   beforeAll(async () => {
-    module = await Test.createTestingModule({
+    jest.mock('@mikro-orm/nestjs', () => ({
+      MikroOrmModule: {
+        forRoot: jest.fn().mockReturnValue({}),
+      },
+    }));
+    await Test.createTestingModule({
       imports: [AppModule],
     }).compile();
   });
