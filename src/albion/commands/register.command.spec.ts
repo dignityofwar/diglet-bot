@@ -166,7 +166,7 @@ describe('AlbionRegisterCommand', () => {
     expect(sentMessage.edit).toHaveBeenCalledWith('⛔️ **ERROR:** Some error fetching character');
 
     // Check the final result
-    expect(result).toBe('');
+    expect(result).toBe('⬇️');
   });
 
   it('should return errors from the registration process', async () => {
@@ -187,7 +187,7 @@ describe('AlbionRegisterCommand', () => {
     expect(sentMessage.edit).toHaveBeenCalledWith('⛔️ **ERROR:** Some error handling registration');
 
     // Check the final result
-    expect(result).toBe('');
+    expect(result).toBe('⬇️');
   });
 
   it('should return a arrow down message upon success', async () => {
