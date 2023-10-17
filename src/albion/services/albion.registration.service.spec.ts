@@ -15,6 +15,7 @@ const expectedChannelId = '1234567890';
 const expectedRoleId = '987654321';
 const expectedDevUserId = '1234575897';
 const expectedGuildId = '56666666666';
+const expectedGuildMasterRoleId = '6565767686';
 
 describe('AlbionRegistrationService', () => {
   let service: AlbionRegistrationService;
@@ -23,6 +24,7 @@ describe('AlbionRegistrationService', () => {
   let albionMembersRepository: EntityRepository<AlbionMembersEntity>;
 
   let mockDiscordUser: any;
+  let mockDiscordMessage: any;
   let mockCharacter: AlbionPlayerInterface;
   let mockEntityManager: jest.Mocked<EntityManager>;
 
@@ -78,6 +80,14 @@ describe('AlbionRegistrationService', () => {
       },
     } as any;
 
+    mockDiscordMessage = {
+      edit: jest.fn(),
+      delete: jest.fn(),
+      channel: {
+        send: jest.fn(),
+      },
+    };
+
     const moduleRef = await Test.createTestingModule({
       providers: [
         AlbionRegistrationService,
@@ -112,11 +122,13 @@ describe('AlbionRegistrationService', () => {
       const data = {
         albion: {
           guildId: expectedGuildId,
+          guildMasterRole: { discordRoleId: expectedGuildMasterRoleId },
         },
         discord: {
           devUserId: expectedDevUserId,
           channels: {
             albionRegistration: expectedChannelId,
+            albionWelcomeToAlbion: expectedChannelId,
           },
           roles: {
             albionInitiateRoleId: '123456789',
@@ -207,10 +219,11 @@ describe('AlbionRegistrationService', () => {
   it('should handle characters that are not in the guild', async () => {
     mockCharacter.GuildId = 'utter nonsense';
 
-    await expect(service.validateRegistrationAttempt(mockCharacter, mockDiscordUser)).rejects.toThrowError(`Your character **${mockCharacter.Name}** is not in the guild. Please ensure you have spelt the name **exactly** correct **and** you are a member of the guild in the game before trying again.`);
+    await expect(service.validateRegistrationAttempt(mockCharacter, mockDiscordUser)).rejects.toThrowError(`The character **${mockCharacter.Name}** is not in the guild. Please ensure you have spelt the name **exactly** correct (case sensitive) **and** you are a member of the DIG guild in the game before trying again. If you are a member, please wait 30 minutes. If you are still having issues, please contact the Albion Guild Masters.`);
   });
 
   // Registration handling
+
   it('should handle discord role adding errors', async () => {
     service.validateRegistrationAttempt = jest.fn().mockImplementation(() => true);
     discordService.getMemberRole = jest.fn().mockReturnValue({
@@ -221,7 +234,7 @@ describe('AlbionRegistrationService', () => {
       .mockImplementation(() => {
         throw new Error('Unable to add role');
       });
-    await expect(service.handleRegistration(mockCharacter, mockDiscordUser)).rejects.toThrowError(`Unable to add the \`@ALB/Initiate\` or \`@ALB/Registered\` roles to user "${mockDiscordUser.displayName}"! Pinging <@${expectedDevUserId}>!`);
+    await expect(service.handleRegistration(mockCharacter, mockDiscordUser, mockDiscordMessage)).rejects.toThrowError(`Unable to add the \`@ALB/Initiate\` or \`@ALB/Registered\` roles to user "${mockDiscordUser.displayName}"! Pinging <@${expectedDevUserId}>!`);
   });
   it('should return thrown exception upon database error', async () => {
     service.validateRegistrationAttempt = jest.fn().mockImplementation(() => true);
@@ -231,7 +244,7 @@ describe('AlbionRegistrationService', () => {
     albionMembersRepository.upsert = jest.fn().mockImplementation(() => {
       throw new Error('Database done goofed');
     });
-    await expect(service.handleRegistration(mockCharacter, mockDiscordUser)).rejects.toThrowError(`Unable to add you to the database! Pinging <@${expectedDevUserId}>! Err: Database done goofed`);
+    await expect(service.handleRegistration(mockCharacter, mockDiscordUser, mockDiscordMessage)).rejects.toThrowError(`Unable to add you to the database! Pinging <@${expectedDevUserId}>! Err: Database done goofed`);
   });
   it('should handle discord nickname permission errors', async () => {
     service.validateRegistrationAttempt = jest.fn().mockImplementation(() => true);
@@ -242,7 +255,8 @@ describe('AlbionRegistrationService', () => {
     mockDiscordUser.setNickname = jest.fn().mockImplementation(() => {
       throw new Error('Unable to set nickname');
     });
-    await expect(service.handleRegistration(mockCharacter, mockDiscordUser)).rejects.toThrowError(`Unable to set your nickname. If you're Staff this won't work as the bot has no power over you! Pinging <@${expectedDevUserId}>!`);
+    await expect(service.handleRegistration(mockCharacter, mockDiscordUser, mockDiscordMessage)).resolves.toBe(undefined);
+    expect(mockDiscordMessage.channel.send).toBeCalledWith(`⚠️ Unable to set your nickname. If you're Staff this won't work as the bot has no power over you! Pinging <@${expectedDevUserId}>!`);
   });
 
   // Edge case handling
@@ -289,5 +303,27 @@ describe('AlbionRegistrationService', () => {
 
       await expect(service.validateRegistrationAttempt(newMockCharacter, mockDiscordUser)).resolves.toBe(true);
     }
+  });
+  it('should handle successful registrations and return a message to the user', async () => {
+    service.validateRegistrationAttempt = jest.fn().mockImplementation(() => true);
+    discordService.getMemberRole = jest.fn().mockReturnValue({
+      id: expectedRoleId,
+    });
+    mockDiscordUser.roles.add = jest.fn().mockReturnValue(true);
+    mockDiscordUser.setNickname = jest.fn().mockImplementation(() => {
+      true;
+    });
+
+    await expect(service.handleRegistration(mockCharacter, mockDiscordUser, mockDiscordMessage)).resolves.toBe(undefined);
+    expect(mockDiscordMessage.channel.send).toBeCalledWith(`## ✅ Thank you **${mockCharacter.Name}**, you've been verified as a [DIG] guild member! 🎉
+    
+* ➡️ Please read the information within <#${expectedChannelId}> to be fully acquainted with the guild!
+    
+* 👉️ Grab opt-in roles of interest in <id:customize> under the Albion section! It is _important_ you do this, otherwise you may miss content.
+    
+* ℹ️ Your Discord server nickname has been automatically changed to match your character name. You are free to change this back should you want to, but please make sure it resembles your in-game name.
+    
+CC <@&${expectedGuildMasterRoleId}> / <@${expectedDevUserId}>`);
+    expect(mockDiscordMessage.delete).toBeCalled();
   });
 });

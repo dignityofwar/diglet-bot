@@ -25,6 +25,9 @@ describe('AlbionApiService', () => {
         albion: {
           guildId: guildId,
         },
+        discord: {
+          devUserId: '1234567890',
+        },
       };
 
       const result = _.get(data, key);
@@ -55,7 +58,7 @@ describe('AlbionApiService', () => {
 
     await expect(service.getCharacter('who.dis'))
       .rejects
-      .toThrowError('Character **who.dis** does not exist. Please ensure you have supplied your exact name.');
+      .toThrowError('Character **who.dis** does not exist. Please ensure you have supplied your **exact** name (case sensitive).');
   });
 
   it('should return a character based on exact match amongst partial matches', async () => {
@@ -217,7 +220,7 @@ describe('AlbionApiService', () => {
 
     await expect(service.getCharacter(characterName))
       .rejects
-      .toThrowError('Multiple characters for **NightRaven2511** were found within the guild. This is an unsupported use case for this registration system. Congrats you broke it. Please contact the Albion Guild Masters.');
+      .toThrowError('Multiple characters for **NightRaven2511** were found within the DIG guild. This is an unsupported use case for this registration system. Pinging <@1234567890>!');
   });
 
   it('should return a character with all uppercase letters', async () => {

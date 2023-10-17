@@ -127,6 +127,14 @@ describe('AlbionRegisterCommand', () => {
           },
         },
         user: mockUser,
+        channel: {
+          send: jest.fn().mockImplementation(() => {
+            return {
+              edit: jest.fn(),
+            };
+          }),
+          edit: jest.fn(),
+        },
       },
     ];
   });
@@ -145,7 +153,20 @@ describe('AlbionRegisterCommand', () => {
     albionApiService.getCharacter = jest.fn().mockImplementation(() => {
       throw new Error('Some error fetching character');
     });
-    expect(await command.onAlbionRegisterCommand(dto, mockInteraction)).toBe('⛔️ **ERROR:** Some error fetching character');
+
+    const result = await command.onAlbionRegisterCommand(dto, mockInteraction);
+
+    // Check that send was called with the expected argument
+    expect(mockInteraction[0].channel.send).toHaveBeenCalledWith('🔍 Validating character...');
+
+    // Capture the mock message object returned by send
+    const sentMessage = mockInteraction[0].channel.send.mock.results[0].value;
+
+    // Check that the edit method on the sentMessage was called with the expected argument
+    expect(sentMessage.edit).toHaveBeenCalledWith('⛔️ **ERROR:** Some error fetching character');
+
+    // Check the final result
+    expect(result).toBe('');
   });
 
   it('should return errors from the registration process', async () => {
@@ -154,19 +175,25 @@ describe('AlbionRegisterCommand', () => {
       throw new Error('Some error handling registration');
     });
 
-    expect(await command.onAlbionRegisterCommand(dto, mockInteraction)).toBe('⛔️ **ERROR:** Some error handling registration');
+    const result = await command.onAlbionRegisterCommand(dto, mockInteraction);
+
+    // Check that send was called with the expected argument
+    expect(mockInteraction[0].channel.send).toHaveBeenCalledWith('🔍 Validating character...');
+
+    // Capture the mock message object returned by send
+    const sentMessage = mockInteraction[0].channel.send.mock.results[0].value;
+
+    // Check that the edit method on the sentMessage was called with the expected argument
+    expect(sentMessage.edit).toHaveBeenCalledWith('⛔️ **ERROR:** Some error handling registration');
+
+    // Check the final result
+    expect(result).toBe('');
   });
 
-  it('should return the success message if the character has successfully been registered', async () => {
+  it('should return a arrow down message upon success', async () => {
     albionApiService.getCharacter = jest.fn().mockImplementation(() => mockCharacter);
     albionRegistrationService.handleRegistration = jest.fn().mockImplementation(() => true);
 
-    expect(await command.onAlbionRegisterCommand(dto, mockInteraction)).toBe(`## ✅ Thank you **${mockUser.displayName}**, you've been verified as a [DIG] guild member! 🎉
-    
-* ➡️ Please read the information within <#5555444455555> to be fully acquainted with the guild!
-    
-* 👉️ Grab opt-in roles of interest in <id:customize> under the Albion section! It is _important_ you do this, otherwise you may miss content.
-    
-* ℹ️ Your Discord server nickname has been automatically changed to match your character name. You are free to change this back should you want to, but please make sure it resembles your in-game name.`);
+    expect(await command.onAlbionRegisterCommand(dto, mockInteraction)).toBe('⬇️');
   });
 });

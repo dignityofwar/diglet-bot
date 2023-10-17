@@ -44,7 +44,7 @@ export class AlbionApiService {
 
     // If there were no players found
     if (foundPlayer.length === 0) {
-      this.throwError(`Character **${characterName}** does not exist. Please ensure you have supplied your exact name.`);
+      this.throwError(`Character **${characterName}** does not exist. Please ensure you have supplied your **exact** name (case sensitive).`);
     }
 
     if (foundPlayer.length > 1) {
@@ -61,7 +61,7 @@ export class AlbionApiService {
         return foundPlayerInGuild[0].Id;
       }
       else {
-        this.throwError(`Multiple characters for **${characterName}** were found within the guild. This is an unsupported use case for this registration system. Congrats you broke it. Please contact the Albion Guild Masters.`);
+        this.throwError(`Multiple characters for **${characterName}** were found within the DIG guild. This is an unsupported use case for this registration system. Pinging <@${this.config.get('discord.devUserId')}>!`);
       }
     }
 

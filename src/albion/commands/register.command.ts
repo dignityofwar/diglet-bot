@@ -41,22 +41,22 @@ export class AlbionRegisterCommand {
     // Get the character from the Albion Online API
     let character: AlbionPlayerInterface;
 
+    const message = await interaction[0].channel.send('🔍 Validating character...');
+
     // Start processing the character
     try {
       character = await this.albionApiService.getCharacter(dto.character);
-      await this.albionRegistrationService.handleRegistration(character, member);
+      await this.albionRegistrationService.handleRegistration(character, member, message);
     }
     catch (err) {
+      await message.edit(`⛔️ **ERROR:** ${err.message}`);
       this.logger.error(err.message);
-      return `⛔️ **ERROR:** ${err.message}`;
+      return '⬇️';
     }
 
     this.logger.log(`Registration for ${character.Name} was successful, returning success response.`);
 
-    // Successful!
-    return `## ✅ Thank you **${character.Name}**, you've been verified as a [DIG] guild member! 🎉
-    \n* ➡️ Please read the information within <#${this.config.get('discord.channels.albionWelcomeToAlbion')}> to be fully acquainted with the guild!
-    \n* 👉️ Grab opt-in roles of interest in <id:customize> under the Albion section! It is _important_ you do this, otherwise you may miss content.
-    \n* ℹ️ Your Discord server nickname has been automatically changed to match your character name. You are free to change this back should you want to, but please make sure it resembles your in-game name.`;
+    // Successful! Success message now within handleRegistration.
+    return '⬇️';
   }
 }

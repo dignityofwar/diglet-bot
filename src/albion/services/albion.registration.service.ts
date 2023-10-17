@@ -4,7 +4,7 @@ import { ConfigService } from '@nestjs/config';
 import { InjectRepository } from '@mikro-orm/nestjs';
 import { AlbionMembersEntity } from '../../database/entities/albion.members.entity';
 import { EntityRepository } from '@mikro-orm/core';
-import { Channel, GuildMember } from 'discord.js';
+import { Channel, GuildMember, Message } from 'discord.js';
 import { AlbionPlayerInterface } from '../interfaces/albion.api.interfaces';
 
 @Injectable()
@@ -16,7 +16,7 @@ export class AlbionRegistrationService implements OnApplicationBootstrap {
   constructor(
     private readonly discordService: DiscordService,
     private readonly config: ConfigService,
-    @InjectRepository(AlbionMembersEntity) private readonly albionMembersRepository: EntityRepository<AlbionMembersEntity>
+    @InjectRepository(AlbionMembersEntity) private readonly albionMembersRepository: EntityRepository<AlbionMembersEntity>,
   ) {
   }
 
@@ -52,7 +52,7 @@ export class AlbionRegistrationService implements OnApplicationBootstrap {
 
     // Check if the character is in the Albion guild
     if (character.GuildId !== guildId) {
-      this.throwError(`Your character **${character.Name}** is not in the guild. Please ensure you have spelt the name **exactly** correct **and** you are a member of the guild in the game before trying again. If it still doesn't work, try again later as our data source may be out of date.`);
+      this.throwError(`The character **${character.Name}** is not in the guild. Please ensure you have spelt the name **exactly** correct (case sensitive) **and** you are a member of the DIG guild in the game before trying again. If you are a member, please wait 30 minutes. If you are still having issues, please contact the Albion Guild Masters.`);
     }
 
     // 3. Check if the character has already been registered
@@ -85,7 +85,7 @@ export class AlbionRegistrationService implements OnApplicationBootstrap {
     return true;
   }
 
-  async handleRegistration(character: AlbionPlayerInterface, guildMember: GuildMember) {
+  async handleRegistration(character: AlbionPlayerInterface, guildMember: GuildMember, message: Message) {
     this.logger.debug(`Handling Albion character "${character.Name}" registration`);
 
     await this.validateRegistrationAttempt(character, guildMember);
@@ -127,8 +127,21 @@ export class AlbionRegistrationService implements OnApplicationBootstrap {
       await guildMember?.setNickname(character.Name);
     }
     catch (err) {
-      this.throwError(`Unable to set your nickname. If you're Staff this won't work as the bot has no power over you! Pinging <@${this.config.get('discord.devUserId')}>!`);
+      const errorMessage = `⚠️ Unable to set your nickname. If you're Staff this won't work as the bot has no power over you! Pinging <@${this.config.get('discord.devUserId')}>!`;
+      await message.channel.send(errorMessage);
+      this.logger.error(errorMessage);
+      return;
     }
+
+    // Successful!
+    await message.channel.send(`## ✅ Thank you **${character.Name}**, you've been verified as a [DIG] guild member! 🎉
+    \n* ➡️ Please read the information within <#${this.config.get('discord.channels.albionWelcomeToAlbion')}> to be fully acquainted with the guild!
+    \n* 👉️ Grab opt-in roles of interest in <id:customize> under the Albion section! It is _important_ you do this, otherwise you may miss content.
+    \n* ℹ️ Your Discord server nickname has been automatically changed to match your character name. You are free to change this back should you want to, but please make sure it resembles your in-game name.
+    \nCC <@&${this.config.get('albion.guildMasterRole').discordRoleId}> / <@${this.config.get('discord.devUserId')}>`);
+
+    // Delete the placeholder message
+    await message.delete();
   }
 
   private throwError(error: string) {
