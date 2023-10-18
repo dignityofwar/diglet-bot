@@ -97,9 +97,9 @@ export class AlbionScanningService {
       this.logger.log(`Sending ${leavers.length} changes to channel...`);
     }
 
-    for (const change of this.changesMap.values()) {
+    for (const suggestion of suggestions) {
       const fakeMessage = await message.channel.send('dummy'); // Send a fake message first so it doesn't ping people
-      await fakeMessage.edit(change.change);
+      await fakeMessage.edit(suggestion);
     }
 
     if (suggestions.length === 0) {
@@ -181,7 +181,7 @@ export class AlbionScanningService {
       }
       catch (err) {
         // No discord member means they've left the server. Remove them from the database and continue.
-        this.logger.log(`User ${character.Name} has left the server`);
+        this.logger.log(`User ${character.Name} has left the Discord server`);
 
         if (!dryRun) {
           await this.albionMembersRepository.removeAndFlush(member);
@@ -232,6 +232,8 @@ export class AlbionScanningService {
 
       changes.push(`- 👋 <@${discordMember.id}>'s character **${character.Name}** has left the Guild. Their roles and registration status have been stripped.`);
     }
+
+    this.logger.log(`Found ${changes.length} changes to make.`);
 
     return changes;
   }
