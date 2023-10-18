@@ -247,7 +247,15 @@ export class AlbionScanningService {
         continue;
       }
 
-      const discordMember = await message.guild.members.fetch({ user: member.discordId, force: true });
+      let discordMember: GuildMember | null = null;
+
+      try {
+        discordMember = await message.guild.members.fetch({ user: member.discordId, force: true });
+      }
+      catch (err) {
+        this.logger.warn(`Unable to fetch Discord member for ${member.characterName}! Assuming they've left the server, skipping suggestions for them.`);
+        continue;
+      }
 
       // Get the role inconsistencies
       const inconsistencies = await this.checkRoleInconsistencies(discordMember);
