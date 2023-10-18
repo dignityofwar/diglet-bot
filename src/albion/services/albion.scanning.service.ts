@@ -88,6 +88,12 @@ export class AlbionScanningService {
     }
     else {
       await message.channel.send(`## 📝 ${leavers.length} leavers detected!`);
+
+      for (const leaver of leavers) {
+        const fakeMessage = await message.channel.send('dummy'); // Send a fake message first so it doesn't ping people
+        await fakeMessage.edit(leaver);
+      }
+
       this.logger.log(`Sending ${leavers.length} changes to channel...`);
     }
 
