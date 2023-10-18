@@ -50,6 +50,8 @@ export class AlbionScanningService {
     // Also send a message to the #ps2-scans channel to denote this has happened
 
     const guildMembers: AlbionMembersEntity[] = await this.albionMembersRepository.findAll();
+    await message.edit(`ℹ️ There are currently ${guildMembers.length} members on record.`);
+
     const length = guildMembers.length;
 
     let characters: Array<AlbionPlayerInterface | null>;
@@ -66,66 +68,17 @@ export class AlbionScanningService {
       return this.reset();
     }
 
-    let leavers: string[];
-    let suggestions: string[];
-
     try {
       await message.edit(`Checking ${length} characters for membership status...`);
-      leavers = await this.removeLeavers(characters, guildMembers, message, dryRun);
+      await this.removeLeavers(characters, guildMembers, message, dryRun);
 
       await message.edit(`Checking ${length} characters for role inconsistencies...`);
-      suggestions = await this.generateSuggestions(guildMembers, message);
+      await this.generateSuggestions(guildMembers, message, dryRun);
     }
     catch (err) {
       await message.edit('## ❌ An error occurred while scanning!');
       await message.channel.send(`Error: ${err.message}`);
-      return this.reset();
     }
-
-    if (leavers.length === 0) {
-      await message.channel.send('✅ No leavers were detected.');
-      this.logger.log('No leavers were detected.');
-    }
-    else {
-      await message.channel.send(`## 📝 ${leavers.length} leavers detected!`);
-
-      for (const leaver of leavers) {
-        const fakeMessage = await message.channel.send('dummy'); // Send a fake message first so it doesn't ping people
-        await fakeMessage.edit(leaver);
-      }
-
-      this.logger.log(`Sending ${leavers.length} changes to channel...`);
-    }
-
-    for (const suggestion of suggestions) {
-      const fakeMessage = await message.channel.send('dummy'); // Send a fake message first so it doesn't ping people
-      await fakeMessage.edit(suggestion);
-    }
-
-    if (suggestions.length === 0) {
-      await message.channel.send('✅ No Discord changes are required.');
-      this.logger.log('No suggestions were made.');
-    }
-    else {
-      await message.channel.send(`## 👀 ${suggestions.length} manual correction(s) to make`);
-      this.logger.log(`Sending ${suggestions.length} suggestions to channel...`);
-    }
-
-    for (const suggestion of suggestions) {
-      if (!suggestion) {
-        this.logger.error('Attempted to send empty suggestion!');
-        continue;
-      }
-      const fakeMessage = await message.channel.send('dummy'); // Send a fake message first so it doesn't ping people
-      await fakeMessage.edit(suggestion);
-    }
-
-    if (suggestions.length > 0 && !dryRun) {
-      const pingRoles = this.config.get('albion.pingRoles');
-      await message.channel.send(`🔔 <@&${pingRoles.join('>, <@&')}> Please review the above suggestions and make any necessary changes manually. To check again without pinging Guildmasters or Masters, run the \`/albion-scan\` command with the \`dry-run\` flag set to \`true\`.`);
-    }
-
-    await message.edit(`ℹ️ There are currently ${guildMembers.length} members on record.`);
 
     return this.reset();
   }
@@ -162,10 +115,10 @@ export class AlbionScanningService {
     guildMembers: AlbionMembersEntity[],
     message: Message,
     dryRun = false
-  ): Promise<string[]> {
+  ): Promise<void> {
     // Save all the characters to a map we can easily pick out later via character ID
     const charactersMap = new Map<string, AlbionPlayerInterface>();
-    const changes: string[] = [];
+    const leavers: string[] = [];
     for (const character of characters) {
       charactersMap.set(character.Id, character);
     }
@@ -187,7 +140,7 @@ export class AlbionScanningService {
           await this.albionMembersRepository.removeAndFlush(member);
         }
 
-        changes.push(`- 🫥️ Discord member for Character **${character.Name}** has left the DIG server. Their registration status has been removed.`);
+        leavers.push(`- 🫥️ Discord member for Character **${character.Name}** has left the DIG server. Their registration status has been removed.`);
         continue;
       }
 
@@ -230,18 +183,30 @@ export class AlbionScanningService {
         }
       }
 
-      changes.push(`- 👋 <@${discordMember.id}>'s character **${character.Name}** has left the Guild. Their roles and registration status have been stripped.`);
+      leavers.push(`- 👋 <@${discordMember.id}>'s character **${character.Name}** has left the Guild. Their roles and registration status have been stripped.`);
     }
 
-    this.logger.log(`Found ${changes.length} changes to make.`);
+    this.logger.log(`Found ${leavers.length} changes to make.`);
 
-    return changes;
+    if (leavers.length > 0) {
+      this.logger.log(`Sending ${leavers.length} changes to channel...`);
+      await message.channel.send(`## 🚪 ${leavers.length} leavers detected!`);
+
+      for (const leaver of leavers) {
+        await message.channel.send(leaver); // Send a fake message first so it doesn't ping people
+      }
+      return;
+    }
+
+    await message.channel.send('✅ No leavers were detected.');
+    this.logger.log('No leavers were detected.');
   }
 
   async generateSuggestions(
     guildMembers: AlbionMembersEntity[],
-    message: Message
-  ): Promise<string[]> {
+    message: Message,
+    dryRun = false
+  ): Promise<void> {
     const suggestions: string[] = [];
     for (const member of guildMembers) {
       // If already in the change set, they have been removed so don't bother checking
@@ -268,7 +233,26 @@ export class AlbionScanningService {
       });
     }
 
-    return suggestions;
+    if (suggestions.length === 0) {
+      await message.channel.send('✅ No role inconsistencies were detected.');
+      return;
+    }
+
+    await message.channel.send(`## 👀 ${suggestions.length} role inconsistencies detected!`);
+
+    for (const suggestion of suggestions) {
+      if (!suggestion) {
+        this.logger.error('Attempted to send empty suggestion!');
+        continue;
+      }
+      const fakeMessage = await message.channel.send('---'); // Send a fake message first so it doesn't ping people
+      await fakeMessage.edit(suggestion);
+    }
+
+    if (suggestions.length > 0 && !dryRun) {
+      const pingRoles = this.config.get('albion.pingRoles');
+      await message.channel.send(`🔔 <@&${pingRoles.join('>, <@&')}> Please review the above suggestions and make any necessary changes manually. To check again without pinging Guildmasters or Masters, run the \`/albion-scan\` command with the \`dry-run\` flag set to \`true\`.`);
+    }
   }
 
   async checkRoleInconsistencies(discordMember: GuildMember): Promise<RoleInconsistencyResult[]> {
