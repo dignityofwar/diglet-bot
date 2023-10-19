@@ -42,6 +42,12 @@ const rolesToRankProduction: AlbionRoleMapInterface[] = [
     priority: 6,
     keep: false,
   },
+  {
+    name: '@ALB/Registered',
+    discordRoleId: '1155987035472023702',
+    priority: 6,
+    keep: true,
+  },
 ];
 const rolesToRankDevelopment: AlbionRoleMapInterface[] = [
   {
