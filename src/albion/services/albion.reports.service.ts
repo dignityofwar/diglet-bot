@@ -83,7 +83,7 @@ export class AlbionReportsService {
         continue;
       }
 
-      const line = `- ${member.characterName}: Registered on ${discordDateCode} (${discordRelativeCode})`;
+      const line = `- ${member.characterName} / <@${discordMember.id}: Registered on ${discordDateCode} (${discordRelativeCode})`;
 
       // Push to the correct array based on the role
       switch (highestRole.name) {
@@ -173,7 +173,7 @@ export class AlbionReportsService {
       }
 
       if (highestRole.name === '@ALB/Initiate' && diffInDays >= 14) {
-        membersReport.candidates.push(`- ${member.characterName} - registered ${discordRelativeCode}`);
+        membersReport.candidates.push(`- ${member.characterName} / <@${discordMember.id}> - registered ${discordRelativeCode}`);
       }
     }
 
@@ -212,7 +212,8 @@ export class AlbionReportsService {
 
     for (const bufferedMessage of messagesInBuffer) {
       this.logger.debug(`Sending buffered message: ${bufferedMessage}`);
-      await message.channel.send(bufferedMessage);
+      const sentMessage = await message.channel.send('---');
+      await sentMessage.edit(bufferedMessage);
     }
   }
 }
