@@ -56,6 +56,7 @@ describe('AlbionScanningService', () => {
 
     mockAlbionMembersRepository = {
       find: jest.fn(),
+      findAll: jest.fn(),
       create: jest.fn(),
       upsert: jest.fn(),
       removeAndFlush: jest.fn(),
@@ -131,8 +132,13 @@ describe('AlbionScanningService', () => {
         },
       },
       channel: {
-        send: jest.fn(),
+        send: jest.fn().mockImplementation(() => {
+          return {
+            edit: jest.fn(),
+          };
+        }),
       },
+      edit: jest.fn(),
     } as any;
 
     const moduleRef = await Test.createTestingModule({
@@ -170,6 +176,7 @@ describe('AlbionScanningService', () => {
         albion: {
           guildId: expectedGuildId,
           scanExcludedUsers: [excludedScanUserId],
+          pingRoles: [guildMasterRoleId, masterRoleId],
           roleMap: [
             {
               name: guildMasterName,
@@ -250,22 +257,66 @@ describe('AlbionScanningService', () => {
     { id: '1155987100928323594', name: '@ALB/Registered' },
   ];
 
+  // Scanning handling
+  it('should gracefully error if no characters were found in the database', async () => {
+    mockAlbionMembersRepository.findAll = jest.fn().mockResolvedValueOnce([]);
+    await service.startScan(mockDiscordMessage);
+    expect(mockDiscordMessage.edit).toBeCalledWith('Starting scan...');
+    expect(mockDiscordMessage.edit).toBeCalledWith('## ❌ No members were found in the database!');
+  });
+  it('should send number of members on record', async () => {
+    mockAlbionMembersRepository.findAll = jest.fn().mockResolvedValueOnce([mockAlbionMember]);
+    service.gatherCharacters = jest.fn().mockResolvedValueOnce([]);
+    await service.startScan(mockDiscordMessage);
+    expect(mockDiscordMessage.edit).toBeCalledWith('ℹ️ There are currently 1 members on record.');
+  });
+  it('should handle errors with character gathering', async () => {
+    mockAlbionMembersRepository.findAll = jest.fn().mockResolvedValueOnce([mockAlbionMember]);
+    service.gatherCharacters = jest.fn().mockImplementation(() => {throw new Error('Operation went boom');});
+    await service.startScan(mockDiscordMessage);
+    expect(mockDiscordMessage.edit).toBeCalledWith('## ❌ An error occurred while gathering data from the API!');
+  });
+  it('should error when no characters return from the API', async () => {
+    mockAlbionMembersRepository.findAll = jest.fn().mockResolvedValueOnce([mockAlbionMember]);
+    service.gatherCharacters = jest.fn().mockResolvedValueOnce([]);
+    await service.startScan(mockDiscordMessage);
+    expect(mockDiscordMessage.edit).toBeCalledWith('## ❌ No characters were gathered from the API!');
+  });
+  it('should properly relay errors from the remover or suggestions functions', async () => {
+    mockAlbionMembersRepository.findAll = jest.fn().mockResolvedValueOnce([mockAlbionMember]);
+    service.gatherCharacters = jest.fn().mockResolvedValueOnce([mockCharacter]);
+    service.removeLeavers = jest.fn().mockResolvedValueOnce([]);
+    service.generateSuggestions = jest.fn().mockImplementation(() => {throw new Error('Operation went boom');});
+    await service.startScan(mockDiscordMessage);
+    expect(mockDiscordMessage.edit).toBeCalledWith('## ❌ An error occurred while scanning!');
+    expect(mockDiscordMessage.channel.send).toBeCalledWith('Error: Operation went boom');
+  });
+
   // Remove leavers handling
   it('should properly handle server leavers', async () => {
+    mockDiscordMessage.guild.members.fetch = jest.fn().mockRejectedValueOnce(new Error('Unknown Member'));
 
-    mockDiscordMessage.guild.members.fetch = jest.fn().mockRejectedValueOnce(new Error('User not found'));
+    await service.removeLeavers([mockCharacter], [mockAlbionMember], mockDiscordMessage);
+    expect(mockDiscordMessage.channel.send).toBeCalledTimes(2);
+    expect(mockDiscordMessage.channel.send).toBeCalledWith('## 🚪 1 leavers detected!');
+    expect(mockDiscordMessage.channel.send).toBeCalledWith(`- 🫥️ Discord member for Character **${mockCharacter.Name}** has left the DIG server. Their registration status has been removed.`);
+  });
+  it('should properly handle zero server leavers', async () => {
+    mockDiscordMessage.guild.members.fetch = jest.fn().mockResolvedValueOnce(mockDiscordUser);
 
-    const result = await service.removeLeavers([mockCharacter], [mockAlbionMember], mockDiscordMessage);
-
-    expect(result).toEqual([`- 🫥️ Discord member for Character **${mockCharacter.Name}** has left the DIG server. Their registration status has been removed.`]);
+    await service.removeLeavers([mockCharacter], [mockAlbionMember], mockDiscordMessage);
+    expect(mockDiscordMessage.channel.send).toBeCalledTimes(1);
+    expect(mockDiscordMessage.channel.send).toBeCalledWith('✅ No leavers were detected.');
   });
   it('should properly handle guild leavers', async () => {
     // Mock the Albion API response to denote the character has left the guild
     mockCharacter.GuildId = 'foobar';
 
-    const result = await service.removeLeavers([mockCharacter], [mockAlbionMember], mockDiscordMessage);
+    await service.removeLeavers([mockCharacter], [mockAlbionMember], mockDiscordMessage);
 
-    expect(result).toEqual([`- 👋 <@${mockDiscordUser.id}>'s character **${mockCharacter.Name}** has left the Guild. Their roles and registration status have been stripped.`]);
+    expect(mockDiscordMessage.channel.send).toBeCalledTimes(2);
+    expect(mockDiscordMessage.channel.send).toBeCalledWith('## 🚪 1 leavers detected!');
+    expect(mockDiscordMessage.channel.send).toBeCalledWith(`- 👋 <@${mockDiscordUser.id}>'s character **${mockCharacter.Name}** has left the Guild. Their roles and registration status have been stripped.`);
   });
   it('should properly handle guild leavers and handle role errors', async () => {
     // Mock the Albion API response to denote the character has left the guild
@@ -304,115 +355,131 @@ describe('AlbionScanningService', () => {
   // Inconsistency scanner tests
   const testCases = [
     {
-      title: 'Captain having Initiate and missing Squire',
+      title: 'Captain needs Initiate removed and missing Squire',
       roles: [captainRoleId, initiateRoleId, registeredRoleId],
+      highestPriorityRole: { id: captainRoleId, name: captainName },
       expected: [
-        { id: squireRoleId, name: squireName, action: 'added' },
-        { id: initiateRoleId, name: initiateName, action: 'removed' },
+        { id: squireRoleId, name: squireName, action: 'added', message: '' },
+        { id: initiateRoleId, name: initiateName, action: 'removed', message: '' },
       ],
     },
     {
       title: 'Guild Master having Initiate, Captain and General when they shouldn\'t',
       roles: [guildMasterRoleId, initiateRoleId, captainRoleId, generalRoleId, squireRoleId, registeredRoleId],
+      highestPriorityRole: { id: guildMasterRoleId, name: guildMasterName },
       expected: [
-        { id: generalRoleId, name: generalName, action: 'removed' },
-        { id: captainRoleId, name: captainName, action: 'removed' },
-        { id: initiateRoleId, name: initiateName, action: 'removed' },
+        { id: generalRoleId, name: generalName, action: 'removed', message: '' },
+        { id: captainRoleId, name: captainName, action: 'removed', message: '' },
+        { id: initiateRoleId, name: initiateName, action: 'removed', message: '' },
       ],
     },
     {
       title: 'Guild Master requires Squire',
       roles: [guildMasterRoleId, registeredRoleId],
+      highestPriorityRole: { id: guildMasterRoleId, name: guildMasterName },
       expected: [
-        { id: squireRoleId, name: squireName, action: 'added' },
+        { id: squireRoleId, name: squireName, action: 'added', message: '' },
       ],
     },
     {
       title: 'Master requires Squire',
       roles: [masterRoleId, registeredRoleId],
+      highestPriorityRole: { id: masterRoleId, name: masterName },
       expected: [
-        { id: squireRoleId, name: squireName, action: 'added' },
+        { id: squireRoleId, name: squireName, action: 'added', message: '' },
       ],
     },
     {
       title: 'General requires Squire',
       roles: [generalRoleId, registeredRoleId],
+      highestPriorityRole: { id: generalRoleId, name: generalName },
       expected: [
-        { id: squireRoleId, name: squireName, action: 'added' },
+        { id: squireRoleId, name: squireName, action: 'added', message: '' },
       ],
     },
     {
       title: 'Captain requires Squire',
       roles: [captainRoleId, registeredRoleId],
+      highestPriorityRole: { id: captainRoleId, name: captainName },
       expected: [
-        { id: squireRoleId, name: squireName, action: 'added' },
+        { id: squireRoleId, name: squireName, action: 'added', message: '' },
       ],
     },
     {
       title: 'Squire has no extra roles',
       roles: [squireRoleId, registeredRoleId],
+      highestPriorityRole: { id: squireRoleId, name: squireName },
       expected: [],
     },
     {
       title: 'Initiate has no extra roles',
       roles: [initiateRoleId, registeredRoleId],
+      highestPriorityRole: { id: initiateRoleId, name: initiateName },
       expected: [],
     },
     {
       title: 'Guild Masters should not have Initiate and should have Squire',
       roles: [guildMasterRoleId, squireRoleId, initiateRoleId, registeredRoleId],
+      highestPriorityRole: { id: guildMasterRoleId, name: guildMasterName },
       expected: [
-        { id: initiateRoleId, name: initiateName, action: 'removed' },
+        { id: initiateRoleId, name: initiateName, action: 'removed', message: '' },
       ],
     },
     {
       title: 'Masters should not have Initiate and should have Squire',
       roles: [masterRoleId, squireRoleId, initiateRoleId, registeredRoleId],
+      highestPriorityRole: { id: masterRoleId, name: masterName },
       expected: [
-        { id: initiateRoleId, name: initiateName, action: 'removed' },
+        { id: initiateRoleId, name: initiateName, action: 'removed', message: '' },
       ],
     },
     {
       title: 'Generals should not have Initiate and should have Squire',
       roles: [generalRoleId, squireRoleId, initiateRoleId, registeredRoleId],
+      highestPriorityRole: { id: generalRoleId, name: generalName },
       expected: [
-        { id: initiateRoleId, name: initiateName, action: 'removed' },
+        { id: initiateRoleId, name: initiateName, action: 'removed', message: '' },
       ],
     },
     {
       title: 'Captains should not have Initiate and should have Squire',
       roles: [captainRoleId, squireRoleId, initiateRoleId, registeredRoleId],
+      highestPriorityRole: { id: captainRoleId, name: captainName },
       expected: [
-        { id: initiateRoleId, name: initiateName, action: 'removed' },
+        { id: initiateRoleId, name: initiateName, action: 'removed', message: '' },
       ],
     },
     {
       title: 'Squires should not have Initiate',
       roles: [squireRoleId, initiateRoleId, registeredRoleId],
+      highestPriorityRole: { id: squireRoleId, name: squireName },
       expected: [
-        { id: initiateRoleId, name: initiateName, action: 'removed' },
+        { id: initiateRoleId, name: initiateName, action: 'removed', message: '' },
       ],
     },
     {
       title: 'Squires should have registered role',
       roles: [squireRoleId],
+      highestPriorityRole: { id: squireRoleId, name: squireName },
       expected: [
-        { id: registeredRoleId, name: registeredName, action: 'added' },
+        { id: registeredRoleId, name: registeredName, action: 'added', message: '' },
       ],
     },
     {
       title: 'Initiate should have registered role',
       roles: [initiateRoleId],
+      highestPriorityRole: { id: initiateRoleId, name: initiateName },
       expected: [
-        { id: registeredRoleId, name: registeredName, action: 'added' },
+        { id: registeredRoleId, name: registeredName, action: 'added', message: '' },
       ],
     },
     {
       title: 'Registered people should have at least registered and initiate',
       roles: [],
+      highestPriorityRole: { id: initiateRoleId, name: initiateName },
       expected: [
-        { id: initiateRoleId, name: initiateName, action: 'added' },
-        { id: registeredRoleId, name: registeredName, action: 'added' },
+        { id: initiateRoleId, name: initiateName, action: 'added', message: '' },
+        { id: registeredRoleId, name: registeredName, action: 'added', message: '' },
       ],
     },
   ];
@@ -425,8 +492,31 @@ describe('AlbionScanningService', () => {
     });
   };
 
+  const generateMessage = (testCase, expected) => {
+    // Dynamically generate the expected message
+    let emoji = '➕';
+    let reason = `their highest role is **${testCase.highestPriorityRole.name}**, and the role is marked as "keep".`;
+
+    if (expected.action === 'removed') {
+      emoji = '➖';
+      reason = `their highest role is **${testCase.highestPriorityRole.name}**, and the role is not marked as "keep".`;
+    }
+
+    if (testCase.roles.length === 0) {
+      emoji = '⚠️';
+      reason = 'they have no roles but are registered!';
+    }
+
+    return `- ${emoji} <@${mockDiscordUser.id}> requires role **${expected.name}** to be ${expected.action} because ${reason}`;
+  };
+
   testCases.forEach(testCase => {
     it(`should correctly detect ${testCase.title}`, async () => {
+      // Take the test case and fill in the expected messages, as it would be a PITA to define them at the array level
+      testCase.expected.forEach((expected, i) => {
+        testCase.expected[i].message = generateMessage(testCase, expected);
+      });
+
       setupRoleTestMocks(testCase.roles);
       const result = await service.checkRoleInconsistencies(mockDiscordUser);
 
@@ -440,8 +530,26 @@ describe('AlbionScanningService', () => {
         expect(r.id).toEqual(testCase.expected[i].id);
         expect(r.name).toEqual(testCase.expected[i].name);
         expect(r.action).toEqual(testCase.expected[i].action);
-        expect(r.message).toContain(testCase.expected[i].action);
+        expect(r.message).toEqual(testCase.expected[i].message);
       });
+
+      // Run it again except checking the messages it sends back
+      await service.generateSuggestions([mockAlbionMember], mockDiscordMessage);
+
+      if (testCase.expected.length === 0) {
+        expect(mockDiscordMessage.channel.send).toBeCalledTimes(1);
+        expect(mockDiscordMessage.channel.send).toBeCalledWith('✅ No role inconsistencies were detected.');
+        return;
+      }
+
+      expect(mockDiscordMessage.channel.send).toBeCalledWith(`## 👀 ${result.length} role inconsistencies detected!`);
+      expect(mockDiscordMessage.channel.send).toBeCalledWith('---');
+
+      // TODO: Make this work, brain melted
+      // Capture the mock message object returned by send
+      // const sentMessage = mockDiscordMessage.channel.send.mock.results[0].value;
+      // Check that the edit method on the sentMessage was called with the expected argument
+      // expect(sentMessage.edit).toBeCalledTimes(1);
     });
   });
   it('should ensure certain people are excluded from scanning', async () => {

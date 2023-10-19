@@ -52,7 +52,7 @@ export class AlbionRegistrationService implements OnApplicationBootstrap {
 
     // Check if the character is in the Albion guild
     if (character.GuildId !== guildId) {
-      this.throwError(`The character **${character.Name}** is not in the guild. Please ensure you have spelt the name **exactly** correct (case sensitive) **and** you are a member of the DIG guild in the game before trying again. If you have just joined us, please wait ~10 minutes. If you are still having issues, please contact the Albion Guild Masters.`);
+      this.throwError(`The character **${character.Name}** is not in the guild. Please ensure you have spelt the name **exactly** correct (case sensitive) **and** you are a member of the "DIG - Dignity of War" guild in the game before trying again. If you have just joined us, please wait ~10 minutes. If you are still having issues, please contact the Albion Guild Masters.`);
     }
 
     // 3. Check if the character has already been registered
@@ -60,7 +60,7 @@ export class AlbionRegistrationService implements OnApplicationBootstrap {
 
     if (foundMember.length > 0) {
       // Get the original Discord user, if possible
-      let originalDiscordMember;
+      let originalDiscordMember: GuildMember;
       try {
         originalDiscordMember = await this.discordService.getOtherGuildMember(guildMember, foundMember[0].discordId);
       }
@@ -130,7 +130,6 @@ export class AlbionRegistrationService implements OnApplicationBootstrap {
       const errorMessage = `⚠️ Unable to set your nickname. If you're Staff this won't work as the bot has no power over you! Pinging <@${this.config.get('discord.devUserId')}>!`;
       await message.channel.send(errorMessage);
       this.logger.error(errorMessage);
-      return;
     }
 
     // Successful!
