@@ -62,10 +62,10 @@ export class AlbionScanningService {
 
     try {
       await message.edit(`Checking ${length} characters for membership status...`);
-      await this.removeLeavers(characters, guildMembers, message, dryRun);
+      await this.removeLeavers(characters, message, dryRun);
 
       await message.edit(`Checking ${length} characters for role inconsistencies...`);
-      await this.generateSuggestions(guildMembers, message, dryRun);
+      await this.generateSuggestions(message, dryRun);
     }
     catch (err) {
       await message.edit('## ❌ An error occurred while scanning!');
@@ -102,7 +102,6 @@ export class AlbionScanningService {
 
   async removeLeavers(
     characters: AlbionPlayerInterface[],
-    guildMembers: AlbionMembersEntity[],
     message: Message,
     dryRun = false
   ): Promise<void> {
@@ -112,6 +111,9 @@ export class AlbionScanningService {
     for (const character of characters) {
       charactersMap.set(character.Id, character);
     }
+
+    // Get the registered members from the database
+    const guildMembers: AlbionMembersEntity[] = await this.albionMembersRepository.findAll();
 
     // Do the checks
     for (const member of guildMembers) {
@@ -193,11 +195,14 @@ export class AlbionScanningService {
   }
 
   async generateSuggestions(
-    guildMembers: AlbionMembersEntity[],
     message: Message,
     dryRun = false
   ): Promise<void> {
     const suggestions: string[] = [];
+
+    // Refresh GuildMembers as some may have been booted / left
+    const guildMembers: AlbionMembersEntity[] = await this.albionMembersRepository.findAll();
+
     for (const member of guildMembers) {
       let discordMember: GuildMember | null = null;
 

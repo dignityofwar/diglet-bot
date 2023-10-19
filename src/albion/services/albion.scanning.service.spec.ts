@@ -55,8 +55,8 @@ describe('AlbionScanningService', () => {
     } as any;
 
     mockAlbionMembersRepository = {
-      find: jest.fn(),
-      findAll: jest.fn(),
+      find: jest.fn().mockResolvedValueOnce([mockAlbionMember]),
+      findAll: jest.fn().mockResolvedValue([mockAlbionMember]),
       create: jest.fn(),
       upsert: jest.fn(),
       removeAndFlush: jest.fn(),
@@ -296,7 +296,7 @@ describe('AlbionScanningService', () => {
   it('should properly handle server leavers', async () => {
     mockDiscordMessage.guild.members.fetch = jest.fn().mockRejectedValueOnce(new Error('Unknown Member'));
 
-    await service.removeLeavers([mockCharacter], [mockAlbionMember], mockDiscordMessage);
+    await service.removeLeavers([mockCharacter], mockDiscordMessage);
     expect(mockDiscordMessage.channel.send).toBeCalledTimes(2);
     expect(mockDiscordMessage.channel.send).toBeCalledWith('## 🚪 1 leavers detected!');
     expect(mockDiscordMessage.channel.send).toBeCalledWith(`- 🫥️ Discord member for Character **${mockCharacter.Name}** has left the DIG server. Their registration status has been removed.`);
@@ -304,7 +304,7 @@ describe('AlbionScanningService', () => {
   it('should properly handle zero server leavers', async () => {
     mockDiscordMessage.guild.members.fetch = jest.fn().mockResolvedValueOnce(mockDiscordUser);
 
-    await service.removeLeavers([mockCharacter], [mockAlbionMember], mockDiscordMessage);
+    await service.removeLeavers([mockCharacter], mockDiscordMessage);
     expect(mockDiscordMessage.channel.send).toBeCalledTimes(1);
     expect(mockDiscordMessage.channel.send).toBeCalledWith('✅ No leavers were detected.');
   });
@@ -312,7 +312,7 @@ describe('AlbionScanningService', () => {
     // Mock the Albion API response to denote the character has left the guild
     mockCharacter.GuildId = 'foobar';
 
-    await service.removeLeavers([mockCharacter], [mockAlbionMember], mockDiscordMessage);
+    await service.removeLeavers([mockCharacter], mockDiscordMessage);
 
     expect(mockDiscordMessage.channel.send).toBeCalledTimes(2);
     expect(mockDiscordMessage.channel.send).toBeCalledWith('## 🚪 1 leavers detected!');
@@ -330,7 +330,7 @@ describe('AlbionScanningService', () => {
       };
     });
 
-    await service.removeLeavers([mockCharacter], [mockAlbionMember], mockDiscordMessage);
+    await service.removeLeavers([mockCharacter], mockDiscordMessage);
 
     expect(mockDiscordMessage.channel.send).toHaveBeenCalledWith(`ERROR: Unable to remove role "foobar" from ${mockCharacter.Name} (${mockCharacter.Id}). Pinging <@${expectedDevUserId}>!`);
   });
@@ -347,7 +347,7 @@ describe('AlbionScanningService', () => {
 
     mockAlbionMembersRepository.removeAndFlush = jest.fn().mockRejectedValueOnce(new Error('Operation went boom'));
 
-    await service.removeLeavers([mockCharacter], [mockAlbionMember], mockDiscordMessage);
+    await service.removeLeavers([mockCharacter], mockDiscordMessage);
 
     expect(mockDiscordMessage.channel.send).toHaveBeenCalledWith(`ERROR: Unable to remove Albion Character "${mockCharacter.Name}" (${mockCharacter.Id}) from registration database! Pinging <@${expectedDevUserId}>!`);
   });
@@ -534,7 +534,7 @@ describe('AlbionScanningService', () => {
       });
 
       // Run it again except checking the messages it sends back
-      await service.generateSuggestions([mockAlbionMember], mockDiscordMessage);
+      await service.generateSuggestions(mockDiscordMessage);
 
       if (testCase.expected.length === 0) {
         expect(mockDiscordMessage.channel.send).toBeCalledTimes(1);
