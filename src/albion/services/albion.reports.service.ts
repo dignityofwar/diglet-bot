@@ -83,7 +83,7 @@ export class AlbionReportsService {
         continue;
       }
 
-      const line = `- ${member.characterName} / <@${discordMember.id}: Registered on ${discordDateCode} (${discordRelativeCode})`;
+      const line = `- ${member.characterName} / <@${discordMember.id}>: Registered on ${discordDateCode} (${discordRelativeCode})`;
 
       // Push to the correct array based on the role
       switch (highestRole.name) {
