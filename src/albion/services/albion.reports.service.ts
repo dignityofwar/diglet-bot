@@ -107,26 +107,26 @@ export class AlbionReportsService {
 
     await message.channel.send(`# Metrics \n🧑‍🤝‍🧑 Total Guild members: ${metrics.totalMembers}\n📝 Total registered: ${metrics.totalRegistered} (${regPercent}%)\nℹ️ Total unregistered: ${metrics.totalUnregistered} (${unregPercent}%)`);
 
-    await message.channel.send('# Initiates');
+    await message.channel.send(`# Initiates (${membersReport.initiates.length})`);
     if (membersReport.initiates.length > 0) {
       await this.bufferMessages(membersReport.initiates, message);
     }
     else {
       await message.channel.send('No Initiates found!');
     }
-    await message.channel.send('# Squires');
+    await message.channel.send(`# Squires (${membersReport.squires.length})`);
     if (membersReport.squires.length > 0) {
       await this.bufferMessages(membersReport.squires, message);
     }
     else {
       await message.channel.send('No Squires found!');
     }
-    await message.channel.send('# Leadership');
+    await message.channel.send(`# Leadership (${membersReport.leadership.length})`);
     if (membersReport.leadership.length > 0) {
       await this.bufferMessages(membersReport.leadership, message);
     }
     else {
-      await message.channel.send('No Leadership found!');
+      await message.channel.send('No Leadership members found!');
     }
 
     if (membersReport.errors.length > 0) {
