@@ -204,7 +204,7 @@ export class AlbionReportsService {
 
       messageBuffer += `${initiate}\n`;
 
-      if (count % 5 === 0 || count === membersReportArray.length) {
+      if (count % 10 === 0 || count === membersReportArray.length) {
         messagesInBuffer.push(messageBuffer);
         messageBuffer = '';
       }
