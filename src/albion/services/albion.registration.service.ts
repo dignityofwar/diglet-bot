@@ -60,7 +60,7 @@ export class AlbionRegistrationService implements OnApplicationBootstrap {
 
     if (foundMember.length > 0) {
       // Get the original Discord user, if possible
-      let originalDiscordMember;
+      let originalDiscordMember: GuildMember;
       try {
         originalDiscordMember = await this.discordService.getOtherGuildMember(guildMember, foundMember[0].discordId);
       }

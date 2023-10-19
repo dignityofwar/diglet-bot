@@ -9,12 +9,6 @@ import { AlbionPlayerInterface } from '../interfaces/albion.api.interfaces';
 import { AlbionRoleMapInterface } from '../../config/albion.app.config';
 import { AlbionUtilities } from '../utilities/albion.utilities';
 
-interface ChangesInterface {
-  character: AlbionPlayerInterface,
-  discordMember: GuildMember | null,
-  change: string
-}
-
 export interface RoleInconsistencyResult {
   id: string,
   name: string,
@@ -25,8 +19,6 @@ export interface RoleInconsistencyResult {
 @Injectable()
 export class AlbionScanningService {
   private readonly logger = new Logger(AlbionScanningService.name);
-  private charactersMap: Map<string, AlbionPlayerInterface> = new Map();
-  private changesMap: Map<string, ChangesInterface> = new Map();
 
   constructor(
     private readonly albionApiService: AlbionApiService,
@@ -34,12 +26,6 @@ export class AlbionScanningService {
     private readonly albionUtilities: AlbionUtilities,
     @InjectRepository(AlbionMembersEntity) private readonly albionMembersRepository: EntityRepository<AlbionMembersEntity>
   ) {
-  }
-
-  reset() {
-    this.logger.log('Resetting maps...');
-    this.charactersMap.clear();
-    this.changesMap.clear();
   }
 
   async startScan(message: Message, dryRun = false) {
@@ -50,9 +36,14 @@ export class AlbionScanningService {
     // Also send a message to the #ps2-scans channel to denote this has happened
 
     const guildMembers: AlbionMembersEntity[] = await this.albionMembersRepository.findAll();
-    await message.edit(`ℹ️ There are currently ${guildMembers.length} members on record.`);
-
     const length = guildMembers.length;
+
+    if (length === 0) {
+      await message.edit('## ❌ No members were found in the database!');
+      return;
+    }
+
+    await message.edit(`ℹ️ There are currently ${guildMembers.length} members on record.`);
 
     let characters: Array<AlbionPlayerInterface | null>;
 
@@ -60,12 +51,13 @@ export class AlbionScanningService {
       characters = await this.gatherCharacters(guildMembers, message);
     }
     catch (err) {
-      return this.reset();
+      await message.edit('## ❌ An error occurred while gathering data from the API!');
+      return;
     }
 
-    if (!characters) {
+    if (characters.length === 0) {
       await message.edit('## ❌ No characters were gathered from the API!');
-      return this.reset();
+      return;
     }
 
     try {
@@ -79,8 +71,6 @@ export class AlbionScanningService {
       await message.edit('## ❌ An error occurred while scanning!');
       await message.channel.send(`Error: ${err.message}`);
     }
-
-    return this.reset();
   }
 
   async gatherCharacters(guildMembers: AlbionMembersEntity[], statusMessage: Message, tries = 0) {
@@ -209,11 +199,6 @@ export class AlbionScanningService {
   ): Promise<void> {
     const suggestions: string[] = [];
     for (const member of guildMembers) {
-      // If already in the change set, they have been removed so don't bother checking
-      if (this.changesMap.has(member.characterId)) {
-        continue;
-      }
-
       let discordMember: GuildMember | null = null;
 
       try {

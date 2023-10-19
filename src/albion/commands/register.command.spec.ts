@@ -133,7 +133,6 @@ describe('AlbionRegisterCommand', () => {
               edit: jest.fn(),
             };
           }),
-          edit: jest.fn(),
         },
       },
     ];
