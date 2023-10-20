@@ -128,7 +128,7 @@ describe('AlbionRegistrationService', () => {
           devUserId: expectedDevUserId,
           channels: {
             albionRegistration: expectedChannelId,
-            albionWelcomeToAlbion: expectedChannelId,
+            albionInfopoint: expectedChannelId,
           },
           roles: {
             albionInitiateRoleId: '123456789',

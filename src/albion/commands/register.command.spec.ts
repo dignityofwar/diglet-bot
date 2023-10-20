@@ -71,7 +71,6 @@ describe('AlbionRegisterCommand', () => {
           devUserId: expectedDevUserId,
           channels: {
             albionRegistration: expectedChannelId,
-            albionWelcomeToAlbion: expectedWelcomeChannelId,
           },
           roles: {
             albionInitiateRoleId: expectedRoleId,

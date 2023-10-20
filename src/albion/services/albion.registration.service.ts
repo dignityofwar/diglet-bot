@@ -134,7 +134,7 @@ export class AlbionRegistrationService implements OnApplicationBootstrap {
 
     // Successful!
     await message.channel.send(`## ✅ Thank you **${character.Name}**, you've been verified as a [DIG] guild member! 🎉
-    \n* ➡️ Please read the information within <#${this.config.get('discord.channels.albionWelcomeToAlbion')}> to be fully acquainted with the guild!
+    \n* ➡️ Please read the information within <#${this.config.get('discord.channels.albionInfopoint')}> to be fully acquainted with the guild!
     \n* 👉️ Grab opt-in roles of interest in <id:customize> under the Albion section! It is _important_ you do this, otherwise you may miss content.
     \n* ℹ️ Your Discord server nickname has been automatically changed to match your character name. You are free to change this back should you want to, but please make sure it resembles your in-game name.
     \nCC <@&${this.config.get('albion.guildMasterRole').discordRoleId}> / <@${this.config.get('discord.devUserId')}>`);
