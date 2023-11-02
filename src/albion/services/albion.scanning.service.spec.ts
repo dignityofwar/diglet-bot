@@ -286,10 +286,19 @@ describe('AlbionScanningService', () => {
     mockAlbionMembersRepository.findAll = jest.fn().mockResolvedValueOnce([mockAlbionMember]);
     service.gatherCharacters = jest.fn().mockResolvedValueOnce([mockCharacter]);
     service.removeLeavers = jest.fn().mockResolvedValueOnce([]);
-    service.generateSuggestions = jest.fn().mockImplementation(() => {throw new Error('Operation went boom');});
+    service.roleInconsistencies = jest.fn().mockImplementation(() => {throw new Error('Operation went boom');});
     await service.startScan(mockDiscordMessage);
     expect(mockDiscordMessage.edit).toBeCalledWith('## ❌ An error occurred while scanning!');
     expect(mockDiscordMessage.channel.send).toBeCalledWith('Error: Operation went boom');
+  });
+
+  // Reverse role scanning
+  it('should properly detect an unregistered member who has a role they shouldn\'t', async () => {
+    // Mock the Discord API to return a list of Discord GuildMembers who have the Captain role
+    mockDiscordUser.roles.cache.has = jest.fn().mockImplementation((roleId: string) => roleId === captainRoleId);
+    mockDiscordUser.roles.cache.get = jest.fn().mockImplementation((roleId: string) => {
+
+    }
   });
 
   // Remove leavers handling
@@ -534,7 +543,7 @@ describe('AlbionScanningService', () => {
       });
 
       // Run it again except checking the messages it sends back
-      await service.generateSuggestions(mockDiscordMessage);
+      await service.roleInconsistencies(mockDiscordMessage);
 
       if (testCase.expected.length === 0) {
         expect(mockDiscordMessage.channel.send).toBeCalledTimes(1);

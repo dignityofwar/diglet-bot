@@ -1,7 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@mikro-orm/nestjs';
 import { EntityRepository } from '@mikro-orm/core';
-import { GuildMember, Message } from 'discord.js';
+import { GuildMember, Message, Role } from 'discord.js';
 import { ConfigService } from '@nestjs/config';
 import { AlbionApiService } from './albion.api.service';
 import { AlbionMembersEntity } from '../../database/entities/albion.members.entity';
@@ -29,7 +29,7 @@ export class AlbionScanningService {
   }
 
   async startScan(message: Message, dryRun = false) {
-    await message.edit('Starting scan...');
+    await message.edit('## Starting scan...');
 
     // Pull the list of verified members from the database and check if they're still in the outfit
     // If they're not, remove the verified role from them and any other PS2 Roles
@@ -39,15 +39,18 @@ export class AlbionScanningService {
     const length = guildMembers.length;
 
     if (length === 0) {
-      await message.edit('## ❌ No members were found in the database!');
+      await message.edit('## ❌ No members were found in the database!\nStill running reverse role scan...');
+      // However, still perform the reverse role scan
+      await this.reverseRoleScan(message, dryRun);
       return;
     }
 
-    await message.edit(`ℹ️ There are currently ${guildMembers.length} members on record.`);
+    await message.channel.send(`ℹ️ There are currently ${guildMembers.length} registered members on record.`);
 
     let characters: Array<AlbionPlayerInterface | null>;
 
     try {
+      await message.edit(`## Task: [1/4] Gathering ${length} characters from ALB API..`);
       characters = await this.gatherCharacters(guildMembers, message);
     }
     catch (err) {
@@ -61,36 +64,45 @@ export class AlbionScanningService {
     }
 
     try {
-      await message.edit(`Checking ${length} characters for membership status...`);
+      await message.edit(`## Task: [2/4] Checking ${length} characters for membership status...`);
       await this.removeLeavers(characters, message, dryRun);
 
-      await message.edit(`Checking ${length} characters for role inconsistencies...`);
-      await this.generateSuggestions(message, dryRun);
+      // Check if members have roles they shouldn't who are not registered
+      await message.edit('## Task: [3/4] Performing reverse role scan...');
+      await this.reverseRoleScan(message, dryRun);
+
+      await message.edit('## Task: [4/4] Checking for role inconsistencies...');
+      await this.roleInconsistencies(message, dryRun);
     }
     catch (err) {
       await message.edit('## ❌ An error occurred while scanning!');
       await message.channel.send(`Error: ${err.message}`);
     }
+
+    // All done, clean up
+    await message.channel.send('### Scan complete!');
+    await message.delete();
   }
 
-  async gatherCharacters(guildMembers: AlbionMembersEntity[], statusMessage: Message, tries = 0) {
+  async gatherCharacters(guildMembers: AlbionMembersEntity[], message: Message, tries = 0) {
     const characterPromises: Promise<AlbionPlayerInterface>[] = [];
     tries++;
     const length = guildMembers.length;
 
-    await statusMessage.edit(`Gathering ${length} characters from ALB API... (attempt #${tries})`);
+    const statusMessage = await message.channel.send(`Gathering ${length} characters from ALB API... (attempt #${tries})`);
 
     for (const member of guildMembers) {
       characterPromises.push(this.albionApiService.getCharacterById(member.characterId));
     }
+
+    await statusMessage.delete();
 
     try {
       return await Promise.all(characterPromises);
     }
     catch (err) {
       if (tries === 3) {
-        await statusMessage.edit(`## ❌ An error occurred while gathering data for ${length} characters! Giving up after 3 tries! Pinging <@${this.config.get('discord.devUserId')}>!`);
-        await statusMessage.channel.send(`Error: ${err.message}`);
+        await statusMessage.channel.send(`## ❌ An error occurred while gathering data for ${length} characters! Giving up after 3 tries! Pinging <@${this.config.get('discord.devUserId')}>!`);
         return null;
       }
 
@@ -194,7 +206,84 @@ export class AlbionScanningService {
     this.logger.log('No leavers were detected.');
   }
 
-  async generateSuggestions(
+  async reverseRoleScan(message: Message, dryRun = false) {
+    // Get the registered members from the database again as they may have changed
+    const guildMembers: AlbionMembersEntity[] = await this.albionMembersRepository.findAll();
+
+    // Loop through each role, starting with Guildmaster, and check if anyone has it who are not registered
+    const roleMap: AlbionRoleMapInterface[] = this.config.get('albion.roleMap');
+    const roleMapLength = roleMap.length;
+
+    const scanMessage = await message.channel.send(`### Scanning ${roleMapLength} Discord roles for members who are not fully registered...`);
+    const scanCountMessage = await message.channel.send('foo');
+
+    const invalidUsers: string[] = [];
+
+    // Loop each role and scan them
+    let count = 0;
+    for (const role of roleMap) {
+      count++;
+      let discordRole: Role;
+
+      await scanCountMessage.edit(`Scanning role **${role.name}** [${count}/${roleMapLength}]...`);
+
+      try {
+        discordRole = message.guild.roles.cache.get(role.discordRoleId);
+      }
+      catch (err) {
+        const error = `Reverse Role Scan: Error fetching role ${role.name}! Err: ${err.message}`;
+        this.logger.error(error);
+        throw new Error(error);
+      }
+
+      // If for some reason the role didn't throw an error but doesn't exist
+      if (!discordRole) {
+        const error = `Reverse Role Scan: Role ${role.name} does not seem to exist!`;
+        this.logger.error(error);
+        throw new Error(error);
+      }
+
+      // Get the members of the role
+      const members = discordRole.members;
+      if (!members) {
+        this.logger.error(`Reverse Role Scan: No members were found for role ${role.name}!`);
+        continue;
+      }
+
+      // Loop through each member and check if they're registered, if not strip 'em
+      for (const [ref, discordMember] of members) {
+        // Filter on guildMembers to find them by Discord ID
+        const foundMember = guildMembers.filter((guildMember) => guildMember.discordId === discordMember.id)[0];
+
+        if (!foundMember) {
+          invalidUsers.push(`- ⚠️ <@${discordMember.id}> had role **${role.name}** but was not registered!`);
+
+          if (!dryRun) {
+            await discordMember.roles.remove(discordRole);
+          }
+        }
+      }
+    }
+
+    await scanMessage.delete();
+    await scanCountMessage.delete();
+
+    // Display list of invalid users
+    if (invalidUsers.length > 0) {
+      await message.channel.send(`## 🚨 ${invalidUsers.length} invalid users detected via Reverse Role Scan!\nThese users have been **automatically** stripped of their roles.`);
+
+      for (const invalidUser of invalidUsers) {
+        const lineMessage = await message.channel.send('foo');
+        await lineMessage.edit(invalidUser);
+      }
+      return;
+    }
+    else {
+      await message.channel.send('✅ No invalid users were detected via Reverse Role Scan.');
+    }
+  }
+
+  async roleInconsistencies(
     message: Message,
     dryRun = false
   ): Promise<void> {
@@ -203,7 +292,15 @@ export class AlbionScanningService {
     // Refresh GuildMembers as some may have been booted / left
     const guildMembers: AlbionMembersEntity[] = await this.albionMembersRepository.findAll();
 
+    const scanCountMessage = await message.channel.send(`### Scanning ${guildMembers.length} members for role inconsistencies... [0/${guildMembers.length}]`);
+    let count = 0;
+
     for (const member of guildMembers) {
+      count++;
+
+      if (count % 5 === 0) {
+        await scanCountMessage.edit(`### Scanning ${guildMembers.length} members for role inconsistencies... [${count}/${guildMembers.length}]`);
+      }
       let discordMember: GuildMember | null = null;
 
       try {
@@ -222,6 +319,8 @@ export class AlbionScanningService {
         suggestions.push(inconsistency.message);
       });
     }
+
+    await scanCountMessage.delete();
 
     if (suggestions.length === 0) {
       await message.channel.send('✅ No role inconsistencies were detected.');
@@ -243,6 +342,7 @@ export class AlbionScanningService {
       const scanPingRoles = this.config.get('albion.scanPingRoles');
       await message.channel.send(`🔔 <@&${scanPingRoles.join('>, <@&')}> Please review the above suggestions and make any necessary changes manually. To check again without pinging Guildmasters or Masters, run the \`/albion-scan\` command with the \`dry-run\` flag set to \`true\`.`);
     }
+
   }
 
   async checkRoleInconsistencies(discordMember: GuildMember): Promise<RoleInconsistencyResult[]> {
