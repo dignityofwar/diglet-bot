@@ -176,7 +176,7 @@ describe('AlbionScanningService', () => {
         albion: {
           guildId: expectedGuildId,
           scanExcludedUsers: [excludedScanUserId],
-          pingRoles: [guildMasterRoleId, masterRoleId],
+          scanPingRoles: [guildMasterRoleId, masterRoleId],
           roleMap: [
             {
               name: guildMasterName,

@@ -240,8 +240,8 @@ export class AlbionScanningService {
     }
 
     if (suggestions.length > 0 && !dryRun) {
-      const pingRoles = this.config.get('albion.pingRoles');
-      await message.channel.send(`🔔 <@&${pingRoles.join('>, <@&')}> Please review the above suggestions and make any necessary changes manually. To check again without pinging Guildmasters or Masters, run the \`/albion-scan\` command with the \`dry-run\` flag set to \`true\`.`);
+      const scanPingRoles = this.config.get('albion.scanPingRoles');
+      await message.channel.send(`🔔 <@&${scanPingRoles.join('>, <@&')}> Please review the above suggestions and make any necessary changes manually. To check again without pinging Guildmasters or Masters, run the \`/albion-scan\` command with the \`dry-run\` flag set to \`true\`.`);
     }
   }
 
