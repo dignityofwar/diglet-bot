@@ -12,7 +12,6 @@ import * as _ from 'lodash';
 import { AlbionRegistrationService } from '../services/albion.registration.service';
 
 const expectedChannelId = '1234567890';
-const expectedWelcomeChannelId = '5555444455555';
 const expectedRoleId = '987654321';
 const expectedDevUserId = '1234575897';
 const expectedGuildId = '56666666666';
@@ -164,7 +163,7 @@ describe('AlbionRegisterCommand', () => {
     expect(sentMessage.edit).toHaveBeenCalledWith('⛔️ **ERROR:** Some error fetching character');
 
     // Check the final result
-    expect(result).toBe('⬇️');
+    expect(result).toBe('');
   });
 
   it('should return errors from the registration process', async () => {
@@ -185,13 +184,13 @@ describe('AlbionRegisterCommand', () => {
     expect(sentMessage.edit).toHaveBeenCalledWith('⛔️ **ERROR:** Some error handling registration');
 
     // Check the final result
-    expect(result).toBe('⬇️');
+    expect(result).toBe('');
   });
 
-  it('should return a arrow down message upon success', async () => {
+  it('should return no response', async () => {
     albionApiService.getCharacter = jest.fn().mockImplementation(() => mockCharacter);
     albionRegistrationService.handleRegistration = jest.fn().mockImplementation(() => true);
 
-    expect(await command.onAlbionRegisterCommand(dto, mockInteraction)).toBe('⬇️');
+    expect(await command.onAlbionRegisterCommand(dto, mockInteraction)).toBe('');
   });
 });

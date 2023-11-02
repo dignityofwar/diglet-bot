@@ -90,23 +90,23 @@ export class AlbionRegistrationService implements OnApplicationBootstrap {
 
     await this.validateRegistrationAttempt(character, guildMember);
 
-    // Roles can be safely assumed to be present as it's checked at command level.
-    const initiateRole = await this.discordService.getMemberRole(
-      guildMember,
-      this.config.get('discord.roles.albionInitiateRoleId')
-    );
-    const verifiedRole = await this.discordService.getMemberRole(
-      guildMember,
-      this.config.get('discord.roles.albionRegisteredRoleId')
-    );
-
-    // Add the initiate and verified roles
+    // Add the initiate, verified and towncrier roles. We are safe to assume these roles exist as they are checked at every /register command invocation.
     try {
-      await guildMember.roles.add(initiateRole);
-      await guildMember.roles.add(verifiedRole);
+      await guildMember.roles.add(await this.discordService.getMemberRole(
+        guildMember,
+        this.config.get('discord.roles.albionInitiateRoleId')
+      ));
+      await guildMember.roles.add(await this.discordService.getMemberRole(
+        guildMember,
+        this.config.get('discord.roles.albionRegisteredRoleId')
+      ));
+      await guildMember.roles.add(await this.discordService.getMemberRole(
+        guildMember,
+        this.config.get('discord.roles.albionTowncrierRoleId')
+      ));
     }
     catch (err) {
-      this.throwError(`Unable to add the \`@ALB/Initiate\` or \`@ALB/Registered\` roles to user "${guildMember.displayName}"! Pinging <@${this.config.get('discord.devUserId')}>!`);
+      this.throwError(`Unable to add registration role(s) to "${guildMember.displayName}"! Pinging <@${this.config.get('discord.devUserId')}>!\nErr: ${err.message}`);
     }
 
     try {
@@ -133,11 +133,17 @@ export class AlbionRegistrationService implements OnApplicationBootstrap {
     }
 
     // Successful!
-    await message.channel.send(`## ✅ Thank you **${character.Name}**, you've been verified as a [DIG] guild member! 🎉
-    \n* ➡️ Please read the information within <#${this.config.get('discord.channels.albionInfopoint')}> to be fully acquainted with the guild!
-    \n* 👉️ Grab opt-in roles of interest in <id:customize> under the Albion section! It is _important_ you do this, otherwise you may miss content.
-    \n* ℹ️ Your Discord server nickname has been automatically changed to match your character name. You are free to change this back should you want to, but please make sure it resembles your in-game name.
-    \nCC <@&${this.config.get('albion.guildMasterRole').discordRoleId}> / <@${this.config.get('discord.devUserId')}>`);
+    await message.channel.send(`## ✅ Thank you <@${guildMember.id}>, your character **${character.Name}** has been verified! 🎉
+
+* ➡️ Please read the information within <#${this.config.get('discord.channels.albionInfopoint')}> to be fully acquainted with the guild!
+
+* 👉️ Grab opt-in roles of interest in <id:customize> under the Albion section! It is _important_ you do this, otherwise you may miss content.
+
+* ℹ️ Your Discord server nickname has been automatically changed to match your character name. You are free to change this back should you want to, but please make sure it resembles your in-game name.
+
+* 🔔 You have automatically been enrolled to our <#${this.config.get('discord.channels.albionTownCrier')}> announcements channel, we send a maximum of 3 a week. If you wish to not receive these, you can opt out in <id:customize>.
+
+CC <@&${this.config.get('albion.guildMasterRole').discordRoleId}> / <@${this.config.get('discord.devUserId')}>`);
 
     // Delete the placeholder message
     await message.delete();
