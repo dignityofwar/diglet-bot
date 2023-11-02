@@ -135,7 +135,7 @@ describe('AlbionRegistrationService', () => {
           roles: {
             albionInitiateRoleId: '123456789',
             albionRegisteredRoleId: '1234567890',
-            albionTowncrierRoleId: '987654321',
+            albionTownCrierRoleId: '987654321',
           },
         },
       };
