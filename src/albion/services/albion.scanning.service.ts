@@ -28,12 +28,11 @@ export class AlbionScanningService {
   ) {
   }
 
+  // Pull the list of verified members from the database and check if they're still in the Guild
+  // If they're not, remove the ALB/Registered role from them and any other non opt-in Albion roles e.g. ALB/Initiate, ALB/Squire etc.
+  // Also send a message to the #albion-scans channel to denote this has happened.
   async startScan(message: Message, dryRun = false) {
     await message.edit('## Starting scan...');
-
-    // Pull the list of verified members from the database and check if they're still in the outfit
-    // If they're not, remove the verified role from them and any other PS2 Roles
-    // Also send a message to the #ps2-scans channel to denote this has happened
 
     const guildMembers: AlbionMembersEntity[] = await this.albionMembersRepository.findAll();
     const length = guildMembers.length;
@@ -50,7 +49,7 @@ export class AlbionScanningService {
     let characters: Array<AlbionPlayerInterface | null>;
 
     try {
-      await message.edit(`## Task: [1/4] Gathering ${length} characters from ALB API..`);
+      await message.edit(`## Task: [1/4] Gathering ${length} characters from the ALB API...`);
       characters = await this.gatherCharacters(guildMembers, message);
     }
     catch (err) {
@@ -214,7 +213,7 @@ export class AlbionScanningService {
     const roleMap: AlbionRoleMapInterface[] = this.config.get('albion.roleMap');
     const roleMapLength = roleMap.length;
 
-    const scanMessage = await message.channel.send(`### Scanning ${roleMapLength} Discord roles for members who are not fully registered...`);
+    const scanMessage = await message.channel.send(`### Scanning ${roleMapLength} Discord roles for members who are falsely registered...`);
     const scanCountMessage = await message.channel.send('foo');
 
     const invalidUsers: string[] = [];
@@ -251,7 +250,7 @@ export class AlbionScanningService {
       }
 
       // Loop through each member and check if they're registered, if not strip 'em
-      for (const [ref, discordMember] of members) {
+      for (const [foo, discordMember] of members) {
         // Filter on guildMembers to find them by Discord ID
         const foundMember = guildMembers.filter((guildMember) => guildMember.discordId === discordMember.id)[0];
 
