@@ -102,5 +102,5 @@ export default () => ({
   roleMap,
   pingRoles,
   scanExcludedUsers: ['387671683684761601'], // Discord IDs
-  guildMasterRole: findRole('@ALB/Guildmaster'),
+  masterRole: findRole('@ALB/Master'),
 });

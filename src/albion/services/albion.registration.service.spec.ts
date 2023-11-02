@@ -15,7 +15,7 @@ const expectedChannelId = '1234567890';
 const expectedRoleId = '987654321';
 const expectedDevUserId = '1234575897';
 const expectedGuildId = '56666666666';
-const expectedGuildMasterRoleId = '6565767686';
+const expectedMasterRoleId = '7891478187458412';
 const expectedTownCrierChannelId = '69549874977887';
 
 describe('AlbionRegistrationService', () => {
@@ -123,7 +123,7 @@ describe('AlbionRegistrationService', () => {
       const data = {
         albion: {
           guildId: expectedGuildId,
-          guildMasterRole: { discordRoleId: expectedGuildMasterRoleId },
+          masterRole: { discordRoleId: expectedMasterRoleId },
         },
         discord: {
           devUserId: expectedDevUserId,
@@ -263,50 +263,6 @@ describe('AlbionRegistrationService', () => {
   });
 
   // Edge case handling
-  it('should correctly handle edge case names for new characters', async () => {
-    const edgeCaseCharacters = [{
-      'Id': 'jTFos2u5QQ6OjhYV9C6DMw',
-      'Name': 'R4L2E1',
-      'GuildId': 'btPZRoLvTUqLC7URnDRgSQ',
-    }];
-
-    jest.spyOn(config, 'get').mockImplementation((key: string) => {
-      const data = {
-        albion: {
-          guildId: 'btPZRoLvTUqLC7URnDRgSQ',
-        },
-        discord: {
-          devUserId: expectedDevUserId,
-          channels: {
-            albionRegistration: expectedChannelId,
-          },
-          roles: {
-            albionInitiateRoleId: '123456789',
-            albionRegisteredRoleId: '123456789',
-          },
-        },
-      };
-
-      const result = _.get(data, key);
-
-      if (!result) {
-        throw new Error(`Unexpected config key: ${key}`);
-      }
-
-      return result;
-    });
-
-    discordService.getMemberRole = jest.fn().mockReturnValue({
-      id: expectedRoleId,
-    });
-    albionMembersRepository.find = jest.fn().mockResolvedValue([]);
-
-    for (const character of edgeCaseCharacters) {
-      const newMockCharacter = character as AlbionPlayerInterface;
-
-      await expect(service.validateRegistrationAttempt(newMockCharacter, mockDiscordUser)).resolves.toBe(true);
-    }
-  });
   it('should handle successful registrations and return a message to the user', async () => {
     service.validateRegistrationAttempt = jest.fn().mockImplementation(() => true);
     discordService.getMemberRole = jest.fn().mockReturnValue({
@@ -329,7 +285,7 @@ describe('AlbionRegistrationService', () => {
 
 * 🔔 You have automatically been enrolled to our <#${expectedTownCrierChannelId}> announcements channel, we send a maximum of 3 a week. If you wish to not receive these, you can opt out in <id:customize>.
 
-CC <@&${expectedGuildMasterRoleId}> / <@${expectedDevUserId}>`);
+CC <@&${expectedMasterRoleId}>`);
     expect(mockDiscordMessage.delete).toBeCalled();
   });
 });

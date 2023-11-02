@@ -144,7 +144,7 @@ export class AlbionRegistrationService implements OnApplicationBootstrap {
 
 * 🔔 You have automatically been enrolled to our <#${this.config.get('discord.channels.albionTownCrier')}> announcements channel, we send a maximum of 3 a week. If you wish to not receive these, you can opt out in <id:customize>.
 
-CC <@&${this.config.get('albion.guildMasterRole').discordRoleId}> / <@${this.config.get('discord.devUserId')}>`);
+CC <@&${this.config.get('albion.masterRole').discordRoleId}>`);
 
     // Delete the placeholder message
     await message.delete();
