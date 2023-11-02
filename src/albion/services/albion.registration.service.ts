@@ -42,7 +42,7 @@ export class AlbionRegistrationService implements OnApplicationBootstrap {
     try {
       await this.discordService.getMemberRole(guildMember, this.config.get('discord.roles.albionInitiateRoleId'));
       await this.discordService.getMemberRole(guildMember, this.config.get('discord.roles.albionRegisteredRoleId'));
-      await this.discordService.getMemberRole(guildMember, this.config.get('discord.roles.albionTowncrierRoleId'));
+      await this.discordService.getMemberRole(guildMember, this.config.get('discord.roles.albionTownCrierRoleId'));
     }
     catch (err) {
       this.throwError(`Required Role(s) do not exist! Pinging <@${this.config.get('discord.devUserId')}>! Err: ${err.message}`);
@@ -103,7 +103,7 @@ export class AlbionRegistrationService implements OnApplicationBootstrap {
       ));
       await guildMember.roles.add(await this.discordService.getMemberRole(
         guildMember,
-        this.config.get('discord.roles.albionTowncrierRoleId')
+        this.config.get('discord.roles.albionTownCrierRoleId')
       ));
     }
     catch (err) {
