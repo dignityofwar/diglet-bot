@@ -51,12 +51,12 @@ export class AlbionRegisterCommand {
     catch (err) {
       await message.edit(`⛔️ **ERROR:** ${err.message}`);
       this.logger.error(err.message);
-      return '⬇️';
+      return '';
     }
 
     this.logger.log(`Registration for ${character.Name} was successful, returning success response.`);
 
     // Successful! Success message now within handleRegistration.
-    return '⬇️';
+    return '';
   }
 }

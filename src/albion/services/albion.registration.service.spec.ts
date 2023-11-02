@@ -16,6 +16,7 @@ const expectedRoleId = '987654321';
 const expectedDevUserId = '1234575897';
 const expectedGuildId = '56666666666';
 const expectedGuildMasterRoleId = '6565767686';
+const expectedTownCrierChannelId = '69549874977887';
 
 describe('AlbionRegistrationService', () => {
   let service: AlbionRegistrationService;
@@ -129,10 +130,12 @@ describe('AlbionRegistrationService', () => {
           channels: {
             albionRegistration: expectedChannelId,
             albionInfopoint: expectedChannelId,
+            albionTownCrier: expectedTownCrierChannelId,
           },
           roles: {
             albionInitiateRoleId: '123456789',
-            albionRegisteredRoleId: '123456789',
+            albionRegisteredRoleId: '1234567890',
+            albionTowncrierRoleId: '987654321',
           },
         },
       };
@@ -234,7 +237,7 @@ describe('AlbionRegistrationService', () => {
       .mockImplementation(() => {
         throw new Error('Unable to add role');
       });
-    await expect(service.handleRegistration(mockCharacter, mockDiscordUser, mockDiscordMessage)).rejects.toThrowError(`Unable to add the \`@ALB/Initiate\` or \`@ALB/Registered\` roles to user "${mockDiscordUser.displayName}"! Pinging <@${expectedDevUserId}>!`);
+    await expect(service.handleRegistration(mockCharacter, mockDiscordUser, mockDiscordMessage)).rejects.toThrowError(`Unable to add registration role(s) to "${mockDiscordUser.displayName}"! Pinging <@${expectedDevUserId}>!\nErr: Unable to add role`);
   });
   it('should return thrown exception upon database error', async () => {
     service.validateRegistrationAttempt = jest.fn().mockImplementation(() => true);
@@ -315,14 +318,17 @@ describe('AlbionRegistrationService', () => {
     });
 
     await expect(service.handleRegistration(mockCharacter, mockDiscordUser, mockDiscordMessage)).resolves.toBe(undefined);
-    expect(mockDiscordMessage.channel.send).toBeCalledWith(`## ✅ Thank you **${mockCharacter.Name}**, you've been verified as a [DIG] guild member! 🎉
-    
+
+    expect(mockDiscordMessage.channel.send).toBeCalledWith(`## ✅ Thank you <@${mockDiscordUser.id}>, your character **${mockCharacter.Name}** has been verified! 🎉
+
 * ➡️ Please read the information within <#${expectedChannelId}> to be fully acquainted with the guild!
-    
+
 * 👉️ Grab opt-in roles of interest in <id:customize> under the Albion section! It is _important_ you do this, otherwise you may miss content.
-    
+
 * ℹ️ Your Discord server nickname has been automatically changed to match your character name. You are free to change this back should you want to, but please make sure it resembles your in-game name.
-    
+
+* 🔔 You have automatically been enrolled to our <#${expectedTownCrierChannelId}> announcements channel, we send a maximum of 3 a week. If you wish to not receive these, you can opt out in <id:customize>.
+
 CC <@&${expectedGuildMasterRoleId}> / <@${expectedDevUserId}>`);
     expect(mockDiscordMessage.delete).toBeCalled();
   });
