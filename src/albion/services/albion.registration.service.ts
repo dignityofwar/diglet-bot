@@ -42,9 +42,10 @@ export class AlbionRegistrationService implements OnApplicationBootstrap {
     try {
       await this.discordService.getMemberRole(guildMember, this.config.get('discord.roles.albionInitiateRoleId'));
       await this.discordService.getMemberRole(guildMember, this.config.get('discord.roles.albionRegisteredRoleId'));
+      await this.discordService.getMemberRole(guildMember, this.config.get('discord.roles.albionTowncrierRoleId'));
     }
     catch (err) {
-      this.throwError(`Required Roles do not exist! Pinging <@${this.config.get('discord.devUserId')}>! Err: ${err.message}`);
+      this.throwError(`Required Role(s) do not exist! Pinging <@${this.config.get('discord.devUserId')}>! Err: ${err.message}`);
     }
 
     // 2. Check if the user is in the guild
@@ -90,7 +91,7 @@ export class AlbionRegistrationService implements OnApplicationBootstrap {
 
     await this.validateRegistrationAttempt(character, guildMember);
 
-    // Add the initiate, verified and towncrier roles. We are safe to assume these roles exist as they are checked at every /register command invocation.
+    // Add the initiate, verified and towncrier roles. We are safe to assume these roles exist as they are checked at the validation step.
     try {
       await guildMember.roles.add(await this.discordService.getMemberRole(
         guildMember,

@@ -182,7 +182,7 @@ describe('AlbionRegistrationService', () => {
         throw new Error('Role not found');
       });
 
-    await expect(service.validateRegistrationAttempt(mockCharacter, mockDiscordUser)).rejects.toThrowError(`Required Roles do not exist! Pinging <@${expectedDevUserId}>! Err: Role not found`);
+    await expect(service.validateRegistrationAttempt(mockCharacter, mockDiscordUser)).rejects.toThrowError(`Required Role(s) do not exist! Pinging <@${expectedDevUserId}>! Err: Role not found`);
   });
 
   it('validation should return an error if the character has already been registered by another person (and member has left the server)', async () => {
