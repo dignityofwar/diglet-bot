@@ -250,7 +250,7 @@ export class AlbionScanningService {
       }
 
       // Loop through each member and check if they're registered, if not strip 'em
-      for (const [foo, discordMember] of members) {
+      for (const [, discordMember] of members) {
         // Filter on guildMembers to find them by Discord ID
         const foundMember = guildMembers.filter((guildMember) => guildMember.discordId === discordMember.id)[0];
 

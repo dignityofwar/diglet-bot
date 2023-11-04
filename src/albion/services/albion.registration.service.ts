@@ -138,7 +138,7 @@ export class AlbionRegistrationService implements OnApplicationBootstrap {
 
 * ➡️ Please read the information within <#${this.config.get('discord.channels.albionInfopoint')}> to be fully acquainted with the guild!
 
-* 👉️ Grab opt-in roles of interest in <id:customize> under the Albion section! It is _important_ you do this, otherwise you may miss content.
+* 👉️ **IMPORTANT**: Grab opt-in roles for various content you're interested for here: https://discord.com/channels/90078410642034688/1039268966905954394/1170055900040536064!
 
 * ℹ️ Your Discord server nickname has been automatically changed to match your character name. You are free to change this back should you want to, but please make sure it resembles your in-game name.
 
