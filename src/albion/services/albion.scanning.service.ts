@@ -341,7 +341,6 @@ export class AlbionScanningService {
       const scanPingRoles = this.config.get('albion.scanPingRoles');
       await message.channel.send(`🔔 <@&${scanPingRoles.join('>, <@&')}> Please review the above suggestions and make any necessary changes manually. To check again without pinging Guildmasters or Masters, run the \`/albion-scan\` command with the \`dry-run\` flag set to \`true\`.`);
     }
-
   }
 
   async checkRoleInconsistencies(discordMember: GuildMember): Promise<RoleInconsistencyResult[]> {

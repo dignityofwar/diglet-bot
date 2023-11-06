@@ -372,7 +372,6 @@ describe('AlbionScanningService', () => {
     expect(mockDiscordUser.roles.remove).toBeCalledWith(mockedRoleToDelete);
   });
   it('reverse scan should return no change message properly', async () => {
-    // Force the AlbionsMembersEntity to be empty
     mockAlbionMembersRepository.findAll = jest.fn().mockResolvedValueOnce([mockAlbionMember]);
 
     const mockedRole = {
