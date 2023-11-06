@@ -15,6 +15,7 @@ const expectedChannelId = '1234567890';
 const expectedRoleId = '987654321';
 const expectedDevUserId = '1234575897';
 const expectedGuildId = '56666666666';
+const expectedGuildMasterRoleId = '13371337';
 const expectedMasterRoleId = '7891478187458412';
 const expectedTownCrierChannelId = '69549874977887';
 
@@ -123,6 +124,7 @@ describe('AlbionRegistrationService', () => {
       const data = {
         albion: {
           guildId: expectedGuildId,
+          guildMasterRole: { discordRoleId: expectedGuildMasterRoleId },
           masterRole: { discordRoleId: expectedMasterRoleId },
         },
         discord: {
@@ -283,9 +285,9 @@ describe('AlbionRegistrationService', () => {
 
 * ℹ️ Your Discord server nickname has been automatically changed to match your character name. You are free to change this back should you want to, but please make sure it resembles your in-game name.
 
-* 🔔 You have automatically been enrolled to our <#${expectedTownCrierChannelId}> announcements channel, we send a maximum of 3 a week. If you wish to not receive these, you can opt out in <id:customize>.
+* 🔔 You have automatically been enrolled to our <#${expectedTownCrierChannelId}> announcements channel, we send a maximum of 3 a week. If you wish to opt out, go here: https://discord.com/channels/90078410642034688/1039268966905954394/1170055900040536064.
 
-CC <@&${expectedMasterRoleId}>`);
+CC <@&${expectedMasterRoleId}>, <@&${expectedGuildMasterRoleId}>`);
     expect(mockDiscordMessage.delete).toBeCalled();
   });
 });
