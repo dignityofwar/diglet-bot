@@ -32,7 +32,7 @@ export class AlbionCronService implements OnApplicationBootstrap {
     }
   }
 
-  @Cron(CronExpression.EVERY_DAY_AT_6PM)
+  @Cron('0 0 6,18 * * *')
   async runAlbionScans(): Promise<void> {
     this.logger.log('Running Albion Scans Cron');
 
