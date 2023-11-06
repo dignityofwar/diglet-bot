@@ -134,7 +134,7 @@ export class AlbionRegistrationService implements OnApplicationBootstrap {
     }
 
     // Successful!
-    await message.channel.send(`## ✅ Thank you <@${guildMember.id}>, your character **${character.Name}** has been verified! 🎉
+    const successMessage = await message.channel.send(`## ✅ Thank you <@${guildMember.id}>, your character **${character.Name}** has been verified! 🎉
 
 * ➡️ Please read the information within <#${this.config.get('discord.channels.albionInfopoint')}> to be fully acquainted with the guild!
 
@@ -145,6 +145,8 @@ export class AlbionRegistrationService implements OnApplicationBootstrap {
 * 🔔 You have automatically been enrolled to our <#${this.config.get('discord.channels.albionTownCrier')}> announcements channel, we send a maximum of 3 a week. If you wish to opt out, go here: https://discord.com/channels/90078410642034688/1039268966905954394/1170055900040536064.
 
 CC <@&${this.config.get('albion.masterRole').discordRoleId}>, <@&${this.config.get('albion.guildMasterRole').discordRoleId}>`);
+
+    await successMessage.removeAttachments();
 
     // Delete the placeholder message
     await message.delete();
