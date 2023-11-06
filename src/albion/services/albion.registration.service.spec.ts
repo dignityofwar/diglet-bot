@@ -86,7 +86,11 @@ describe('AlbionRegistrationService', () => {
       edit: jest.fn(),
       delete: jest.fn(),
       channel: {
-        send: jest.fn(),
+        send: jest.fn().mockImplementation(() => {
+          return {
+            removeAttachments: jest.fn(),
+          };
+        }),
       },
     };
 
