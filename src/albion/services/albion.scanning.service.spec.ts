@@ -396,8 +396,8 @@ describe('AlbionScanningService', () => {
     mockDiscordMessage.guild.members.fetch = jest.fn().mockRejectedValueOnce(new Error('Unknown Member'));
 
     await service.removeLeavers([mockCharacter], mockDiscordMessage);
-    expect(mockDiscordMessage.channel.send).toBeCalledTimes(2);
     expect(mockDiscordMessage.channel.send).toBeCalledWith('## 🚪 1 leavers detected!');
+    expect(mockDiscordMessage.channel.send).toBeCalledWith('ℹ️ If a leaver is <10 days offline, just remove their ranks. If >10, boot them! 🦵');
     expect(mockDiscordMessage.channel.send).toBeCalledWith(`- 🫥️ Discord member for Character **${mockCharacter.Name}** has left the DIG server. Their registration status has been removed.`);
   });
   it('should properly handle zero server leavers', async () => {
@@ -413,8 +413,8 @@ describe('AlbionScanningService', () => {
 
     await service.removeLeavers([mockCharacter], mockDiscordMessage);
 
-    expect(mockDiscordMessage.channel.send).toBeCalledTimes(2);
     expect(mockDiscordMessage.channel.send).toBeCalledWith('## 🚪 1 leavers detected!');
+    expect(mockDiscordMessage.channel.send).toBeCalledWith('ℹ️ If a leaver is <10 days offline, just remove their ranks. If >10, boot them! 🦵');
     expect(mockDiscordMessage.channel.send).toBeCalledWith(`- 👋 <@${mockDiscordUser.id}>'s character **${mockCharacter.Name}** has left the Guild. Their roles and registration status have been stripped.`);
   });
   it('should properly handle guild leavers and handle role errors', async () => {

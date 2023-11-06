@@ -194,9 +194,10 @@ export class AlbionScanningService {
     if (leavers.length > 0) {
       this.logger.log(`Sending ${leavers.length} changes to channel...`);
       await message.channel.send(`## 🚪 ${leavers.length} leavers detected!`);
+      await message.channel.send('ℹ️ If a leaver is <10 days offline, just remove their ranks. If >10, boot them! 🦵');
 
       for (const leaver of leavers) {
-        await message.channel.send(leaver); // Send a fake message first so it doesn't ping people
+        await message.channel.send(leaver); // Send a fake message first, so it doesn't ping people
       }
       return;
     }
