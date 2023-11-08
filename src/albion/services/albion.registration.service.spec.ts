@@ -7,7 +7,7 @@ import * as _ from 'lodash';
 import { ConfigService } from '@nestjs/config';
 import { EntityManager, EntityRepository, MikroORM } from '@mikro-orm/core';
 import { getRepositoryToken } from '@mikro-orm/nestjs';
-import { AlbionMembersEntity } from '../../database/entities/albion.members.entity';
+import { AlbionRegistrationsEntity } from '../../database/entities/albion.registrations.entity';
 import { AlbionPlayerInterface } from '../interfaces/albion.api.interfaces';
 import { SnowflakeUtil } from 'discord.js';
 
@@ -23,7 +23,7 @@ describe('AlbionRegistrationService', () => {
   let service: AlbionRegistrationService;
   let discordService: DiscordService;
   let config: ConfigService;
-  let albionMembersRepository: EntityRepository<AlbionMembersEntity>;
+  let albionMembersRepository: EntityRepository<AlbionRegistrationsEntity>;
 
   let mockDiscordUser: any;
   let mockDiscordMessage: any;
@@ -112,7 +112,7 @@ describe('AlbionRegistrationService', () => {
           },
         },
         {
-          provide: getRepositoryToken(AlbionMembersEntity),
+          provide: getRepositoryToken(AlbionRegistrationsEntity),
           useValue: mockAlbionMembersRepository,
         },
       ],
@@ -121,7 +121,7 @@ describe('AlbionRegistrationService', () => {
     service = moduleRef.get<AlbionRegistrationService>(AlbionRegistrationService);
     discordService = moduleRef.get<DiscordService>(DiscordService);
     config = moduleRef.get<ConfigService>(ConfigService);
-    albionMembersRepository = moduleRef.get(getRepositoryToken(AlbionMembersEntity));
+    albionMembersRepository = moduleRef.get(getRepositoryToken(AlbionRegistrationsEntity));
 
     // Spy on the 'get' method of the ConfigService, and make it return a specific values based on the path
     jest.spyOn(config, 'get').mockImplementation((key: string) => {

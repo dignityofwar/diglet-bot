@@ -1,7 +1,7 @@
 import { Entity, Index, Property, Unique } from '@mikro-orm/core';
 import { BaseEntity } from './base.entity';
 
-export interface AlbionMembersEntityInterface {
+export interface AlbionRegistrationsEntityInterface {
   discordId: string;
   characterId: string;
   characterName: string;
@@ -11,7 +11,7 @@ export interface AlbionMembersEntityInterface {
 }
 
 @Entity()
-export class AlbionMembersEntity extends BaseEntity {
+export class AlbionRegistrationsEntity extends BaseEntity {
   @Property({
     nullable: false,
   })
@@ -42,7 +42,7 @@ export class AlbionMembersEntity extends BaseEntity {
   })
     manualCreatedByDiscordName: null | string = null;
 
-  constructor(options: AlbionMembersEntityInterface) {
+  constructor(options: AlbionRegistrationsEntityInterface) {
     super();
     Object.assign(this, options);
   }

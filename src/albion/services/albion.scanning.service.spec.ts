@@ -6,7 +6,7 @@ import * as _ from 'lodash';
 import { ConfigService } from '@nestjs/config';
 import { EntityManager, EntityRepository, MikroORM } from '@mikro-orm/core';
 import { getRepositoryToken } from '@mikro-orm/nestjs';
-import { AlbionMembersEntity } from '../../database/entities/albion.members.entity';
+import { AlbionRegistrationsEntity } from '../../database/entities/albion.registrations.entity';
 import { AlbionPlayerInterface } from '../interfaces/albion.api.interfaces';
 import { SnowflakeUtil } from 'discord.js';
 import { AlbionScanningService } from './albion.scanning.service';
@@ -41,8 +41,8 @@ describe('AlbionScanningService', () => {
   let mockDiscordUser: any;
   let mockDiscordMessage: any;
   let mockEntityManager: jest.Mocked<EntityManager>;
-  let mockAlbionMember: AlbionMembersEntity;
-  let mockAlbionMembersRepository: EntityRepository<AlbionMembersEntity>;
+  let mockAlbionMember: AlbionRegistrationsEntity;
+  let mockAlbionMembersRepository: EntityRepository<AlbionRegistrationsEntity>;
   let mockCharacter: AlbionPlayerInterface;
 
   beforeEach(async () => {
@@ -106,7 +106,7 @@ describe('AlbionScanningService', () => {
       manualCreatedByDiscordName: null,
       createdAt: new Date(),
       updatedAt: new Date(),
-    } as AlbionMembersEntity;
+    } as AlbionRegistrationsEntity;
 
     mockCharacter = {
       AverageItemPower: 1337,
@@ -163,7 +163,7 @@ describe('AlbionScanningService', () => {
           },
         },
         {
-          provide: getRepositoryToken(AlbionMembersEntity),
+          provide: getRepositoryToken(AlbionRegistrationsEntity),
           useValue: mockAlbionMembersRepository,
         },
       ],
