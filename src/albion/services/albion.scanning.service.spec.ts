@@ -12,6 +12,7 @@ import { SnowflakeUtil } from 'discord.js';
 import { AlbionScanningService } from './albion.scanning.service';
 import { AlbionApiService } from './albion.api.service';
 import { AlbionUtilities } from '../utilities/albion.utilities';
+import { AlbionGuildMembersEntity } from '../../database/entities/albion.guildmembers.entity';
 
 const expectedChannelId = '1234567890';
 const expectedDevUserId = '1234575897';
@@ -42,7 +43,9 @@ describe('AlbionScanningService', () => {
   let mockDiscordMessage: any;
   let mockEntityManager: jest.Mocked<EntityManager>;
   let mockAlbionMember: AlbionRegistrationsEntity;
+  let mockAlbionGuildMember: AlbionGuildMembersEntity;
   let mockAlbionMembersRepository: EntityRepository<AlbionRegistrationsEntity>;
+  let mockAlbionGuildMembersRepository: EntityRepository<AlbionGuildMembersEntity>;
   let mockCharacter: AlbionPlayerInterface;
 
   beforeEach(async () => {
@@ -59,6 +62,13 @@ describe('AlbionScanningService', () => {
       findAll: jest.fn().mockResolvedValue([mockAlbionMember]),
       create: jest.fn(),
       upsert: jest.fn(),
+      removeAndFlush: jest.fn(),
+    } as any;
+    mockAlbionGuildMembersRepository = {
+      find: jest.fn().mockResolvedValueOnce([mockAlbionGuildMember]),
+      findAll: jest.fn().mockResolvedValue([mockAlbionGuildMember]),
+      findOne: jest.fn().mockResolvedValue([mockAlbionGuildMember]),
+      persistAndFlush: jest.fn().mockResolvedValue([mockAlbionGuildMember]),
       removeAndFlush: jest.fn(),
     } as any;
     const mockInit = jest.spyOn(MikroORM, 'init');
@@ -107,6 +117,13 @@ describe('AlbionScanningService', () => {
       createdAt: new Date(),
       updatedAt: new Date(),
     } as AlbionRegistrationsEntity;
+    mockAlbionGuildMember = {
+      id: 123456789,
+      characterId: '123456789',
+      characterName: 'Maelstrome26',
+      registered: false,
+      warned: false,
+    } as AlbionGuildMembersEntity;
 
     mockCharacter = {
       AverageItemPower: 1337,
@@ -165,6 +182,10 @@ describe('AlbionScanningService', () => {
         {
           provide: getRepositoryToken(AlbionRegistrationsEntity),
           useValue: mockAlbionMembersRepository,
+        },
+        {
+          provide: getRepositoryToken(AlbionGuildMembersEntity),
+          useValue: mockAlbionGuildMembersRepository,
         },
       ],
     }).compile();
@@ -263,9 +284,16 @@ describe('AlbionScanningService', () => {
   it('should gracefully handle no members in the database by calling the reverse role scan', async () => {
     mockAlbionMembersRepository.findAll = jest.fn().mockResolvedValueOnce([]);
     service.reverseRoleScan = jest.fn().mockResolvedValue(undefined);
+    service.discordEnforcementScan = jest.fn().mockResolvedValue(undefined);
+
     await service.startScan(mockDiscordMessage);
-    expect(mockDiscordMessage.edit).toHaveBeenCalledWith('## ❌ No members were found in the database!\nStill running reverse role scan...');
+    expect(mockDiscordMessage.edit).toHaveBeenCalledWith('# Starting scan...');
+    expect(mockDiscordMessage.edit).toHaveBeenCalledWith('## ❌ No members were found in the database!\nStill running reverse role and Discord enforcement scans...');
+    expect(mockDiscordMessage.edit).toHaveBeenCalledWith('# Task: [1/2] Performing reverse role scan...');
+    expect(mockDiscordMessage.edit).toHaveBeenCalledWith('# Task: [2/2] Discord enforcement scan...');
+
     expect(service.reverseRoleScan).toBeCalledTimes(1);
+    expect(service.discordEnforcementScan).toBeCalledTimes(1);
   });
   it('should send number of members on record', async () => {
     mockAlbionMembersRepository.findAll = jest.fn().mockResolvedValueOnce([mockAlbionMember]);
@@ -305,12 +333,14 @@ describe('AlbionScanningService', () => {
     service.roleInconsistencies = jest.fn().mockResolvedValueOnce([]);
 
     await service.startScan(mockDiscordMessage);
-    expect(mockDiscordMessage.edit).toBeCalledWith('## Starting scan...');
-    expect(mockDiscordMessage.edit).toBeCalledWith('## Task: [1/4] Gathering 1 characters from the ALB API...');
-    expect(mockDiscordMessage.edit).toBeCalledWith('## Task: [2/4] Checking 1 characters for membership status...');
-    expect(mockDiscordMessage.edit).toBeCalledWith('## Task: [3/4] Performing reverse role scan...');
-    expect(mockDiscordMessage.edit).toBeCalledWith('## Task: [4/4] Checking for role inconsistencies...');
-    expect(mockDiscordMessage.channel.send).toBeCalledWith('### Scan complete!');
+    expect(mockDiscordMessage.edit).toBeCalledWith('# Starting scan...');
+    expect(mockDiscordMessage.edit).toBeCalledWith('# Task: [1/5] Gathering 1 characters from the ALB API...');
+    expect(mockDiscordMessage.edit).toBeCalledWith('# Task: [2/5] Checking 1 characters for membership status...');
+    expect(mockDiscordMessage.edit).toBeCalledWith('# Task: [3/5] Performing reverse role scan...');
+    expect(mockDiscordMessage.edit).toBeCalledWith('# Task: [4/5] Checking for role inconsistencies...');
+    expect(mockDiscordMessage.edit).toBeCalledWith('# Task: [5/5] Discord enforcement scan...');
+    expect(mockDiscordMessage.channel.send).toBeCalledWith('## Scan complete!');
+    expect(mockDiscordMessage.channel.send).toBeCalledWith('------------------------------------------');
     expect(mockDiscordMessage.delete).toBeCalled();
 
     // Also expect functions to actually be called
@@ -602,7 +632,7 @@ describe('AlbionScanningService', () => {
     }
 
     if (testCase.roles.length === 0) {
-      emoji = '⚠️';
+      emoji = '‼️';
       reason = 'they have no roles but are registered!';
     }
 

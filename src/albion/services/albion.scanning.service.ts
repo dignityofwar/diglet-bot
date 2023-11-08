@@ -8,6 +8,7 @@ import { AlbionRegistrationsEntity } from '../../database/entities/albion.regist
 import { AlbionPlayerInterface } from '../interfaces/albion.api.interfaces';
 import { AlbionRoleMapInterface } from '../../config/albion.app.config';
 import { AlbionUtilities } from '../utilities/albion.utilities';
+import { AlbionGuildMembersEntity } from '../../database/entities/albion.guildmembers.entity';
 
 export interface RoleInconsistencyResult {
   id: string,
@@ -19,12 +20,15 @@ export interface RoleInconsistencyResult {
 @Injectable()
 export class AlbionScanningService {
   private readonly logger = new Logger(AlbionScanningService.name);
+  private actionRequired = false;
+  private readonly bootDays = 10;
 
   constructor(
     private readonly albionApiService: AlbionApiService,
     private readonly config: ConfigService,
     private readonly albionUtilities: AlbionUtilities,
-    @InjectRepository(AlbionRegistrationsEntity) private readonly albionMembersRepository: EntityRepository<AlbionRegistrationsEntity>
+    @InjectRepository(AlbionRegistrationsEntity) private readonly albionRegistrationsRepository: EntityRepository<AlbionRegistrationsEntity>,
+    @InjectRepository(AlbionGuildMembersEntity) private readonly albionGuildMembersRepository: EntityRepository<AlbionGuildMembersEntity>
   ) {
   }
 
@@ -32,15 +36,19 @@ export class AlbionScanningService {
   // If they're not, remove the ALB/Registered role from them and any other non opt-in Albion roles e.g. ALB/Initiate, ALB/Squire etc.
   // Also send a message to the #albion-scans channel to denote this has happened.
   async startScan(message: Message, dryRun = false) {
-    await message.edit('## Starting scan...');
+    await message.edit('# Starting scan...');
 
-    const guildMembers: AlbionRegistrationsEntity[] = await this.albionMembersRepository.findAll();
+    const guildMembers: AlbionRegistrationsEntity[] = await this.albionRegistrationsRepository.findAll();
     const length = guildMembers.length;
 
     if (length === 0) {
-      await message.edit('## ❌ No members were found in the database!\nStill running reverse role scan...');
+      await message.edit('## ❌ No members were found in the database!\nStill running reverse role and Discord enforcement scans...');
       // However, still perform the reverse role scan
+      await message.edit('# Task: [1/2] Performing reverse role scan...');
       await this.reverseRoleScan(message, dryRun);
+
+      await message.edit('# Task: [2/2] Discord enforcement scan...');
+      await this.discordEnforcementScan(message, dryRun);
       return;
     }
 
@@ -49,7 +57,7 @@ export class AlbionScanningService {
     let characters: Array<AlbionPlayerInterface | null>;
 
     try {
-      await message.edit(`## Task: [1/4] Gathering ${length} characters from the ALB API...`);
+      await message.edit(`# Task: [1/5] Gathering ${length} characters from the ALB API...`);
       characters = await this.gatherCharacters(guildMembers, message);
     }
     catch (err) {
@@ -63,15 +71,18 @@ export class AlbionScanningService {
     }
 
     try {
-      await message.edit(`## Task: [2/4] Checking ${length} characters for membership status...`);
+      await message.edit(`# Task: [2/5] Checking ${length} characters for membership status...`);
       await this.removeLeavers(characters, message, dryRun);
 
       // Check if members have roles they shouldn't who are not registered
-      await message.edit('## Task: [3/4] Performing reverse role scan...');
+      await message.edit('# Task: [3/5] Performing reverse role scan...');
       await this.reverseRoleScan(message, dryRun);
 
-      await message.edit('## Task: [4/4] Checking for role inconsistencies...');
+      await message.edit('# Task: [4/5] Checking for role inconsistencies...');
       await this.roleInconsistencies(message, dryRun);
+
+      await message.edit('# Task: [5/5] Discord enforcement scan...');
+      await this.discordEnforcementScan(message, dryRun);
     }
     catch (err) {
       await message.edit('## ❌ An error occurred while scanning!');
@@ -79,7 +90,15 @@ export class AlbionScanningService {
     }
 
     // All done, clean up
-    await message.channel.send('### Scan complete!');
+    await message.channel.send('## Scan complete!');
+    // If any of the tasks flagged for action, tell them now.
+    if (this.actionRequired && !dryRun) {
+      const scanPingRoles = this.config.get('albion.scanPingRoles');
+      await message.channel.send(`️🔔 <@&${scanPingRoles.join('>, <@&')}> Please review the above actions marked with (‼️) and make any necessary changes manually. To scan again without pinging Guildmasters or Masters, run the \`/albion-scan\` command with the \`dry-run\` flag set to \`true\`.`);
+      this.actionRequired = false;
+    }
+    await message.channel.send('------------------------------------------');
+
     await message.delete();
   }
 
@@ -124,7 +143,7 @@ export class AlbionScanningService {
     }
 
     // Get the registered members from the database
-    const guildMembers: AlbionRegistrationsEntity[] = await this.albionMembersRepository.findAll();
+    const guildMembers: AlbionRegistrationsEntity[] = await this.albionRegistrationsRepository.findAll();
 
     // Do the checks
     for (const member of guildMembers) {
@@ -140,7 +159,14 @@ export class AlbionScanningService {
         this.logger.log(`User ${character.Name} has left the Discord server`);
 
         if (!dryRun) {
-          await this.albionMembersRepository.removeAndFlush(member);
+          await this.albionRegistrationsRepository.removeAndFlush(member);
+
+          // Also mark them as unregistered in the Guild Members database if they're in there
+          const guildMember = await this.albionGuildMembersRepository.findOne({ characterId: member.characterId });
+          if (guildMember) {
+            guildMember.registered = false;
+            await this.albionGuildMembersRepository.persistAndFlush(guildMember);
+          }
         }
 
         leavers.push(`- 🫥️ Discord member for Character **${character.Name}** has left the DIG server. Their registration status has been removed.`);
@@ -179,7 +205,13 @@ export class AlbionScanningService {
 
       if (!dryRun) {
         try {
-          await this.albionMembersRepository.removeAndFlush(member);
+          await this.albionRegistrationsRepository.removeAndFlush(member);
+
+          // Also flush them from the Guild Members table if they're in there
+          const guildMember = await this.albionGuildMembersRepository.findOne({ characterId: member.characterId });
+          if (guildMember) {
+            await this.albionGuildMembersRepository.removeAndFlush(guildMember);
+          }
         }
         catch (err) {
           await message.channel.send(`ERROR: Unable to remove Albion Character "${character.Name}" (${character.Id}) from registration database! Pinging <@${this.config.get('discord.devUserId')}>!`);
@@ -208,7 +240,7 @@ export class AlbionScanningService {
 
   async reverseRoleScan(message: Message, dryRun = false) {
     // Get the registered members from the database again as they may have changed
-    const guildMembers: AlbionRegistrationsEntity[] = await this.albionMembersRepository.findAll();
+    const guildMembers: AlbionRegistrationsEntity[] = await this.albionRegistrationsRepository.findAll();
 
     // Loop through each role, starting with Guildmaster, and check if anyone has it who are not registered
     const roleMap: AlbionRoleMapInterface[] = this.config.get('albion.roleMap');
@@ -290,7 +322,7 @@ export class AlbionScanningService {
     const suggestions: string[] = [];
 
     // Refresh GuildMembers as some may have been booted / left
-    const guildMembers: AlbionRegistrationsEntity[] = await this.albionMembersRepository.findAll();
+    const guildMembers: AlbionRegistrationsEntity[] = await this.albionRegistrationsRepository.findAll();
 
     const scanCountMessage = await message.channel.send(`### Scanning ${guildMembers.length} members for role inconsistencies... [0/${guildMembers.length}]`);
     let count = 0;
@@ -339,8 +371,7 @@ export class AlbionScanningService {
     }
 
     if (suggestions.length > 0 && !dryRun) {
-      const scanPingRoles = this.config.get('albion.scanPingRoles');
-      await message.channel.send(`🔔 <@&${scanPingRoles.join('>, <@&')}> Please review the above suggestions and make any necessary changes manually. To check again without pinging Guildmasters or Masters, run the \`/albion-scan\` command with the \`dry-run\` flag set to \`true\`.`);
+      this.actionRequired = true;
     }
   }
 
@@ -359,20 +390,19 @@ export class AlbionScanningService {
     if (!highestPriorityRole) {
       const initiateRole = roleMap.filter((role) => role.name === '@ALB/Initiate')[0];
       const registeredRole = roleMap.filter((role) => role.name === '@ALB/Registered')[0];
-      const emoji = '⚠️';
       const action = 'added';
       const reason = 'they have no roles but are registered!';
       inconsistencies.push({
         id: initiateRole.discordRoleId,
         name: initiateRole.name,
         action,
-        message: `- ${emoji} <@${discordMember.id}> requires role **${initiateRole.name}** to be ${action} because ${reason}`,
+        message: `- ‼️ <@${discordMember.id}> requires role **${initiateRole.name}** to be ${action} because ${reason}`,
       });
       inconsistencies.push({
         id: registeredRole.discordRoleId,
         name: registeredRole.name,
         action,
-        message: `- ${emoji} <@${discordMember.id}> requires role **${registeredRole.name}** to be ${action} because ${reason}`,
+        message: `- ‼️ <@${discordMember.id}> requires role **${registeredRole.name}** to be ${action} because ${reason}`,
       });
       return inconsistencies;
     }
@@ -408,5 +438,125 @@ export class AlbionScanningService {
     });
 
     return inconsistencies;
+  }
+
+  async discordEnforcementScan(message: Message, dryRun = false) {
+    const statusMessage = await message.channel.send('## Starting Discord enforcement scan...');
+
+    // First, get all the DIG guild members and parse them into an array
+    const guildMembers = await this.albionApiService.getAllGuildMembers(this.config.get('albion.guildId'));
+    const guildMembersLength = guildMembers.length;
+
+    const currentGuildMembers: AlbionGuildMembersEntity[] = await this.albionGuildMembersRepository.findAll();
+
+    // Get the registered members from the database again as they may have changed
+    const registeredMembers: AlbionRegistrationsEntity[] = await this.albionRegistrationsRepository.findAll();
+
+    const unregisteredMembers: AlbionPlayerInterface[] = [];
+
+    // Loop all guild members and check if they exist in the registeredMembers list, if they don't, add them to a unregistered list
+    for (const guildMember of guildMembers) {
+      const memberIsRegistered = registeredMembers.filter((registeredMember) => registeredMember.characterId === guildMember.Id)[0];
+
+      if (!memberIsRegistered) {
+        unregisteredMembers.push(guildMember);
+      }
+
+      // Check if they have a guild member record
+      const foundGuildMember = currentGuildMembers.filter((currentGuildMember) => currentGuildMember.characterId === guildMember.Id)[0];
+
+      // If not, add them to the guild members table
+      if (!foundGuildMember && !dryRun) {
+        await this.albionGuildMembersRepository.persistAndFlush(new AlbionGuildMembersEntity({
+          characterId: guildMember.Id,
+          characterName: guildMember.Name,
+          registered: !!memberIsRegistered,
+          warned: false,
+        }));
+      }
+    }
+
+    await message.channel.send(`ℹ️ **${unregisteredMembers.length}** unregistered members out of total ${guildMembersLength} guild members.`);
+
+    // 1. > 10 days boot warning
+    // Find all guild members who are not registered and were first seen > 10 days ago
+    const tenDaysAgo = new Date();
+    tenDaysAgo.setDate(tenDaysAgo.getDate() - this.bootDays);
+
+    const bootableMembers = await this.albionGuildMembersRepository.find({
+      registered: false,
+      createdAt: { $lte: tenDaysAgo },
+    });
+
+    if (!bootableMembers || bootableMembers.length === 0) {
+      this.logger.debug('No bootable members found!');
+    }
+    else {
+      // Loop the bootable members and spit put their names in Discord
+      await message.channel.send(`## 🦵 ${bootableMembers.length} members have reached their ${this.bootDays} day kick limit!`);
+
+      for (const bootableMember of bootableMembers) {
+        await message.channel.send(`- ‼️ **${bootableMember.characterName}** needs the boot!`);
+      }
+    }
+
+    // 2. 5 Day limit Warning
+    const fiveDaysAgo = new Date();
+    fiveDaysAgo.setDate(fiveDaysAgo.getDate() - (this.bootDays - 5));
+
+    const fiveDayWarningMembers = await this.albionGuildMembersRepository.find({
+      registered: false,
+      warned: false,
+      createdAt: { $lte: fiveDaysAgo, $gte: tenDaysAgo },
+    });
+    const warnedMembers = await this.albionGuildMembersRepository.find({
+      warned: true,
+    });
+
+    if (warnedMembers && warnedMembers.length > 0) {
+      await message.channel.send(`### ⏰ Clock's ticking for ${warnedMembers.length} warned member(s)!`);
+
+      for (const warnedMember of warnedMembers) {
+        // Get their final kick date by taking their createdAt date and adding 10 days
+        const finalKickDate = new Date(warnedMember.createdAt);
+        finalKickDate.setDate(finalKickDate.getDate() + this.bootDays);
+
+        // Get unix for DC time code
+        const unix = Math.floor(finalKickDate.getTime() / 1000);
+
+        await message.channel.send(`- **${warnedMember.characterName}** will be booted on: <t:${unix}:D> (<t:${unix}:R>)`);
+      }
+    }
+
+    if (!fiveDayWarningMembers || fiveDayWarningMembers.length === 0) {
+      this.logger.debug('No 5 day warning members found!');
+    }
+    else {
+      await message.channel.send(`## 📧 ${fiveDayWarningMembers.length} members have reached their ${(this.bootDays - 5)} day warning limit!\nCheck Scriptorium for the template.`);
+
+      for (const fiveDayWarningMember of fiveDayWarningMembers) {
+        await message.channel.send(`- ‼️ **${fiveDayWarningMember.characterName}** needs a warning!`);
+
+        // Mark them as warned
+        if (!dryRun) {
+          fiveDayWarningMember.warned = true;
+          await this.albionGuildMembersRepository.persistAndFlush(fiveDayWarningMember);
+          this.logger.debug(`Marked ${fiveDayWarningMember.characterName} as warned!`);
+        }
+      }
+    }
+
+    if (
+      bootableMembers
+      && warnedMembers
+      && fiveDayWarningMembers
+    ) {
+      await message.channel.send('✅ No members require kicking, warning or are close to being booted.');
+    }
+    if (bootableMembers.length > 0 || fiveDayWarningMembers.length > 0) {
+      this.actionRequired = true;
+    }
+
+    await statusMessage.delete();
   }
 }

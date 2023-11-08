@@ -3,12 +3,18 @@ import { MikroOrmModule } from '@mikro-orm/nestjs';
 import { PS2VerificationAttemptEntity } from './entities/ps2.verification.attempt.entity';
 import { PS2MembersEntity } from './entities/ps2.members.entity';
 import { AlbionRegistrationsEntity } from './entities/albion.registrations.entity';
+import { AlbionGuildMembersEntity } from './entities/albion.guildmembers.entity';
 
 @Module({
   imports: [
     MikroOrmModule.forRoot(),
     MikroOrmModule.forFeature({
-      entities: [PS2VerificationAttemptEntity, PS2MembersEntity, AlbionRegistrationsEntity],
+      entities: [
+        AlbionGuildMembersEntity,
+        AlbionRegistrationsEntity,
+        PS2MembersEntity,
+        PS2VerificationAttemptEntity,
+      ],
     }),
   ],
   providers: [],
