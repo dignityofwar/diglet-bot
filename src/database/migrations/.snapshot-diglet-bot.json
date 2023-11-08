@@ -32,6 +32,109 @@
           "length": 0,
           "mappedType": "datetime"
         },
+        "character_id": {
+          "name": "character_id",
+          "type": "varchar(255)",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "mappedType": "string"
+        },
+        "character_name": {
+          "name": "character_name",
+          "type": "varchar(255)",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "mappedType": "string"
+        },
+        "registered": {
+          "name": "registered",
+          "type": "varchar(255)",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "default": "false",
+          "mappedType": "string"
+        },
+        "warned": {
+          "name": "warned",
+          "type": "varchar(255)",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "default": "false",
+          "mappedType": "string"
+        }
+      },
+      "name": "albion_guild_members_entity",
+      "indexes": [
+        {
+          "columnNames": [
+            "character_id"
+          ],
+          "composite": false,
+          "keyName": "albion_guild_members_entity_character_id_index",
+          "primary": false,
+          "unique": false
+        },
+        {
+          "columnNames": [
+            "character_id"
+          ],
+          "composite": false,
+          "keyName": "albion_guild_members_entity_character_id_unique",
+          "primary": false,
+          "unique": true
+        },
+        {
+          "keyName": "PRIMARY",
+          "columnNames": [
+            "id"
+          ],
+          "composite": false,
+          "primary": true,
+          "unique": true
+        }
+      ],
+      "checks": [],
+      "foreignKeys": {}
+    },
+    {
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "int",
+          "unsigned": true,
+          "autoincrement": true,
+          "primary": true,
+          "nullable": false,
+          "mappedType": "integer"
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "datetime",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "length": 0,
+          "mappedType": "datetime"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "datetime",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "length": 0,
+          "mappedType": "datetime"
+        },
         "discord_id": {
           "name": "discord_id",
           "type": "varchar(255)",
