@@ -4,7 +4,7 @@ import { EntityRepository } from '@mikro-orm/core';
 import { GuildMember, Message, Role } from 'discord.js';
 import { ConfigService } from '@nestjs/config';
 import { AlbionApiService } from './albion.api.service';
-import { AlbionMembersEntity } from '../../database/entities/albion.members.entity';
+import { AlbionRegistrationsEntity } from '../../database/entities/albion.registrations.entity';
 import { AlbionPlayerInterface } from '../interfaces/albion.api.interfaces';
 import { AlbionRoleMapInterface } from '../../config/albion.app.config';
 import { AlbionUtilities } from '../utilities/albion.utilities';
@@ -24,7 +24,7 @@ export class AlbionScanningService {
     private readonly albionApiService: AlbionApiService,
     private readonly config: ConfigService,
     private readonly albionUtilities: AlbionUtilities,
-    @InjectRepository(AlbionMembersEntity) private readonly albionMembersRepository: EntityRepository<AlbionMembersEntity>
+    @InjectRepository(AlbionRegistrationsEntity) private readonly albionMembersRepository: EntityRepository<AlbionRegistrationsEntity>
   ) {
   }
 
@@ -34,7 +34,7 @@ export class AlbionScanningService {
   async startScan(message: Message, dryRun = false) {
     await message.edit('## Starting scan...');
 
-    const guildMembers: AlbionMembersEntity[] = await this.albionMembersRepository.findAll();
+    const guildMembers: AlbionRegistrationsEntity[] = await this.albionMembersRepository.findAll();
     const length = guildMembers.length;
 
     if (length === 0) {
@@ -83,7 +83,7 @@ export class AlbionScanningService {
     await message.delete();
   }
 
-  async gatherCharacters(guildMembers: AlbionMembersEntity[], message: Message, tries = 0) {
+  async gatherCharacters(guildMembers: AlbionRegistrationsEntity[], message: Message, tries = 0) {
     const characterPromises: Promise<AlbionPlayerInterface>[] = [];
     tries++;
     const length = guildMembers.length;
@@ -124,7 +124,7 @@ export class AlbionScanningService {
     }
 
     // Get the registered members from the database
-    const guildMembers: AlbionMembersEntity[] = await this.albionMembersRepository.findAll();
+    const guildMembers: AlbionRegistrationsEntity[] = await this.albionMembersRepository.findAll();
 
     // Do the checks
     for (const member of guildMembers) {
@@ -208,7 +208,7 @@ export class AlbionScanningService {
 
   async reverseRoleScan(message: Message, dryRun = false) {
     // Get the registered members from the database again as they may have changed
-    const guildMembers: AlbionMembersEntity[] = await this.albionMembersRepository.findAll();
+    const guildMembers: AlbionRegistrationsEntity[] = await this.albionMembersRepository.findAll();
 
     // Loop through each role, starting with Guildmaster, and check if anyone has it who are not registered
     const roleMap: AlbionRoleMapInterface[] = this.config.get('albion.roleMap');
@@ -290,7 +290,7 @@ export class AlbionScanningService {
     const suggestions: string[] = [];
 
     // Refresh GuildMembers as some may have been booted / left
-    const guildMembers: AlbionMembersEntity[] = await this.albionMembersRepository.findAll();
+    const guildMembers: AlbionRegistrationsEntity[] = await this.albionMembersRepository.findAll();
 
     const scanCountMessage = await message.channel.send(`### Scanning ${guildMembers.length} members for role inconsistencies... [0/${guildMembers.length}]`);
     let count = 0;

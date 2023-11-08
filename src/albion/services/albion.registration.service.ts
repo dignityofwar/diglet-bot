@@ -2,7 +2,7 @@ import { Injectable, Logger, OnApplicationBootstrap } from '@nestjs/common';
 import { DiscordService } from '../../discord/discord.service';
 import { ConfigService } from '@nestjs/config';
 import { InjectRepository } from '@mikro-orm/nestjs';
-import { AlbionMembersEntity } from '../../database/entities/albion.members.entity';
+import { AlbionRegistrationsEntity } from '../../database/entities/albion.registrations.entity';
 import { EntityRepository } from '@mikro-orm/core';
 import { Channel, GuildMember, Message } from 'discord.js';
 import { AlbionPlayerInterface } from '../interfaces/albion.api.interfaces';
@@ -16,7 +16,7 @@ export class AlbionRegistrationService implements OnApplicationBootstrap {
   constructor(
     private readonly discordService: DiscordService,
     private readonly config: ConfigService,
-    @InjectRepository(AlbionMembersEntity) private readonly albionMembersRepository: EntityRepository<AlbionMembersEntity>,
+    @InjectRepository(AlbionRegistrationsEntity) private readonly albionMembersRepository: EntityRepository<AlbionRegistrationsEntity>,
   ) {
   }
 

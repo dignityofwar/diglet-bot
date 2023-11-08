@@ -90,14 +90,14 @@
           "mappedType": "string"
         }
       },
-      "name": "albion_members_entity",
+      "name": "albion_registrations_entity",
       "indexes": [
         {
           "columnNames": [
             "discord_id"
           ],
           "composite": false,
-          "keyName": "albion_members_entity_discord_id_index",
+          "keyName": "albion_registrations_entity_discord_id_index",
           "primary": false,
           "unique": false
         },
@@ -106,7 +106,7 @@
             "discord_id"
           ],
           "composite": false,
-          "keyName": "albion_members_entity_discord_id_unique",
+          "keyName": "albion_registrations_entity_discord_id_unique",
           "primary": false,
           "unique": true
         },
@@ -115,7 +115,7 @@
             "character_id"
           ],
           "composite": false,
-          "keyName": "albion_members_entity_character_id_index",
+          "keyName": "albion_registrations_entity_character_id_index",
           "primary": false,
           "unique": false
         },
@@ -124,7 +124,7 @@
             "character_id"
           ],
           "composite": false,
-          "keyName": "albion_members_entity_character_id_unique",
+          "keyName": "albion_registrations_entity_character_id_unique",
           "primary": false,
           "unique": true
         },

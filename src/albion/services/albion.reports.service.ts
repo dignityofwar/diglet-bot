@@ -1,6 +1,6 @@
 import { Logger } from '@nestjs/common';
 import { InjectRepository } from '@mikro-orm/nestjs';
-import { AlbionMembersEntity } from '../../database/entities/albion.members.entity';
+import { AlbionRegistrationsEntity } from '../../database/entities/albion.registrations.entity';
 import { EntityRepository } from '@mikro-orm/core';
 import { DiscordService } from '../../discord/discord.service';
 import { ConfigService } from '@nestjs/config';
@@ -13,7 +13,7 @@ export class AlbionReportsService {
   private readonly logger = new Logger(AlbionReportsService.name);
 
   constructor(
-    @InjectRepository(AlbionMembersEntity) private readonly albionMembersRepository: EntityRepository<AlbionMembersEntity>,
+    @InjectRepository(AlbionRegistrationsEntity) private readonly albionMembersRepository: EntityRepository<AlbionRegistrationsEntity>,
     private readonly config: ConfigService,
     private readonly discordService: DiscordService,
     private readonly albionApiService: AlbionApiService,
