@@ -513,21 +513,6 @@ export class AlbionScanningService {
       warned: true,
     });
 
-    if (warnedMembers && warnedMembers.length > 0) {
-      await message.channel.send(`### ⏰ Clock's ticking for ${warnedMembers.length} warned member(s)!`);
-
-      for (const warnedMember of warnedMembers) {
-        // Get their final kick date by taking their createdAt date and adding 10 days
-        const finalKickDate = new Date(warnedMember.createdAt);
-        finalKickDate.setDate(finalKickDate.getDate() + this.bootDays);
-
-        // Get unix for DC time code
-        const unix = Math.floor(finalKickDate.getTime() / 1000);
-
-        await message.channel.send(`- **${warnedMember.characterName}** will be booted on: <t:${unix}:D> (<t:${unix}:R>)`);
-      }
-    }
-
     if (!fiveDayWarningMembers || fiveDayWarningMembers.length === 0) {
       this.logger.debug('No 5 day warning members found!');
     }
@@ -543,6 +528,22 @@ export class AlbionScanningService {
           await this.albionGuildMembersRepository.persistAndFlush(fiveDayWarningMember);
           this.logger.debug(`Marked ${fiveDayWarningMember.characterName} as warned!`);
         }
+      }
+    }
+
+    // 3. Members who are running out of time...
+    if (warnedMembers && warnedMembers.length > 0) {
+      await message.channel.send(`### ⏰ Clock's ticking for ${warnedMembers.length} warned member(s)!`);
+
+      for (const warnedMember of warnedMembers) {
+        // Get their final kick date by taking their createdAt date and adding 10 days
+        const finalKickDate = new Date(warnedMember.createdAt);
+        finalKickDate.setDate(finalKickDate.getDate() + this.bootDays);
+
+        // Get unix for DC time code
+        const unix = Math.floor(finalKickDate.getTime() / 1000);
+
+        await message.channel.send(`- **${warnedMember.characterName}** will be booted on: <t:${unix}:D> (<t:${unix}:R>)`);
       }
     }
 
