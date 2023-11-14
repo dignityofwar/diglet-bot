@@ -290,8 +290,31 @@ export class AlbionScanningService {
         if (!foundMember) {
           invalidUsers.push(`- ⚠️ <@${discordMember.id}> had role **${role.name}** but was not registered!`);
 
+          let discordMemberReal: GuildMember;
+
+          // Check if the member actually exists first before removing their roles
+          try {
+            discordMemberReal = await message.guild.members.fetch({ user: discordMember.id, force: true });
+
+            if (!discordMemberReal) {
+              this.logger.error('Reverse Role Scan: Discord member does not actually exist!');
+              continue;
+            }
+          }
+          catch {
+            this.logger.error('Reverse Role Scan: Discord member does not actually exist (and errored!)');
+            continue;
+          }
+
           if (!dryRun) {
-            await discordMember.roles.remove(discordRole);
+            try {
+              await discordMemberReal.roles.remove(discordRole);
+              this.logger.debug(`Reverse Role Scan: Removed role from user ${discordMemberReal.id}!`);
+            }
+            catch (err) {
+              this.logger.error(`Reverse Role Scan: Error removing role ${role.name} from user ${discordMemberReal.id}! Err: ${err.message}`);
+              await message.channel.send(`Error removing role ${role.name} from user ${discordMemberReal.id}! Err: ${err.message}`);
+            }
           }
         }
       }
