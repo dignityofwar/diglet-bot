@@ -16,7 +16,7 @@ export class AlbionRegistrationService implements OnApplicationBootstrap {
   constructor(
     private readonly discordService: DiscordService,
     private readonly config: ConfigService,
-    @InjectRepository(AlbionRegistrationsEntity) private readonly albionMembersRepository: EntityRepository<AlbionRegistrationsEntity>,
+    @InjectRepository(AlbionRegistrationsEntity) private readonly albionRegistrationsRepository: EntityRepository<AlbionRegistrationsEntity>,
   ) {
   }
 
@@ -57,7 +57,7 @@ export class AlbionRegistrationService implements OnApplicationBootstrap {
     }
 
     // 3. Check if the character has already been registered
-    const foundMember = await this.albionMembersRepository.find({ characterId: character.Id });
+    const foundMember = await this.albionRegistrationsRepository.find({ characterId: character.Id });
 
     if (foundMember.length > 0) {
       // Get the original Discord user, if possible
@@ -76,7 +76,7 @@ export class AlbionRegistrationService implements OnApplicationBootstrap {
       this.throwError(`Character **${character.Name}** has already been registered by Discord user \`@${originalDiscordMember.displayName}\`. If this is you, you don't need to do anything. If you believe this to be in error, please contact the Albion Guild Masters.`);
     }
 
-    const discordMember = await this.albionMembersRepository.find({ discordId: guildMember.id });
+    const discordMember = await this.albionRegistrationsRepository.find({ discordId: guildMember.id });
     if (discordMember.length > 0) {
       this.throwError(`You have already registered a character named **${discordMember[0].characterName}**. We don't allow multiple characters to be registered to the same Discord user, as there is little point to it. If you believe this to be in error, or you have registered the wrong character, please contact the Albion Guild Masters.`);
     }
@@ -112,12 +112,12 @@ export class AlbionRegistrationService implements OnApplicationBootstrap {
 
     try {
       // Add the member to the database
-      const entity = this.albionMembersRepository.create({
+      const entity = this.albionRegistrationsRepository.create({
         discordId: guildMember.id,
         characterId: character.Id,
         characterName: character.Name,
       });
-      await this.albionMembersRepository.upsert(entity);
+      await this.albionRegistrationsRepository.upsert(entity);
     }
     catch (err) {
       this.throwError(`Unable to add you to the database! Pinging <@${this.config.get('discord.devUserId')}>! Err: ${err.message}`);
@@ -134,7 +134,7 @@ export class AlbionRegistrationService implements OnApplicationBootstrap {
     }
 
     // Successful!
-    const successMessage = await message.channel.send(`## ✅ Thank you <@${guildMember.id}>, your character **${character.Name}** has been verified! 🎉
+    await message.channel.send(`## ✅ Thank you <@${guildMember.id}>, your character **${character.Name}** has been verified! 🎉
 
 * ➡️ Please read the information within <#${this.config.get('discord.channels.albionInfopoint')}> to be fully acquainted with the guild!
 
@@ -145,8 +145,6 @@ export class AlbionRegistrationService implements OnApplicationBootstrap {
 * 🔔 You have automatically been enrolled to our <#${this.config.get('discord.channels.albionTownCrier')}> announcements channel, we send a maximum of 3 a week. If you wish to opt out, go here: <https://discord.com/channels/90078410642034688/1039268966905954394/1170055900040536064>.
 
 CC <@&${this.config.get('albion.masterRole').discordRoleId}>, <@&${this.config.get('albion.guildMasterRole').discordRoleId}>`);
-
-    await successMessage.removeAttachments();
 
     // Delete the placeholder message
     await message.delete();
