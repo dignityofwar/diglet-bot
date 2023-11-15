@@ -7,7 +7,7 @@ import { AlbionRegisterDto } from '../dto/albion.register.dto';
 import { ReflectMetadataProvider } from '@discord-nestjs/core';
 import { AlbionPlayersResponseInterface } from '../interfaces/albion.api.interfaces';
 import { AlbionRegistrationService } from '../services/albion.registration.service';
-import { TestBootstrapper } from '../utilities/test.bootstrapper';
+import { TestBootstrapper } from '../../test.bootstrapper';
 
 const expectedChannelId = TestBootstrapper.mockConfig.discord.channels.albionRegistration;
 

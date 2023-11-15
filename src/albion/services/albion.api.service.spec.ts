@@ -3,7 +3,7 @@ import { Test } from '@nestjs/testing';
 import { AlbionApiService } from './albion.api.service';
 import AlbionAxiosFactory from '../factories/albion.axios.factory';
 import { ConfigService } from '@nestjs/config';
-import { TestBootstrapper } from '../utilities/test.bootstrapper';
+import { TestBootstrapper } from '../../test.bootstrapper';
 
 const mockGuildId = TestBootstrapper.mockConfig.albion.guildId;
 

@@ -8,7 +8,7 @@ import { EntityRepository } from '@mikro-orm/core';
 import { getRepositoryToken } from '@mikro-orm/nestjs';
 import { AlbionRegistrationsEntity } from '../../database/entities/albion.registrations.entity';
 import { AlbionPlayerInterface } from '../interfaces/albion.api.interfaces';
-import { TestBootstrapper } from '../utilities/test.bootstrapper';
+import { TestBootstrapper } from '../../test.bootstrapper';
 import { AlbionRegisterDto } from '../dto/albion.register.dto';
 import { AlbionApiService } from './albion.api.service';
 

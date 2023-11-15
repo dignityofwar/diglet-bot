@@ -4,7 +4,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { ReflectMetadataProvider } from '@discord-nestjs/core';
 import { AlbionCronService } from './albion.cron.service';
 import { AlbionScanningService } from './albion.scanning.service';
-import { TestBootstrapper } from '../utilities/test.bootstrapper';
+import { TestBootstrapper } from '../../test.bootstrapper';
 
 jest.mock('discord.js', () => {
   return {

@@ -11,7 +11,7 @@ import { AlbionScanningService } from './albion.scanning.service';
 import { AlbionApiService } from './albion.api.service';
 import { AlbionUtilities } from '../utilities/albion.utilities';
 import { AlbionGuildMembersEntity } from '../../database/entities/albion.guildmembers.entity';
-import { TestBootstrapper } from '../utilities/test.bootstrapper';
+import { TestBootstrapper } from '../../test.bootstrapper';
 
 const mockDevUserId = TestBootstrapper.mockConfig.discord.devUserId;
 const mockScanUserId = '1337';
