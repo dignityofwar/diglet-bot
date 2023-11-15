@@ -55,28 +55,11 @@ describe('PS2VerifyCommand', () => {
     censusApiService = module.get<CensusApiService>(CensusApiService);
     ps2GameVerificationService = module.get<PS2GameVerificationService>(PS2GameVerificationService);
 
-    // A mock instance of User
     mockDiscordUser = TestBootstrapper.getMockDiscordUser();
     mockDiscordInteraction = TestBootstrapper.getMockDiscordInteraction(mockChannelId, mockDiscordUser);
 
-    const mockCharacterId = '5428010618035323201';
-    mockCharacter = {
-      character_id: mockCharacterId,
-      name: {
-        first: 'Maelstrome26',
-        first_lower: 'maelstrome26',
-      },
-      outfit_info: {
-        outfit_id: mockOutfitId,
-        character_id: mockCharacterId,
-        member_since: '1441379570',
-        member_since_date: '2015-09-04 15:12:50.0',
-        rank: 'Platoon Leader',
-        rank_ordinal: '3',
-      },
-    } as any;
+    mockCharacter = TestBootstrapper.getMockPS2Character('5428010618035323201', mockOutfitId);
     censusApiService.getCharacter = jest.fn().mockImplementation(() => mockCharacter);
-
   });
 
   it('should be defined', () => {

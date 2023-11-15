@@ -137,6 +137,24 @@ export class TestBootstrapper {
     } as any;
   }
 
+  static getMockPS2Character(characterId, outfitId) {
+    return {
+      character_id: characterId,
+      name: {
+        first: 'Maelstrome26',
+        first_lower: 'maelstrome26',
+      },
+      outfit_info: {
+        outfit_id: outfitId,
+        character_id: characterId,
+        member_since: '1441379570',
+        member_since_date: '2015-09-04 15:12:50.0',
+        rank: 'Platoon Leader',
+        rank_ordinal: '3',
+      },
+    } as any;
+  }
+
   static readonly mockConfig = {
     albion: {
       guildId: '54545423435',

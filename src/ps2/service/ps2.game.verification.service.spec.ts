@@ -15,8 +15,8 @@ import { getRepositoryToken } from '@mikro-orm/nestjs';
 import { TestBootstrapper } from '../../test.bootstrapper';
 
 const verifyChannelId = TestBootstrapper.mockConfig.discord.channels.ps2Verify;
-const expectedCharacterId = '5428010618035323201';
-const expectedOutfitId = TestBootstrapper.mockConfig.ps2.outfitId;
+const mockCharacterId = '5428010618035323201';
+const mockOutfitId = TestBootstrapper.mockConfig.ps2.outfitId;
 
 describe('PS2GameVerificationService', () => {
   let service: PS2GameVerificationService;
@@ -82,21 +82,7 @@ describe('PS2GameVerificationService', () => {
 
     // A mock instance of a GuildMember
     mockDiscordUser = TestBootstrapper.getMockDiscordUser();
-    mockPS2Character = {
-      character_id: expectedCharacterId,
-      name: {
-        first: 'Maelstrome26',
-        first_lower: 'maelstrome26',
-      },
-      outfit_info: {
-        outfit_id: expectedOutfitId,
-        character_id: expectedCharacterId,
-        member_since: '1441379570',
-        member_since_date: '2015-09-04 15:12:50.0',
-        rank: 'Platoon Leader',
-        rank_ordinal: '3',
-      },
-    } as any;
+    mockPS2Character = TestBootstrapper.getMockPS2Character(mockCharacterId, mockOutfitId) as any;
   });
 
   it('should be defined', () => {
@@ -118,7 +104,7 @@ describe('PS2GameVerificationService', () => {
 
   it('should return an error if the character is already registered', async () => {
     ps2MembersRepository.find = jest.fn().mockResolvedValue([{
-      characterId: expectedCharacterId,
+      characterId: mockCharacterId,
     }]);
 
     const response = await service.isValidRegistrationAttempt(mockPS2Character, mockDiscordUser);
