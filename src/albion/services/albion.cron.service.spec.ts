@@ -2,9 +2,9 @@ import { DiscordService } from '../../discord/discord.service';
 import { ConfigService } from '@nestjs/config';
 import { Test, TestingModule } from '@nestjs/testing';
 import { ReflectMetadataProvider } from '@discord-nestjs/core';
-import _ from 'lodash';
 import { AlbionCronService } from './albion.cron.service';
 import { AlbionScanningService } from './albion.scanning.service';
+import { TestBootstrapper } from '../../test.bootstrapper';
 
 jest.mock('discord.js', () => {
   return {
@@ -17,13 +17,12 @@ jest.mock('discord.js', () => {
 });
 
 describe('AlbionCronService', () => {
-  let config: ConfigService;
   let service: AlbionCronService;
   let discordService: DiscordService;
-  const scanChannelId = '123456789';
+  const scanChannelId = TestBootstrapper.mockConfig.discord.channels.albionScans;
 
   beforeEach(async () => {
-    const module: TestingModule = await Test.createTestingModule({
+    const moduleRef: TestingModule = await Test.createTestingModule({
       providers: [
         AlbionCronService,
         ConfigService,
@@ -50,28 +49,10 @@ describe('AlbionCronService', () => {
         },
       ],
     }).compile();
+    TestBootstrapper.setupConfig(moduleRef);
 
-    config = module.get<ConfigService>(ConfigService);
-    discordService = module.get<DiscordService>(DiscordService);
-    service = module.get<AlbionCronService>(AlbionCronService);
-
-    jest.spyOn(config, 'get').mockImplementation((key: string) => {
-      const data = {
-        discord: {
-          channels: {
-            albionScans: scanChannelId,
-          },
-        },
-      };
-
-      const result = _.get(data, key);
-
-      if (!result) {
-        throw new Error(`Unexpected config key: ${key}`);
-      }
-
-      return result;
-    });
+    discordService = moduleRef.get<DiscordService>(DiscordService);
+    service = moduleRef.get<AlbionCronService>(AlbionCronService);
   });
 
   it('should be defined', async () => {

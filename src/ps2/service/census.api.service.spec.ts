@@ -3,14 +3,14 @@ import CensusAxiosFactory from '../factories/census.axios.factory';
 import { Test, TestingModule } from '@nestjs/testing';
 import { ReflectMetadataProvider } from '@discord-nestjs/core';
 import { ConfigService } from '@nestjs/config';
-import * as _ from 'lodash';
+import { TestBootstrapper } from '../../test.bootstrapper';
 
 describe('CensusApiService', () => {
-  let config: ConfigService;
   let service: CensusApiService;
+  let moduleRef: TestingModule;
 
   beforeEach(async () => {
-    const module: TestingModule = await Test.createTestingModule({
+    moduleRef = await Test.createTestingModule({
       providers: [
         CensusApiService,
         ReflectMetadataProvider,
@@ -23,27 +23,8 @@ describe('CensusApiService', () => {
         },
       ],
     }).compile();
-
-    config = module.get<ConfigService>(ConfigService);
-    service = module.get<CensusApiService>(CensusApiService);
-
-    jest.spyOn(config, 'get').mockImplementation((key: string) => {
-      const data = {
-        ps2: {
-          censusServiceId: 'dignityofwar',
-          censusTimeout: 10000,
-        },
-      };
-
-      const result = _.get(data, key);
-
-      if (!result) {
-        throw new Error(`Unexpected config key: ${key}`);
-      }
-
-      return result;
-    });
-
+    TestBootstrapper.setupConfig(moduleRef);
+    service = moduleRef.get<CensusApiService>(CensusApiService);
   });
 
   test('should be defined', () => {
@@ -51,8 +32,11 @@ describe('CensusApiService', () => {
   });
 
   test('init should crash upon missing service ID', async () => {
-    jest.spyOn(config, 'get').mockReturnValue('');
-
+    TestBootstrapper.setupConfig(moduleRef, {
+      ps2: {
+        censusServiceId: '',
+      },
+    });
     await expect(service.onModuleInit()).rejects.toThrowError('PS2_CENSUS_SERVICE_ID is not defined.');
   });
 
@@ -70,22 +54,22 @@ describe('CensusApiService', () => {
       expect(character).toBeDefined();
       expect(character.outfit_info).toBeDefined();
       expect(character.outfit_info.outfit_id).toBe('37509488620604883');
-    }, 10000);
+    }, 30000);
     test('should throw an error if a character doesn\'t exist', async () => {
       const name = 'IDoNotExist101010101010101';
       await expect(service.getCharacter(name)).rejects.toThrowError(`Character \`${name}\` does not exist. Please ensure you have spelt it correctly.`);
-    }, 10000);
+    }, 30000);
     test('should return a character, and also returns outfit details (by ID)', async () => {
       const character = await service.getCharacterById('5428010618035323201');
 
       expect(character).toBeDefined();
       expect(character.outfit_info).toBeDefined();
       expect(character.outfit_info.outfit_id).toBe('37509488620604883');
-    }, 10000);
+    }, 30000);
     test('should throw an error if a character doesn\'t exist (by ID)', async () => {
       const id = '12343435465464646454';
       await expect(service.getCharacterById(id)).rejects.toThrowError(`Character with ID **${id}** does not exist.`);
-    }, 10000);
+    }, 30000);
   }
   catch (e) {
     console.log('Flaky Census test failed, skipping.');

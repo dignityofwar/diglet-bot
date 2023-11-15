@@ -3,45 +3,28 @@ import { Test } from '@nestjs/testing';
 import { AlbionApiService } from './albion.api.service';
 import AlbionAxiosFactory from '../factories/albion.axios.factory';
 import { ConfigService } from '@nestjs/config';
-import _ from 'lodash';
+import { TestBootstrapper } from '../../test.bootstrapper';
 
-const guildId = '123564534343434343';
+const mockGuildId = TestBootstrapper.mockConfig.albion.guildId;
 
 describe('AlbionApiService', () => {
   let service: AlbionApiService;
-  let config: ConfigService;
 
   beforeEach(async () => {
     const moduleRef = await Test.createTestingModule({
       providers: [AlbionApiService, ConfigService],
     }).compile();
+    TestBootstrapper.setupConfig(moduleRef);
 
     service = moduleRef.get<AlbionApiService>(AlbionApiService);
-    config = moduleRef.get<ConfigService>(ConfigService);
-
-    // Spy on the 'get' method of the ConfigService, and make it return a specific values based on the path
-    jest.spyOn(config, 'get').mockImplementation((key: string) => {
-      const data = {
-        albion: {
-          guildId: guildId,
-        },
-        discord: {
-          devUserId: '1234567890',
-        },
-      };
-
-      const result = _.get(data, key);
-
-      if (!result) {
-        throw new Error(`Unexpected config key: ${key}`);
-      }
-
-      return result;
-    });
   });
 
   afterEach(() => {
     jest.resetAllMocks();
+  });
+
+  it('is defined', () => {
+    expect(service).toBeDefined();
   });
 
   it('should return an error if no player exists', async () => {
@@ -119,7 +102,7 @@ describe('AlbionApiService', () => {
     const properResult = {
       'Id': '2obpVpJrRfqa26SIXdXK4A',
       'Name': characterName,
-      'GuildId': guildId,
+      'GuildId': mockGuildId,
       'GuildName': 'DIG - Dignity of War',
     };
 
@@ -187,13 +170,13 @@ describe('AlbionApiService', () => {
     const properResult = {
       'Id': '2obpVpJrRfqa26SIXdXK4A',
       'Name': characterName,
-      'GuildId': guildId,
+      'GuildId': mockGuildId,
       'GuildName': 'DIG - Dignity of War',
     };
     const duplicate = {
       'Id': '33rfgegdDGDgfgffdfHHH',
       'Name': characterName,
-      'GuildId': guildId,
+      'GuildId': mockGuildId,
       'GuildName': 'DIG - Dignity of War',
     };
 
@@ -220,7 +203,7 @@ describe('AlbionApiService', () => {
 
     await expect(service.getCharacter(characterName))
       .rejects
-      .toThrowError('Multiple characters for **NightRaven2511** were found within the DIG guild. This is an unsupported use case for this registration system. Pinging <@1234567890>!');
+      .toThrowError(`Multiple characters for **NightRaven2511** were found within the DIG guild. This is an unsupported use case for this registration system. Pinging <@${TestBootstrapper.mockConfig.discord.devUserId}>!`);
   });
 
   it('should return a character with all uppercase letters', async () => {

@@ -4,30 +4,27 @@ import { AlbionRegisterCommand } from './register.command';
 import { AlbionApiService } from '../services/albion.api.service';
 import { ConfigService } from '@nestjs/config';
 import { AlbionRegisterDto } from '../dto/albion.register.dto';
-
-import { SnowflakeUtil } from 'discord.js';
 import { ReflectMetadataProvider } from '@discord-nestjs/core';
 import { AlbionPlayersResponseInterface } from '../interfaces/albion.api.interfaces';
-import * as _ from 'lodash';
 import { AlbionRegistrationService } from '../services/albion.registration.service';
+import { TestBootstrapper } from '../../test.bootstrapper';
 
-const expectedChannelId = '1234567890';
-const expectedRoleId = '987654321';
-const expectedDevUserId = '1234575897';
-const expectedGuildId = '56666666666';
+const expectedChannelId = TestBootstrapper.mockConfig.discord.channels.albionRegistration;
 
 describe('AlbionRegisterCommand', () => {
   let command: AlbionRegisterCommand;
   let albionApiService: AlbionApiService;
   let albionRegistrationService: AlbionRegistrationService;
-  let config: ConfigService;
 
-  let mockUser: any;
   let mockCharacter: AlbionPlayersResponseInterface;
-  let mockInteraction: any;
+  let mockDiscordInteraction: any;
+  let mockDiscordUser: any;
   const dto: AlbionRegisterDto = { character: 'Maelstrome26' };
 
   beforeEach(async () => {
+    TestBootstrapper.mockORM();
+    mockCharacter = TestBootstrapper.getMockAlbionCharacter(TestBootstrapper.mockConfig.albion.guildId) as any;
+    mockDiscordUser = TestBootstrapper.getMockDiscordUser();
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         AlbionRegisterCommand,
@@ -58,82 +55,9 @@ describe('AlbionRegisterCommand', () => {
     command = module.get<AlbionRegisterCommand>(AlbionRegisterCommand);
     albionApiService = module.get<AlbionApiService>(AlbionApiService);
     albionRegistrationService = module.get<AlbionRegistrationService>(AlbionRegistrationService);
-    config = module.get<ConfigService>(ConfigService);
+    TestBootstrapper.setupConfig(module);
 
-    // Spy on the 'get' method of the ConfigService, and make it return a specific values based on the path
-    jest.spyOn(config, 'get').mockImplementation((key: string) => {
-      const data = {
-        albion: {
-          guildId: expectedGuildId,
-        },
-        discord: {
-          devUserId: expectedDevUserId,
-          channels: {
-            albionRegistration: expectedChannelId,
-          },
-          roles: {
-            albionInitiateRoleId: expectedRoleId,
-          },
-        },
-      };
-
-      const result = _.get(data, key);
-
-      if (!result) {
-        throw new Error(`Unexpected config key: ${key}`);
-      }
-
-      return result;
-    });
-
-    // A mock instance of a Discord User
-    mockUser = {
-      createdAt: new Date(),
-      createdTimestamp: Date.now(),
-      discriminator: '0000',
-      defaultAvatarURL: 'https://defaultavatar.url',
-      id: SnowflakeUtil.generate(),
-      tag: 'TestUser#0000',
-      username: 'TestUser',
-      fetch: jest.fn(),
-      fetchFlags: jest.fn(),
-      toString: jest.fn().mockReturnValue('<@userId>'), // Mocked
-      setNickname: jest.fn().mockResolvedValue(() => true),
-      roles: {
-        add: jest.fn().mockResolvedValue(() => true),
-      },
-    };
-
-    mockCharacter = {
-      data: {
-        AverageItemPower: 1337,
-        Id: '123456789',
-        Name: 'TestUser',
-        GuildId: expectedGuildId,
-      } as any,
-    };
-
-    mockInteraction = [
-      {
-        channelId: expectedChannelId,
-        guild: {
-          roles: {
-            fetch: jest.fn().mockReturnValue({ id: expectedRoleId }),
-          },
-          members: {
-            fetch: jest.fn().mockReturnValue(mockUser),
-          },
-        },
-        user: mockUser,
-        channel: {
-          send: jest.fn().mockImplementation(() => {
-            return {
-              edit: jest.fn(),
-            };
-          }),
-        },
-      },
-    ];
+    mockDiscordInteraction = TestBootstrapper.getMockDiscordInteraction(expectedChannelId, mockDiscordUser);
   });
 
   it('should be defined', () => {
@@ -141,29 +65,9 @@ describe('AlbionRegisterCommand', () => {
   });
 
   it('should return a message if command did not come from the correct channel', async () => {
-    mockInteraction[0].channelId = '1234';
+    mockDiscordInteraction[0].channelId = '1234';
 
-    expect(await command.onAlbionRegisterCommand(dto, mockInteraction)).toBe(`Please use the <#${expectedChannelId}> channel to register.`);
-  });
-
-  it('should return errors upon character API failure', async () => {
-    albionApiService.getCharacter = jest.fn().mockImplementation(() => {
-      throw new Error('Some error fetching character');
-    });
-
-    const result = await command.onAlbionRegisterCommand(dto, mockInteraction);
-
-    // Check that send was called with the expected argument
-    expect(mockInteraction[0].channel.send).toHaveBeenCalledWith('🔍 Validating character...');
-
-    // Capture the mock message object returned by send
-    const sentMessage = mockInteraction[0].channel.send.mock.results[0].value;
-
-    // Check that the edit method on the sentMessage was called with the expected argument
-    expect(sentMessage.edit).toHaveBeenCalledWith('⛔️ **ERROR:** Some error fetching character');
-
-    // Check the final result
-    expect(result).toBe('');
+    expect(await command.onAlbionRegisterCommand(dto, mockDiscordInteraction)).toBe(`Please use the <#${expectedChannelId}> channel to register.`);
   });
 
   it('should return errors from the registration process', async () => {
@@ -172,13 +76,13 @@ describe('AlbionRegisterCommand', () => {
       throw new Error('Some error handling registration');
     });
 
-    const result = await command.onAlbionRegisterCommand(dto, mockInteraction);
+    const result = await command.onAlbionRegisterCommand(dto, mockDiscordInteraction);
 
     // Check that send was called with the expected argument
-    expect(mockInteraction[0].channel.send).toHaveBeenCalledWith('🔍 Validating character...');
+    expect(mockDiscordInteraction[0].channel.send).toHaveBeenCalledWith('🔍 Running registration process...');
 
     // Capture the mock message object returned by send
-    const sentMessage = mockInteraction[0].channel.send.mock.results[0].value;
+    const sentMessage = mockDiscordInteraction[0].channel.send.mock.results[0].value;
 
     // Check that the edit method on the sentMessage was called with the expected argument
     expect(sentMessage.edit).toHaveBeenCalledWith('⛔️ **ERROR:** Some error handling registration');
@@ -188,9 +92,7 @@ describe('AlbionRegisterCommand', () => {
   });
 
   it('should return no response', async () => {
-    albionApiService.getCharacter = jest.fn().mockImplementation(() => mockCharacter);
     albionRegistrationService.handleRegistration = jest.fn().mockImplementation(() => true);
-
-    expect(await command.onAlbionRegisterCommand(dto, mockInteraction)).toBe('');
+    expect(await command.onAlbionRegisterCommand(dto, mockDiscordInteraction)).toBe('');
   });
 });
