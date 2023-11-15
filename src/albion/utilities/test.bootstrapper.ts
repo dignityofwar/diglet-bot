@@ -105,7 +105,31 @@ export class TestBootstrapper {
     } as any;
   }
 
-  static getMockCharacter(guildId) {
+  static getMockDiscordInteraction(channelId: string, mockDiscordUser) {
+    return [
+      {
+        channelId: channelId,
+        guild: {
+          roles: {
+            fetch: jest.fn().mockReturnValue({ id: '4969797969594' }),
+          },
+          members: {
+            fetch: jest.fn().mockImplementation(() => this.getMockDiscordUser()),
+          },
+        },
+        user: mockDiscordUser,
+        channel: {
+          send: jest.fn().mockImplementation(() => {
+            return {
+              edit: jest.fn(),
+            };
+          }),
+        },
+      },
+    ];
+  }
+
+  static getMockAlbionCharacter(guildId) {
     return {
       Id: 'BehrhjrfhK-_!FDHrd$£64tert3',
       Name: 'Maelstrome26',

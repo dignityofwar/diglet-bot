@@ -43,7 +43,7 @@ describe('AlbionScanningService', () => {
   let mockCharacter: AlbionPlayerInterface;
 
   beforeEach(async () => {
-    mockCharacter = TestBootstrapper.getMockCharacter(TestBootstrapper.mockConfig.albion.guildId);
+    mockCharacter = TestBootstrapper.getMockAlbionCharacter(TestBootstrapper.mockConfig.albion.guildId);
     mockRegisteredMember = {
       id: 123456789,
       discordId: '123456789',

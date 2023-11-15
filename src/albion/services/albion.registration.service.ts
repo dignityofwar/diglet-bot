@@ -6,6 +6,8 @@ import { AlbionRegistrationsEntity } from '../../database/entities/albion.regist
 import { EntityRepository } from '@mikro-orm/core';
 import { Channel, GuildMember, Message } from 'discord.js';
 import { AlbionPlayerInterface } from '../interfaces/albion.api.interfaces';
+import { AlbionRegisterDto } from '../dto/albion.register.dto';
+import { AlbionApiService } from './albion.api.service';
 
 @Injectable()
 export class AlbionRegistrationService implements OnApplicationBootstrap {
@@ -16,9 +18,9 @@ export class AlbionRegistrationService implements OnApplicationBootstrap {
   constructor(
     private readonly discordService: DiscordService,
     private readonly config: ConfigService,
+    private readonly albionApiService: AlbionApiService,
     @InjectRepository(AlbionRegistrationsEntity) private readonly albionRegistrationsRepository: EntityRepository<AlbionRegistrationsEntity>,
-  ) {
-  }
+  ) {}
 
   async onApplicationBootstrap() {
     // Store the Discord guild channel and ensure we can send messages to it
@@ -86,34 +88,37 @@ export class AlbionRegistrationService implements OnApplicationBootstrap {
     return true;
   }
 
-  async handleRegistration(character: AlbionPlayerInterface, guildMember: GuildMember, message: Message) {
-    this.logger.debug(`Handling Albion character "${character.Name}" registration`);
+  async handleRegistration(dto: AlbionRegisterDto, discordMember: GuildMember, message: Message) {
+    this.logger.debug(`Handling Albion character "${dto.character}" registration`);
 
-    await this.validateRegistrationAttempt(character, guildMember);
+    // Get the character from the Albion Online API
+    const character = await this.albionApiService.getCharacter(dto.character);
 
-    // Add the initiate, verified and towncrier roles. We are safe to assume these roles exist as they are checked at the validation step.
+    await this.validateRegistrationAttempt(character, discordMember);
+
+    // Add the initiate, verified and towncrier roles. We are safe to assume these roles exist as they are checked at the validateRegistrationAttempt step.
     try {
-      await guildMember.roles.add(await this.discordService.getMemberRole(
-        guildMember,
+      await discordMember.roles.add(await this.discordService.getMemberRole(
+        discordMember,
         this.config.get('discord.roles.albionInitiateRoleId')
       ));
-      await guildMember.roles.add(await this.discordService.getMemberRole(
-        guildMember,
+      await discordMember.roles.add(await this.discordService.getMemberRole(
+        discordMember,
         this.config.get('discord.roles.albionRegisteredRoleId')
       ));
-      await guildMember.roles.add(await this.discordService.getMemberRole(
-        guildMember,
+      await discordMember.roles.add(await this.discordService.getMemberRole(
+        discordMember,
         this.config.get('discord.roles.albionTownCrierRoleId')
       ));
     }
     catch (err) {
-      this.throwError(`Unable to add registration role(s) to "${guildMember.displayName}"! Pinging <@${this.config.get('discord.devUserId')}>!\nErr: ${err.message}`);
+      this.throwError(`Unable to add registration role(s) to "${discordMember.displayName}"! Pinging <@${this.config.get('discord.devUserId')}>!\nErr: ${err.message}`);
     }
 
     try {
       // Add the member to the database
       const entity = this.albionRegistrationsRepository.create({
-        discordId: guildMember.id,
+        discordId: discordMember.id,
         characterId: character.Id,
         characterName: character.Name,
       });
@@ -125,7 +130,7 @@ export class AlbionRegistrationService implements OnApplicationBootstrap {
 
     // Edit their nickname to match their ingame
     try {
-      await guildMember?.setNickname(character.Name);
+      await discordMember?.setNickname(character.Name);
     }
     catch (err) {
       const errorMessage = `⚠️ Unable to set your nickname. If you're Staff this won't work as the bot has no power over you! Pinging <@${this.config.get('discord.devUserId')}>!`;
@@ -133,8 +138,10 @@ export class AlbionRegistrationService implements OnApplicationBootstrap {
       this.logger.error(errorMessage);
     }
 
+    this.logger.log(`Registration for ${character.Name} was successful, returning success response.`);
+
     // Successful!
-    await message.channel.send(`## ✅ Thank you <@${guildMember.id}>, your character **${character.Name}** has been verified! 🎉
+    await message.channel.send(`## ✅ Thank you <@${discordMember.id}>, your character **${character.Name}** has been verified! 🎉
 
 * ➡️ Please read the information within <#${this.config.get('discord.channels.albionInfopoint')}> to be fully acquainted with the guild!
 

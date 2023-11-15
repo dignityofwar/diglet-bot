@@ -9,6 +9,8 @@ import { getRepositoryToken } from '@mikro-orm/nestjs';
 import { AlbionRegistrationsEntity } from '../../database/entities/albion.registrations.entity';
 import { AlbionPlayerInterface } from '../interfaces/albion.api.interfaces';
 import { TestBootstrapper } from '../utilities/test.bootstrapper';
+import { AlbionRegisterDto } from '../dto/albion.register.dto';
+import { AlbionApiService } from './albion.api.service';
 
 const mockRegistrationChannelId = TestBootstrapper.mockConfig.discord.channels.albionRegistration;
 const mockAlbionInitiateRoleId = TestBootstrapper.mockConfig.discord.roles.albionInitiateRoleId;
@@ -22,11 +24,12 @@ describe('AlbionRegistrationService', () => {
   let mockCharacter: AlbionPlayerInterface;
   let mockDiscordUser: any;
   let mockDiscordMessage: any;
+  const mockDto: AlbionRegisterDto = { character: 'Maelstrome26' };
 
   beforeEach(async () => {
     TestBootstrapper.mockORM();
     mockAlbionRegistrationsRepository = TestBootstrapper.getMockEntityRepo();
-    mockCharacter = TestBootstrapper.getMockCharacter(TestBootstrapper.mockConfig.albion.guildId) as any;
+    mockCharacter = TestBootstrapper.getMockAlbionCharacter(TestBootstrapper.mockConfig.albion.guildId) as any;
     mockDiscordUser = TestBootstrapper.getMockDiscordUser();
     mockDiscordMessage = TestBootstrapper.getMockDiscordMessage();
 
@@ -47,6 +50,7 @@ describe('AlbionRegistrationService', () => {
             get: jest.fn(),
           },
         },
+        AlbionApiService,
         {
           provide: getRepositoryToken(AlbionRegistrationsEntity),
           useValue: mockAlbionRegistrationsRepository,
@@ -146,7 +150,7 @@ describe('AlbionRegistrationService', () => {
       .mockImplementation(() => {
         throw new Error('Unable to add role');
       });
-    await expect(service.handleRegistration(mockCharacter, mockDiscordUser, mockDiscordMessage)).rejects.toThrowError(`Unable to add registration role(s) to "${mockDiscordUser.displayName}"! Pinging <@${mockDevUserId}>!\nErr: Unable to add role`);
+    await expect(service.handleRegistration(mockDto, mockDiscordUser, mockDiscordMessage)).rejects.toThrowError(`Unable to add registration role(s) to "${mockDiscordUser.displayName}"! Pinging <@${mockDevUserId}>!\nErr: Unable to add role`);
   });
   it('should return thrown exception upon database error', async () => {
     service.validateRegistrationAttempt = jest.fn().mockImplementation(() => true);
@@ -156,7 +160,7 @@ describe('AlbionRegistrationService', () => {
     mockAlbionRegistrationsRepository.upsert = jest.fn().mockImplementation(() => {
       throw new Error('Database done goofed');
     });
-    await expect(service.handleRegistration(mockCharacter, mockDiscordUser, mockDiscordMessage)).rejects.toThrowError(`Unable to add you to the database! Pinging <@${mockDevUserId}>! Err: Database done goofed`);
+    await expect(service.handleRegistration(mockDto, mockDiscordUser, mockDiscordMessage)).rejects.toThrowError(`Unable to add you to the database! Pinging <@${mockDevUserId}>! Err: Database done goofed`);
   });
   it('should handle discord nickname permission errors', async () => {
     service.validateRegistrationAttempt = jest.fn().mockImplementation(() => true);
@@ -167,7 +171,7 @@ describe('AlbionRegistrationService', () => {
     mockDiscordUser.setNickname = jest.fn().mockImplementation(() => {
       throw new Error('Unable to set nickname');
     });
-    await expect(service.handleRegistration(mockCharacter, mockDiscordUser, mockDiscordMessage)).resolves.toBe(undefined);
+    await expect(service.handleRegistration(mockDto, mockDiscordUser, mockDiscordMessage)).resolves.toBe(undefined);
     expect(mockDiscordMessage.channel.send).toBeCalledWith(`⚠️ Unable to set your nickname. If you're Staff this won't work as the bot has no power over you! Pinging <@${mockDevUserId}>!`);
   });
 
@@ -182,7 +186,7 @@ describe('AlbionRegistrationService', () => {
       true;
     });
 
-    await expect(service.handleRegistration(mockCharacter, mockDiscordUser, mockDiscordMessage)).resolves.toBe(undefined);
+    await expect(service.handleRegistration(mockDto, mockDiscordUser, mockDiscordMessage)).resolves.toBe(undefined);
 
     const mockMasterRoleId = TestBootstrapper.mockConfig.albion.masterRole.discordRoleId;
     const mockGuildMasterRoleId = TestBootstrapper.mockConfig.albion.guildMasterRole.discordRoleId;

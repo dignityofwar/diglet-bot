@@ -1,6 +1,6 @@
 import { Injectable, OnModuleInit } from '@nestjs/common';
 import { InjectDiscordClient } from '@discord-nestjs/core';
-import { Channel, Client, Collection, GuildMember } from 'discord.js';
+import { Channel, Client, GuildMember } from 'discord.js';
 
 @Injectable()
 export class DiscordService implements OnModuleInit {
@@ -47,11 +47,5 @@ export class DiscordService implements OnModuleInit {
   async getMemberRole(guildMember: GuildMember, roleId: string) {
     const serverId = guildMember.guild.id;
     return await this.discordClient.guilds.cache.get(serverId).roles.fetch(roleId);
-  }
-
-  async getAllWithRole(discordGuildId: string, roleId: string): Promise<Collection<string, GuildMember>> {
-    const guild = await this.getGuild(discordGuildId);
-    const role = await guild.roles.fetch(roleId);
-    return role.members;
   }
 }
