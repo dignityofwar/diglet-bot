@@ -143,11 +143,15 @@ export class AlbionScanningService {
     }
 
     // Get the registered members from the database
-    const guildMembers: AlbionRegistrationsEntity[] = await this.albionRegistrationsRepository.findAll();
+    const registeredMembers: AlbionRegistrationsEntity[] = await this.albionRegistrationsRepository.findAll();
 
     // Do the checks
-    for (const member of guildMembers) {
+    for (const member of registeredMembers) {
       const character = charactersMap.get(member.characterId);
+
+      if (!character) {
+        throw new Error('Character vanished!');
+      }
 
       let discordMember: GuildMember | null = null;
 
@@ -173,8 +177,10 @@ export class AlbionScanningService {
         continue;
       }
 
+      const guildId = this.config.get('albion.guildId');
+
       // Is the character still in the Guild?
-      if (character?.GuildId && character?.GuildId === this.config.get('albion.guildId')) {
+      if (character?.GuildId && character?.GuildId === guildId) {
         continue;
       }
 

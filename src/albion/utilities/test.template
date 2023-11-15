@@ -1,0 +1,26 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
+import { Test } from '@nestjs/testing';
+import { AlbionApiService } from './albion.api.service';
+import { ConfigService } from '@nestjs/config';
+import { TestBootstrapper } from '../utilities/test.bootstrapper';
+
+describe('SomeTestingClass', () => {
+  let service: SomeTestingClass;
+
+  beforeEach(async () => {
+    const moduleRef = await Test.createTestingModule({
+      providers: [SomeTestingClass, ConfigService],
+    }).compile();
+    TestBootstrapper.setupConfig(moduleRef);
+
+    service = moduleRef.get<SomeTestingClass>(SomeTestingClass);
+  });
+
+  afterEach(() => {
+    jest.resetAllMocks();
+  });
+
+  it('is defined', () => {
+    expect(service).toBeDefined();
+  });
+});

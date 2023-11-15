@@ -25,10 +25,10 @@ describe('AlbionRegistrationService', () => {
 
   beforeEach(async () => {
     TestBootstrapper.mockORM();
-    mockAlbionRegistrationsRepository = TestBootstrapper.mockEntityRepo as any;
+    mockAlbionRegistrationsRepository = TestBootstrapper.getMockEntityRepo();
     mockCharacter = TestBootstrapper.getMockCharacter(TestBootstrapper.mockConfig.albion.guildId) as any;
-    mockDiscordUser = TestBootstrapper.getMockDiscordUser() as any;
-    mockDiscordMessage = TestBootstrapper.mockDiscordMessage;
+    mockDiscordUser = TestBootstrapper.getMockDiscordUser();
+    mockDiscordMessage = TestBootstrapper.getMockDiscordMessage();
 
     const moduleRef = await Test.createTestingModule({
       providers: [

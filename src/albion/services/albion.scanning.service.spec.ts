@@ -2,115 +2,53 @@
 import { Test } from '@nestjs/testing';
 import { DiscordService } from '../../discord/discord.service';
 import { ReflectMetadataProvider } from '@discord-nestjs/core';
-import * as _ from 'lodash';
 import { ConfigService } from '@nestjs/config';
-import { EntityManager, EntityRepository, MikroORM } from '@mikro-orm/core';
+import { EntityRepository } from '@mikro-orm/core';
 import { getRepositoryToken } from '@mikro-orm/nestjs';
 import { AlbionRegistrationsEntity } from '../../database/entities/albion.registrations.entity';
 import { AlbionPlayerInterface } from '../interfaces/albion.api.interfaces';
-import { SnowflakeUtil } from 'discord.js';
 import { AlbionScanningService } from './albion.scanning.service';
 import { AlbionApiService } from './albion.api.service';
 import { AlbionUtilities } from '../utilities/albion.utilities';
 import { AlbionGuildMembersEntity } from '../../database/entities/albion.guildmembers.entity';
+import { TestBootstrapper } from '../utilities/test.bootstrapper';
 
-const expectedChannelId = '1234567890';
-const expectedDevUserId = '1234575897';
-const expectedGuildId = '56666666666';
-const excludedScanUserId = '1337';
+const mockDevUserId = TestBootstrapper.mockConfig.discord.devUserId;
+const mockScanUserId = '1337';
 
 // Role constants
-const guildMasterRoleId = '1158467537550454895';
-const guildMasterName = '@ALB/Guildmaster';
-const masterRoleId = '1158467574678429696';
-const masterName = '@ALB/Master';
-const generalRoleId = '1158467600687300699';
-const generalName = '@ALB/General';
-const captainRoleId = '1158467651165761626';
-const captainName = '@ALB/Captain';
-const squireRoleId = '1158467840496635914';
-const squireName = '@ALB/Squire';
-const initiateRoleId = '1139909152701947944';
-const initiateName = '@ALB/Initiate';
-const registeredRoleId = '1155987100928323594';
-const registeredName = '@ALB/Registered';
+const mockGuildMasterRoleId = '1158467537550454895';
+const mockGuildMasterRoleName = '@ALB/Guildmaster';
+const mockMasterRoleId = '1158467574678429696';
+const mockMasterName = '@ALB/Master';
+const mockGeneralRoleId = '1158467600687300699';
+const mockGeneralName = '@ALB/General';
+const mockCaptainRoleId = '1158467651165761626';
+const mockCaptainName = '@ALB/Captain';
+const mockSquireRoleId = '1158467840496635914';
+const mockSquireName = '@ALB/Squire';
+const mockInitiateRoleId = '1139909152701947944';
+const mockInitiateName = '@ALB/Initiate';
+const mockRegisteredRoleId = '1155987100928323594';
+const mockRegisteredName = '@ALB/Registered';
 
 describe('AlbionScanningService', () => {
   let service: AlbionScanningService;
-  let config: ConfigService;
-
   let mockDiscordUser: any;
   let mockDiscordMessage: any;
-  let mockEntityManager: jest.Mocked<EntityManager>;
-  let mockAlbionMember: AlbionRegistrationsEntity;
+  let mockRegisteredMember: AlbionRegistrationsEntity;
   let mockAlbionGuildMember: AlbionGuildMembersEntity;
-  let mockAlbionMembersRepository: EntityRepository<AlbionRegistrationsEntity>;
+  let mockAlbionRegistrationsRepository: EntityRepository<AlbionRegistrationsEntity>;
   let mockAlbionGuildMembersRepository: EntityRepository<AlbionGuildMembersEntity>;
   let mockCharacter: AlbionPlayerInterface;
 
   beforeEach(async () => {
-    mockEntityManager = {
-      find: jest.fn(),
-      persistAndFlush: jest.fn(),
-      getRepository: jest.fn().mockReturnValue({
-        find: jest.fn(),
-      }),
-    } as any;
-
-    mockAlbionMembersRepository = {
-      find: jest.fn().mockResolvedValueOnce([mockAlbionMember]),
-      findAll: jest.fn().mockResolvedValue([mockAlbionMember]),
-      create: jest.fn(),
-      upsert: jest.fn(),
-      removeAndFlush: jest.fn(),
-    } as any;
-    mockAlbionGuildMembersRepository = {
-      find: jest.fn().mockResolvedValueOnce([mockAlbionGuildMember]),
-      findAll: jest.fn().mockResolvedValue([mockAlbionGuildMember]),
-      findOne: jest.fn().mockResolvedValue([mockAlbionGuildMember]),
-      persistAndFlush: jest.fn().mockResolvedValue([mockAlbionGuildMember]),
-      removeAndFlush: jest.fn(),
-    } as any;
-    const mockInit = jest.spyOn(MikroORM, 'init');
-
-    // Now you can set your mock implementation
-    mockInit.mockResolvedValue(Promise.resolve({
-      em: mockEntityManager,
-    } as any));
-
-    // A mock instance of a Discord User
-    mockDiscordUser = {
-      displayName: 'mockuser',
-      id: SnowflakeUtil.generate(),
-      tag: 'TestUser#0000',
-      username: 'TestUser',
-      fetch: jest.fn(),
-      roles: {
-        add: jest.fn(),
-        remove: jest.fn(),
-        cache: {
-          has: jest.fn(),
-          get: jest.fn(),
-        },
-      },
-    };
-
-    mockDiscordUser.guild = {
-      members: {
-        fetch: jest.fn().mockImplementation(() => mockDiscordUser),
-      },
-      roles: {
-        cache: {
-          get: jest.fn(),
-        },
-      },
-    } as any;
-
-    mockAlbionMember = {
+    mockCharacter = TestBootstrapper.getMockCharacter(TestBootstrapper.mockConfig.albion.guildId);
+    mockRegisteredMember = {
       id: 123456789,
       discordId: '123456789',
-      characterId: '123456789',
-      characterName: 'Maelstrome26',
+      characterId: mockCharacter.Id,
+      characterName: mockCharacter.Name,
       manual: false,
       manualCreatedByDiscordId: null,
       manualCreatedByDiscordName: null,
@@ -119,46 +57,16 @@ describe('AlbionScanningService', () => {
     } as AlbionRegistrationsEntity;
     mockAlbionGuildMember = {
       id: 123456789,
-      characterId: '123456789',
-      characterName: 'Maelstrome26',
+      characterId: mockCharacter.Id,
+      characterName: mockCharacter.Name,
       registered: false,
       warned: false,
     } as AlbionGuildMembersEntity;
 
-    mockCharacter = {
-      AverageItemPower: 1337,
-      Id: '123456789',
-      Name: 'TestUser',
-      GuildId: expectedGuildId,
-    } as any;
-
-    mockDiscordMessage = {
-      roles: {
-        cache: {
-          has: jest.fn(),
-        },
-      },
-      guild: {
-        members: {
-          fetch: jest.fn().mockImplementation(() => mockDiscordUser),
-        },
-        roles: {
-          cache: {
-            get: jest.fn(),
-          },
-        },
-      },
-      channel: {
-        send: jest.fn().mockImplementation(() => {
-          return {
-            edit: jest.fn(),
-            delete: jest.fn(),
-          };
-        }),
-      },
-      edit: jest.fn(),
-      delete: jest.fn(),
-    } as any;
+    mockAlbionRegistrationsRepository = TestBootstrapper.getMockRepositoryInjected(mockRegisteredMember);
+    mockAlbionGuildMembersRepository = TestBootstrapper.getMockRepositoryInjected(mockAlbionGuildMember);
+    mockDiscordUser = TestBootstrapper.getMockDiscordUser();
+    mockDiscordMessage = TestBootstrapper.getMockDiscordMessage();
 
     const moduleRef = await Test.createTestingModule({
       providers: [
@@ -181,7 +89,7 @@ describe('AlbionScanningService', () => {
         },
         {
           provide: getRepositoryToken(AlbionRegistrationsEntity),
-          useValue: mockAlbionMembersRepository,
+          useValue: mockAlbionRegistrationsRepository,
         },
         {
           provide: getRepositoryToken(AlbionGuildMembersEntity),
@@ -191,76 +99,64 @@ describe('AlbionScanningService', () => {
     }).compile();
 
     service = moduleRef.get<AlbionScanningService>(AlbionScanningService);
-    config = moduleRef.get<ConfigService>(ConfigService);
 
-    // Spy on the 'get' method of the ConfigService, and make it return a specific values based on the path
-    jest.spyOn(config, 'get').mockImplementation((key: string) => {
-      const data = {
-        albion: {
-          guildId: expectedGuildId,
-          scanExcludedUsers: [excludedScanUserId],
-          scanPingRoles: [guildMasterRoleId, masterRoleId],
-          roleMap: [
-            {
-              name: guildMasterName,
-              discordRoleId: guildMasterRoleId,
-              priority: 1,
-              keep: true,
-            },
-            {
-              name: masterName,
-              discordRoleId: masterRoleId,
-              priority: 2,
-              keep: false,
-            },
-            {
-              name: generalName,
-              discordRoleId: generalRoleId,
-              priority: 3,
-              keep: false,
-            },
-            {
-              name: captainName,
-              discordRoleId: captainRoleId,
-              priority: 4,
-              keep: false,
-            },
-            {
-              name: squireName,
-              discordRoleId: squireRoleId,
-              priority: 5,
-              keep: true,
-            },
-            {
-              name: initiateName,
-              discordRoleId: initiateRoleId,
-              priority: 6,
-              keep: false,
-            },
-            {
-              name: registeredName,
-              discordRoleId: registeredRoleId,
-              priority: 6,
-              keep: true,
-            },
-          ],
-        },
-        discord: {
-          devUserId: expectedDevUserId,
-          channels: {
-            albionRegistration: expectedChannelId,
+    const albionMerged = {
+      ...TestBootstrapper.mockConfig.albion,
+      ...{
+        scanExcludedUsers: [mockScanUserId],
+        scanPingRoles: [mockGuildMasterRoleId, mockMasterRoleId],
+        roleMap: [
+          {
+            name: mockGuildMasterRoleName,
+            discordRoleId: mockGuildMasterRoleId,
+            priority: 1,
+            keep: true,
           },
-        },
-      };
+          {
+            name: mockMasterName,
+            discordRoleId: mockMasterRoleId,
+            priority: 2,
+            keep: false,
+          },
+          {
+            name: mockGeneralName,
+            discordRoleId: mockGeneralRoleId,
+            priority: 3,
+            keep: false,
+          },
+          {
+            name: mockCaptainName,
+            discordRoleId: mockCaptainRoleId,
+            priority: 4,
+            keep: false,
+          },
+          {
+            name: mockSquireName,
+            discordRoleId: mockSquireRoleId,
+            priority: 5,
+            keep: true,
+          },
+          {
+            name: mockInitiateName,
+            discordRoleId: mockInitiateRoleId,
+            priority: 6,
+            keep: false,
+          },
+          {
+            name: mockRegisteredName,
+            discordRoleId: mockRegisteredRoleId,
+            priority: 6,
+            keep: true,
+          },
+        ],
+      },
+    };
+    const fulLData = {
+      ...TestBootstrapper.mockConfig,
+      albion: albionMerged,
+    };
 
-      const result = _.get(data, key);
-
-      if (!result) {
-        throw new Error(`Unexpected config key: ${key}`);
-      }
-
-      return result;
-    });
+    TestBootstrapper.setupConfig(moduleRef, fulLData);
   });
 
   afterEach(() => {
@@ -282,7 +178,7 @@ describe('AlbionScanningService', () => {
 
   // Execution flow
   it('should gracefully handle no members in the database by calling the reverse role scan', async () => {
-    mockAlbionMembersRepository.findAll = jest.fn().mockResolvedValueOnce([]);
+    mockAlbionRegistrationsRepository.findAll = jest.fn().mockResolvedValueOnce([]);
     service.reverseRoleScan = jest.fn().mockResolvedValue(undefined);
     service.discordEnforcementScan = jest.fn().mockResolvedValue(undefined);
 
@@ -296,25 +192,25 @@ describe('AlbionScanningService', () => {
     expect(service.discordEnforcementScan).toBeCalledTimes(1);
   });
   it('should send number of members on record', async () => {
-    mockAlbionMembersRepository.findAll = jest.fn().mockResolvedValueOnce([mockAlbionMember]);
+    mockAlbionRegistrationsRepository.findAll = jest.fn().mockResolvedValueOnce([mockRegisteredMember]);
     service.gatherCharacters = jest.fn().mockResolvedValueOnce([mockCharacter]);
     await service.startScan(mockDiscordMessage);
     expect(mockDiscordMessage.channel.send).toBeCalledWith('ℹ️ There are currently 1 registered members on record.');
   });
   it('should handle errors with character gathering', async () => {
-    mockAlbionMembersRepository.findAll = jest.fn().mockResolvedValueOnce([mockAlbionMember]);
+    mockAlbionRegistrationsRepository.findAll = jest.fn().mockResolvedValueOnce([mockRegisteredMember]);
     service.gatherCharacters = jest.fn().mockImplementation(() => {throw new Error('Operation went boom');});
     await service.startScan(mockDiscordMessage);
     expect(mockDiscordMessage.edit).toBeCalledWith('## ❌ An error occurred while gathering data from the API!');
   });
   it('should error when no characters return from the API', async () => {
-    mockAlbionMembersRepository.findAll = jest.fn().mockResolvedValueOnce([mockAlbionMember]);
+    mockAlbionRegistrationsRepository.findAll = jest.fn().mockResolvedValueOnce([mockRegisteredMember]);
     service.gatherCharacters = jest.fn().mockResolvedValueOnce([]);
     await service.startScan(mockDiscordMessage);
     expect(mockDiscordMessage.edit).toBeCalledWith('## ❌ No characters were gathered from the API!');
   });
   it('should properly relay errors from the remover or suggestions functions', async () => {
-    mockAlbionMembersRepository.findAll = jest.fn().mockResolvedValueOnce([mockAlbionMember]);
+    mockAlbionRegistrationsRepository.findAll = jest.fn().mockResolvedValueOnce([mockRegisteredMember]);
     service.gatherCharacters = jest.fn().mockResolvedValueOnce([mockCharacter]);
     service.removeLeavers = jest.fn().mockResolvedValueOnce([]);
     service.reverseRoleScan = jest.fn().mockResolvedValueOnce([]);
@@ -326,7 +222,7 @@ describe('AlbionScanningService', () => {
     expect(mockDiscordMessage.channel.send).toBeCalledWith('Error: Operation went boom');
   });
   it('should probably relay scan progress', async () => {
-    mockAlbionMembersRepository.findAll = jest.fn().mockResolvedValueOnce([mockAlbionMember]);
+    mockAlbionRegistrationsRepository.findAll = jest.fn().mockResolvedValueOnce([mockRegisteredMember]);
     service.gatherCharacters = jest.fn().mockResolvedValueOnce([mockCharacter]);
     service.removeLeavers = jest.fn().mockResolvedValueOnce([]);
     service.reverseRoleScan = jest.fn().mockResolvedValueOnce([]);
@@ -373,11 +269,11 @@ describe('AlbionScanningService', () => {
   // Happy path
   it('reverse scan should properly detect an unregistered member who has a role they shouldn\'t', async () => {
     // Force the AlbionsMembersEntity to be empty
-    mockAlbionMembersRepository.findAll = jest.fn().mockResolvedValueOnce([]);
+    mockAlbionRegistrationsRepository.findAll = jest.fn().mockResolvedValueOnce([]);
 
     const mockedRoleToDelete = {
       name: 'ALB/Captain',
-      id: captainRoleId,
+      id: mockCaptainRoleId,
       members: [
         [mockDiscordUser.id, mockDiscordUser],
       ],
@@ -402,11 +298,11 @@ describe('AlbionScanningService', () => {
     expect(mockDiscordUser.roles.remove).toBeCalledWith(mockedRoleToDelete);
   });
   it('reverse scan should return no change message properly', async () => {
-    mockAlbionMembersRepository.findAll = jest.fn().mockResolvedValueOnce([mockAlbionMember]);
+    mockAlbionRegistrationsRepository.findAll = jest.fn().mockResolvedValueOnce([mockRegisteredMember]);
 
     const mockedRole = {
       name: 'ALB/Captain',
-      id: captainRoleId,
+      id: mockCaptainRoleId,
       members: [],
     };
 
@@ -461,7 +357,7 @@ describe('AlbionScanningService', () => {
 
     await service.removeLeavers([mockCharacter], mockDiscordMessage);
 
-    expect(mockDiscordMessage.channel.send).toHaveBeenCalledWith(`ERROR: Unable to remove role "foobar" from ${mockCharacter.Name} (${mockCharacter.Id}). Pinging <@${expectedDevUserId}>!`);
+    expect(mockDiscordMessage.channel.send).toHaveBeenCalledWith(`ERROR: Unable to remove role "foobar" from ${mockCharacter.Name} (${mockCharacter.Id}). Pinging <@${mockDevUserId}>!`);
   });
   it('should properly handle guild leavers and handle database errors', async () => {
     // Mock the Albion API response to denote the character has left the guild
@@ -474,141 +370,141 @@ describe('AlbionScanningService', () => {
       };
     });
 
-    mockAlbionMembersRepository.removeAndFlush = jest.fn().mockRejectedValueOnce(new Error('Operation went boom'));
+    mockAlbionRegistrationsRepository.removeAndFlush = jest.fn().mockRejectedValueOnce(new Error('Operation went boom'));
 
     await service.removeLeavers([mockCharacter], mockDiscordMessage);
 
-    expect(mockDiscordMessage.channel.send).toHaveBeenCalledWith(`ERROR: Unable to remove Albion Character "${mockCharacter.Name}" (${mockCharacter.Id}) from registration database! Pinging <@${expectedDevUserId}>!`);
+    expect(mockDiscordMessage.channel.send).toHaveBeenCalledWith(`ERROR: Unable to remove Albion Character "${mockCharacter.Name}" (${mockCharacter.Id}) from registration database! Pinging <@${mockDevUserId}>!`);
   });
 
   // Inconsistency scanner tests
   const testCases = [
     {
       title: 'Captain needs Initiate removed and missing Squire',
-      roles: [captainRoleId, initiateRoleId, registeredRoleId],
-      highestPriorityRole: { id: captainRoleId, name: captainName },
+      roles: [mockCaptainRoleId, mockInitiateRoleId, mockRegisteredRoleId],
+      highestPriorityRole: { id: mockCaptainRoleId, name: mockCaptainName },
       expected: [
-        { id: squireRoleId, name: squireName, action: 'added', message: '' },
-        { id: initiateRoleId, name: initiateName, action: 'removed', message: '' },
+        { id: mockSquireRoleId, name: mockSquireName, action: 'added', message: '' },
+        { id: mockInitiateRoleId, name: mockInitiateName, action: 'removed', message: '' },
       ],
     },
     {
       title: 'Guild Master having Initiate, Captain and General when they shouldn\'t',
-      roles: [guildMasterRoleId, initiateRoleId, captainRoleId, generalRoleId, squireRoleId, registeredRoleId],
-      highestPriorityRole: { id: guildMasterRoleId, name: guildMasterName },
+      roles: [mockGuildMasterRoleId, mockInitiateRoleId, mockCaptainRoleId, mockGeneralRoleId, mockSquireRoleId, mockRegisteredRoleId],
+      highestPriorityRole: { id: mockGuildMasterRoleId, name: mockGuildMasterRoleName },
       expected: [
-        { id: generalRoleId, name: generalName, action: 'removed', message: '' },
-        { id: captainRoleId, name: captainName, action: 'removed', message: '' },
-        { id: initiateRoleId, name: initiateName, action: 'removed', message: '' },
+        { id: mockGeneralRoleId, name: mockGeneralName, action: 'removed', message: '' },
+        { id: mockCaptainRoleId, name: mockCaptainName, action: 'removed', message: '' },
+        { id: mockInitiateRoleId, name: mockInitiateName, action: 'removed', message: '' },
       ],
     },
     {
       title: 'Guild Master requires Squire',
-      roles: [guildMasterRoleId, registeredRoleId],
-      highestPriorityRole: { id: guildMasterRoleId, name: guildMasterName },
+      roles: [mockGuildMasterRoleId, mockRegisteredRoleId],
+      highestPriorityRole: { id: mockGuildMasterRoleId, name: mockGuildMasterRoleName },
       expected: [
-        { id: squireRoleId, name: squireName, action: 'added', message: '' },
+        { id: mockSquireRoleId, name: mockSquireName, action: 'added', message: '' },
       ],
     },
     {
       title: 'Master requires Squire',
-      roles: [masterRoleId, registeredRoleId],
-      highestPriorityRole: { id: masterRoleId, name: masterName },
+      roles: [mockMasterRoleId, mockRegisteredRoleId],
+      highestPriorityRole: { id: mockMasterRoleId, name: mockMasterName },
       expected: [
-        { id: squireRoleId, name: squireName, action: 'added', message: '' },
+        { id: mockSquireRoleId, name: mockSquireName, action: 'added', message: '' },
       ],
     },
     {
       title: 'General requires Squire',
-      roles: [generalRoleId, registeredRoleId],
-      highestPriorityRole: { id: generalRoleId, name: generalName },
+      roles: [mockGeneralRoleId, mockRegisteredRoleId],
+      highestPriorityRole: { id: mockGeneralRoleId, name: mockGeneralName },
       expected: [
-        { id: squireRoleId, name: squireName, action: 'added', message: '' },
+        { id: mockSquireRoleId, name: mockSquireName, action: 'added', message: '' },
       ],
     },
     {
       title: 'Captain requires Squire',
-      roles: [captainRoleId, registeredRoleId],
-      highestPriorityRole: { id: captainRoleId, name: captainName },
+      roles: [mockCaptainRoleId, mockRegisteredRoleId],
+      highestPriorityRole: { id: mockCaptainRoleId, name: mockCaptainName },
       expected: [
-        { id: squireRoleId, name: squireName, action: 'added', message: '' },
+        { id: mockSquireRoleId, name: mockSquireName, action: 'added', message: '' },
       ],
     },
     {
       title: 'Squire has no extra roles',
-      roles: [squireRoleId, registeredRoleId],
-      highestPriorityRole: { id: squireRoleId, name: squireName },
+      roles: [mockSquireRoleId, mockRegisteredRoleId],
+      highestPriorityRole: { id: mockSquireRoleId, name: mockSquireName },
       expected: [],
     },
     {
       title: 'Initiate has no extra roles',
-      roles: [initiateRoleId, registeredRoleId],
-      highestPriorityRole: { id: initiateRoleId, name: initiateName },
+      roles: [mockInitiateRoleId, mockRegisteredRoleId],
+      highestPriorityRole: { id: mockInitiateRoleId, name: mockInitiateName },
       expected: [],
     },
     {
       title: 'Guild Masters should not have Initiate and should have Squire',
-      roles: [guildMasterRoleId, squireRoleId, initiateRoleId, registeredRoleId],
-      highestPriorityRole: { id: guildMasterRoleId, name: guildMasterName },
+      roles: [mockGuildMasterRoleId, mockSquireRoleId, mockInitiateRoleId, mockRegisteredRoleId],
+      highestPriorityRole: { id: mockGuildMasterRoleId, name: mockGuildMasterRoleName },
       expected: [
-        { id: initiateRoleId, name: initiateName, action: 'removed', message: '' },
+        { id: mockInitiateRoleId, name: mockInitiateName, action: 'removed', message: '' },
       ],
     },
     {
       title: 'Masters should not have Initiate and should have Squire',
-      roles: [masterRoleId, squireRoleId, initiateRoleId, registeredRoleId],
-      highestPriorityRole: { id: masterRoleId, name: masterName },
+      roles: [mockMasterRoleId, mockSquireRoleId, mockInitiateRoleId, mockRegisteredRoleId],
+      highestPriorityRole: { id: mockMasterRoleId, name: mockMasterName },
       expected: [
-        { id: initiateRoleId, name: initiateName, action: 'removed', message: '' },
+        { id: mockInitiateRoleId, name: mockInitiateName, action: 'removed', message: '' },
       ],
     },
     {
       title: 'Generals should not have Initiate and should have Squire',
-      roles: [generalRoleId, squireRoleId, initiateRoleId, registeredRoleId],
-      highestPriorityRole: { id: generalRoleId, name: generalName },
+      roles: [mockGeneralRoleId, mockSquireRoleId, mockInitiateRoleId, mockRegisteredRoleId],
+      highestPriorityRole: { id: mockGeneralRoleId, name: mockGeneralName },
       expected: [
-        { id: initiateRoleId, name: initiateName, action: 'removed', message: '' },
+        { id: mockInitiateRoleId, name: mockInitiateName, action: 'removed', message: '' },
       ],
     },
     {
       title: 'Captains should not have Initiate and should have Squire',
-      roles: [captainRoleId, squireRoleId, initiateRoleId, registeredRoleId],
-      highestPriorityRole: { id: captainRoleId, name: captainName },
+      roles: [mockCaptainRoleId, mockSquireRoleId, mockInitiateRoleId, mockRegisteredRoleId],
+      highestPriorityRole: { id: mockCaptainRoleId, name: mockCaptainName },
       expected: [
-        { id: initiateRoleId, name: initiateName, action: 'removed', message: '' },
+        { id: mockInitiateRoleId, name: mockInitiateName, action: 'removed', message: '' },
       ],
     },
     {
       title: 'Squires should not have Initiate',
-      roles: [squireRoleId, initiateRoleId, registeredRoleId],
-      highestPriorityRole: { id: squireRoleId, name: squireName },
+      roles: [mockSquireRoleId, mockInitiateRoleId, mockRegisteredRoleId],
+      highestPriorityRole: { id: mockSquireRoleId, name: mockSquireName },
       expected: [
-        { id: initiateRoleId, name: initiateName, action: 'removed', message: '' },
+        { id: mockInitiateRoleId, name: mockInitiateName, action: 'removed', message: '' },
       ],
     },
     {
       title: 'Squires should have registered role',
-      roles: [squireRoleId],
-      highestPriorityRole: { id: squireRoleId, name: squireName },
+      roles: [mockSquireRoleId],
+      highestPriorityRole: { id: mockSquireRoleId, name: mockSquireName },
       expected: [
-        { id: registeredRoleId, name: registeredName, action: 'added', message: '' },
+        { id: mockRegisteredRoleId, name: mockRegisteredName, action: 'added', message: '' },
       ],
     },
     {
       title: 'Initiate should have registered role',
-      roles: [initiateRoleId],
-      highestPriorityRole: { id: initiateRoleId, name: initiateName },
+      roles: [mockInitiateRoleId],
+      highestPriorityRole: { id: mockInitiateRoleId, name: mockInitiateName },
       expected: [
-        { id: registeredRoleId, name: registeredName, action: 'added', message: '' },
+        { id: mockRegisteredRoleId, name: mockRegisteredName, action: 'added', message: '' },
       ],
     },
     {
       title: 'Registered people should have at least registered and initiate',
       roles: [],
-      highestPriorityRole: { id: initiateRoleId, name: initiateName },
+      highestPriorityRole: { id: mockInitiateRoleId, name: mockInitiateName },
       expected: [
-        { id: initiateRoleId, name: initiateName, action: 'added', message: '' },
-        { id: registeredRoleId, name: registeredName, action: 'added', message: '' },
+        { id: mockInitiateRoleId, name: mockInitiateName, action: 'added', message: '' },
+        { id: mockRegisteredRoleId, name: mockRegisteredName, action: 'added', message: '' },
       ],
     },
   ];
@@ -675,16 +571,16 @@ describe('AlbionScanningService', () => {
     });
   });
   it('roleInconsistencies should ensure certain people are excluded from scanning', async () => {
-    mockDiscordUser.id = excludedScanUserId;
-    setupRoleTestMocks([guildMasterRoleId, squireRoleId, initiateRoleId, registeredRoleId]); // Should require they remove initiate rank
+    mockDiscordUser.id = mockScanUserId;
+    setupRoleTestMocks([mockGuildMasterRoleId, mockSquireRoleId, mockInitiateRoleId, mockRegisteredRoleId]); // Should require they remove initiate rank
     expect((await service.checkRoleInconsistencies(mockDiscordUser)).length).toEqual(0);
   });
   it('roleInconsistencies should still process non excluded users', async () => {
-    setupRoleTestMocks([guildMasterRoleId, squireRoleId, initiateRoleId, registeredRoleId]); // Should require they remove initiate rank
+    setupRoleTestMocks([mockGuildMasterRoleId, mockSquireRoleId, mockInitiateRoleId, mockRegisteredRoleId]); // Should require they remove initiate rank
     expect((await service.checkRoleInconsistencies(mockDiscordUser)).length).toEqual(1);
   });
   it('roleInconsistencies should properly indicate progress when multiple users are involved', async () => {
-    mockAlbionMembersRepository.findAll = jest.fn().mockResolvedValueOnce([mockAlbionMember, mockAlbionMember, mockAlbionMember, mockAlbionMember, mockAlbionMember]);
+    mockAlbionRegistrationsRepository.findAll = jest.fn().mockResolvedValueOnce([mockRegisteredMember, mockRegisteredMember, mockRegisteredMember, mockRegisteredMember, mockRegisteredMember]);
     await service.roleInconsistencies(mockDiscordMessage);
     expect(mockDiscordMessage.channel.send).toBeCalledWith('### Scanning 5 members for role inconsistencies... [0/5]');
     // Tried making it also check the scanCountMessage but that is an absolute brain melter as it's a new instance of the message object...

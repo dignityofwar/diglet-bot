@@ -1,6 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { Injectable } from '@nestjs/common';
-import { SnowflakeUtil } from 'discord.js';
 import _ from 'lodash';
 import { ConfigService } from '@nestjs/config';
 import { TestingModule } from '@nestjs/testing';
@@ -9,11 +8,13 @@ import { MikroORM } from '@mikro-orm/core';
 // This file helps set up mocks for various tests, which have been copied and pasted across the suite, causing a lot of duplication.
 @Injectable()
 export class TestBootstrapper {
-  static mockEntityRepo = {
-    find: jest.fn(),
-    create: jest.fn(),
-    upsert: jest.fn(),
-  };
+  static getMockEntityRepo() {
+    return {
+      find: jest.fn(),
+      create: jest.fn(),
+      upsert: jest.fn(),
+    } as any;
+  }
 
   static mockORM() {
     const mockEntityManager = {
@@ -30,18 +31,21 @@ export class TestBootstrapper {
     } as any));
   }
 
-  private static mockEntityManager = {
-    find: jest.fn(),
-    persistAndFlush: jest.fn(),
-    getRepository: jest.fn().mockReturnValue({
-      find: jest.fn(),
-      persistAndFlush: jest.fn(),
-    }),
-  };
+  static getMockRepositoryInjected(entity) {
+    return {
+      find: jest.fn().mockResolvedValueOnce([entity]),
+      findOne: jest.fn().mockResolvedValueOnce([entity]),
+      findAll: jest.fn().mockResolvedValue([entity]),
+      create: jest.fn(),
+      upsert: jest.fn(),
+      persistAndFlush: jest.fn().mockResolvedValue([entity]),
+      removeAndFlush: jest.fn(),
+    } as any;
+  }
 
-  private static mockDiscordUser = {
+  private static readonly mockDiscordUser = {
     displayName: 'mockuser',
-    id: SnowflakeUtil.generate(),
+    id: '90078072660852736',
     username: 'TestUser',
     fetch: jest.fn(),
     roles: {
@@ -67,30 +71,49 @@ export class TestBootstrapper {
           },
         },
       },
-    };
+    } as any;
   }
 
-  static mockDiscordMessage = {
-    edit: jest.fn(),
-    delete: jest.fn(),
-    channel: {
-      send: jest.fn().mockImplementation(() => {
-        return {
-          removeAttachments: jest.fn(),
-        };
-      }),
-    },
-  };
+  static getMockDiscordMessage() {
+    return {
+      edit: jest.fn(),
+      delete: jest.fn(),
+      channel: {
+        send: jest.fn().mockImplementation(() => {
+          return {
+            edit: jest.fn(),
+            delete: jest.fn(),
+            removeAttachments: jest.fn(),
+          };
+        }),
+      },
+      roles: {
+        cache: {
+          has: jest.fn(),
+        },
+      },
+      guild: {
+        members: {
+          fetch: jest.fn().mockImplementation(() => this.getMockDiscordUser()),
+        },
+        roles: {
+          cache: {
+            get: jest.fn(),
+          },
+        },
+      },
+    } as any;
+  }
 
   static getMockCharacter(guildId) {
     return {
-      Id: '123456789',
-      Name: 'TestCharacter',
-      GuildId: guildId,
-    };
+      Id: 'BehrhjrfhK-_!FDHrd$£64tert3',
+      Name: 'Maelstrome26',
+      GuildId: guildId ?? this.mockConfig.albion.guildId,
+    } as any;
   }
 
-  static mockConfig = {
+  static readonly mockConfig = {
     albion: {
       guildId: '54545423435',
       guildMasterRole: { discordRoleId: '14546543371337' },
@@ -102,6 +125,7 @@ export class TestBootstrapper {
         albionRegistration: '396474759683473',
         albionInfopoint: '387573839485',
         albionTownCrier: '3845759049437495',
+        albionScans: '4858696849494',
       },
       roles: {
         albionInitiateRoleId: '123456789',
@@ -111,10 +135,10 @@ export class TestBootstrapper {
     },
   };
 
-  static setupConfig(moduleRef: TestingModule) {
+  static setupConfig(moduleRef: TestingModule, overrideData?: any) {
     const config = moduleRef.get<ConfigService>(ConfigService);
     return jest.spyOn(config, 'get').mockImplementation((key: string) => {
-      const data = this.mockConfig;
+      const data = overrideData ?? this.mockConfig;
 
       const result = _.get(data, key);
 
