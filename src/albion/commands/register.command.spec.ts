@@ -17,7 +17,7 @@ describe('AlbionRegisterCommand', () => {
   let albionRegistrationService: AlbionRegistrationService;
 
   let mockCharacter: AlbionPlayersResponseInterface;
-  let mockInteraction: any;
+  let mockDiscordInteraction: any;
   let mockDiscordUser: any;
   const dto: AlbionRegisterDto = { character: 'Maelstrome26' };
 
@@ -57,7 +57,7 @@ describe('AlbionRegisterCommand', () => {
     albionRegistrationService = module.get<AlbionRegistrationService>(AlbionRegistrationService);
     TestBootstrapper.setupConfig(module);
 
-    mockInteraction = TestBootstrapper.getMockDiscordInteraction(expectedChannelId, mockDiscordUser);
+    mockDiscordInteraction = TestBootstrapper.getMockDiscordInteraction(expectedChannelId, mockDiscordUser);
   });
 
   it('should be defined', () => {
@@ -65,9 +65,9 @@ describe('AlbionRegisterCommand', () => {
   });
 
   it('should return a message if command did not come from the correct channel', async () => {
-    mockInteraction[0].channelId = '1234';
+    mockDiscordInteraction[0].channelId = '1234';
 
-    expect(await command.onAlbionRegisterCommand(dto, mockInteraction)).toBe(`Please use the <#${expectedChannelId}> channel to register.`);
+    expect(await command.onAlbionRegisterCommand(dto, mockDiscordInteraction)).toBe(`Please use the <#${expectedChannelId}> channel to register.`);
   });
 
   it('should return errors from the registration process', async () => {
@@ -76,13 +76,13 @@ describe('AlbionRegisterCommand', () => {
       throw new Error('Some error handling registration');
     });
 
-    const result = await command.onAlbionRegisterCommand(dto, mockInteraction);
+    const result = await command.onAlbionRegisterCommand(dto, mockDiscordInteraction);
 
     // Check that send was called with the expected argument
-    expect(mockInteraction[0].channel.send).toHaveBeenCalledWith('🔍 Running registration process...');
+    expect(mockDiscordInteraction[0].channel.send).toHaveBeenCalledWith('🔍 Running registration process...');
 
     // Capture the mock message object returned by send
-    const sentMessage = mockInteraction[0].channel.send.mock.results[0].value;
+    const sentMessage = mockDiscordInteraction[0].channel.send.mock.results[0].value;
 
     // Check that the edit method on the sentMessage was called with the expected argument
     expect(sentMessage.edit).toHaveBeenCalledWith('⛔️ **ERROR:** Some error handling registration');
@@ -93,6 +93,6 @@ describe('AlbionRegisterCommand', () => {
 
   it('should return no response', async () => {
     albionRegistrationService.handleRegistration = jest.fn().mockImplementation(() => true);
-    expect(await command.onAlbionRegisterCommand(dto, mockInteraction)).toBe('');
+    expect(await command.onAlbionRegisterCommand(dto, mockDiscordInteraction)).toBe('');
   });
 });

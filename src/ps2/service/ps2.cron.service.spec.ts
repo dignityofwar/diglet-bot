@@ -4,7 +4,7 @@ import { PS2GameScanningService } from './ps2.game.scanning.service';
 import { ConfigService } from '@nestjs/config';
 import { Test, TestingModule } from '@nestjs/testing';
 import { ReflectMetadataProvider } from '@discord-nestjs/core';
-import _ from 'lodash';
+import { TestBootstrapper } from '../../test.bootstrapper';
 
 jest.mock('discord.js', () => {
   return {
@@ -17,13 +17,12 @@ jest.mock('discord.js', () => {
 });
 
 describe('PS2CronService', () => {
-  let config: ConfigService;
   let service: PS2CronService;
   let discordService: DiscordService;
-  const scanChannelId = '123456789';
+  const scanChannelId = TestBootstrapper.mockConfig.discord.channels.ps2Scans;
 
   beforeEach(async () => {
-    const module: TestingModule = await Test.createTestingModule({
+    const moduleRef: TestingModule = await Test.createTestingModule({
       providers: [
         PS2CronService,
         ConfigService,
@@ -50,28 +49,10 @@ describe('PS2CronService', () => {
         },
       ],
     }).compile();
+    TestBootstrapper.setupConfig(moduleRef);
 
-    config = module.get<ConfigService>(ConfigService);
-    discordService = module.get<DiscordService>(DiscordService);
-    service = module.get<PS2CronService>(PS2CronService);
-
-    jest.spyOn(config, 'get').mockImplementation((key: string) => {
-      const data = {
-        discord: {
-          channels: {
-            ps2Scans: scanChannelId,
-          },
-        },
-      };
-
-      const result = _.get(data, key);
-
-      if (!result) {
-        throw new Error(`Unexpected config key: ${key}`);
-      }
-
-      return result;
-    });
+    discordService = moduleRef.get<DiscordService>(DiscordService);
+    service = moduleRef.get<PS2CronService>(PS2CronService);
   });
 
   it('should be defined', async () => {

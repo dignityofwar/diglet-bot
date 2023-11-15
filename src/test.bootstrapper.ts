@@ -150,12 +150,22 @@ export class TestBootstrapper {
         albionInfopoint: '387573839485',
         albionTownCrier: '3845759049437495',
         albionScans: '4858696849494',
+        ps2Verify: '558787980890809',
+        ps2Scans: '8558496070888',
+        ps2Private: '9705950678045896095',
+        ps2HowToRankUp: '84594873574837596',
       },
       roles: {
         albionInitiateRoleId: '123456789',
         albionRegisteredRoleId: '1234567890',
         albionTownCrierRoleId: '987654321',
+        ps2Verified: '059769706045',
       },
+    },
+    ps2: {
+      censusServiceId: 'dignityofwar',
+      censusTimeout: 30000,
+      outfitId: '866685885885885',
     },
   };
 
@@ -166,7 +176,7 @@ export class TestBootstrapper {
 
       const result = _.get(data, key);
 
-      if (!result) {
+      if (!result && !overrideData) {
         throw new Error(`Unexpected config key: ${key}`);
       }
 
