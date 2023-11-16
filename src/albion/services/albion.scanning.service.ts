@@ -48,7 +48,8 @@ export class AlbionScanningService {
       await this.reverseRoleScan(message, dryRun);
 
       await message.edit('# Task: [2/2] Discord enforcement scan...');
-      await this.discordEnforcementScan(message, dryRun);
+      await message.channel.send('## DISCORD ENFORCEMENT SCAN DISABLED!');
+      // await this.discordEnforcementScan(message, dryRun);
       return;
     }
 
@@ -82,7 +83,8 @@ export class AlbionScanningService {
       await this.roleInconsistencies(message, dryRun);
 
       await message.edit('# Task: [5/5] Discord enforcement scan...');
-      await this.discordEnforcementScan(message, dryRun);
+      await message.channel.send('## DISCORD ENFORCEMENT SCAN DISABLED!');
+      // await this.discordEnforcementScan(message, dryRun);
     }
     catch (err) {
       await message.edit('## ❌ An error occurred while scanning!');
