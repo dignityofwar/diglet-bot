@@ -252,13 +252,13 @@ describe('AlbionScanningService', () => {
   });
   it('reverse scan should properly error upon Discord role error', async () => {
     const errMsg = 'Discord don\'t like you';
-    mockDiscordMessage.guild.roles.cache.get = jest.fn().mockImplementationOnce(() => {
+    mockDiscordMessage.guild.roles.fetch = jest.fn().mockImplementationOnce(() => {
       throw new Error(errMsg);
     });
     await expect(service.reverseRoleScan(mockDiscordMessage)).rejects.toThrowError(`Reverse Role Scan: Error fetching role @ALB/Guildmaster! Err: ${errMsg}`);
   });
   it('reverse scan should properly handle when no members were found for any roles', async () => {
-    mockDiscordMessage.guild.roles.cache.get = jest.fn().mockImplementation(() => {
+    mockDiscordMessage.guild.roles.fetch = jest.fn().mockImplementation(() => {
       return {
         members: [],
       };
@@ -280,7 +280,7 @@ describe('AlbionScanningService', () => {
     };
 
     // Mock the Discord API to return a list of Discord GuildMembers who have the Captain role
-    mockDiscordMessage.guild.roles.cache.get = jest.fn()
+    mockDiscordMessage.guild.roles.fetch = jest.fn()
       .mockImplementationOnce(() => mockedRoleToDelete)
       .mockImplementation((roleId: string) => {
         return {
@@ -307,7 +307,7 @@ describe('AlbionScanningService', () => {
     };
 
     // Mock the Discord API to return a list of Discord GuildMembers who have the Captain role
-    mockDiscordMessage.guild.roles.cache.get = jest.fn()
+    mockDiscordMessage.guild.roles.fetch = jest.fn()
       .mockImplementation(() => mockedRole);
 
     await service.reverseRoleScan(mockDiscordMessage);

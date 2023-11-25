@@ -97,6 +97,7 @@ export class TestBootstrapper {
           fetch: jest.fn().mockImplementation(() => this.getMockDiscordUser()),
         },
         roles: {
+          fetch: jest.fn(),
           cache: {
             get: jest.fn(),
           },

@@ -274,7 +274,11 @@ export class AlbionScanningService {
       await scanCountMessage.edit(`Scanning role **${role.name}** [${count}/${roleMapLength}]...`);
 
       try {
-        discordRole = message.guild.roles.cache.get(role.discordRoleId);
+        // Force fetch the role to get the correct members
+        discordRole = await message.guild.roles.fetch(
+          role.discordRoleId,
+          { cache: false, force: true }
+        );
       }
       catch (err) {
         const error = `Reverse Role Scan: Error fetching role ${role.name}! Err: ${err.message}`;
