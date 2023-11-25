@@ -11,8 +11,8 @@ Typescript DIGBot
 4. `pnpm run start:dev`.
 5. Invite the bot to your server.
 
-## TyoeORM & Planetscale
+## MikroORM & Planetscale
 
-This project uses [TypeORM](https://typeorm.io/) which is a TS-first ORM.
+This project uses [MikroORM](https://mikro-orm.io/) which is a TS native ORM.
 
 We use a cloud database hosted by [Planetscale](https://planetscale.com/). This is a MySQL database, and is used for simple database storage.
