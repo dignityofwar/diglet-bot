@@ -97,8 +97,8 @@ export class AlbionScanningService {
     if (this.actionRequired && !dryRun) {
       const scanPingRoles = this.config.get('albion.scanPingRoles');
       await message.channel.send(`️🔔 <@&${scanPingRoles.join('>, <@&')}> Please review the above actions marked with (‼️) and make any necessary changes manually. To scan again without pinging Guildmasters or Masters, run the \`/albion-scan\` command with the \`dry-run\` flag set to \`true\`.`);
-      this.actionRequired = false;
     }
+    this.actionRequired = false;
     await message.channel.send('------------------------------------------');
 
     await message.delete();
@@ -147,10 +147,16 @@ export class AlbionScanningService {
     // Get the registered members from the database
     const registeredMembers: AlbionRegistrationsEntity[] = await this.albionRegistrationsRepository.findAll();
 
-    let serverLeavers = false;
+    const statusMessage = await message.channel.send(`### Scanned 0/${registeredMembers.length} registered members...`);
+
+    let count = 0;
 
     // Do the checks
     for (const member of registeredMembers) {
+      count++;
+      if (count % 5 === 0) {
+        await statusMessage.edit(`### Scanned ${count}/${registeredMembers.length} registered members...`);
+      }
       const character = charactersMap.get(member.characterId);
 
       if (!character) {
@@ -177,8 +183,8 @@ export class AlbionScanningService {
           }
         }
 
-        leavers.push(`- 🫥️ Discord member for Character **${character.Name}** has left the DIG server. Their registration status has been removed.`);
-        serverLeavers = true;
+        leavers.push(`- ‼️🫥️ Discord member for Character **${character.Name}** has left the DIG server. Their registration status has been removed. **They require booting from the Guild!**`);
+        this.actionRequired = true;
         continue;
       }
 
@@ -234,13 +240,11 @@ export class AlbionScanningService {
 
     this.logger.log(`Found ${leavers.length} changes to make.`);
 
+    await statusMessage.delete();
+
     if (leavers.length > 0) {
       this.logger.log(`Sending ${leavers.length} changes to channel...`);
       await message.channel.send(`## 🚪 ${leavers.length} leavers detected!`);
-
-      if (serverLeavers) {
-        await message.channel.send('ℹ️ If a **server** leaver is <10 days offline, just remove their ranks. If >10, boot them! 🦵');
-      }
 
       for (const leaver of leavers) {
         await message.channel.send(leaver); // Send a fake message first, so it doesn't ping people

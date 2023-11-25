@@ -323,9 +323,9 @@ describe('AlbionScanningService', () => {
 
     await service.removeLeavers([mockCharacter], mockDiscordMessage);
     expect(mockDiscordMessage.channel.send).toBeCalledTimes(3);
+    expect(mockDiscordMessage.channel.send).toBeCalledWith('### Scanned 0/1 registered members...');
     expect(mockDiscordMessage.channel.send).toBeCalledWith('## 🚪 1 leavers detected!');
-    expect(mockDiscordMessage.channel.send).toBeCalledWith('ℹ️ If a **server** leaver is <10 days offline, just remove their ranks. If >10, boot them! 🦵');
-    expect(mockDiscordMessage.channel.send).toBeCalledWith(`- 🫥️ Discord member for Character **${mockCharacter.Name}** has left the DIG server. Their registration status has been removed.`);
+    expect(mockDiscordMessage.channel.send).toBeCalledWith(`- ‼️🫥️ Discord member for Character **${mockCharacter.Name}** has left the DIG server. Their registration status has been removed. **They require booting from the Guild!**`);
   });
   it('should properly handle guild leavers', async () => {
     // Mock the Albion API response to denote the character has left the guild
@@ -333,6 +333,8 @@ describe('AlbionScanningService', () => {
 
     await service.removeLeavers([mockCharacter], mockDiscordMessage);
 
+    expect(mockDiscordMessage.channel.send).toBeCalledTimes(3);
+    expect(mockDiscordMessage.channel.send).toBeCalledWith('### Scanned 0/1 registered members...');
     expect(mockDiscordMessage.channel.send).toBeCalledWith('## 🚪 1 leavers detected!');
     expect(mockDiscordMessage.channel.send).toBeCalledWith(`- 👋 <@${mockDiscordUser.id}>'s character **${mockCharacter.Name}** has left the Guild. Their roles and registration status have been stripped.`);
   });
@@ -373,7 +375,8 @@ describe('AlbionScanningService', () => {
     mockDiscordMessage.guild.members.fetch = jest.fn().mockResolvedValueOnce(mockDiscordUser);
 
     await service.removeLeavers([mockCharacter], mockDiscordMessage);
-    expect(mockDiscordMessage.channel.send).toBeCalledTimes(1);
+    expect(mockDiscordMessage.channel.send).toBeCalledTimes(2);
+    expect(mockDiscordMessage.channel.send).toBeCalledWith('### Scanned 0/1 registered members...');
     expect(mockDiscordMessage.channel.send).toBeCalledWith('✅ No leavers were detected.');
   });
 
