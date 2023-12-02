@@ -151,8 +151,13 @@ export class AlbionScanningService {
 
     let count = 0;
 
-    // Force on the first run not to use the cache
-    let rolesForceFetched = false;
+    const roleMaps: AlbionRoleMapInterface = this.config.get('albion.roleMap');
+
+    // Force a role fetch for each role, so we get an accurate list of members
+    for (const roleMap of Object.values(roleMaps)) {
+      // Force fetch the role so we get a proper list of updated members
+      await message.guild.roles.fetch(roleMap.discordRoleId, { force: true });
+    }
 
     // Do the checks
     for (const member of registeredMembers) {
@@ -187,38 +192,7 @@ export class AlbionScanningService {
       catch (err) {
         // No discord member means they've left the server. Flag them as removed and proceed with guild check.
         this.logger.log(`User ${character.Name} has left the Discord server`);
-
         leftServer = true;
-      }
-
-      const roleMaps: AlbionRoleMapInterface = this.config.get('albion.roleMap');
-
-      // If they're still on the server, we need to strip their roles
-      if (discordMember) {
-        // Remove all roles from the user
-        for (const roleMap of Object.values(roleMaps)) {
-          // Force fetch the role so we get a proper list of updated members
-          const role = await message.guild.roles.fetch(roleMap.discordRoleId, { force: !!rolesForceFetched });
-          // Check if the user still has the role
-          const hasRole = role.members.has(discordMember.id);
-
-          if (!hasRole) {
-            continue;
-          }
-
-          if (!dryRun) {
-            try {
-              await discordMember.roles.remove(roleMap.discordRoleId);
-            }
-            catch (err) {
-              await message.channel.send(`ERROR: Unable to remove role "${role.name}" from ${character.Name} (${character.Id}). Err: "${err.message}". Pinging <@${this.config.get('discord.devUserId')}>!`);
-            }
-          }
-        }
-
-        // Roles have all been force fetched, so we can swap back to using the cache
-        this.logger.debug('Roles have all been force fetched, so we can swap back to using the cache');
-        rolesForceFetched = true;
       }
 
       if (leftGuild || leftServer) {
@@ -227,7 +201,7 @@ export class AlbionScanningService {
           leavers.push(`- 💁 Character / Player ${character.Name} has left **both** the DIG server and the Guild. They are dead to us now 💅`);
         }
         else if (leftGuild && discordMember) {
-          leavers.push(`- 👋 <@${discordMember.id}>'s character **${character.Name}** has left the Guild. Their roles and registration status have been stripped.`);
+          leavers.push(`- 👋 <@${discordMember.id}>'s character **${character.Name}** has left the Guild but remains on the Discord server. Their roles and registration status have been stripped.`);
         }
         else if (leftServer) {
           leavers.push(`- ‼️🫥️ Discord member for Character **${character.Name}** has left the DIG Discord server. Their registration status has been removed. **They require booting from the Guild!**`);
@@ -235,14 +209,32 @@ export class AlbionScanningService {
         }
 
         if (!dryRun) {
+          // Strip their roles if they still remain on the server
+          if (discordMember) {
+            // Remove all roles from the user
+            for (const roleMap of Object.values(roleMaps)) {
+              // Force fetch the role so we get a proper list of updated members
+              const role = message.guild.roles.cache.get(roleMap.discordRoleId);
+              // Check if the user still has the role
+              const hasRole = role.members.has(discordMember.id);
+
+              if (hasRole) {
+                try {
+                  await discordMember.roles.remove(roleMap.discordRoleId);
+                }
+                catch (err) {
+                  await message.channel.send(`ERROR: Unable to remove role "${role.name}" from ${character.Name} (${character.Id}). Err: "${err.message}". Pinging <@${this.config.get('discord.devUserId')}>!`);
+                }
+              }
+            }
+          }
           try {
             await this.albionRegistrationsRepository.removeAndFlush(member);
-
-            // Also flush them from the Guild Members table if they're in there
-            const guildMember = await this.albionGuildMembersRepository.findOne({ characterId: member.characterId });
-            if (guildMember) {
-              await this.albionGuildMembersRepository.removeAndFlush(guildMember);
-            }
+            // // Also flush them from the Guild Members table if they're in there
+            // const guildMember = await this.albionGuildMembersRepository.findOne({ characterId: member.characterId });
+            // if (guildMember) {
+            //   await this.albionGuildMembersRepository.removeAndFlush(guildMember);
+            // }
           }
           catch (err) {
             await message.channel.send(`ERROR: Unable to remove Albion Character "${character.Name}" (${character.Id}) from registration database! Pinging <@${this.config.get('discord.devUserId')}>!`);

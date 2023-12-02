@@ -111,9 +111,9 @@ export class TestBootstrapper {
       id: roleId,
       name: 'mockrole',
       members: {
-        has: jest.fn(),
+        has: jest.fn().mockImplementation(() => true),
         cache: {
-          has: jest.fn(),
+          has: jest.fn().mockImplementation(() => true),
         },
       },
     } as any;
