@@ -97,10 +97,23 @@ export class TestBootstrapper {
           fetch: jest.fn().mockImplementation(() => this.getMockDiscordUser()),
         },
         roles: {
-          fetch: jest.fn(),
+          fetch: jest.fn().mockImplementation(() => this.getMockDiscordRole('4969797969594')),
           cache: {
-            get: jest.fn(),
+            get: jest.fn().mockImplementation(() => this.getMockDiscordRole('4969797969594')),
           },
+        },
+      },
+    } as any;
+  }
+
+  static getMockDiscordRole(roleId: string) {
+    return {
+      id: roleId,
+      name: 'mockrole',
+      members: {
+        has: jest.fn(),
+        cache: {
+          has: jest.fn(),
         },
       },
     } as any;
@@ -112,7 +125,7 @@ export class TestBootstrapper {
         channelId: channelId,
         guild: {
           roles: {
-            fetch: jest.fn().mockReturnValue({ id: '4969797969594' }),
+            fetch: jest.fn().mockImplementation(() => this.getMockDiscordRole('4969797969594')),
           },
           members: {
             fetch: jest.fn().mockImplementation(() => this.getMockDiscordUser()),

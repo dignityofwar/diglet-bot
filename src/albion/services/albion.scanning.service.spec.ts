@@ -248,6 +248,9 @@ describe('AlbionScanningService', () => {
 
   // Reverse role scanning
   it('reverse scan should properly error upon blank role', async () => {
+    mockDiscordMessage.guild.roles.fetch = jest.fn().mockImplementation(() => {
+      return null;
+    });
     await expect(service.reverseRoleScan(mockDiscordMessage)).rejects.toThrowError('Reverse Role Scan: Role @ALB/Guildmaster does not seem to exist!');
   });
   it('reverse scan should properly error upon Discord role error', async () => {
@@ -293,7 +296,7 @@ describe('AlbionScanningService', () => {
     await service.reverseRoleScan(mockDiscordMessage);
     expect(mockDiscordMessage.channel.send).toBeCalledWith('foo'); // For scanCountMessage
     expect(mockDiscordMessage.channel.send).toBeCalledWith('### Scanning 7 Discord roles for members who are falsely registered...');
-    expect(mockDiscordMessage.channel.send).toBeCalledWith('## 🚨 1 invalid users detected via Reverse Role Scan!\nThese users have been **automatically** stripped of their roles.');
+    expect(mockDiscordMessage.channel.send).toBeCalledWith('## 🚨 1 invalid users detected via Reverse Role Scan!\nThese users have been **automatically** stripped of their incorrect roles.');
     expect(mockDiscordMessage.channel.send).toBeCalledWith('foo'); // For invalid user line
     expect(mockDiscordUser.roles.remove).toBeCalledWith(mockedRoleToDelete);
   });
@@ -318,16 +321,7 @@ describe('AlbionScanningService', () => {
   });
 
   // Remove leavers handling
-  it('should properly handle server leavers', async () => {
-    mockDiscordMessage.guild.members.fetch = jest.fn().mockRejectedValueOnce(new Error('Unknown Member'));
-
-    await service.removeLeavers([mockCharacter], mockDiscordMessage);
-    expect(mockDiscordMessage.channel.send).toBeCalledTimes(3);
-    expect(mockDiscordMessage.channel.send).toBeCalledWith('### Scanned 0/1 registered members...');
-    expect(mockDiscordMessage.channel.send).toBeCalledWith('## 🚪 1 leavers detected!');
-    expect(mockDiscordMessage.channel.send).toBeCalledWith(`- ‼️🫥️ Discord member for Character **${mockCharacter.Name}** has left the DIG server. Their registration status has been removed. **They require booting from the Guild!**`);
-  });
-  it('should properly handle guild leavers', async () => {
+  it('should properly handle guild only leavers who have joined a new guild', async () => {
     // Mock the Albion API response to denote the character has left the guild
     mockCharacter.GuildId = 'foobar';
 
@@ -338,32 +332,60 @@ describe('AlbionScanningService', () => {
     expect(mockDiscordMessage.channel.send).toBeCalledWith('## 🚪 1 leavers detected!');
     expect(mockDiscordMessage.channel.send).toBeCalledWith(`- 👋 <@${mockDiscordUser.id}>'s character **${mockCharacter.Name}** has left the Guild. Their roles and registration status have been stripped.`);
   });
-  it('should properly handle guild leavers and handle role errors', async () => {
+  it('should properly handle guild only leavers when they have no guild', async () => {
     // Mock the Albion API response to denote the character has left the guild
-    mockCharacter.GuildId = 'foobar';
-
-    mockDiscordUser.roles.cache.has = jest.fn().mockImplementation(() => true);
-    mockDiscordUser.roles.remove = jest.fn().mockRejectedValueOnce(new Error('Operation went boom'));
-    mockDiscordMessage.guild.roles.cache.get = jest.fn().mockImplementation(() => {
-      return {
-        name: 'foobar',
-      };
-    });
+    mockCharacter.GuildId = null;
 
     await service.removeLeavers([mockCharacter], mockDiscordMessage);
 
-    expect(mockDiscordMessage.channel.send).toHaveBeenCalledWith(`ERROR: Unable to remove role "foobar" from ${mockCharacter.Name} (${mockCharacter.Id}). Pinging <@${mockDevUserId}>!`);
+    expect(mockDiscordMessage.channel.send).toBeCalledTimes(3);
+    expect(mockDiscordMessage.channel.send).toBeCalledWith('### Scanned 0/1 registered members...');
+    expect(mockDiscordMessage.channel.send).toBeCalledWith('## 🚪 1 leavers detected!');
+    expect(mockDiscordMessage.channel.send).toBeCalledWith(`- 👋 <@${mockDiscordUser.id}>'s character **${mockCharacter.Name}** has left the Guild. Their roles and registration status have been stripped.`);
+  });
+  it('should properly handle server only leavers', async () => {
+    mockDiscordMessage.guild.members.fetch = jest.fn().mockRejectedValueOnce(new Error('Unknown Member'));
+
+    await service.removeLeavers([mockCharacter], mockDiscordMessage);
+    expect(mockDiscordMessage.channel.send).toBeCalledTimes(3);
+    expect(mockDiscordMessage.channel.send).toBeCalledWith('### Scanned 0/1 registered members...');
+    expect(mockDiscordMessage.channel.send).toBeCalledWith('## 🚪 1 leavers detected!');
+    expect(mockDiscordMessage.channel.send).toBeCalledWith(`- ‼️🫥️ Discord member for Character **${mockCharacter.Name}** has left the DIG Discord server. Their registration status has been removed. **They require booting from the Guild!**`);
+  });
+  it('should properly handle leavers for both server and guild', async () => {
+    // Mock the Albion API response to denote the character has left the guild
+    mockCharacter.GuildId = 'foobar';
+    mockDiscordMessage.guild.members.fetch = jest.fn().mockRejectedValueOnce(new Error('Unknown Member'));
+
+    await service.removeLeavers([mockCharacter], mockDiscordMessage);
+    expect(mockDiscordMessage.channel.send).toBeCalledTimes(3);
+    expect(mockDiscordMessage.channel.send).toBeCalledWith('### Scanned 0/1 registered members...');
+    expect(mockDiscordMessage.channel.send).toBeCalledWith('## 🚪 1 leavers detected!');
+    expect(mockDiscordMessage.channel.send).toBeCalledWith(`- 💁 Character / Player ${mockCharacter.Name} has left **both** the DIG server and the Guild. They are dead to us now 💅`);
+  });
+  it('should properly handle guild only leavers and handle role errors', async () => {
+    const mockedRole = TestBootstrapper.getMockDiscordRole('lol');
+    // Mock the Albion API response to denote the character has left the guild
+    mockCharacter.GuildId = 'foobar';
+    mockDiscordMessage.guild.roles.fetch = jest.fn().mockImplementation(() => {
+      return {
+        ...mockedRole,
+        members: {
+          has: jest.fn().mockImplementation(() => true),
+        },
+      };
+    });
+    mockDiscordUser.roles.remove = jest.fn().mockRejectedValueOnce(new Error('Operation went boom!'));
+
+    await service.removeLeavers([mockCharacter], mockDiscordMessage);
+    expect(mockDiscordMessage.channel.send).toBeCalledWith('### Scanned 0/1 registered members...');
+    expect(mockDiscordMessage.channel.send).toBeCalledWith('## 🚪 1 leavers detected!');
+    expect(mockDiscordMessage.channel.send).toBeCalledWith(`- 👋 <@${mockDiscordUser.id}>'s character **${mockCharacter.Name}** has left the Guild. Their roles and registration status have been stripped.`);
+    expect(mockDiscordMessage.channel.send).toBeCalledWith(`ERROR: Unable to remove role "${mockedRole.name}" from ${mockCharacter.Name} (${mockCharacter.Id}). Err: "Operation went boom!". Pinging <@${mockDevUserId}>!`);
   });
   it('should properly handle guild leavers and handle database errors', async () => {
     // Mock the Albion API response to denote the character has left the guild
     mockCharacter.GuildId = 'foobar';
-
-    mockDiscordUser.roles.cache.has = jest.fn().mockImplementation(() => true);
-    mockDiscordMessage.guild.roles.cache.get = jest.fn().mockImplementation(() => {
-      return {
-        name: 'foobar',
-      };
-    });
 
     mockAlbionRegistrationsRepository.removeAndFlush = jest.fn().mockRejectedValueOnce(new Error('Operation went boom'));
 
@@ -372,8 +394,6 @@ describe('AlbionScanningService', () => {
     expect(mockDiscordMessage.channel.send).toHaveBeenCalledWith(`ERROR: Unable to remove Albion Character "${mockCharacter.Name}" (${mockCharacter.Id}) from registration database! Pinging <@${mockDevUserId}>!`);
   });
   it('should properly handle zero server leavers', async () => {
-    mockDiscordMessage.guild.members.fetch = jest.fn().mockResolvedValueOnce(mockDiscordUser);
-
     await service.removeLeavers([mockCharacter], mockDiscordMessage);
     expect(mockDiscordMessage.channel.send).toBeCalledTimes(2);
     expect(mockDiscordMessage.channel.send).toBeCalledWith('### Scanned 0/1 registered members...');
