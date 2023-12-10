@@ -28,32 +28,36 @@ describe('PurgeService', () => {
   });
 
   // Helper function to create a mock member
-  function createMockMember(isBot, hasRole) {
-    return {
-      user: {
-        bot: isBot,
-      },
-      roles: {
-        cache: {
-          has: jest.fn().mockReturnValue(hasRole),
+  function createMockMember(isBot, hasRole, returnCount) {
+    const returnArray = [];
+    let count = 0;
+    while (count < returnCount) {
+      returnArray.push({
+        user: {
+          bot: isBot,
         },
-      },
-    };
+        roles: {
+          cache: {
+            has: () => hasRole,
+          },
+        },
+      });
+      count++;
+    }
+    return returnArray;
   }
 
+  const members = [
+    ...createMockMember(false, true, 10), // 10 humans with role
+    ...createMockMember(false, false, 20), // 20 humans without role
+    ...createMockMember(true, false, 5), // 5 bots without role
+  ];
+
   // Your test case with dynamic member creation
-  it('should properly calculate bots and humans without the onboarded role', async () => {
+  it('should properly calculate purgable members, bot count and human count', async () => {
     mockMessage.guild.roles.cache.find = jest.fn().mockReturnValue({
       id: '123',
     });
-
-    // Define your members here
-    const members = [
-      ...Array.from({ length: 3 }, () => createMockMember(false, false)), // 3 humans without role
-      ...Array.from({ length: 2 }, () => createMockMember(true, false)), // 2 bots without role
-      createMockMember(true, false), // 1 bot
-      ...Array.from({ length: 30 }, () => createMockMember(false, true)), // 30 humans with role
-    ];
 
     // Mock forEach implementation
     mockMessage.guild.members.cache.forEach = jest.fn().mockImplementation((callback) => {
@@ -62,6 +66,9 @@ describe('PurgeService', () => {
 
     const result = await service.getPurgableMembers(mockMessage as any);
 
-    expect(result.length).toBe(3); // Adjust expectation based on your mock data
+    expect(result.purgableMembers.length).toBe(20);
+    expect(result.totalMembers).toBe(35);
+    expect(result.totalBots).toBe(5);
+    expect(result.totalHumans).toBe(30);
   });
 });
