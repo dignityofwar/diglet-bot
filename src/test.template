@@ -1,6 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { Test } from '@nestjs/testing';
-import { AlbionApiService } from './albion.api.service';
 import { ConfigService } from '@nestjs/config';
 import { TestBootstrapper } from '../utilities/test.bootstrapper';
 
