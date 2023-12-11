@@ -28,17 +28,17 @@ export class ThanosSnapCommand {
 
     await channel.send('https://media.giphy.com/media/ie76dJeem4xBDcf83e/giphy.gif');
 
-    const message = await channel.send('Executing purge command...');
+    const message = await channel.send('Snapping fingers...');
 
     const purgableMembers = await this.purgeService.getPurgableMembers(message);
 
-    if (purgableMembers.purgableMembers.length === 0) {
+    if (purgableMembers.purgableMembers.size === 0) {
       this.logger.log('All members are onboarded!');
       await channel.send('All members are onboarded!');
       return;
     }
 
-    await message.edit(`Found ${purgableMembers.purgableMembers.length} members who are not onboarded...\nI don't feel too good Mr Stark...`);
+    await message.edit(`Found ${purgableMembers.purgableMembers.size} members who are not onboarded...\nI don't feel too good Mr Stark...`);
 
     // I don't feel too good Mr Stark...
     await message.channel.send('https://media2.giphy.com/media/XzkGfRsUweB9ouLEsE/giphy.gif');
@@ -51,6 +51,6 @@ export class ThanosSnapCommand {
 
     await message.channel.send('https://media1.tenor.com/m/g0oFjHy6W1cAAAAC/thanos-smile.gif');
 
-    await message.channel.send(`Purge complete. ${purgableMembers.purgableMembers.length} members have been removed from the server.`);
+    await message.channel.send(`✅ Purge complete. ${purgableMembers.purgableMembers.size} members have been removed from the server. It is now recommended to run the Scanners found in #albion-scans and #ps2-scans.`);
   }
 }
