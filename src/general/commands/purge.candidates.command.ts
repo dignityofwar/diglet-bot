@@ -16,7 +16,7 @@ export class PurgeCandidatesCommand {
   ) {}
 
   @Handler()
-  async onPurgeCommand(interaction: ChatInputCommandInteraction): Promise<void> {
+  async onPurgeCandidatesCommand(interaction: ChatInputCommandInteraction): Promise<void> {
     await interaction.reply('Executing purge command...');
 
     const message = await interaction.channel.send('Calculating purgable members...');
@@ -51,11 +51,13 @@ export class PurgeCandidatesCommand {
 
     this.logger.log(`Found ${purgableMembersBatched.length} batches of 20 members who are not onboarded. Sending batches...`);
 
+    const percent = Math.floor((purgableMembers.purgableMembers.length / purgableMembers.totalHumans) * 100);
+
     await interaction.channel.send(`List complete.\n 
 - Total members: **${purgableMembers.totalMembers}**
 - Total bots: **${purgableMembers.totalBots}**
 - Total humans: **${purgableMembers.totalHumans}**
-- Total human members who are not onboarded: **${purgableMembers.purgableMembers.length}**`);
+- Total human members who are not onboarded: **${purgableMembers.purgableMembers.length}** (${percent}%)`);
 
     this.logger.log('All batches sent.');
     this.logger.log(`Identified ${purgableMembers.purgableMembers.length} members are not onboarded.`);

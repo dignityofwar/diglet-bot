@@ -71,4 +71,16 @@ describe('PurgeService', () => {
     expect(result.totalBots).toBe(5);
     expect(result.totalHumans).toBe(30);
   });
+
+  it('should call the kick function for each purgable member', async () => {
+    mockMessage.guild.roles.cache.find = jest.fn().mockReturnValue({
+      id: '123',
+    });
+
+    // Mock forEach implementation
+    mockMessage.guild.members.cache.forEach = jest.fn().mockImplementation((callback) => {
+      members.forEach(member => callback(member));
+    });
+
+  });
 });

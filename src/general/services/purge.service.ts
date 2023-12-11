@@ -42,7 +42,8 @@ export class PurgeService {
       return 0;
     });
 
-    await statusMessage.edit(`Calculating out of ${members.length} non-bot members who are not onboarded...`);
+    await statusMessage.delete();
+
     // Filter out bots and people who are onboarded already
     return {
       purgableMembers: members.filter(member => !member.user.bot && !member.roles.cache.has(onboardedRole.id)),
@@ -50,5 +51,42 @@ export class PurgeService {
       totalBots: members.filter(member => member.user.bot).length,
       totalHumans: members.filter(member => !member.user.bot).length,
     };
+
+  }
+
+  async kickPurgableMembers(
+    message: Message,
+    purgableMembers: GuildMember[],
+    dryRun = true
+  ): Promise<void> {
+    const statusMessage = await message.channel.send(`Kicking ${purgableMembers.length} purgable members...`);
+    const lastKickedMessage = await message.channel.send('Awaiting first kick...');
+
+    this.logger.log(`Kicking ${purgableMembers.length} purgable members...`);
+    let count = 0;
+    const total = purgableMembers.length;
+
+    for (const member of purgableMembers) {
+      count++;
+      // Every 5 members, edit the status message
+      if (purgableMembers.indexOf(member) % 5 === 0) {
+        const percent = Math.floor((count / total) * 100);
+        await lastKickedMessage.edit(`Kicking ${member.nickname || member.user.username} (${member.id}) [${count}/${total}] (${percent}%)`);
+      }
+
+      try {
+        if (!dryRun) {
+          await member.kick('Purged: Has not onboarded.');
+        }
+        this.logger.log(`Kicked member ${member.user.username} (${member.id})`);
+      }
+      catch (err) {
+        this.logger.error(`Failed to kick member ${member.user.username} (${member.id})`);
+        message.channel.send(`⚠️ Failed to kick member <@${member.id}>! Err: ${err.message}`);
+      }
+    }
+    this.logger.log('All purgable members kicked.');
+    await statusMessage.edit('All purgable members kicked.');
+    await lastKickedMessage.delete();
   }
 }
