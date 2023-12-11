@@ -18,7 +18,13 @@ import { ScheduleModule } from '@nestjs/schedule';
       useFactory: (configService: ConfigService) => ({
         token: configService.get('TOKEN'),
         discordClientOptions: {
-          intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages, GatewayIntentBits.GuildPresences, GatewayIntentBits.GuildMessageReactions],
+          intents: [
+            GatewayIntentBits.Guilds,
+            GatewayIntentBits.GuildMembers,
+            GatewayIntentBits.GuildMessages,
+            GatewayIntentBits.GuildMessageReactions,
+            GatewayIntentBits.GuildPresences,
+          ],
         },
         registerCommandOptions: [
           {
