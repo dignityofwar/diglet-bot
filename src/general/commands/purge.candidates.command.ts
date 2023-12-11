@@ -1,5 +1,5 @@
 import { Command, Handler } from '@discord-nestjs/core';
-import { ApplicationCommandType, ChatInputCommandInteraction, Guild, GuildMember } from 'discord.js';
+import { ApplicationCommandType, ChatInputCommandInteraction, GuildMember } from 'discord.js';
 import { Logger } from '@nestjs/common';
 import { PurgeService } from '../services/purge.service';
 
@@ -17,15 +17,19 @@ export class PurgeCandidatesCommand {
 
   @Handler()
   async onPurgeCandidatesCommand(interaction: ChatInputCommandInteraction): Promise<void> {
-    await interaction.reply('Executing purge command...');
+    await interaction.reply('Finding the poor souls who are not onboarded...');
+    const channel = interaction.channel;
 
-    const message = await interaction.channel.send('Calculating purgable members...');
+    const message = await channel.send('Calculating purgable members...');
 
     const purgableMembers = await this.purgeService.getPurgableMembers(message);
 
     if (purgableMembers.purgableMembers.size === 0) {
       this.logger.log('All members are onboarded!');
-      await interaction.channel.send('All members are onboarded!');
+      await channel.send('https://static1.srcdn.com/wordpress/wp-content/uploads/2019/02/Thanos-Soul-World-Sad-Face.jpg');
+      await channel.send('All members are onboarded or are within grace period! They have been saved from Thanos, for now.');
+      await channel.send(`Humans in grace period: **${purgableMembers.inGracePeriod}**`);
+      await message.delete();
       return;
     }
 
@@ -52,7 +56,7 @@ export class PurgeCandidatesCommand {
 
     // Send the batches
     for (let k = 0; k < purgableMembersBatched.length; k++) {
-      const tempMessage = await interaction.channel.send('foo');
+      const tempMessage = await channel.send('foo');
       await tempMessage.edit(purgableMembersBatched[k]);
     }
 
@@ -60,10 +64,11 @@ export class PurgeCandidatesCommand {
 
     const percent = Math.floor((purgableMembers.purgableMembers.size / purgableMembers.totalHumans) * 100);
 
-    await interaction.channel.send(`List complete.\n 
+    await channel.send(`List complete.\n 
 - Total members: **${purgableMembers.totalMembers}**
 - Total bots: **${purgableMembers.totalBots}**
 - Total humans: **${purgableMembers.totalHumans}**
+- Total humans in 1 week grace period: **${purgableMembers.inGracePeriod}**
 - Total human members who are not onboarded: **${purgableMembers.purgableMembers.size}** (${percent}%)`);
 
     this.logger.log('All batches sent.');

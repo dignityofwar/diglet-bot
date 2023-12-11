@@ -6,6 +6,7 @@ export interface PurgableMemberList {
   totalMembers: number;
   totalBots: number;
   totalHumans: number;
+  inGracePeriod: number;
 }
 
 @Injectable()
@@ -57,10 +58,25 @@ export class PurgeService {
 
     // Filter out bots and people who are onboarded already
     return {
-      purgableMembers: members.filter(member => !member.user.bot && !member.roles.cache.has(onboardedRole.id)),
+      purgableMembers: members.filter(member => {
+        if (member.user.bot) {
+          return false;
+        }
+        // Don't boot people brand new to the server, give them 1 weeks grace period
+        if (member.joinedTimestamp > Date.now() - 604800000) {
+          return false;
+        }
+        return !member.roles.cache.has(onboardedRole.id);
+      }),
       totalMembers: members.size,
       totalBots: members.filter(member => member.user.bot).size,
       totalHumans: members.filter(member => !member.user.bot).size,
+      inGracePeriod: members.filter(member => {
+        // If in 1 weeks grace period
+        if (member.joinedTimestamp > Date.now() - 604800000) {
+          return true;
+        }
+      }).size,
     };
   }
 
