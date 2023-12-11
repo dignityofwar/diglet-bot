@@ -43,15 +43,17 @@ export class PurgeService {
 
     await statusMessage.edit(`Refreshing member cache [0/${members.size}]...`);
 
-    // Refresh the cache of each member
-    let c = 0;
-    for (const member of members.values()) {
-      c++;
+    const batchSize = 25; // Define the size of each batch
 
-      if (c % 5 === 0) {
-        await statusMessage.edit(`Refreshing member cache [${c}/${members.size}]...`);
-      }
-      await member.fetch();
+    // Refresh the cache of each member
+    for (let m = 0; m < members.size; m += batchSize) {
+      const membersArray = Array.from(members.values());
+      const batch = membersArray.slice(m, m + batchSize);
+      const promises = batch.map(member => member.fetch());
+
+      await Promise.all(promises);
+
+      await statusMessage.edit(`Refreshing member cache [${m}/${members.size}]...`);
     }
 
     await statusMessage.delete();
