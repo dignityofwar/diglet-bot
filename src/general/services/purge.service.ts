@@ -46,7 +46,14 @@ export class PurgeService {
     const statusMessage = await message.channel.send('Fetching guild members...');
 
     this.logger.log('Fetching guild members...');
-    const members = await message.guild.members.fetch();
+    let members: Collection<string, GuildMember>;
+    try {
+      members = await message.guild.members.fetch();
+    }
+    catch (err) {
+      await message.channel.send('Error fetching guild members. Please try again.');
+      return;
+    }
     await statusMessage.edit(`${members.size} members found. Sorting members...`);
     this.logger.log(`${members.size} members found`);
 
@@ -73,7 +80,14 @@ export class PurgeService {
       const batch = membersArray.slice(m, m + batchSize);
       const promises = batch.map(member => member.fetch());
 
-      await Promise.all(promises);
+      try {
+        await Promise.all(promises);
+      }
+      catch (err) {
+        await message.channel.send(`Error refreshing member cache: ${err.message}`);
+        this.logger.error(`Error refreshing member cache: ${err.message}`);
+        console.log(batch);
+      }
 
       await statusMessage.edit(`Refreshing member cache [${m}/${members.size}]...`);
     }
