@@ -46,7 +46,7 @@ export class PurgeCandidatesCommand {
     purgableMembers.purgableMembers.each((member: GuildMember) => {
       i++;
       remaining--;
-      batch += `- <@${member.user.id}> / ${member.nickname || member.user.username},  joined <t:${Math.floor(member.joinedTimestamp / 1000)}:R>\n`;
+      batch += `- <@${member.user.id}> / ${member.nickname || member.user.username}, joined <t:${Math.floor(member.joinedTimestamp / 1000)}:R>\n`;
 
       if (i % 20 === 0 || remaining === 0) {
         purgableMembersBatched.push(batch);
