@@ -1,9 +1,14 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { Collection, GuildMember, Message } from 'discord.js';
+import { Collection, GuildMember, Message, Role } from 'discord.js';
 import { DiscordService } from '../../discord/discord.service';
 
 export interface PurgableMemberList {
   purgableMembers: Collection<string, GuildMember>;
+  purgableByGame: {
+    ps2: Collection<string, GuildMember>;
+    foxhole: Collection<string, GuildMember>;
+    albion: Collection<string, GuildMember>;
+  }
   totalMembers: number;
   totalBots: number;
   totalHumans: number;
@@ -20,9 +25,17 @@ export class PurgeService {
 
   async getPurgableMembers(message: Message): Promise<PurgableMemberList> {
     const onboardedRole = message.guild.roles.cache.find(role => role.name === 'Onboarded');
+    const ps2Role = message.guild.roles.cache.find(role => role.name === 'Planetside2');
+    const foxholeRole = message.guild.roles.cache.find(role => role.name === 'Foxhole');
+    const albionRole = message.guild.roles.cache.find(role => role.name === 'Albion Online');
 
     if (!onboardedRole) {
       await message.channel.send('Could not find onboarded role. Please create a role called "Onboarded" and try again.');
+      return;
+    }
+
+    if (!ps2Role || !foxholeRole || !albionRole) {
+      await message.channel.send('Could not find game roles. Please create roles called "Planetside2", "Foxhole", and "Albion Online" and try again.');
       return;
     }
 
@@ -65,16 +78,12 @@ export class PurgeService {
 
     // Filter out bots and people who are onboarded already
     return {
-      purgableMembers: members.filter(member => {
-        if (member.user.bot) {
-          return false;
-        }
-        // Don't boot people brand new to the server, give them 1 weeks grace period
-        if (member.joinedTimestamp > Date.now() - 604800000) {
-          return false;
-        }
-        return !member.roles.cache.has(onboardedRole.id);
-      }),
+      purgableMembers: members.filter(member => this.isNotOnboarded(member, onboardedRole)),
+      purgableByGame: {
+        ps2: members.filter(member => this.isNotOnboarded(member, onboardedRole) && member.roles.cache.has(ps2Role.id)),
+        foxhole: members.filter(member => this.isNotOnboarded(member, onboardedRole) && member.roles.cache.has(foxholeRole.id)),
+        albion: members.filter(member => this.isNotOnboarded(member, onboardedRole) && member.roles.cache.has(albionRole.id)),
+      },
       totalMembers: members.size,
       totalBots: members.filter(member => member.user.bot).size,
       totalHumans: members.filter(member => !member.user.bot).size,
@@ -85,6 +94,17 @@ export class PurgeService {
         }
       }).size,
     };
+  }
+
+  isNotOnboarded(member: GuildMember, role: Role): boolean {
+    if (member.user.bot) {
+      return false;
+    }
+    // Don't boot people brand new to the server, give them 1 weeks grace period
+    if (member.joinedTimestamp > Date.now() - 604800000) {
+      return false;
+    }
+    return !member.roles.cache.has(role.id);
   }
 
   async kickPurgableMembers(

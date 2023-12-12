@@ -34,25 +34,59 @@ export class PurgeCandidatesCommand {
     }
 
     await message.edit(`Found ${purgableMembers.purgableMembers.size} members who are not onboarded. Generating list...`);
-    purgableMembers.purgableMembers.each((member: GuildMember) => {
-      console.log(member.user);
-    });
 
-    // Loop through the members and send them in batches of 20, appending the .id of each member to a concatenated string to be sent in batches
+    // Hold a list of member IDs that will be sent by the below
+    const gameMemberIds: string[] = [];
+
+    // Loop through purgable members by game, batch sending the members in each game
     const purgableMembersBatched = [];
-    let batch = '';
-    let remaining = purgableMembers.purgableMembers.size;
-    let i = 0;
-    purgableMembers.purgableMembers.each((member: GuildMember) => {
-      i++;
-      remaining--;
-      batch += `- <@${member.user.id}> / ${member.nickname || member.user.username}, joined <t:${Math.floor(member.joinedTimestamp / 1000)}:R>\n`;
+    for (const game in purgableMembers.purgableByGame) {
+      if (purgableMembers.purgableByGame[game].size > 0) {
+        const batch: string[] = [];
+        purgableMembers.purgableByGame[game].each((member: GuildMember) => {
+          batch.push(`- [${game.toUpperCase()}] <@${member.user.id}> / ${member.nickname || member.user.username}, joined <t:${Math.floor(member.joinedTimestamp / 1000)}:R>\n`);
+          gameMemberIds.push(member.user.id);
+        });
+        await channel.send(`## ${game.toUpperCase()}`);
+        // Go through the batches by groups of 20 and spit out the members
+        for (let i = 0; i < batch.length; i += 20) {
+          const tempMessage = await channel.send('foo');
+          await tempMessage.edit(`${batch.slice(i, i + 20)}`);
+        }
+      }
+    }
 
-      if (i % 20 === 0 || remaining === 0) {
-        purgableMembersBatched.push(batch);
-        batch = '';
+    // Now loop through the purgable members in it's entirity, reference to the gameMemberIds array to see if the member has already been sent
+    const batch: string[] = [];
+    purgableMembers.purgableMembers.each((member: GuildMember) => {
+      if (!gameMemberIds.includes(member.user.id)) {
+        batch.push(`- [NONE] <@${member.user.id}> / ${member.nickname || member.user.username}, joined <t:${Math.floor(member.joinedTimestamp / 1000)}:R>\n`);
       }
     });
+
+    await channel.send('## No game role');
+
+    // Go through the batches by groups of 20 and spit out the members
+    for (let i = 0; i < batch.length; i += 20) {
+      const tempMessage = await channel.send('foo');
+      await tempMessage.edit(`${batch.slice(i, i + 20)}`);
+    }
+
+    // // Loop through the members and send them in batches of 20, appending the .id of each member to a concatenated string to be sent in batches
+    // const purgableMembersBatched = [];
+    // let batch = '';
+    // let remaining = purgableMembers.purgableMembers.size;
+    // let i = 0;
+    // purgableMembers.purgableMembers.each((member: GuildMember) => {
+    //   i++;
+    //   remaining--;
+    //   batch += `- <@${member.user.id}> / ${member.nickname || member.user.username}, joined <t:${Math.floor(member.joinedTimestamp / 1000)}:R>\n`;
+    //
+    //   if (i % 20 === 0 || remaining === 0) {
+    //     purgableMembersBatched.push(batch);
+    //     batch = '';
+    //   }
+    // });
 
     // Send the batches
     for (let k = 0; k < purgableMembersBatched.length; k++) {
