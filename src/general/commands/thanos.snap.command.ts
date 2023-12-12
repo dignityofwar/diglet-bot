@@ -26,6 +26,10 @@ export class ThanosSnapCommand {
     const channel = interaction[0].channel;
     await interaction[0].reply('I am... inevitable.');
 
+    if (dto.dryRun) {
+      await channel.send('## This is a dry run! No members will be kicked!');
+    }
+
     await channel.send('https://media.giphy.com/media/ie76dJeem4xBDcf83e/giphy.gif');
 
     const message = await channel.send('Snapping fingers...');
@@ -51,6 +55,6 @@ export class ThanosSnapCommand {
 
     await message.channel.send('https://media1.tenor.com/m/g0oFjHy6W1cAAAAC/thanos-smile.gif');
 
-    await message.channel.send(`✅ <@${interaction[0].member.user.id} Purge complete. ${purgableMembers.purgableMembers.size} members have been removed from the server. It is now recommended to run the Scanners found in #albion-scans and #ps2-scans.`);
+    await message.channel.send(`✅ <@${interaction[0].member.user.id}> Purge complete. **${purgableMembers.purgableMembers.size}** members have been removed from the server. It is now recommended to run the Scanners found in #albion-scans and #ps2-scans.`);
   }
 }
