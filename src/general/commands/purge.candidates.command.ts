@@ -56,7 +56,7 @@ export class PurgeCandidatesCommand {
       }
     }
 
-    // Now loop through the purgable members in it's entirity, reference to the gameMemberIds array to see if the member has already been sent
+    // Now loop through the purgable members in its entirety, reference to the gameMemberIds array to see if the member has already been sent
     const batch: string[] = [];
     purgableMembers.purgableMembers.each((member: GuildMember) => {
       if (!gameMemberIds.includes(member.user.id)) {
@@ -71,22 +71,6 @@ export class PurgeCandidatesCommand {
       const tempMessage = await channel.send('foo');
       await tempMessage.edit(`${batch.slice(i, i + 20)}`);
     }
-
-    // // Loop through the members and send them in batches of 20, appending the .id of each member to a concatenated string to be sent in batches
-    // const purgableMembersBatched = [];
-    // let batch = '';
-    // let remaining = purgableMembers.purgableMembers.size;
-    // let i = 0;
-    // purgableMembers.purgableMembers.each((member: GuildMember) => {
-    //   i++;
-    //   remaining--;
-    //   batch += `- <@${member.user.id}> / ${member.nickname || member.user.username}, joined <t:${Math.floor(member.joinedTimestamp / 1000)}:R>\n`;
-    //
-    //   if (i % 20 === 0 || remaining === 0) {
-    //     purgableMembersBatched.push(batch);
-    //     batch = '';
-    //   }
-    // });
 
     // Send the batches
     for (let k = 0; k < purgableMembersBatched.length; k++) {
