@@ -6,8 +6,10 @@ export interface PurgableMemberList {
   purgableMembers: Collection<string, GuildMember>;
   purgableByGame: {
     ps2: Collection<string, GuildMember>;
+    ps2Verified: Collection<string, GuildMember>;
     foxhole: Collection<string, GuildMember>;
     albion: Collection<string, GuildMember>;
+    albionRegistered: Collection<string, GuildMember>;
   }
   totalMembers: number;
   totalBots: number;
@@ -26,15 +28,17 @@ export class PurgeService {
   async getPurgableMembers(message: Message): Promise<PurgableMemberList> {
     const onboardedRole = message.guild.roles.cache.find(role => role.name === 'Onboarded');
     const ps2Role = message.guild.roles.cache.find(role => role.name === 'Planetside2');
+    const ps2VerifiedRole = message.guild.roles.cache.find(role => role.name === 'PS2/Verified');
     const foxholeRole = message.guild.roles.cache.find(role => role.name === 'Foxhole');
     const albionRole = message.guild.roles.cache.find(role => role.name === 'Albion Online');
+    const albionRegisteredRole = message.guild.roles.cache.find(role => role.name === 'ALB/Registered');
 
     if (!onboardedRole) {
       await message.channel.send('Could not find onboarded role. Please create a role called "Onboarded" and try again.');
       return;
     }
 
-    if (!ps2Role || !foxholeRole || !albionRole) {
+    if (!ps2Role || !ps2VerifiedRole || !foxholeRole || !albionRole || !albionRegisteredRole) {
       await message.channel.send('Could not find game roles. Please create roles called "Planetside2", "Foxhole", and "Albion Online" and try again.');
       return;
     }
@@ -81,8 +85,10 @@ export class PurgeService {
       purgableMembers: members.filter(member => this.isNotOnboarded(member, onboardedRole)),
       purgableByGame: {
         ps2: members.filter(member => this.isNotOnboarded(member, onboardedRole) && member.roles.cache.has(ps2Role.id)),
+        ps2Verified: members.filter(member => this.isNotOnboarded(member, onboardedRole) && member.roles.cache.has(ps2VerifiedRole.id)),
         foxhole: members.filter(member => this.isNotOnboarded(member, onboardedRole) && member.roles.cache.has(foxholeRole.id)),
         albion: members.filter(member => this.isNotOnboarded(member, onboardedRole) && member.roles.cache.has(albionRole.id)),
+        albionRegistered: members.filter(member => this.isNotOnboarded(member, onboardedRole) && member.roles.cache.has(albionRegisteredRole.id)),
       },
       totalMembers: members.size,
       totalBots: members.filter(member => member.user.bot).size,

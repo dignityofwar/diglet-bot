@@ -87,7 +87,17 @@ export class PurgeCandidatesCommand {
 - Total bots: **${purgableMembers.totalBots}**
 - Total humans: **${purgableMembers.totalHumans}**
 - Total humans in 1 week grace period: **${purgableMembers.inGracePeriod}**
-- Total human members who are not onboarded: **${purgableMembers.purgableMembers.size}** (${percent}%)`);
+- Total human members who are not onboarded: **${purgableMembers.purgableMembers.size}** (${percent}%)
+
+## Game stats
+Note, these numbers will not add up to total numbers, as a member can be in multiple games.
+
+- Total PS2 kicked: **${purgableMembers.purgableByGame.ps2.size}**
+- Total PS2 verified kicked: **${purgableMembers.purgableByGame.ps2Verified.size}**
+- Total Foxhole kicked: **${purgableMembers.purgableByGame.foxhole.size}**
+- Total Albion kicked: **${purgableMembers.purgableByGame.albion.size}**
+- Total ALB Registered kicked: **${purgableMembers.purgableByGame.albionRegistered.size}**`
+    );
 
     this.logger.log('All batches sent.');
     this.logger.log(`Identified ${purgableMembers.purgableMembers.size} members are not onboarded.`);
