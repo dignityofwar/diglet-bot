@@ -51,7 +51,7 @@ export class PurgeCandidatesCommand {
         // Go through the batches by groups of 20 and spit out the members
         for (let i = 0; i < batch.length; i += 20) {
           const tempMessage = await channel.send('foo');
-          await tempMessage.edit(`${batch.slice(i, i + 20)}`);
+          await tempMessage.edit(`${batch.slice(i, i + 20).join('')}`);
         }
       }
     }
@@ -69,7 +69,7 @@ export class PurgeCandidatesCommand {
     // Go through the batches by groups of 20 and spit out the members
     for (let i = 0; i < batch.length; i += 20) {
       const tempMessage = await channel.send('foo');
-      await tempMessage.edit(`${batch.slice(i, i + 20)}`);
+      await tempMessage.edit(`${batch.slice(i, i + 20).join('')}`);
     }
 
     // Send the batches
