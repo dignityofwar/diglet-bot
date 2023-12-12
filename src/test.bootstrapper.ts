@@ -57,6 +57,7 @@ export class TestBootstrapper {
       },
     },
     setNickname: jest.fn().mockResolvedValue(() => true),
+    kick: jest.fn().mockResolvedValue(() => true),
   };
   static getMockDiscordUser() {
     return {
