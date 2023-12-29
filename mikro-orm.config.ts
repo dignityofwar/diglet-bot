@@ -29,6 +29,7 @@ const config: MySqlOptions = {
   },
   migrations: {
     path: './src/database/migrations',
+    transactional: false,
   },
   logger: logger.log.bind(logger),
   forceUtcTimezone: true,

@@ -4,12 +4,15 @@ import { PS2VerificationAttemptEntity } from './entities/ps2.verification.attemp
 import { PS2MembersEntity } from './entities/ps2.members.entity';
 import { AlbionRegistrationsEntity } from './entities/albion.registrations.entity';
 import { AlbionGuildMembersEntity } from './entities/albion.guildmembers.entity';
+import { DatabaseService } from './services/database.service';
+import { ActivityEntity } from './entities/activity.entity';
 
 @Module({
   imports: [
     MikroOrmModule.forRoot(),
     MikroOrmModule.forFeature({
       entities: [
+        ActivityEntity,
         AlbionGuildMembersEntity,
         AlbionRegistrationsEntity,
         PS2MembersEntity,
@@ -17,7 +20,7 @@ import { AlbionGuildMembersEntity } from './entities/albion.guildmembers.entity'
       ],
     }),
   ],
-  providers: [],
-  exports: [MikroOrmModule],
+  providers: [DatabaseService],
+  exports: [MikroOrmModule, DatabaseService],
 })
 export class DatabaseModule {}
