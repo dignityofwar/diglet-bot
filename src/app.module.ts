@@ -1,7 +1,7 @@
 import { DiscordModule } from '@discord-nestjs/core';
 import { Module } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { GatewayIntentBits } from 'discord.js';
+import { GatewayIntentBits, Partials } from 'discord.js';
 import { GeneralModule } from './general/general.module';
 import { AlbionModule } from './albion/albion.module';
 import { ConfigModule } from './config/config.module';
@@ -25,6 +25,7 @@ import { ScheduleModule } from '@nestjs/schedule';
             GatewayIntentBits.GuildMessageReactions,
             GatewayIntentBits.GuildPresences,
           ],
+          partials: [Partials.Message, Partials.Channel, Partials.Reaction],
         },
         registerCommandOptions: [
           {
