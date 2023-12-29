@@ -24,6 +24,7 @@ import { ScheduleModule } from '@nestjs/schedule';
             GatewayIntentBits.GuildMessages,
             GatewayIntentBits.GuildMessageReactions,
             GatewayIntentBits.GuildPresences,
+            GatewayIntentBits.GuildVoiceStates,
           ],
           partials: [Partials.Message, Partials.Channel, Partials.Reaction],
         },

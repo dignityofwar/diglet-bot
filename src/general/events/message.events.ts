@@ -32,13 +32,13 @@ export class MessageEvents {
   ): Promise<void> {
     if (user.bot) return;
 
-    this.logger.debug(`Message Reaction ${type} event detected from: ${user.username}`);
+    this.logger.debug(`Message Reaction ${type} event detected from "${user.displayName}"`);
 
     // Get the GuildMember from the guild as the client user isn't compatible with the GuildMember class
     const guildMember = message.message.guild.members.cache.get(user.id);
 
     if (!guildMember) {
-      this.logger.error(`Unable to get GuildMember for ${user.username}`);
+      this.logger.error(`Unable to get GuildMember for "${user.displayName}", this could mean they have left the server.`);
       return;
     }
     await this.databaseService.updateActivity(guildMember);
@@ -60,7 +60,7 @@ export class MessageEvents {
         user = await user.fetch();
       }
       catch (error) {
-        this.logger.error(`Error fetching user: ${error.message}`);
+        this.logger.error(`Error fetching user "${user.displayName}": ${error.message}`);
         throw error;
       }
     }

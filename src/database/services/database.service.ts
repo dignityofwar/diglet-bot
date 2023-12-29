@@ -21,12 +21,12 @@ export class DatabaseService {
     if (!entity) {
       entity = new ActivityEntity({
         discordId: member.id,
-        discordNickname: member.nickname || member.user.username,
+        discordNickname: member.displayName,
       });
     }
 
     // Update the timestamp and nickname here in all cases, created or not
-    entity.discordNickname = member.nickname || member.user.username;
+    entity.discordNickname = member.displayName;
     entity.lastActivity = new Date();
 
     try {
