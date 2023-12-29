@@ -59,9 +59,12 @@ export class TestBootstrapper {
     setNickname: jest.fn().mockResolvedValue(() => true),
     kick: jest.fn().mockResolvedValue(() => true),
   };
-  static getMockDiscordUser() {
+  static getMockDiscordUser(isBot = false) {
     return {
       ...this.mockDiscordUser,
+      user: {
+        bot: isBot,
+      },
       guild: {
         members: {
           fetch: jest.fn().mockImplementation(() => this.mockDiscordUser),
@@ -88,6 +91,7 @@ export class TestBootstrapper {
           };
         }),
       },
+      member: this.getMockDiscordUser(),
       roles: {
         cache: {
           has: jest.fn(),
@@ -95,7 +99,9 @@ export class TestBootstrapper {
       },
       guild: {
         members: {
-          cache: jest.fn(),
+          cache: {
+            get: jest.fn().mockImplementation(() => this.getMockDiscordUser()),
+          },
           fetch: jest.fn().mockImplementation(() => this.getMockDiscordUser()),
         },
         roles: {
@@ -143,6 +149,17 @@ export class TestBootstrapper {
         },
       },
     ];
+  }
+
+  static getMockDiscordMessageReaction() {
+    return {
+      message: this.getMockDiscordMessage(),
+      partial: false,
+      fetch: jest.fn(),
+      user: {
+        bot: false,
+      },
+    };
   }
 
   static getMockAlbionCharacter(guildId) {
