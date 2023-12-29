@@ -20,7 +20,7 @@ export class MessageEvents {
   async handleMessageEvent(member: GuildMember, type: string): Promise<void> {
     if (member.user.bot) return;
 
-    console.log(`Message ${type} event detected from: ${member.nickname || member.user.username}`);
+    this.logger.debug(`Message ${type} event detected from: ${member.nickname || member.user.username}`);
 
     await this.databaseService.updateActivity(member);
   }
@@ -32,7 +32,7 @@ export class MessageEvents {
   ): Promise<void> {
     if (user.bot) return;
 
-    console.log(`Message Reaction ${type} event detected from: ${user.username}`);
+    this.logger.debug(`Message Reaction ${type} event detected from: ${user.username}`);
 
     // Get the GuildMember from the guild as the client user isn't compatible with the GuildMember class
     const guildMember = message.message.guild.members.cache.get(user.id);
