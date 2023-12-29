@@ -162,6 +162,30 @@ export class TestBootstrapper {
     };
   }
 
+  static getMockDiscordVoiceChannel() {
+    return {
+      id: '1234567890', // A mock channel ID
+      name: 'Test Voice Channel', // A mock channel name
+    };
+  }
+
+  static getMockDiscordVoiceState(member, channel) {
+    return {
+      member: member, // The GuildMember object, mocked separately
+      channel: channel, // The VoiceChannel object, could be null or mocked separately
+      channelId: channel ? channel.id : null, // Channel ID, null if not in a channel
+      guild: member.guild, // The Guild object, usually part of the mocked GuildMember
+      deaf: false, // Indicates if the member is deafened
+      mute: false, // Indicates if the member is muted
+      selfDeaf: false, // Indicates if the member has deafened themselves
+      selfMute: false, // Indicates if the member has muted themselves
+      streaming: false, // Indicates if the member is streaming
+      serverDeaf: false, // Indicates if the member is deafened by the server
+      serverMute: false, // Indicates if the member is muted by the server
+      selfVideo: false, // Indicates if the member is transmitting video
+    };
+  }
+
   static getMockAlbionCharacter(guildId) {
     return {
       Id: 'BehrhjrfhK-_!FDHrd$£64tert3',

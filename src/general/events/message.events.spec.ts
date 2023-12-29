@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { Test, TestingModule } from '@nestjs/testing';
 import { MessageEvents } from './message.events';
 import { DatabaseService } from '../../database/services/database.service';
