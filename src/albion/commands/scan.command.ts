@@ -39,6 +39,6 @@ export class AlbionScanCommand {
 
     this.albionScanningService.startScan(message, dto.dryRun);
 
-    return `Albion Scan initiated. ${dto.dryRun ? '[DRY RUN, NO CHANGES WILL ACTUALLY BE PERFORMED]' : ''}`;
+    return `Albion Scan initiated!${dto.dryRun ? ' [DRY RUN, NO CHANGES WILL ACTUALLY BE PERFORMED]' : ''}`;
   }
 }

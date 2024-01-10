@@ -2,7 +2,6 @@ import { Command, EventParams, Handler, InteractionEvent } from '@discord-nestjs
 import { ApplicationCommandType, ChatInputCommandInteraction, GuildMember } from 'discord.js';
 import { SlashCommandPipe } from '@discord-nestjs/common';
 import { AlbionRegisterDto } from '../dto/albion.register.dto';
-import { AlbionApiService } from '../services/albion.api.service';
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { AlbionRegistrationService } from '../services/albion.registration.service';
@@ -18,7 +17,6 @@ export class AlbionRegisterCommand {
 
   constructor(
     private readonly config: ConfigService,
-    private readonly albionApiService: AlbionApiService,
     private readonly albionRegistrationService: AlbionRegistrationService,
   ) {}
 

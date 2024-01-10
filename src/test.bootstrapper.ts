@@ -144,6 +144,7 @@ export class TestBootstrapper {
           send: jest.fn().mockImplementation(() => {
             return {
               edit: jest.fn(),
+              react: jest.fn(),
             };
           }),
         },

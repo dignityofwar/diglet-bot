@@ -38,7 +38,6 @@ export class AlbionReportsCommand {
     const message = await interaction[0].channel.send('Starting Albion Members Report...');
 
     if (dto.fullReport) {
-
       this.albionReportsService.fullReport(message);
     }
     if (dto.squireCandidates) {
