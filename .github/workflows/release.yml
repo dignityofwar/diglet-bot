@@ -17,18 +17,18 @@ jobs:
       version: ${{ steps.version.outputs.newTag }}
     steps:
       - name: Checkout source code
-        uses: 'actions/checkout@v3'
+        uses: actions/checkout@v4
         with:
           fetch-depth: 2
           submodules: true
 
       - name: Bump package version
         id: version
-        uses: 'phips28/gh-action-bump-version@master'
+        uses: phips28/gh-action-bump-version@master
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          target-branch: 'main'
+          target-branch: main
 
       - name: Create new GitHub Release
         uses: ncipollo/release-action@v1

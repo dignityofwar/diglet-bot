@@ -9,7 +9,7 @@ jobs:
     outputs:
       store-path: ${{ steps.pnpm-cache.outputs.STORE_PATH }}
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
           fetch-depth: 2
           submodules: true
@@ -49,3 +49,7 @@ jobs:
           coverage-summary-path: ./src/coverage/coverage-summary.json
           commit-message: "ci(bot): Update coverage badges"
 
+      # Need to wait a little bit for the last commit to fully register with GH, then pull it in
+      - uses: GuillaumeFalourd/wait-sleep-action@v1
+        with:
+          time: '5'
