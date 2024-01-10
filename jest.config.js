@@ -18,8 +18,9 @@ module.exports = {
     '!database/**', // Exclude database folder, filled with migrations that's pointless to test
     '!config/**', // Exclude config folder, mostly pointless to test
     '!**/*.module.ts', // Exclude module files, really hard to test with not much value
+    '!main.ts', // Exclude main.ts, as it's the entrypoint to the app
   ],
   coverageDirectory: 'coverage',
-  coverageReporters: ['json-summary', 'text'],
+  coverageReporters: ['json-summary', 'text', 'lcov'],
   setupFilesAfterEnv: ['./jest-preload.js'],
 };
