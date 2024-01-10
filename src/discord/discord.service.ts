@@ -1,4 +1,4 @@
-import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { InjectDiscordClient } from '@discord-nestjs/core';
 import { Channel, Client, Guild, GuildMember, Message, Role } from 'discord.js';
 
