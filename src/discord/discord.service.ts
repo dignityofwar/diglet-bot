@@ -86,9 +86,10 @@ export class DiscordService {
     }
   }
 
-  async deleteMessage(message: Message): Promise<Message<boolean>> {
+  async deleteMessage(message: Message) : Promise<boolean> {
     try {
-      return await message.delete();
+      await message.delete();
+      return true;
     }
     catch (err) {
       this.logger.error('Failed to delete message', err);

@@ -188,14 +188,16 @@ describe('DiscordService', () => {
   describe('deleteMessage', () => {
     it('should delete the message successfully', async () => {
       const message = TestBootstrapper.getMockDiscordMessage();
-      const result = await service.deleteMessage(message);
 
+      // Setup mocking before calling the function
       message.delete = jest.fn().mockResolvedValue(true);
 
-      expect(result).toBeTruthy();
+      // Call function under test
+      const result = await service.deleteMessage(message);
+
+      expect(result).toBe(true);
       expect(message.delete).toHaveBeenCalled();
     });
-
     it('should log an error when message deletion fails', async () => {
       const message = TestBootstrapper.getMockDiscordMessage();
       const deleteError = new Error('Test delete error');
