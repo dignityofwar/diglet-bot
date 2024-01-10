@@ -4,6 +4,7 @@ import { AlbionApiService } from './albion.api.service';
 import AlbionAxiosFactory from '../factories/albion.axios.factory';
 import { ConfigService } from '@nestjs/config';
 import { TestBootstrapper } from '../../test.bootstrapper';
+import { AlbionPlayerInterface, AlbionPlayersResponseInterface } from '../interfaces/albion.api.interfaces';
 
 const mockGuildId = TestBootstrapper.mockConfig.albion.guildId;
 
@@ -12,10 +13,12 @@ describe('AlbionApiService', () => {
 
   beforeEach(async () => {
     const moduleRef = await Test.createTestingModule({
-      providers: [AlbionApiService, ConfigService],
+      providers: [
+        AlbionApiService,
+        ConfigService,
+      ],
     }).compile();
     TestBootstrapper.setupConfig(moduleRef);
-
     service = moduleRef.get<AlbionApiService>(AlbionApiService);
   });
 
@@ -69,6 +72,25 @@ describe('AlbionApiService', () => {
     } as any);
 
     await expect(service.getCharacter('Maelstrome'))
+      .resolves
+      .toStrictEqual(properResult);
+  });
+
+  it('should return a character based on an ID', async () => {
+    const id = 'hd8zVXIjRc6lnb_1FYIgpw';
+    const properResult = {
+      'Id': id,
+      'Name': 'Maelstrome',
+    };
+    const response = {
+      data: properResult,
+    };
+
+    jest.spyOn(AlbionAxiosFactory.prototype, 'createAlbionApiClient').mockReturnValue({
+      get: jest.fn().mockResolvedValueOnce(response),
+    } as any);
+
+    await expect(service.getCharacterById(id))
       .resolves
       .toStrictEqual(properResult);
   });
@@ -237,5 +259,44 @@ describe('AlbionApiService', () => {
 
     const result = await service.getCharacter('R4L2E1');
     expect(result.Name).toBe('R4L2E1');
+  });
+
+  it('should get all guild members', async () => {
+    const guildId = 'complicatedGuildId';
+    const mockMembers: AlbionPlayerInterface[] = [
+      {
+        'Id': Math.random().toString(36).substr(2, 10),
+        'Name': Math.random().toString(36).substr(2, 10),
+        'GuildId': 'btPZRoLvTUqLC7URnDRgSQ',
+        'GuildName': 'DIG - Dignity of War',
+      },
+      {
+        'Id': Math.random().toString(36).substr(2, 10),
+        'Name': Math.random().toString(36).substr(2, 10),
+        'GuildId': 'btPZRoLvTUqLC7URnDRgSQ',
+        'GuildName': 'DIG - Dignity of War',
+      },
+      {
+        'Id': Math.random().toString(36).substr(2, 10),
+        'Name': Math.random().toString(36).substr(2, 10),
+        'GuildId': 'btPZRoLvTUqLC7URnDRgSQ',
+        'GuildName': 'DIG - Dignity of War',
+      },
+      {
+        'Id': Math.random().toString(36).substr(2, 10),
+        'Name': Math.random().toString(36).substr(2, 10),
+        'GuildId': 'btPZRoLvTUqLC7URnDRgSQ',
+        'GuildName': 'DIG - Dignity of War',
+      },
+    ] as any[];
+    const mockResponse: AlbionPlayersResponseInterface = { data: mockMembers } as any;
+    const mockRequest = { get: jest.fn().mockResolvedValue(mockResponse) } as any;
+
+    jest.spyOn(AlbionAxiosFactory.prototype, 'createAlbionApiClient').mockReturnValue(mockRequest);
+
+    const receivedMembers = await service.getAllGuildMembers(guildId);
+
+    expect(receivedMembers).toEqual(mockMembers);
+    expect(mockRequest.get).toBeCalledWith(`/guilds/${guildId}/members`);
   });
 });
