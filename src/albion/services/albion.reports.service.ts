@@ -71,7 +71,7 @@ export class AlbionReportsService {
 
       const discordDateCode = `<t:${unix}:f>`;
       const discordRelativeCode = `<t:${unix}:R>`;
-      const discordMember = await this.discordService.getGuildMemberFromId(message.guildId, member.discordId);
+      const discordMember = await this.discordService.getGuildMember(message.guildId, member.discordId);
 
       // Get their highest albion role
       const highestRole = this.albionUtilities.getHighestAlbionRole(discordMember);
@@ -160,7 +160,7 @@ export class AlbionReportsService {
       const diffInDays = Math.floor((Date.now() - new Date(member.createdAt).getTime()) / 1000 / 60 / 60 / 24);
 
       const discordRelativeCode = `<t:${unix}:R>`;
-      const discordMember = await this.discordService.getGuildMemberFromId(message.guildId, member.discordId);
+      const discordMember = await this.discordService.getGuildMember(message.guildId, member.discordId);
 
       // Get their highest albion role
       const highestRole = this.albionUtilities.getHighestAlbionRole(discordMember);

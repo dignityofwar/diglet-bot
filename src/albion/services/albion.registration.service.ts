@@ -65,7 +65,7 @@ export class AlbionRegistrationService implements OnApplicationBootstrap {
       // Get the original Discord user, if possible
       let originalDiscordMember: GuildMember;
       try {
-        originalDiscordMember = await this.discordService.getOtherGuildMember(guildMember, foundMember[0].discordId);
+        originalDiscordMember = await this.discordService.getGuildMember(guildMember.id, foundMember[0].discordId);
       }
       catch (err) {
         this.logger.warn(`Unable to find original Discord user for character "${character.Name}"! Err: ${err.message}`);

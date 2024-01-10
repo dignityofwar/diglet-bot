@@ -1,14 +1,17 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { Test } from '@nestjs/testing';
 import { ConfigService } from '@nestjs/config';
-import { TestBootstrapper } from '../utilities/test.bootstrapper';
+import { TestBootstrapper } from '../test.bootstrapper';
 
 describe('SomeTestingClass', () => {
   let service: SomeTestingClass;
 
   beforeEach(async () => {
     const moduleRef = await Test.createTestingModule({
-      providers: [SomeTestingClass, ConfigService],
+      providers: [
+        SomeTestingClass,
+        ConfigService
+      ],
     }).compile();
     TestBootstrapper.setupConfig(moduleRef);
 

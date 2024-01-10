@@ -8,6 +8,8 @@ import { MikroORM } from '@mikro-orm/core';
 // This file helps set up mocks for various tests, which have been copied and pasted across the suite, causing a lot of duplication.
 @Injectable()
 export class TestBootstrapper {
+  static mockGuildsStore: any = {};
+
   static getMockEntityRepo() {
     return {
       find: jest.fn(),
@@ -43,10 +45,9 @@ export class TestBootstrapper {
     } as any;
   }
 
-  private static readonly mockDiscordUser = {
+  private static readonly mockDiscordGuildMember = {
     displayName: 'mockuser',
     id: '90078072660852736',
-    username: 'TestUser',
     fetch: jest.fn(),
     roles: {
       add: jest.fn(),
@@ -59,23 +60,47 @@ export class TestBootstrapper {
     setNickname: jest.fn().mockResolvedValue(() => true),
     kick: jest.fn().mockResolvedValue(() => true),
   };
+
   static getMockDiscordUser(isBot = false) {
     return {
-      ...this.mockDiscordUser,
+      ...this.mockDiscordGuildMember,
+      guild: this.getMockGuild('1234567890'),
       user: {
+        id: '90078072660852736',
+        username: 'mockuser',
         bot: isBot,
       },
-      guild: {
-        members: {
-          fetch: jest.fn().mockImplementation(() => this.mockDiscordUser),
-        },
-        roles: {
-          cache: {
-            get: jest.fn(),
-          },
-        },
-      },
+
     } as any;
+  }
+
+  static getMockGuild(id: string) {
+    return {
+      id,
+      members: {
+        cache: {
+          get: jest.fn().mockImplementation(() => TestBootstrapper.getMockDiscordUser()),
+          has: jest.fn().mockImplementation(() => true),
+        },
+        fetch: jest.fn().mockImplementation(() => this.getMockDiscordUser()),
+      },
+      roles: {
+        cache: {
+          get: jest.fn().mockImplementation(() => TestBootstrapper.getMockDiscordRole('4969797969594')),
+        },
+        fetch: jest.fn().mockImplementation(() => TestBootstrapper.getMockDiscordRole('4969797969594')),
+      },
+    };
+  }
+
+  static getMockDiscordGuildManager(id: string) {
+    const mockGuild = this.getMockGuild(id);
+    return {
+      cache: {
+        get: jest.fn().mockReturnValue(mockGuild),
+      },
+      fetch: jest.fn().mockResolvedValue(mockGuild),
+    };
   }
 
   static getMockDiscordMessage() {
@@ -97,20 +122,7 @@ export class TestBootstrapper {
           has: jest.fn(),
         },
       },
-      guild: {
-        members: {
-          cache: {
-            get: jest.fn().mockImplementation(() => this.getMockDiscordUser()),
-          },
-          fetch: jest.fn().mockImplementation(() => this.getMockDiscordUser()),
-        },
-        roles: {
-          fetch: jest.fn().mockImplementation(() => this.getMockDiscordRole('4969797969594')),
-          cache: {
-            get: jest.fn().mockImplementation(() => this.getMockDiscordRole('4969797969594')),
-          },
-        },
-      },
+      guild: this.getMockGuild('1234567890'),
     } as any;
   }
 
@@ -184,6 +196,21 @@ export class TestBootstrapper {
       serverDeaf: false, // Indicates if the member is deafened by the server
       serverMute: false, // Indicates if the member is muted by the server
       selfVideo: false, // Indicates if the member is transmitting video
+    };
+  }
+
+  static getMockDiscordClient() {
+    return {
+      guilds: TestBootstrapper.getMockDiscordGuildManager('123456789'),
+      channels: {
+        fetch: jest.fn(),
+      },
+      members: {
+        fetch: jest.fn(),
+      },
+      roles: {
+        fetch: jest.fn(),
+      },
     };
   }
 
