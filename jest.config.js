@@ -15,4 +15,5 @@ module.exports = {
   ],
   coverageDirectory: 'coverage',
   setupFilesAfterEnv: ['./jest-preload.js'],
+  coverageReporters: ['json-summary'],
 };

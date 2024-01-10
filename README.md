@@ -1,6 +1,10 @@
 # diglet-bot
 Typescript DIGBot that serves the Dignity of War community.
 
+[![CI](https://github.com/dignityofwar/diglet-bot/actions/workflows/ci.yml/badge.svg)](https://github.com/dignityofwar/diglet-bot/actions/workflows/ci.yml)
+![Jest coverage](./badges/coverage-jest%20coverage.svg)
+![Lines](./badges/coverage-lines.svg)
+
 ## Setup
 1. `pnpm install`.
 2. Create a copy of `.env.example` file, name it `.env` and add your bot token into it (grab it from the Discord Developers site).
