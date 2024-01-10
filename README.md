@@ -1,5 +1,7 @@
 # diglet-bot
-Typescript DIGBot that serves the Dignity of War community.
+Typescript Discord Bot that serves the Dignity of War community. 
+
+[![](https://dcbadge.vercel.app/api/server/joindig)](https://discord.gg/joindig)
 
 [![CI](https://github.com/dignityofwar/diglet-bot/actions/workflows/ci.yml/badge.svg)](https://github.com/dignityofwar/diglet-bot/actions/workflows/ci.yml)
 ![Jest coverage](./badges/coverage-jest%20coverage.svg)
