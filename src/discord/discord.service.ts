@@ -8,8 +8,7 @@ export class DiscordService {
 
   constructor(
     @InjectDiscordClient() private readonly discordClient: Client,
-  ) {
-  }
+  ) {}
 
   async getGuild(guildId: string): Promise<Guild> {
     let guild: Guild;
