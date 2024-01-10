@@ -7,7 +7,7 @@ on:
 jobs:
   build:
     name: Build & Test
-    uses: ./.github/workflows/node.yml
+    uses: ./.github/workflows/build.yml
 
   release:
     name: Release app
@@ -19,5 +19,5 @@ jobs:
     needs: [build, release]
     with:
       version: ${{ needs.release.outputs.version }}
-    uses: ./.github/workflows/build-publish.yml
+    uses: ./.github/workflows/docker-build.yml
     secrets: inherit
