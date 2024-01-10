@@ -47,4 +47,5 @@ jobs:
         with:
           branches: main
           coverage-summary-path: ./src/coverage/coverage-summary.json
+          commit-message: "ci(bot): Update coverage badges"
 
