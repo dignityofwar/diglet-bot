@@ -46,4 +46,5 @@ jobs:
         uses: jpb06/jest-badges-action@latest
         with:
           branches: main
+          coverage-summary-path: ./src/coverage/coverage-summary.json
 
