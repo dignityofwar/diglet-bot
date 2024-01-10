@@ -1,5 +1,5 @@
 # diglet-bot
-Typescript DIGBot
+Typescript DIGBot that serves the Dignity of War community.
 
 ## Setup
 1. `pnpm install`.
@@ -8,7 +8,7 @@ Typescript DIGBot
    1. Create a database on the main branch and dev branch.
    2. Create passwords for each branch.
    3. Inject said passwords into your `.env`.
-4. `pnpm run start:dev`.
+4. `pnpm dev`.
 5. Invite the bot to your server.
 
 ## MikroORM & Planetscale
