@@ -151,7 +151,7 @@ export class TestBootstrapper {
             fetch: jest.fn().mockImplementation(() => this.getMockDiscordUser()),
           },
         },
-        user: mockDiscordUser,
+        user: mockDiscordUser.user,
         channel: {
           send: jest.fn().mockImplementation(() => {
             return {
@@ -160,6 +160,7 @@ export class TestBootstrapper {
             };
           }),
         },
+        reply: jest.fn(),
       },
     ];
   }
