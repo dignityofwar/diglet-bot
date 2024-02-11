@@ -6,4 +6,4 @@ on:
 jobs:
   test:
     name: Build & Test
-    uses: ./.github/workflows/build.yml
+    uses: ./.github/workflows/bulld-and-test-pr.yml
