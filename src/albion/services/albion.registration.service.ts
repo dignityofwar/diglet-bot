@@ -54,7 +54,10 @@ export class AlbionRegistrationService implements OnApplicationBootstrap {
     const guildId = this.config.get('albion.guildId');
 
     if (character.GuildId !== guildId) {
-      this.throwError(`Sorry <@${guildMember.id}>, the character **${character.Name}** has not been detected in the DIG guild. Please ensure you have spelt the name **exactly** correct (case sensitive) **and** you are a member of the "DIG - Dignity of War" guild in the game before trying again. If you have just joined us, please wait ~10 minutes. If you are still having issues, please contact the Albion Guild Masters.`);
+      this.throwError(`Sorry <@${guildMember.id}>, the character **${character.Name}** has not been detected in the DIG guild. Please ensure that:\n
+1. You have spelt the name **exactly** correct (case sensitive).
+2. You are a member of the "DIG - Dignity of War" guild in the game before trying again.
+\nIf you have just joined us, please wait ~10 minutes. If you are still having issues, please contact the Albion Guild Masters.`);
     }
 
     // 3. Check if the character has already been registered
