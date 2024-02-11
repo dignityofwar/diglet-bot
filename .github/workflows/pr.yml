@@ -1,7 +1,9 @@
 name: PR Tests
 on:
-  pull_request
+  pull_request:
+    branches: [main]
 
 jobs:
   test:
-    uses: ./.github/workflows/node.yml
+    name: Build & Test
+    uses: ./.github/workflows/build.yml

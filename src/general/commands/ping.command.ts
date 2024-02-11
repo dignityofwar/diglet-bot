@@ -15,6 +15,7 @@ export class PingCommand {
   ) {}
   @Handler()
   async onPingCommand(interaction: ChatInputCommandInteraction): Promise<void> {
+
     const content = `Hello ${interaction.user.username}, I'm alive! Version: ${this.config.get('app.version')}`;
 
     await interaction.reply({

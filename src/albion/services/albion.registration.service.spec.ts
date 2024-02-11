@@ -19,6 +19,7 @@ const mockDevUserId = TestBootstrapper.mockConfig.discord.devUserId;
 describe('AlbionRegistrationService', () => {
   let service: AlbionRegistrationService;
   let discordService: DiscordService;
+  let albionApiService: AlbionApiService;
 
   let mockAlbionRegistrationsRepository: EntityRepository<AlbionRegistrationsEntity>;
   let mockCharacter: AlbionPlayerInterface;
@@ -50,7 +51,12 @@ describe('AlbionRegistrationService', () => {
             get: jest.fn(),
           },
         },
-        AlbionApiService,
+        {
+          provide: AlbionApiService,
+          useValue: {
+            getCharacter: jest.fn().mockImplementation(() => mockCharacter),
+          },
+        },
         {
           provide: getRepositoryToken(AlbionRegistrationsEntity),
           useValue: mockAlbionRegistrationsRepository,
@@ -61,6 +67,8 @@ describe('AlbionRegistrationService', () => {
 
     service = moduleRef.get<AlbionRegistrationService>(AlbionRegistrationService);
     discordService = moduleRef.get<DiscordService>(DiscordService);
+    albionApiService = moduleRef.get<AlbionApiService>(AlbionApiService);
+
   });
 
   afterEach(() => {
@@ -135,11 +143,13 @@ describe('AlbionRegistrationService', () => {
   it('should handle characters that are not in the guild', async () => {
     mockCharacter.GuildId = 'utter nonsense';
 
-    await expect(service.validateRegistrationAttempt(mockCharacter, mockDiscordUser)).rejects.toThrowError(`Sorry <@${mockDiscordUser.id}>, the character **${mockCharacter.Name}** has not been detected in the DIG guild. Please ensure you have spelt the name **exactly** correct (case sensitive) **and** you are a member of the "DIG - Dignity of War" guild in the game before trying again. If you have just joined us, please wait ~10 minutes. If you are still having issues, please contact the Albion Guild Masters.`);
+    await expect(service.validateRegistrationAttempt(mockCharacter, mockDiscordUser)).rejects.toThrowError(`Sorry <@${mockDiscordUser.id}>, the character **${mockCharacter.Name}** has not been detected in the DIG guild. Please ensure that:\n
+1. You have spelt the name **exactly** correct (case sensitive).
+2. You are a member of the "DIG - Dignity of War" guild in the game before trying again.
+\nIf you have just joined us, please wait ~10 minutes. If you are still having issues, please contact the Albion Guild Masters.`);
   });
 
   // Registration handling
-
   it('should handle discord role adding errors', async () => {
     service.validateRegistrationAttempt = jest.fn().mockImplementation(() => true);
     discordService.getMemberRole = jest.fn().mockReturnValue({
@@ -173,6 +183,13 @@ describe('AlbionRegistrationService', () => {
     });
     await expect(service.handleRegistration(mockDto, mockDiscordUser, mockDiscordMessage)).resolves.toBe(undefined);
     expect(mockDiscordMessage.channel.send).toBeCalledWith(`⚠️ Unable to set your nickname. If you're Staff this won't work as the bot has no power over you! Pinging <@${mockDevUserId}>!`);
+  });
+  it('should properly handle getCharacter errors, mentioning the user', async () => {
+    const errorMsg = 'Some error from the API service';
+    albionApiService.getCharacter = jest.fn().mockImplementation(() => {
+      throw new Error(errorMsg);
+    });
+    await expect(service.handleRegistration(mockDto, mockDiscordUser, mockDiscordMessage)).rejects.toThrowError(`Sorry <@${mockDiscordUser.id}>, ${errorMsg}`);
   });
 
   // Edge case handling
