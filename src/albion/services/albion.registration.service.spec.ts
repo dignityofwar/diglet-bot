@@ -131,7 +131,7 @@ describe('AlbionRegistrationService', () => {
       .mockResolvedValueOnce([])
       .mockResolvedValueOnce([discordMemberEntry]);
 
-    await expect(service.validateRegistrationAttempt(mockCharacter, mockDiscordUser)).rejects.toThrowError(`Sorry <@${mockDiscordUser.id}>, you have already registered a character named **${discordMemberEntry.characterName}**. We don't allow multiple characters to be registered to the same Discord user, as there is little point to it. If you believe this to be in error, or you have registered the wrong character, please contact the Albion Guild Masters.`);
+    await expect(service.validateRegistrationAttempt(mockCharacter, mockDiscordUser)).rejects.toThrowError(`Sorry <@${mockDiscordUser.id}>, you have already registered a character named **${discordMemberEntry.characterName}**. We don't allow multiple characters to be registered to the same Discord user, as there is little point to it. If you believe this to be in error, or if you have registered the wrong character, please contact the Albion Guild Masters.`);
   });
   it('validation should return true if no existing registration was found', async () => {
     mockAlbionRegistrationsRepository.find = jest.fn()

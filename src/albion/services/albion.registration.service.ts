@@ -67,7 +67,7 @@ export class AlbionRegistrationService implements OnApplicationBootstrap {
       // Get the original Discord user, if possible
       let originalDiscordMember: GuildMember;
       try {
-        originalDiscordMember = await this.discordService.getGuildMember(guildMember.id, foundMember[0].discordId);
+        originalDiscordMember = await this.discordService.getGuildMember(guildMember.guild.id, foundMember[0].discordId);
       }
       catch (err) {
         this.logger.warn(`Unable to find original Discord user for character "${character.Name}"! Err: ${err.message}`);
@@ -83,7 +83,7 @@ export class AlbionRegistrationService implements OnApplicationBootstrap {
     // 4. Check if the user has already registered a character
     const discordMember = await this.albionRegistrationsRepository.find({ discordId: guildMember.id });
     if (discordMember.length > 0) {
-      this.throwError(`Sorry <@${guildMember.id}>, you have already registered a character named **${discordMember[0].characterName}**. We don't allow multiple characters to be registered to the same Discord user, as there is little point to it. If you believe this to be in error, or you have registered the wrong character, please contact the Albion Guild Masters.`);
+      this.throwError(`Sorry <@${guildMember.id}>, you have already registered a character named **${discordMember[0].characterName}**. We don't allow multiple characters to be registered to the same Discord user, as there is little point to it. If you believe this to be in error, or if you have registered the wrong character, please contact the Albion Guild Masters.`);
     }
 
     this.logger.debug(`Registration attempt for "${character.Name}" is valid`);
