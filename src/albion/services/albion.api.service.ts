@@ -44,7 +44,7 @@ export class AlbionApiService {
 
     // If there were no players found
     if (foundPlayer.length === 0) {
-      this.throwError(`character **${characterName}** does not exist. Please ensure you have supplied your **exact** name (case sensitive).`);
+      this.throwError(`character **${characterName}** does not seem to exist. Please ensure you have supplied your **exact** name (case sensitive) and your character is older than 48 hours.`);
     }
 
     if (foundPlayer.length > 1) {

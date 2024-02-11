@@ -44,7 +44,7 @@ describe('AlbionApiService', () => {
 
     await expect(service.getCharacter('who.dis'))
       .rejects
-      .toThrowError('character **who.dis** does not exist. Please ensure you have supplied your **exact** name (case sensitive).');
+      .toThrowError('character **who.dis** does not seem to exist. Please ensure you have supplied your **exact** name (case sensitive) and your character is older than 48 hours.');
   });
 
   it('should return a character based on exact match amongst partial matches', async () => {

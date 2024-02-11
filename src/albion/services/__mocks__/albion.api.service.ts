@@ -17,6 +17,6 @@ export class AlbionApiService {
       return 'hd8zVXIjRc6lnb_1FYIgpw';
     }
 
-    throw new Error('Character does not exist. Please ensure you have supplied your exact name.');
+    throw new Error('Character does not seem to exist. Please ensure you have supplied your exact name.');
   }
 }
