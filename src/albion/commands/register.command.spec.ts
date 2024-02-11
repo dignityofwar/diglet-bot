@@ -1,11 +1,9 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { Test, TestingModule } from '@nestjs/testing';
 import { AlbionRegisterCommand } from './register.command';
-import { AlbionApiService } from '../services/albion.api.service';
 import { ConfigService } from '@nestjs/config';
 import { AlbionRegisterDto } from '../dto/albion.register.dto';
 import { ReflectMetadataProvider } from '@discord-nestjs/core';
-import { AlbionPlayersResponseInterface } from '../interfaces/albion.api.interfaces';
 import { AlbionRegistrationService } from '../services/albion.registration.service';
 import { TestBootstrapper } from '../../test.bootstrapper';
 
@@ -13,29 +11,19 @@ const expectedChannelId = TestBootstrapper.mockConfig.discord.channels.albionReg
 
 describe('AlbionRegisterCommand', () => {
   let command: AlbionRegisterCommand;
-  let albionApiService: AlbionApiService;
   let albionRegistrationService: AlbionRegistrationService;
 
-  let mockCharacter: AlbionPlayersResponseInterface;
   let mockDiscordInteraction: any;
   let mockDiscordUser: any;
   const dto: AlbionRegisterDto = { character: 'Maelstrome26' };
 
   beforeEach(async () => {
     TestBootstrapper.mockORM();
-    mockCharacter = TestBootstrapper.getMockAlbionCharacter(TestBootstrapper.mockConfig.albion.guildId) as any;
     mockDiscordUser = TestBootstrapper.getMockDiscordUser();
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         AlbionRegisterCommand,
         ReflectMetadataProvider,
-        {
-          provide: AlbionApiService,
-          useValue: {
-            getCharacter: jest.fn(),
-            getCharacterId: jest.fn(),
-          },
-        },
         {
           provide: AlbionRegistrationService,
           useValue: {
@@ -53,7 +41,6 @@ describe('AlbionRegisterCommand', () => {
     }).compile();
 
     command = module.get<AlbionRegisterCommand>(AlbionRegisterCommand);
-    albionApiService = module.get<AlbionApiService>(AlbionApiService);
     albionRegistrationService = module.get<AlbionRegistrationService>(AlbionRegistrationService);
     TestBootstrapper.setupConfig(module);
 
@@ -71,7 +58,6 @@ describe('AlbionRegisterCommand', () => {
   });
 
   it('should return errors from the registration process', async () => {
-    albionApiService.getCharacter = jest.fn().mockImplementation(() => mockCharacter);
     albionRegistrationService.handleRegistration = jest.fn().mockImplementation(() => {
       throw new Error('Some error handling registration');
     });

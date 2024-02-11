@@ -53,7 +53,6 @@ export class AlbionRegistrationService implements OnApplicationBootstrap {
     // 2. Check if the user is in the guild
     const guildId = this.config.get('albion.guildId');
 
-    // Check if the character is in the Albion guild
     if (character.GuildId !== guildId) {
       this.throwError(`Sorry <@${guildMember.id}>, the character **${character.Name}** has not been detected in the DIG guild. Please ensure you have spelt the name **exactly** correct (case sensitive) **and** you are a member of the "DIG - Dignity of War" guild in the game before trying again. If you have just joined us, please wait ~10 minutes. If you are still having issues, please contact the Albion Guild Masters.`);
     }
@@ -78,6 +77,7 @@ export class AlbionRegistrationService implements OnApplicationBootstrap {
       this.throwError(`Sorry <@${guildMember.id}>, character **${character.Name}** has already been registered by Discord user \`@${originalDiscordMember.displayName}\`. If this is you, you don't need to do anything. If you believe this to be in error, please contact the Albion Guild Masters.`);
     }
 
+    // 4. Check if the user has already registered a character
     const discordMember = await this.albionRegistrationsRepository.find({ discordId: guildMember.id });
     if (discordMember.length > 0) {
       this.throwError(`Sorry <@${guildMember.id}>, you have already registered a character named **${discordMember[0].characterName}**. We don't allow multiple characters to be registered to the same Discord user, as there is little point to it. If you believe this to be in error, or you have registered the wrong character, please contact the Albion Guild Masters.`);
@@ -91,8 +91,15 @@ export class AlbionRegistrationService implements OnApplicationBootstrap {
   async handleRegistration(dto: AlbionRegisterDto, discordMember: GuildMember, message: Message) {
     this.logger.debug(`Handling Albion character "${dto.character}" registration`);
 
-    // Get the character from the Albion Online API
-    const character = await this.albionApiService.getCharacter(dto.character);
+    let character: AlbionPlayerInterface;
+    try {
+      // Get the character from the Albion Online API
+      character = await this.albionApiService.getCharacter(dto.character);
+    }
+    catch (err) {
+      // Append "Sorry <person>, " to the error message
+      this.throwError(`Sorry <@${discordMember.id}>, ${err.message}`);
+    }
 
     await this.validateRegistrationAttempt(character, discordMember);
 

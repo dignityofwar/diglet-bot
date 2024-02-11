@@ -27,7 +27,7 @@ export class AlbionApiService {
     const response: AlbionPlayersResponseInterface = await request.get(`/players/${characterId}`);
 
     if (response.data.Id !== characterId) {
-      this.throwError(`Character ID \`${characterId}\` does not match API response consistently.`);
+      this.throwError(`character ID \`${characterId}\` does not match API response consistently. Pinging <@${this.config.get('discord.devUserId')}>!`);
     }
 
     return response.data;
@@ -44,7 +44,7 @@ export class AlbionApiService {
 
     // If there were no players found
     if (foundPlayer.length === 0) {
-      this.throwError(`Character **${characterName}** does not exist. Please ensure you have supplied your **exact** name (case sensitive).`);
+      this.throwError(`character **${characterName}** does not exist. Please ensure you have supplied your **exact** name (case sensitive).`);
     }
 
     if (foundPlayer.length > 1) {
@@ -54,14 +54,14 @@ export class AlbionApiService {
       });
 
       if (foundPlayerInGuild.length === 0) {
-        this.throwError(`Multiple characters for **${characterName}** were found, none of them are a guild member.`);
+        this.throwError(`multiple characters for **${characterName}** were found, none of them are a guild member.`);
       }
 
       if (foundPlayerInGuild.length === 1) {
         return foundPlayerInGuild[0].Id;
       }
       else {
-        this.throwError(`Multiple characters for **${characterName}** were found within the DIG guild. This is an unsupported use case for this registration system. Pinging <@${this.config.get('discord.devUserId')}>!`);
+        this.throwError(`multiple characters for **${characterName}** were found within the DIG guild. This is an unsupported use case for this registration system. Pinging <@${this.config.get('discord.devUserId')}>!`);
       }
     }
 

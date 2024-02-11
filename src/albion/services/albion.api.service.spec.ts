@@ -44,7 +44,7 @@ describe('AlbionApiService', () => {
 
     await expect(service.getCharacter('who.dis'))
       .rejects
-      .toThrowError('Character **who.dis** does not exist. Please ensure you have supplied your **exact** name (case sensitive).');
+      .toThrowError('character **who.dis** does not exist. Please ensure you have supplied your **exact** name (case sensitive).');
   });
 
   it('should return a character based on exact match amongst partial matches', async () => {
@@ -116,7 +116,7 @@ describe('AlbionApiService', () => {
 
     await expect(service.getCharacter('Maelstrome'))
       .rejects
-      .toThrowError(`Character ID \`${id}\` does not match API response consistently.`);
+      .toThrowError(`character ID \`${id}\` does not match API response consistently. Pinging <@${TestBootstrapper.mockConfig.discord.devUserId}>!`);
   });
 
   it('should handle a character having duplicates, as long as only one of them is in the guild', async () => {
@@ -185,7 +185,7 @@ describe('AlbionApiService', () => {
 
     await expect(service.getCharacter(characterName))
       .rejects
-      .toThrowError(`Multiple characters for **${characterName}** were found, none of them are a guild member.`);
+      .toThrowError(`multiple characters for **${characterName}** were found, none of them are a guild member.`);
   });
   it('should throw error when multiple characters of the same name in the guild', async () => {
     const characterName = 'NightRaven2511';
@@ -225,7 +225,7 @@ describe('AlbionApiService', () => {
 
     await expect(service.getCharacter(characterName))
       .rejects
-      .toThrowError(`Multiple characters for **NightRaven2511** were found within the DIG guild. This is an unsupported use case for this registration system. Pinging <@${TestBootstrapper.mockConfig.discord.devUserId}>!`);
+      .toThrowError(`multiple characters for **NightRaven2511** were found within the DIG guild. This is an unsupported use case for this registration system. Pinging <@${TestBootstrapper.mockConfig.discord.devUserId}>!`);
   });
 
   it('should return a character with all uppercase letters', async () => {
