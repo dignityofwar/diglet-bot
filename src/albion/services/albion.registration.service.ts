@@ -154,12 +154,9 @@ export class AlbionRegistrationService implements OnApplicationBootstrap {
     await message.channel.send(`## ✅ Thank you <@${discordMember.id}>, your character **${character.Name}** has been verified! 🎉
 
 * ➡️ Please read the information within <#${this.config.get('discord.channels.albionInfopoint')}> to be fully acquainted with the guild!
-
-* 👉️ **IMPORTANT**: Grab opt-in roles for various content you're interested for here: <https://discord.com/channels/90078410642034688/1039268966905954394/1170055900040536064>!
-
+* 👉️ **IMPORTANT**: [Grab opt-in roles for various content you're interested in](https://discord.com/channels/90078410642034688/1039268966905954394/1170055900040536064)!
 * ℹ️ Your Discord server nickname has been automatically changed to match your character name. You are free to change this back should you want to, but please make sure it resembles your in-game name.
-
-* 🔔 You have automatically been enrolled to our <#${this.config.get('discord.channels.albionTownCrier')}> announcements channel, we send a maximum of 3 a week. If you wish to opt out, go here: <https://discord.com/channels/90078410642034688/1039268966905954394/1170055900040536064>.
+* 🔔 You have automatically been enrolled to our <#${this.config.get('discord.channels.albionTownCrier')}> announcements channel. If you wish to opt out, go to the [#welcome-to-albion](https://discord.com/channels/90078410642034688/1039268966905954394/1204480244405243954) channel, double tap the 🔔 icon.
 
 CC <@&${this.config.get('albion.masterRole').discordRoleId}>, <@&${this.config.get('albion.guildMasterRole').discordRoleId}>`);
 
