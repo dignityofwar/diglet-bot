@@ -3,8 +3,9 @@ import { Logger } from '@nestjs/common';
 import { MariaDbOptions } from '@mikro-orm/mariadb/MariaDbMikroORM';
 
 const logger = new Logger('MikroORM');
+const port = Number(process.env.DB_PORT) ?? 3306;
 
-const dbURL = `mysql://${process.env.DB_USERNAME}:${process.env.DB_PASSWORD}@${process.env.DB_HOST}:3306/${process.env.DB_NAME}?sslaccept=strict`;
+const dbURL = `mysql://${process.env.DB_USERNAME}:${process.env.DB_PASSWORD}@${process.env.DB_HOST}:${port}/${process.env.DB_NAME}?sslaccept=strict`;
 console.log(dbURL);
 
 const config: MariaDbOptions = {
@@ -14,7 +15,7 @@ const config: MariaDbOptions = {
   highlighter: new SqlHighlighter(),
   // clientUrl: dbURL,
   host: process.env.DB_HOST,
-  port: 3306,
+  port,
   user: process.env.DB_USERNAME,
   password: process.env.DB_PASSWORD,
   dbName: process.env.DB_NAME,
@@ -30,4 +31,3 @@ const config: MariaDbOptions = {
 };
 
 export default config;
-
