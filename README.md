@@ -14,5 +14,4 @@ Typescript Discord Bot that serves the Dignity of War community.
 4. Invite the bot to your server.
 
 ## MikroORM & Database
-
 This project uses [MikroORM](https://mikro-orm.io/) which is a TS native ORM. We use MariaDB (the same as in the `docker-compose.yaml`) both in local dev and production.
