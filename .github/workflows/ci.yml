@@ -9,12 +9,12 @@ jobs:
     name: Build & Test
     uses: ./.github/workflows/build-and-test-main.yml
 
-  release:
-    name: Release app
+  create-release:
+    name: Create Release
     needs: build
     uses: ./.github/workflows/release.yml
 
-  deploy:
+  publish:
     name: Build & Publish container
     needs: [build, release]
     with:
