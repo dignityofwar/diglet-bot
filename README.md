@@ -23,7 +23,7 @@ This project uses [MikroORM](https://mikro-orm.io/) which is a TS native ORM. We
 While this project is designed for a Mac ecosystem, it can be run on WSL, but you need to make the following bodges:
 1. Rather than running `pnpm install`, you need to run `npm install`, as `pnpm` creates symlinks that winblows doesn't understand, thus your IDE will likely break. Grab a brew, it will take fecking forever to install everything with npm.
 2. You cannot use docker's internal DNS for some reason. `DB_HOST` in your `.env` needs to be `127.0.0.1`.
-
+3. Tests are a problem when running from within WSL. The filesystem absolutely shits the bed (it went up to 500MB/s on an SSD...). I figured this is due to the multi-concurrency, so run `pnpm test:wsl` to set maxWorkers to 4. If you're finding it's still locking up, adjust the worker count to 1/2 in `package.json`.
 # Troubleshooting
 
 # Running migration:up fails
