@@ -8,7 +8,9 @@ Typescript Discord Bot that serves the Dignity of War community.
 ![Lines](./badges/coverage-lines.svg)
 
 ## Prereqs
-Recommend you install `nvm`. Run `nvm install 18.18.1` which will set up your node version correctly.
+Recommend you install `nvm`. 
+- Run `nvm install 18.20.1` which will set up your node version correctly.
+- Ensure you have at least `pnpm` version `8.15.6` installed. `brew install pnpm` is my recommendation.
 
 ## Setup
 1. `pnpm install`.

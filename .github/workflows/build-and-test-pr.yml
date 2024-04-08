@@ -17,12 +17,12 @@ jobs:
       - name: Install Node.js
         uses: actions/setup-node@v3
         with:
-          node-version: 18
+          node-version: 18.20.1
 
       - name: Setup pnpm
         uses: pnpm/action-setup@v2
         with:
-          version: 8.5.1
+          version: 8.15.6
           run_install: false
 
       - uses: actions/cache@v3
