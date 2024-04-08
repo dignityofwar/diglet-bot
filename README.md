@@ -1,21 +1,27 @@
 # diglet-bot
 Typescript Discord Bot that serves the Dignity of War community. 
 
+This project is now considered **stable**, and is now versioned appropriately via SemVer.
+
 [![](https://dcbadge.vercel.app/api/server/joindig)](https://discord.gg/joindig)
 
 [![CI](https://github.com/dignityofwar/diglet-bot/actions/workflows/ci.yml/badge.svg)](https://github.com/dignityofwar/diglet-bot/actions/workflows/ci.yml)
 ![Jest coverage](./badges/coverage-jest%20coverage.svg)
 ![Lines](./badges/coverage-lines.svg)
 
-## Prereqs
-Recommend you install `nvm`. 
+## System Requirements
+- Install brew (on linux), or your own package manager, I'm not your mum!
+- Install node version manager `nvm`: `brew install nvm`
+- Install `pnpm`: `brew install pnpm`
 - Run `nvm install 18.20.1` which will set up your node version correctly.
-- Ensure you have at least `pnpm` version `8.15.6` installed. `brew install pnpm` is my recommendation.
+- Ensure you have at least `pnpm` version `8.15.6` installed.
+
+The engines are enforced via `package.json`, you'll know if it's wrong as no commands will work.
 
 ## Setup
-1. `pnpm install`.
+1. `pnpm install`. **NOTE** on WSL, see WSL compatability section.
 2. Create a copy of `.env.example` file, name it `.env` and add your bot token into it (grab it from the Discord Developers site).
-3. Run `start.sh`
+3. Run `start.sh`.
 4. Invite the bot to your server.
 
 ## MikroORM & Database
