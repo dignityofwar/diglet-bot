@@ -5,4 +5,7 @@ dist
 yarn-error.log
 src/coverage
 
+# Stop npm being comitted
+package-lock.json
+
 provisioning/local-data
