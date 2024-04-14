@@ -42,7 +42,7 @@ export class AlbionRegisterCommand {
     catch (err) {
       await message.edit(`⛔️ **ERROR:** ${err.message}`);
       this.logger.error(err.message);
-      return '';
+      // return '';
     }
 
     // Temp reminder about EU registrations
