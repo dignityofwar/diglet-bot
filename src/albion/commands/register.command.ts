@@ -45,6 +45,10 @@ export class AlbionRegisterCommand {
       return '';
     }
 
+    // Temp reminder about EU registrations
+    await interaction[0].channel.send('# Reminder: EU Guild registrations are currently not possible.\n' +
+      'Please send a message in <#1216143660337332224> stating your in game character name and we\'ll manually give you a role for now.');
+
     // Successful! Success message now within handleRegistration.
     return '';
   }
