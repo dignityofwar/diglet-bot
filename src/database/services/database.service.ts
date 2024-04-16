@@ -38,4 +38,12 @@ export class DatabaseService {
       this.logger.error(`Error updating activity for ${member.id}: ${err.message}`);
     }
   }
+
+  async getInactives() {
+    const thresholdDate = new Date();
+    thresholdDate.setDate(thresholdDate.getDate() - 90);
+    const inactives = await this.activityRepository.find({
+      lastActivity: { $lt: thresholdDate },
+    });
+  }
 }

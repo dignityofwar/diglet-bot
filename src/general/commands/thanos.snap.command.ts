@@ -19,7 +19,7 @@ export class ThanosSnapCommand {
 
   @Handler()
 
-  async onPurgeCandidatesCommand(
+  async onThanosSnapCommand(
     @InteractionEvent(SlashCommandPipe) dto: ThanosSnapDto,
     @EventParams() interaction: ChatInputCommandInteraction[]
   ): Promise<void> {

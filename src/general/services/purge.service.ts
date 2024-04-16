@@ -1,6 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { Collection, GuildMember, Message, Role } from 'discord.js';
 import { DiscordService } from '../../discord/discord.service';
+import { DatabaseService } from '../../database/services/database.service';
 
 export interface PurgableMemberList {
   purgableMembers: Collection<string, GuildMember>;
@@ -23,6 +24,7 @@ export class PurgeService {
 
   constructor(
     private readonly discordService: DiscordService,
+    private readonly databaseService: DatabaseService
   ) {}
 
   async getPurgableMembers(message: Message): Promise<PurgableMemberList> {
@@ -33,25 +35,30 @@ export class PurgeService {
     const albionRole = message.guild.roles.cache.find(role => role.name === 'Albion Online');
     const albionRegisteredRole = message.guild.roles.cache.find(role => role.name === 'ALB/Registered');
 
+    // 1. Preflight
     if (!onboardedRole) {
       await message.channel.send('Could not find onboarded role. Please create a role called "Onboarded" and try again.');
       return;
     }
 
     if (!ps2Role || !ps2VerifiedRole || !foxholeRole || !albionRole || !albionRegisteredRole) {
-      await message.channel.send('Could not find game roles. Please create roles called "Planetside2", "Foxhole", and "Albion Online" and try again.');
+      await message.channel.send('Could not find game roles. Please create roles called "Planetside2", "Foxhole", "Albion Online" and "ALB/Registered", then try again.');
       return;
     }
 
-    const statusMessage = await message.channel.send('Fetching guild members...');
+    // 2. Get a list of members who have been inactive for more than 3 months, and exclude them from the below cache bust cos we're gonna boot them anyway
+    // Removes the need to do useless queries to Discord which are time intensive.
 
-    this.logger.log('Fetching guild members...');
+
+    const statusMessage = await message.channel.send('Fetching Discord server members...');
+
+    this.logger.log('Fetching Discord server members...');
     let members: Collection<string, GuildMember>;
     try {
       members = await message.guild.members.fetch();
     }
     catch (err) {
-      await message.channel.send('Error fetching guild members. Please try again.');
+      await message.channel.send('Error fetching Discord server members. Please try again.');
       return;
     }
     await statusMessage.edit(`${members.size} members found. Sorting members...`);
@@ -166,5 +173,11 @@ export class PurgeService {
 
     this.logger.log(`${purgableMembers.size} members kicked.`);
     await message.channel.send(`${prefix}**${purgableMembers.size}** members kicked.`);
+  }
+
+  async getInactiveMembers() : Promise<Collection<string, GuildMember>> {
+    this.logger.log('Getting inactive members...');
+
+    await this.databaseService.
   }
 }
