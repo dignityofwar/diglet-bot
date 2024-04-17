@@ -20,7 +20,12 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 2
-          submodules: true
+
+      # Needed as when a badge is updated, checkout for some reason won't pull it in
+      - name: Ensure the very latest commit has been pulled
+        run: |
+          git fetch origin main
+          git reset --hard origin/main
 
       - name: Bump package version
         id: version
