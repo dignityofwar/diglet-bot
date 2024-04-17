@@ -39,11 +39,15 @@ export class DatabaseService {
     }
   }
 
-  async getInactives() {
+  getInactiveThreshold() {
     const thresholdDate = new Date();
     thresholdDate.setDate(thresholdDate.getDate() - 90);
-    const inactives = await this.activityRepository.find({
-      lastActivity: { $lt: thresholdDate },
+    return thresholdDate;
+  }
+
+  async getActives() {
+    return await this.activityRepository.find({
+      lastActivity: { $gt: this.getInactiveThreshold() },
     });
   }
 }

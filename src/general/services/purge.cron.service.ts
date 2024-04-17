@@ -32,14 +32,10 @@ export class PurgeCronService implements OnApplicationBootstrap {
     }
   }
 
-  @Cron('0 0 6,18 * * *')
-  async runInactivityPurge(): Promise<void> {
-    this.logger.log('Running Inactivity Purge Cron');
-
-    await this.channel.send('Starting daily scan...');
-
-    const message = await this.channel.send('Running daily Albion Scans');
-
-    await this.purgeService.(message);
-  }
+  // @Cron('0 0 6,18 * * *')
+  // async runPurge(): Promise<void> {
+  //   this.logger.log('Running Purge Cron');
+  //   const message = await this.channel.send('Running weekly purge scans');
+  //   await this.purgeService.kickPurgableMembers(message);
+  // }
 }

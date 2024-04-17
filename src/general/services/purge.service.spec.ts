@@ -3,12 +3,14 @@ import { Test } from '@nestjs/testing';
 import { ConfigService } from '@nestjs/config';
 import { PurgeService } from './purge.service';
 import { TestBootstrapper } from '../../test.bootstrapper';
-import { Collection } from 'discord.js';
+import { Collection, GuildMember } from 'discord.js';
 import { DiscordService } from '../../discord/discord.service';
+import { DatabaseService } from '../../database/services/database.service';
 
 describe('PurgeService', () => {
   let service: PurgeService;
   let mockMessage: any;
+  let mockRole: any;
   let discordService: DiscordService;
 
   beforeEach(async () => {
@@ -22,6 +24,12 @@ describe('PurgeService', () => {
             kickMember: jest.fn(),
           },
         },
+        {
+          provide: DatabaseService,
+          useValue: {
+            getActives: jest.fn(),
+          },
+        },
       ],
     }).compile();
     TestBootstrapper.setupConfig(moduleRef);
@@ -31,6 +39,7 @@ describe('PurgeService', () => {
     discordService.deleteMessage = jest.fn().mockReturnValue(() => true);
 
     mockMessage = TestBootstrapper.getMockDiscordMessage();
+    mockRole = TestBootstrapper.getMockDiscordRole('123');
 
     mockMessage.guild.roles.cache.find = jest.fn().mockReturnValue({
       id: '123',
@@ -56,7 +65,7 @@ describe('PurgeService', () => {
     }
     withinGrace: boolean;
   }
-  function createMockMember(options: MockMemberOptions, returnCount, key = 1) {
+  function createMockMember(options: MockMemberOptions, returnCount: number, key = 1) {
     // Create a hash of the options object values so the users will always be unique
 
     const returnArray = [];
@@ -105,6 +114,11 @@ describe('PurgeService', () => {
       roles: { onboarded: false },
       withinGrace: false,
     }, botSize, 4), // NOT purged, bots
+    ...createMockMember({
+      isBot: false,
+      roles: { onboarded: true },
+      withinGrace: true,
+    }, inGrace, 1), // Onboarded member who went inactive
   ];
 
   // Your test case with dynamic member creation
@@ -138,68 +152,94 @@ describe('PurgeService', () => {
     expect(result.inGracePeriod).toBe(inGrace);
   });
 
-  it('should call the kick function for each purgable member', async () => {
-    const purgables = createMockMember({ isBot: false, roles: { onboarded: false }, withinGrace: false }, 1);
+  describe('kickPurgableMembers', () => {
+    it('should call the kick function for each purgable member', async () => {
+      const purgables = createMockMember({
+        isBot: false,
+        roles: { onboarded: false },
+        withinGrace: false,
+      }, 1);
 
-    await service.kickPurgableMembers(
-      mockMessage as any,
-      new Collection(purgables.map(member => [member.user.id, member])),
-      false,
-    );
+      await service.kickPurgableMembers(
+        mockMessage as any,
+        new Collection(purgables.map(member => [member.user.id, member])),
+        false,
+      );
 
-    expect(discordService.kickMember).toHaveBeenCalledTimes(purgables.length);
-    expect(discordService.deleteMessage).toHaveBeenCalledTimes(1);
-    expect(mockMessage.channel.send).toHaveBeenCalledWith(`Kicking ${purgables.length} purgable members...`);
-    expect(mockMessage.channel.send).toHaveBeenCalledWith('Kicking started...');
-    expect(mockMessage.channel.send).toHaveBeenCalledWith(`- 🥾 Kicked ${purgables[0].nickname} (${purgables[0].user.id})\n`);
-    expect(mockMessage.channel.send).toHaveBeenCalledWith('🫰 Kicking progress: [1/1] (100%)');
-    expect(mockMessage.channel.send).toHaveBeenCalledWith(`**${purgables.length}** members kicked.`);
-    expect(mockMessage.channel.send).toHaveBeenCalledTimes(5);
-  });
+      expect(discordService.kickMember).toHaveBeenCalledTimes(purgables.length);
+      expect(discordService.deleteMessage).toHaveBeenCalledTimes(1);
+      expect(mockMessage.channel.send).toHaveBeenCalledWith(`Kicking ${purgables.length} purgable members...`);
+      expect(mockMessage.channel.send).toHaveBeenCalledWith('Kicking started...');
+      expect(mockMessage.channel.send).toHaveBeenCalledWith(`- 🥾 Kicked ${purgables[0].nickname} (${purgables[0].user.id})\n`);
+      expect(mockMessage.channel.send).toHaveBeenCalledWith('🫰 Kicking progress: [1/1] (100%)');
+      expect(mockMessage.channel.send).toHaveBeenCalledWith(`**${purgables.length}** members kicked.`);
+      expect(mockMessage.channel.send).toHaveBeenCalledTimes(5);
+    });
 
-  it('should call the kick function for each purgable member more than batch limit', async () => {
-    const purgables = createMockMember({ isBot: false, roles: { onboarded: false }, withinGrace: false }, 6);
+    it('should call the kick function for each purgable member more than batch limit', async () => {
+      const purgables = createMockMember({
+        isBot: false,
+        roles: { onboarded: false },
+        withinGrace: false,
+      }, 6);
 
-    await service.kickPurgableMembers(
-      mockMessage as any,
-      new Collection(purgables.map(member => [member.user.id, member])),
-      false,
-    );
+      await service.kickPurgableMembers(
+        mockMessage as any,
+        new Collection(purgables.map(member => [member.user.id, member])),
+        false,
+      );
 
-    expect(discordService.kickMember).toHaveBeenCalledTimes(purgables.length);
-    expect(mockMessage.channel.send).toHaveBeenCalledWith(`Kicking ${purgables.length} purgable members...`);
-    expect(mockMessage.channel.send).toHaveBeenCalledWith('Kicking started...');
-    expect(mockMessage.channel.send).toHaveBeenCalledWith(`- 🥾 Kicked 1-0-nick (1-0)
+      expect(discordService.kickMember).toHaveBeenCalledTimes(purgables.length);
+      expect(mockMessage.channel.send).toHaveBeenCalledWith(`Kicking ${purgables.length} purgable members...`);
+      expect(mockMessage.channel.send).toHaveBeenCalledWith('Kicking started...');
+      expect(mockMessage.channel.send).toHaveBeenCalledWith(`- 🥾 Kicked 1-0-nick (1-0)
 - 🥾 Kicked 1-1-nick (1-1)
 - 🥾 Kicked 1-2-nick (1-2)
 - 🥾 Kicked 1-3-nick (1-3)
 - 🥾 Kicked 1-4-nick (1-4)
 `);
-    expect(mockMessage.channel.send).toHaveBeenCalledWith('🫰 Kicking progress: [5/6] (83%)');
-    expect(mockMessage.channel.send).toHaveBeenCalledWith('- 🥾 Kicked 1-5-nick (1-5)\n');
-    expect(mockMessage.channel.send).toHaveBeenCalledWith('🫰 Kicking progress: [6/6] (100%)');
-    expect(mockMessage.channel.send).toHaveBeenCalledWith(`**${purgables.length}** members kicked.`);
+      expect(mockMessage.channel.send).toHaveBeenCalledWith('🫰 Kicking progress: [5/6] (83%)');
+      expect(mockMessage.channel.send).toHaveBeenCalledWith('- 🥾 Kicked 1-5-nick (1-5)\n');
+      expect(mockMessage.channel.send).toHaveBeenCalledWith('🫰 Kicking progress: [6/6] (100%)');
+      expect(mockMessage.channel.send).toHaveBeenCalledWith(`**${purgables.length}** members kicked.`);
+    });
+
+    it('should NOT call the kick function for each purgable member for a DRY RUN', async () => {
+      const purgables = createMockMember({
+        isBot: false,
+        roles: { onboarded: false },
+        withinGrace: false,
+      }, 1);
+
+      await service.kickPurgableMembers(
+        mockMessage as any,
+        new Collection(purgables.map(member => [member.user.id, member])),
+        true,
+      );
+
+      expect(discordService.kickMember).toHaveBeenCalledTimes(0);
+      expect(mockMessage.channel.send).toHaveBeenCalledWith(`Kicking ${purgables.length} purgable members...`);
+      expect(mockMessage.channel.send).toHaveBeenCalledWith('Kicking started...');
+      expect(mockMessage.channel.send).toHaveBeenCalledWith(`- [DRY RUN] 🥾 Kicked ${purgables[0].nickname} (${purgables[0].user.id})\n`);
+      expect(mockMessage.channel.send).toHaveBeenCalledWith('[DRY RUN] 🫰 Kicking progress: [1/1] (100%)');
+      expect(mockMessage.channel.send).toHaveBeenCalledWith(`[DRY RUN] **${purgables.length}** members kicked.`);
+    });
   });
 
-  it('should NOT call the kick function for each purgable member for a DRY RUN', async () => {
-    // Mock forEach implementation
-    const purgables = createMockMember({
-      isBot: false,
-      roles: { onboarded: false },
-      withinGrace: false,
-    }, 1);
+  describe('isPurgable', () => {
+    it('should correctly mark someone as NOT purgable if they are active and HAVE been onboarded', async () => {
+      const mockMember = createMockMember({
+        isBot: false,
+        roles: { onboarded: true },
+        withinGrace: false,
+      }, 1);
 
-    await service.kickPurgableMembers(
-      mockMessage as any,
-      new Collection(purgables.map(member => [member.user.id, member])),
-      true,
-    );
+      const activeMembers = new Collection<string, GuildMember>();
+      activeMembers.set(mockMember[0].user.id, mockMember[0]);
 
-    expect(discordService.kickMember).toHaveBeenCalledTimes(0);
-    expect(mockMessage.channel.send).toHaveBeenCalledWith(`Kicking ${purgables.length} purgable members...`);
-    expect(mockMessage.channel.send).toHaveBeenCalledWith('Kicking started...');
-    expect(mockMessage.channel.send).toHaveBeenCalledWith(`- [DRY RUN] 🥾 Kicked ${purgables[0].nickname} (${purgables[0].user.id})\n`);
-    expect(mockMessage.channel.send).toHaveBeenCalledWith('[DRY RUN] 🫰 Kicking progress: [1/1] (100%)');
-    expect(mockMessage.channel.send).toHaveBeenCalledWith(`[DRY RUN] **${purgables.length}** members kicked.`);
+      const result = service.isPurgable(mockMember[0], activeMembers, mockRole);
+
+      expect(result).toBe(false);
+    });
   });
 });
