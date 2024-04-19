@@ -15,8 +15,6 @@ describe('MessageEvents', () => {
   let mockGuildMember: any;
 
   beforeEach(async () => {
-    // Mock Logger
-
     const module: TestingModule = await Test.createTestingModule({
       providers: [MessageEvents, DatabaseService],
     }).compile();
@@ -46,6 +44,38 @@ describe('MessageEvents', () => {
       mockGuildMember.user.bot = true;
       await messageEvents.handleMessageEvent(mockGuildMember, 'create');
       expect(databaseService.updateActivity).not.toHaveBeenCalled();
+    });
+
+    it('should handle message events null users', async () => {
+      mockGuildMember.user = null;
+      expect(messageEvents.handleMessageEvent(mockGuildMember, 'create')).rejects.toThrowError('Message create event could not be processed as the GuildMember was not found.');
+      expect(messageEvents.handleMessageEvent(mockGuildMember, 'update')).rejects.toThrowError('Message update event could not be processed as the GuildMember was not found.');
+      expect(messageEvents.handleMessageEvent(mockGuildMember, 'delete')).rejects.toThrowError('Message delete event could not be processed as the GuildMember was not found.');
+    });
+    const eventTypes = ['create', 'update', 'delete'];
+    const memberDetails = [
+      { detail: 'displayName', value: null },
+      { detail: 'nickname', value: null },
+      { detail: 'username', value: null },
+    ];
+
+    memberDetails.forEach(({ detail, value }) => {
+      it(`should handle message events with no ${detail} on GuildMember`, async () => {
+        mockGuildMember.displayName = null;
+        mockGuildMember.nickname = null;
+        mockGuildMember.user.username = null;
+        if (detail === 'nickname') {
+          mockGuildMember.nickname = value;
+        }
+        else {
+          mockGuildMember.user.username = value;
+        }
+
+        for (const type of eventTypes) {
+          expect(messageEvents.handleMessageEvent(mockGuildMember, type)).rejects.toThrowError(`Message ${type} event could not be processed as member ID "${mockGuildMember.id}" does not have a name!`);
+          expect(databaseService.updateActivity).not.toHaveBeenCalled();
+        }
+      });
     });
   });
 

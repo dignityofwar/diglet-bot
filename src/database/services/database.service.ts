@@ -15,18 +15,19 @@ export class DatabaseService {
 
   // Update the activity for a member, updating their lastActivity timestamp
   async updateActivity(member: GuildMember): Promise<void> {
+    const name = member.displayName || member.nickname || member.user.username || null;
     let entity = await this.activityRepository.findOne({ discordId: member.id });
 
     // If no result, create a new entity
     if (!entity) {
       entity = new ActivityEntity({
         discordId: member.id,
-        discordNickname: member.displayName,
+        discordNickname: name,
       });
     }
 
     // Update the timestamp and nickname here in all cases, created or not
-    entity.discordNickname = member.displayName;
+    entity.discordNickname = name;
     entity.lastActivity = new Date();
 
     try {
