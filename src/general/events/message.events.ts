@@ -18,9 +18,18 @@ export class MessageEvents {
   ) {}
 
   async handleMessageEvent(member: GuildMember, type: string): Promise<void> {
+    if (!member || !member.user) {
+      throw new Error(`Message ${type} event could not be processed as the GuildMember was not found.`);
+    }
     if (member.user.bot) return;
 
-    this.logger.debug(`Message ${type} event detected from: ${member.nickname || member.user.username}`);
+    const name = member.displayName || member.nickname || member.user.username || null;
+
+    if (!name) {
+      throw new Error(`Message ${type} event could not be processed as member ID "${member.id}" does not have a name!`);
+    }
+
+    this.logger.debug(`Message ${type} event detected from: ${name}`);
 
     await this.databaseService.updateActivity(member);
   }
@@ -71,28 +80,56 @@ export class MessageEvents {
   // Annoyingly, these events are not additive and have to be defined every time.
   @On(Events.MessageCreate)
   async onMessageCreate(message: Message): Promise<void> {
-    await this.handleMessageEvent(message.member, 'create');
+    try {
+      await this.handleMessageEvent(message.member, 'create');
+      this.logger.debug(`Message create event handled for ${message.member.displayName}`);
+    }
+    catch (error) {
+      this.logger.error(`Error handling message create event: ${error.message}`);
+    }
   }
 
   @On(Events.MessageUpdate)
   async onMessageUpdate(message: Message): Promise<void> {
-    await this.handleMessageEvent(message.member, 'update');
+    try {
+      await this.handleMessageEvent(message.member, 'update');
+      this.logger.debug(`Message update event handled for ${message.member.displayName}`);
+    }
+    catch (error) {
+      this.logger.error(`Error handling message update event: ${error.message}`);
+    }
   }
 
   @On(Events.MessageDelete)
   async onMessageDelete(message: Message): Promise<void> {
-    await this.handleMessageEvent(message.member, 'delete');
+    try {
+      await this.handleMessageEvent(message.member, 'delete');
+      this.logger.debug(`Message delete event handled for ${message.member.displayName}`);
+    }
+    catch (error) {
+      this.logger.error(`Error handling message delete event: ${error.message}`);
+    }
   }
 
   @On(Events.MessageReactionAdd)
   async onMessageReactionAdd(reaction: MessageReaction, user: User): Promise<void> {
-    const { reaction: fullReaction, user: fullUser } = await this.handlePartialReactions(reaction, user);
-    await this.handleMessageReaction(fullReaction, fullUser, 'add');
+    try {
+      const { reaction: fullReaction, user: fullUser } = await this.handlePartialReactions(reaction, user);
+      await this.handleMessageReaction(fullReaction, fullUser, 'add');
+    }
+    catch (error) {
+      this.logger.error(`Error handling message reaction add event. ${error.message}`);
+    }
   }
 
   @On(Events.MessageReactionRemove)
   async onMessageReactionRemove(reaction: MessageReaction, user: User): Promise<void> {
-    const { reaction: fullReaction, user: fullUser } = await this.handlePartialReactions(reaction, user);
-    await this.handleMessageReaction(fullReaction, fullUser, 'remove');
+    try {
+      const { reaction: fullReaction, user: fullUser } = await this.handlePartialReactions(reaction, user);
+      await this.handleMessageReaction(fullReaction, fullUser, 'remove');
+    }
+    catch (error) {
+      this.logger.error(`Error handling message reaction remove event. ${error.message}`);
+    }
   }
 }

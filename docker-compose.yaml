@@ -9,7 +9,5 @@ services:
     environment:
       MYSQL_ROOT_PASSWORD: "password"
       MYSQL_DATABASE: "diglet-bot"
-    labels:
-      - "com.centurylinklabs.watchtower.enable=false"
     volumes:
       - ./provisioning/local-data:/var/lib/mysql
