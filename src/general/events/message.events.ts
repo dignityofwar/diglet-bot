@@ -82,6 +82,7 @@ export class MessageEvents {
   async onMessageCreate(message: Message): Promise<void> {
     try {
       await this.handleMessageEvent(message.member, 'create');
+      this.logger.debug(`Message create event handled for ${message.member.displayName}`);
     }
     catch (error) {
       this.logger.error(`Error handling message create event: ${error.message}`);
@@ -92,6 +93,7 @@ export class MessageEvents {
   async onMessageUpdate(message: Message): Promise<void> {
     try {
       await this.handleMessageEvent(message.member, 'update');
+      this.logger.debug(`Message update event handled for ${message.member.displayName}`);
     }
     catch (error) {
       this.logger.error(`Error handling message update event: ${error.message}`);
@@ -102,6 +104,7 @@ export class MessageEvents {
   async onMessageDelete(message: Message): Promise<void> {
     try {
       await this.handleMessageEvent(message.member, 'delete');
+      this.logger.debug(`Message delete event handled for ${message.member.displayName}`);
     }
     catch (error) {
       this.logger.error(`Error handling message delete event: ${error.message}`);

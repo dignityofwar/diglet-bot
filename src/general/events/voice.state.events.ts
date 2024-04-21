@@ -24,7 +24,7 @@ export class VoiceStateEvents {
     // Channel IDs may not be present, depending on connect (oldState) or disconnect (newState)
     if (oldState.channel?.id === newState.channel?.id) return;
 
-    this.logger.log(`Voice state updated for user: ${newState.member.displayName}`);
+    this.logger.debug(`Voice state updated for user: ${newState.member.displayName}`);
 
     await this.databaseService.updateActivity(newState.member);
   }
