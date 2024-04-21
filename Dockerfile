@@ -3,7 +3,7 @@ FROM node:18
 ARG VERSION
 ENV VERSION=${VERSION}
 
-RUN npm install -g pnpm
+RUN npm install -g pnpm@8.15.6
 
 COPY . /app
 
