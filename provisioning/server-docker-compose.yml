@@ -3,7 +3,7 @@ services:
   diglet-bot:
     container_name: digletbot
     image: maelstromeous/applications:digletbot-latest
-    env_file: docker-digletbot.env
+    env_file: docker-digletbot.env # see .env.example
     restart: unless-stopped
     depends_on:
       - diglet-bot-db
@@ -19,4 +19,4 @@ services:
     labels:
       - "com.centurylinklabs.watchtower.enable=false"
     volumes:
-      - ./foo:/var/lib/mysql
+      - ./data:/var/lib/mysql

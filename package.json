@@ -55,10 +55,10 @@
     "websocket-ts": "^1.1.1"
   },
   "devDependencies": {
-    "@mikro-orm/cli": "^5.9.8",
+    "@mikro-orm/cli": "5.9.8",
     "@nestjs/cli": "9.4.2",
     "@nestjs/schematics": "9.1.0",
-    "@nestjs/testing": "^9.4.3",
+    "@nestjs/testing": "^9.4.2",
     "@types/jest": "^29.5.12",
     "@types/node": "18.16.20",
     "@typescript-eslint/eslint-plugin": "5.59.11",
@@ -67,7 +67,7 @@
     "eslint-config-prettier": "8.8.0",
     "eslint-plugin-prettier": "4.2.1",
     "jest": "^29.7.0",
-    "prettier": "2.8.8",
+    "prettier": "^2.8.8",
     "ts-jest": "^29.1.2",
     "ts-loader": "9.4.4",
     "ts-node": "10.9.2",
