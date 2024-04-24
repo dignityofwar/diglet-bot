@@ -17,20 +17,20 @@ const mockDevUserId = TestBootstrapper.mockConfig.discord.devUserId;
 const mockScanUserId = '1337';
 
 // Role constants
-const mockGuildMasterRoleId = '1158467537550454895';
-const mockGuildMasterRoleName = '@ALB/Guildmaster';
-const mockMasterRoleId = '1158467574678429696';
-const mockMasterName = '@ALB/Master';
+const mockGuildUSLeaderRoleId = '1158467537550454895';
+const mockGuildUSLeaderRoleName = '@ALB/US/Guildmaster';
+const mockGuildUSOfficerRoleId = '1158467574678429696';
+const mockUSOfficerRoleName = '@ALB/US/Master';
 const mockGeneralRoleId = '1158467600687300699';
-const mockGeneralName = '@ALB/General';
+const mockGeneralName = '@ALB/US/General';
 const mockCaptainRoleId = '1158467651165761626';
-const mockCaptainName = '@ALB/Captain';
+const mockCaptainName = '@ALB/US/Captain';
 const mockSquireRoleId = '1158467840496635914';
-const mockSquireName = '@ALB/Squire';
+const mockSquireName = '@ALB/US/Squire';
 const mockInitiateRoleId = '1139909152701947944';
-const mockInitiateName = '@ALB/Initiate';
+const mockInitiateName = '@ALB/US/Initiate';
 const mockRegisteredRoleId = '1155987100928323594';
-const mockRegisteredName = '@ALB/Registered';
+const mockRegisteredName = '@ALB/US/Registered';
 
 describe('AlbionScanningService', () => {
   let service: AlbionScanningService;
@@ -43,7 +43,7 @@ describe('AlbionScanningService', () => {
   let mockCharacter: AlbionPlayerInterface;
 
   beforeEach(async () => {
-    mockCharacter = TestBootstrapper.getMockAlbionCharacter(TestBootstrapper.mockConfig.albion.guildId);
+    mockCharacter = TestBootstrapper.getMockAlbionCharacter(TestBootstrapper.mockConfig.albion.guildIdAmericas);
     mockRegisteredMember = {
       id: 123456789,
       discordId: '123456789',
@@ -104,17 +104,17 @@ describe('AlbionScanningService', () => {
       ...TestBootstrapper.mockConfig.albion,
       ...{
         scanExcludedUsers: [mockScanUserId],
-        scanPingRoles: [mockGuildMasterRoleId, mockMasterRoleId],
+        scanPingRoles: [mockGuildUSLeaderRoleId, mockGuildUSOfficerRoleId],
         roleMap: [
           {
-            name: mockGuildMasterRoleName,
-            discordRoleId: mockGuildMasterRoleId,
+            name: mockGuildUSLeaderRoleName,
+            discordRoleId: mockGuildUSLeaderRoleId,
             priority: 1,
             keep: true,
           },
           {
-            name: mockMasterName,
-            discordRoleId: mockMasterRoleId,
+            name: mockUSOfficerRoleName,
+            discordRoleId: mockGuildUSOfficerRoleId,
             priority: 2,
             keep: false,
           },
@@ -169,11 +169,11 @@ describe('AlbionScanningService', () => {
   });
 
   const roles = [
-    { id: '1158467537550454895', name: '@ALB/Guildmaster' },
-    { id: '1158467574678429696', name: '@ALB/Master' },
-    { id: '1158467840496635914', name: '@ALB/Squire' },
-    { id: '1139909152701947944', name: '@ALB/Initiate' },
-    { id: '1155987100928323594', name: '@ALB/Registered' },
+    { id: '1158467537550454895', name: '@ALB/US/Guildmaster' },
+    { id: '1158467574678429696', name: '@ALB/US/Master' },
+    { id: '1158467840496635914', name: '@ALB/US/Squire' },
+    { id: '1139909152701947944', name: '@ALB/US/Initiate' },
+    { id: '1155987100928323594', name: '@ALB/US/Registered' },
   ];
 
   // Execution flow
@@ -251,14 +251,14 @@ describe('AlbionScanningService', () => {
     mockDiscordMessage.guild.roles.fetch = jest.fn().mockImplementation(() => {
       return null;
     });
-    await expect(service.reverseRoleScan(mockDiscordMessage)).rejects.toThrowError('Reverse Role Scan: Role @ALB/Guildmaster does not seem to exist!');
+    await expect(service.reverseRoleScan(mockDiscordMessage)).rejects.toThrowError('Reverse Role Scan: Role @ALB/US/Guildmaster does not seem to exist!');
   });
   it('reverse scan should properly error upon Discord role error', async () => {
     const errMsg = 'Discord don\'t like you';
     mockDiscordMessage.guild.roles.fetch = jest.fn().mockImplementationOnce(() => {
       throw new Error(errMsg);
     });
-    await expect(service.reverseRoleScan(mockDiscordMessage)).rejects.toThrowError(`Reverse Role Scan: Error fetching role @ALB/Guildmaster! Err: ${errMsg}`);
+    await expect(service.reverseRoleScan(mockDiscordMessage)).rejects.toThrowError(`Reverse Role Scan: Error fetching role @ALB/US/Guildmaster! Err: ${errMsg}`);
   });
   it('reverse scan should properly handle when no members were found for any roles', async () => {
     mockDiscordMessage.guild.roles.fetch = jest.fn().mockImplementation(() => {
@@ -464,8 +464,8 @@ describe('AlbionScanningService', () => {
     },
     {
       title: 'Guild Master having Initiate, Captain and General when they shouldn\'t',
-      roles: [mockGuildMasterRoleId, mockInitiateRoleId, mockCaptainRoleId, mockGeneralRoleId, mockSquireRoleId, mockRegisteredRoleId],
-      highestPriorityRole: { id: mockGuildMasterRoleId, name: mockGuildMasterRoleName },
+      roles: [mockGuildUSLeaderRoleId, mockInitiateRoleId, mockCaptainRoleId, mockGeneralRoleId, mockSquireRoleId, mockRegisteredRoleId],
+      highestPriorityRole: { id: mockGuildUSLeaderRoleId, name: mockGuildUSLeaderRoleName },
       expected: [
         { id: mockGeneralRoleId, name: mockGeneralName, action: 'removed', message: '' },
         { id: mockCaptainRoleId, name: mockCaptainName, action: 'removed', message: '' },
@@ -474,16 +474,16 @@ describe('AlbionScanningService', () => {
     },
     {
       title: 'Guild Master requires Squire',
-      roles: [mockGuildMasterRoleId, mockRegisteredRoleId],
-      highestPriorityRole: { id: mockGuildMasterRoleId, name: mockGuildMasterRoleName },
+      roles: [mockGuildUSLeaderRoleId, mockRegisteredRoleId],
+      highestPriorityRole: { id: mockGuildUSLeaderRoleId, name: mockGuildUSLeaderRoleName },
       expected: [
         { id: mockSquireRoleId, name: mockSquireName, action: 'added', message: '' },
       ],
     },
     {
       title: 'Master requires Squire',
-      roles: [mockMasterRoleId, mockRegisteredRoleId],
-      highestPriorityRole: { id: mockMasterRoleId, name: mockMasterName },
+      roles: [mockGuildUSOfficerRoleId, mockRegisteredRoleId],
+      highestPriorityRole: { id: mockGuildUSOfficerRoleId, name: mockUSOfficerRoleName },
       expected: [
         { id: mockSquireRoleId, name: mockSquireName, action: 'added', message: '' },
       ],
@@ -518,16 +518,16 @@ describe('AlbionScanningService', () => {
     },
     {
       title: 'Guild Masters should not have Initiate and should have Squire',
-      roles: [mockGuildMasterRoleId, mockSquireRoleId, mockInitiateRoleId, mockRegisteredRoleId],
-      highestPriorityRole: { id: mockGuildMasterRoleId, name: mockGuildMasterRoleName },
+      roles: [mockGuildUSLeaderRoleId, mockSquireRoleId, mockInitiateRoleId, mockRegisteredRoleId],
+      highestPriorityRole: { id: mockGuildUSLeaderRoleId, name: mockGuildUSLeaderRoleName },
       expected: [
         { id: mockInitiateRoleId, name: mockInitiateName, action: 'removed', message: '' },
       ],
     },
     {
       title: 'Masters should not have Initiate and should have Squire',
-      roles: [mockMasterRoleId, mockSquireRoleId, mockInitiateRoleId, mockRegisteredRoleId],
-      highestPriorityRole: { id: mockMasterRoleId, name: mockMasterName },
+      roles: [mockGuildUSOfficerRoleId, mockSquireRoleId, mockInitiateRoleId, mockRegisteredRoleId],
+      highestPriorityRole: { id: mockGuildUSOfficerRoleId, name: mockUSOfficerRoleName },
       expected: [
         { id: mockInitiateRoleId, name: mockInitiateName, action: 'removed', message: '' },
       ],
@@ -646,11 +646,11 @@ describe('AlbionScanningService', () => {
   });
   it('roleInconsistencies should ensure certain people are excluded from scanning', async () => {
     mockDiscordUser.id = mockScanUserId;
-    setupRoleTestMocks([mockGuildMasterRoleId, mockSquireRoleId, mockInitiateRoleId, mockRegisteredRoleId]); // Should require they remove initiate rank
+    setupRoleTestMocks([mockGuildUSLeaderRoleId, mockSquireRoleId, mockInitiateRoleId, mockRegisteredRoleId]); // Should require they remove initiate rank
     expect((await service.checkRoleInconsistencies(mockDiscordUser)).length).toEqual(0);
   });
   it('roleInconsistencies should still process non excluded users', async () => {
-    setupRoleTestMocks([mockGuildMasterRoleId, mockSquireRoleId, mockInitiateRoleId, mockRegisteredRoleId]); // Should require they remove initiate rank
+    setupRoleTestMocks([mockGuildUSLeaderRoleId, mockSquireRoleId, mockInitiateRoleId, mockRegisteredRoleId]); // Should require they remove initiate rank
     expect((await service.checkRoleInconsistencies(mockDiscordUser)).length).toEqual(1);
   });
   it('roleInconsistencies should properly indicate progress when multiple users are involved', async () => {

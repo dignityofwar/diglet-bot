@@ -5,7 +5,7 @@ import { InjectRepository } from '@mikro-orm/nestjs';
 import { AlbionRegistrationsEntity } from '../../database/entities/albion.registrations.entity';
 import { EntityRepository } from '@mikro-orm/core';
 import { Channel, GuildMember, Message, MessageFlags } from 'discord.js';
-import { AlbionPlayerInterface } from '../interfaces/albion.api.interfaces';
+import { AlbionPlayerInterface, AlbionServer } from '../interfaces/albion.api.interfaces';
 import { AlbionRegisterDto } from '../dto/albion.register.dto';
 import { AlbionApiService } from './albion.api.service';
 
@@ -37,31 +37,34 @@ export class AlbionRegistrationService implements OnApplicationBootstrap {
     // We purposefully don't check if the verified role exists, as the bot could technically belong to multiple servers, and we'd have to start injecting the guild ID into the config service, which is a bit of a pain.
   }
 
-  async validateRegistrationAttempt(character: AlbionPlayerInterface, guildMember: GuildMember): Promise<string | true> {
+  async validateRegistrationAttempt(dto: AlbionRegisterDto, character: AlbionPlayerInterface, guildMember: GuildMember): Promise<string | true> {
     this.logger.debug(`Checking if registration attempt for "${character.Name}" is valid`);
 
     // 1. Check if the roles to apply exist
     try {
-      await this.discordService.getMemberRole(guildMember, this.config.get('discord.roles.albionInitiateRoleId'));
-      await this.discordService.getMemberRole(guildMember, this.config.get('discord.roles.albionRegisteredRoleId'));
-      await this.discordService.getMemberRole(guildMember, this.config.get('discord.roles.albionTownCrierRoleId'));
+      await this.discordService.getMemberRole(guildMember, this.config.get('discord.roles.albionUSMember'));
+      await this.discordService.getMemberRole(guildMember, this.config.get('discord.roles.albionUSRegistered'));
+      await this.discordService.getMemberRole(guildMember, this.config.get('discord.roles.albionEURegistered'));
+      await this.discordService.getMemberRole(guildMember, this.config.get('discord.roles.albionUSAnnouncements'));
     }
     catch (err) {
       this.throwError(`Required Role(s) do not exist! Pinging <@${this.config.get('discord.devUserId')}>! Err: ${err.message}`);
     }
 
     // 2. Check if the user is in the guild
-    const guildId = this.config.get('albion.guildId');
+    const guildId = dto.server === AlbionServer.AMERICAS ? this.config.get('albion.guildIdAmericas') : this.config.get('albion.guildIdEurope');
 
     if (character.GuildId !== guildId) {
       this.throwError(`Sorry <@${guildMember.id}>, the character **${character.Name}** has not been detected in the DIG guild. Please ensure that:\n
 1. You have spelt the name **exactly** correct (case sensitive).
-2. You are a member of the "DIG - Dignity of War" guild in the game before trying again.
-\nIf you have just joined us, please wait ~10 minutes. If you are still having issues, please contact the Albion Guild Masters.`);
+2. You are a member of the Guild based in the server you have selected:
+  - Albion Europe: 🇪🇺 **Dignity Of War**
+  - Albion Americas: 🇺🇸 **DIG - Dignity of War**
+\nIf you have just joined us, please wait ~10 minutes. If you are still having issues, please contact the Albion Guild Masters in <#1039269706605002912>.`);
     }
 
-    // 3. Check if the character has already been registered
-    const foundMember = await this.albionRegistrationsRepository.find({ characterId: character.Id });
+    // 3. Check if the character has already been registered on the same server
+    const foundMember = await this.albionRegistrationsRepository.find({ characterId: character.Id, guildId });
 
     if (foundMember.length > 0) {
       // Get the original Discord user, if possible
@@ -74,16 +77,18 @@ export class AlbionRegistrationService implements OnApplicationBootstrap {
       }
 
       if (!originalDiscordMember) {
-        this.throwError(`Sorry <@${guildMember.id}>, character **${character.Name}** has already been registered, but the user who registered it has left the server. If you believe this to be in error, please contact the Albion Guild Masters.`);
+        this.throwError(`Sorry <@${guildMember.id}>, character **${character.Name}** has already been registered, but the user who registered it has left the server. If you believe this to be in error, please contact the Albion Guild Masters in <#1039269706605002912>.`);
       }
 
-      this.throwError(`Sorry <@${guildMember.id}>, character **${character.Name}** has already been registered by Discord user \`@${originalDiscordMember.displayName}\`. If this is you, you don't need to do anything. If you believe this to be in error, please contact the Albion Guild Masters.`);
+      this.throwError(`Sorry <@${guildMember.id}>, character **${character.Name}** has already been registered by Discord user \`@${originalDiscordMember.displayName}\`. If this is you, you don't need to do anything. If you believe this to be in error, please contact the Albion Guild Masters in <#1039269706605002912>.`);
     }
 
     // 4. Check if the user has already registered a character
-    const discordMember = await this.albionRegistrationsRepository.find({ discordId: guildMember.id });
+    const discordMember = await this.albionRegistrationsRepository.find({ discordId: guildMember.id, guildId });
     if (discordMember.length > 0) {
-      this.throwError(`Sorry <@${guildMember.id}>, you have already registered a character named **${discordMember[0].characterName}**. We don't allow multiple characters to be registered to the same Discord user, as there is little point to it. If you believe this to be in error, or if you have registered the wrong character, please contact the Albion Guild Masters.`);
+      const serverName = dto.server === AlbionServer.AMERICAS ? 'Americas' : 'Europe';
+      const leaderName = dto.server === AlbionServer.AMERICAS ? 'Guild Masters' : 'Archmages';
+      this.throwError(`Sorry <@${guildMember.id}>, you have already registered a character named **${discordMember[0].characterName}** for the ${serverName} Guild. We don't allow multiple Guild characters to be registered to the same Discord user, as there is little point to it. If you believe this to be in error, or if you have registered the wrong character, please contact the Albion ${leaderName} in <#1039269706605002912>.`);
     }
 
     this.logger.debug(`Registration attempt for "${character.Name}" is valid`);
@@ -92,33 +97,43 @@ export class AlbionRegistrationService implements OnApplicationBootstrap {
   }
 
   async handleRegistration(dto: AlbionRegisterDto, discordMember: GuildMember, message: Message) {
-    this.logger.debug(`Handling Albion character "${dto.character}" registration`);
+    this.logger.debug(`Handling Albion character "${dto.character}" registration for "${discordMember.displayName}" on server "${dto.server}"`);
+
+    if (!dto.server) {
+      this.throwError(`Server was not specified, this shouldn't be possible. Pinging <@${this.config.get('discord.devUserId')}>!`);
+    }
+
+    const guildId = dto.server === AlbionServer.AMERICAS ? this.config.get('albion.guildIdAmericas') : this.config.get('albion.guildIdEurope');
 
     let character: AlbionPlayerInterface;
     try {
       // Get the character from the Albion Online API
-      character = await this.albionApiService.getCharacter(dto.character);
+      character = await this.albionApiService.getCharacter(dto.character, dto.server);
     }
     catch (err) {
       // Append "Sorry <person>, " to the error message
       this.throwError(`Sorry <@${discordMember.id}>, ${err.message}`);
     }
 
-    await this.validateRegistrationAttempt(character, discordMember);
+    await this.validateRegistrationAttempt(dto, character, discordMember);
 
     // Add the initiate, verified and towncrier roles. We are safe to assume these roles exist as they are checked at the validateRegistrationAttempt step.
     try {
       await discordMember.roles.add(await this.discordService.getMemberRole(
         discordMember,
-        this.config.get('discord.roles.albionInitiateRoleId')
+        this.config.get('discord.roles.albionUSMember')
       ));
       await discordMember.roles.add(await this.discordService.getMemberRole(
         discordMember,
-        this.config.get('discord.roles.albionRegisteredRoleId')
+        this.config.get('discord.roles.albionUSRegistered')
       ));
       await discordMember.roles.add(await this.discordService.getMemberRole(
         discordMember,
-        this.config.get('discord.roles.albionTownCrierRoleId')
+        this.config.get('discord.roles.albionEURegistered')
+      ));
+      await discordMember.roles.add(await this.discordService.getMemberRole(
+        discordMember,
+        this.config.get('discord.roles.albionUSAnnouncements')
       ));
     }
     catch (err) {
@@ -131,6 +146,7 @@ export class AlbionRegistrationService implements OnApplicationBootstrap {
         discordId: discordMember.id,
         characterId: character.Id,
         characterName: character.Name,
+        guildId,
       });
       await this.albionRegistrationsRepository.upsert(entity);
     }
@@ -150,15 +166,19 @@ export class AlbionRegistrationService implements OnApplicationBootstrap {
 
     this.logger.log(`Registration for ${character.Name} was successful, returning success response.`);
 
+    const rolesChannel = dto.server === AlbionServer.AMERICAS ? this.config.get('discord.channels.albionUSRoles') : this.config.get('discord.channels.albionEURoles');
+    const announcementChannel = dto.server === AlbionServer.AMERICAS ? this.config.get('discord.channels.albionUSAnnouncements') : this.config.get('discord.channels.albionEUAnnouncements');
+    const albOfficerRole = dto.server === AlbionServer.AMERICAS ? this.config.get('albion.guildUSOfficerRole').discordRoleId : this.config.get('albion.guildEUOfficerRole').discordRoleId;
+    const albLeaderRole = dto.server === AlbionServer.AMERICAS ? this.config.get('albion.guildUSLeaderRole').discordRoleId : this.config.get('albion.guildEULeaderRole').discordRoleId;
+
     // Successful!
-    const messageContent = `## ✅ Thank you <@${discordMember.id}>, your character **${character.Name}** has been verified! 🎉
+    const messageContent = `# ✅ Thank you <@${discordMember.id}>, your character **${character.Name}** has been registered! 🎉
 
-* ➡️ Please read the information within <#${this.config.get('discord.channels.albionInfopoint')}> to be fully acquainted with the guild!
-* 👉️ **IMPORTANT**: [Grab opt-in roles for various content you're interested in](https://discord.com/channels/90078410642034688/1039269859814559764)!
+## 👉️👉️👉️️ NEXT STEP: <#${rolesChannel}>
 * ℹ️ Your Discord server nickname has been automatically changed to match your character name. You are free to change this back should you want to, but please make sure it resembles your in-game name.
-* 🔔 You have automatically been enrolled to our <#${this.config.get('discord.channels.albionTownCrier')}> announcements channel. If you wish to opt out, go to the [#welcome-to-albion](https://discord.com/channels/90078410642034688/1039268966905954394/1204480244405243954) channel, double tap the 🔔 icon.
+* 🔔 You have automatically been enrolled to our <#${announcementChannel}> announcements channel. If you wish to opt out, go to <#${rolesChannel}>, double tap the 🔔 icon.
 
-CC <@&${this.config.get('albion.masterRole').discordRoleId}>, <@&${this.config.get('albion.guildMasterRole').discordRoleId}>`;
+CC <@&${albLeaderRole}>, <@&${albOfficerRole}>`;
     await message.channel.send({
       content: messageContent,
       flags: MessageFlags.SuppressEmbeds,

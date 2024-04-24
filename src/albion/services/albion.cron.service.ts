@@ -32,7 +32,8 @@ export class AlbionCronService implements OnApplicationBootstrap {
     }
   }
 
-  @Cron('0 0 6,18 * * *')
+  // TODO: Re-enable when ready to test.
+  // @Cron('0 0 6,18 * * *')
   async runAlbionScans(): Promise<void> {
     this.logger.log('Running Albion Scans Cron');
 

@@ -1,4 +1,5 @@
-import { Param } from '@discord-nestjs/core';
+import { Choice, Param } from '@discord-nestjs/core';
+import { AlbionServer } from '../interfaces/albion.api.interfaces';
 
 export class AlbionRegisterDto {
   @Param({
@@ -10,4 +11,13 @@ export class AlbionRegisterDto {
     maxLength: 16,
   })
     character: string;
+
+  @Choice(AlbionServer)
+  @Param({
+    name: 'server',
+    description:
+      'Which server are you on? Americas or Europe?',
+    required: true,
+  })
+    server: AlbionServer;
 }

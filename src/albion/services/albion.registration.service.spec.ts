@@ -7,13 +7,14 @@ import { ConfigService } from '@nestjs/config';
 import { EntityRepository } from '@mikro-orm/core';
 import { getRepositoryToken } from '@mikro-orm/nestjs';
 import { AlbionRegistrationsEntity } from '../../database/entities/albion.registrations.entity';
-import { AlbionPlayerInterface } from '../interfaces/albion.api.interfaces';
+import { AlbionPlayerInterface, AlbionServer } from '../interfaces/albion.api.interfaces';
 import { TestBootstrapper } from '../../test.bootstrapper';
 import { AlbionRegisterDto } from '../dto/albion.register.dto';
 import { AlbionApiService } from './albion.api.service';
 
 const mockRegistrationChannelId = TestBootstrapper.mockConfig.discord.channels.albionRegistration;
-const mockAlbionInitiateRoleId = TestBootstrapper.mockConfig.discord.roles.albionInitiateRoleId;
+const mockAlbionUSMemberRoleId = TestBootstrapper.mockConfig.discord.roles.albionUSMember;
+const mockAlbionEUMemberRoleId = TestBootstrapper.mockConfig.discord.roles.albionEUMember;
 const mockDevUserId = TestBootstrapper.mockConfig.discord.devUserId;
 
 describe('AlbionRegistrationService', () => {
@@ -25,12 +26,12 @@ describe('AlbionRegistrationService', () => {
   let mockCharacter: AlbionPlayerInterface;
   let mockDiscordUser: any;
   let mockDiscordMessage: any;
-  const mockDto: AlbionRegisterDto = { character: 'Maelstrome26' };
+  let mockDto: AlbionRegisterDto;
 
   beforeEach(async () => {
     TestBootstrapper.mockORM();
     mockAlbionRegistrationsRepository = TestBootstrapper.getMockEntityRepo();
-    mockCharacter = TestBootstrapper.getMockAlbionCharacter(TestBootstrapper.mockConfig.albion.guildId) as any;
+    mockCharacter = TestBootstrapper.getMockAlbionCharacter(TestBootstrapper.mockConfig.albion.guildIdAmericas) as any;
     mockDiscordUser = TestBootstrapper.getMockDiscordUser();
     mockDiscordMessage = TestBootstrapper.getMockDiscordMessage();
 
@@ -69,6 +70,7 @@ describe('AlbionRegistrationService', () => {
     discordService = moduleRef.get<DiscordService>(DiscordService);
     albionApiService = moduleRef.get<AlbionApiService>(AlbionApiService);
 
+    mockDto = { character: 'Maelstrome26', server: AlbionServer.AMERICAS };
   });
 
   afterEach(() => {
@@ -97,13 +99,13 @@ describe('AlbionRegistrationService', () => {
   it('should throw an error if one of the roles is missing ', async () => {
     discordService.getMemberRole = jest.fn()
       .mockReturnValueOnce({
-        id: mockAlbionInitiateRoleId,
+        id: mockAlbionUSMemberRoleId,
       })
       .mockImplementationOnce(() => {
         throw new Error('Role not found');
       });
 
-    await expect(service.validateRegistrationAttempt(mockCharacter, mockDiscordUser)).rejects.toThrowError(`Required Role(s) do not exist! Pinging <@${mockDevUserId}>! Err: Role not found`);
+    await expect(service.validateRegistrationAttempt(mockDto, mockCharacter, mockDiscordUser)).rejects.toThrowError(`Required Role(s) do not exist! Pinging <@${mockDevUserId}>! Err: Role not found`);
   });
 
   it('validation should return an error if the character has already been registered by another person (and member has left the server)', async () => {
@@ -112,7 +114,7 @@ describe('AlbionRegistrationService', () => {
     }]);
     discordService.getGuildMember = jest.fn().mockResolvedValue(null);
 
-    await expect(service.validateRegistrationAttempt(mockCharacter, mockDiscordUser)).rejects.toThrowError(`Sorry <@${mockDiscordUser.id}>, character **${mockCharacter.Name}** has already been registered, but the user who registered it has left the server. If you believe this to be in error, please contact the Albion Guild Masters.`);
+    await expect(service.validateRegistrationAttempt(mockDto, mockCharacter, mockDiscordUser)).rejects.toThrowError(`Sorry <@${mockDiscordUser.id}>, character **${mockCharacter.Name}** has already been registered, but the user who registered it has left the server. If you believe this to be in error, please contact the Albion Guild Masters in <#1039269706605002912>.`);
   });
   it('validation should return an error if the character has already been registered by another person (but still on server)', async () => {
     mockAlbionRegistrationsRepository.find = jest.fn().mockResolvedValue([{
@@ -120,40 +122,59 @@ describe('AlbionRegistrationService', () => {
     }]);
     discordService.getGuildMember = jest.fn().mockResolvedValue(mockDiscordUser);
 
-    await expect(service.validateRegistrationAttempt(mockCharacter, mockDiscordUser)).rejects.toThrowError(`Sorry <@${mockDiscordUser.id}>, character **${mockCharacter.Name}** has already been registered by Discord user \`@${mockDiscordUser.displayName}\`. If this is you, you don't need to do anything. If you believe this to be in error, please contact the Albion Guild Masters.`);
+    await expect(service.validateRegistrationAttempt(mockDto, mockCharacter, mockDiscordUser)).rejects.toThrowError(`Sorry <@${mockDiscordUser.id}>, character **${mockCharacter.Name}** has already been registered by Discord user \`@${mockDiscordUser.displayName}\`. If this is you, you don't need to do anything. If you believe this to be in error, please contact the Albion Guild Masters in <#1039269706605002912>.`);
   });
-  it('validation should return an error if the user has already registered a character themselves', async () => {
+  it('validation should return an error if there is a character registered under the same name on the same server, formatted for US', async () => {
     const discordMemberEntry = {
-      discordId: mockDiscordUser.id,
       characterName: 'TestCharacter',
+      guildId: TestBootstrapper.mockConfig.albion.guildIdAmericas,
     };
     mockAlbionRegistrationsRepository.find = jest.fn()
       .mockResolvedValueOnce([])
       .mockResolvedValueOnce([discordMemberEntry]);
 
-    await expect(service.validateRegistrationAttempt(mockCharacter, mockDiscordUser)).rejects.toThrowError(`Sorry <@${mockDiscordUser.id}>, you have already registered a character named **${discordMemberEntry.characterName}**. We don't allow multiple characters to be registered to the same Discord user, as there is little point to it. If you believe this to be in error, or if you have registered the wrong character, please contact the Albion Guild Masters.`);
+    await expect(service.validateRegistrationAttempt(mockDto, mockCharacter, mockDiscordUser)).rejects.toThrowError(`Sorry <@${mockDiscordUser.id}>, you have already registered a character named **${discordMemberEntry.characterName}** for the Americas Guild. We don't allow multiple Guild characters to be registered to the same Discord user, as there is little point to it. If you believe this to be in error, or if you have registered the wrong character, please contact the Albion Guild Masters in <#1039269706605002912>.`);
+  });
+  it('validation should return an error if there is a character registered under the same name on the same server, formatted for EU', async () => {
+    mockDto.server = AlbionServer.EUROPE;
+    mockCharacter.GuildId = TestBootstrapper.mockConfig.albion.guildIdEurope;
+    const discordMemberEntry = {
+      characterName: 'TestCharacter',
+      guildId: TestBootstrapper.mockConfig.albion.guildIdEurope,
+    };
+    mockAlbionRegistrationsRepository.find = jest.fn()
+      .mockResolvedValueOnce([])
+      .mockResolvedValueOnce([discordMemberEntry]);
+
+    await expect(service.validateRegistrationAttempt(mockDto, mockCharacter, mockDiscordUser)).rejects.toThrowError(`Sorry <@${mockDiscordUser.id}>, you have already registered a character named **${discordMemberEntry.characterName}** for the Europe Guild. We don't allow multiple Guild characters to be registered to the same Discord user, as there is little point to it. If you believe this to be in error, or if you have registered the wrong character, please contact the Albion Archmages in <#1039269706605002912>.`);
   });
   it('validation should return true if no existing registration was found', async () => {
     mockAlbionRegistrationsRepository.find = jest.fn()
       .mockResolvedValueOnce([])
       .mockResolvedValueOnce([]);
 
-    await expect(service.validateRegistrationAttempt(mockCharacter, mockDiscordUser)).resolves.toBe(true);
+    await expect(service.validateRegistrationAttempt(mockDto, mockCharacter, mockDiscordUser)).resolves.toBe(true);
   });
   it('should handle characters that are not in the guild', async () => {
     mockCharacter.GuildId = 'utter nonsense';
 
-    await expect(service.validateRegistrationAttempt(mockCharacter, mockDiscordUser)).rejects.toThrowError(`Sorry <@${mockDiscordUser.id}>, the character **${mockCharacter.Name}** has not been detected in the DIG guild. Please ensure that:\n
+    await expect(service.validateRegistrationAttempt(mockDto, mockCharacter, mockDiscordUser)).rejects.toThrowError(`Sorry <@${mockDiscordUser.id}>, the character **${mockCharacter.Name}** has not been detected in the DIG guild. Please ensure that:\n
 1. You have spelt the name **exactly** correct (case sensitive).
-2. You are a member of the "DIG - Dignity of War" guild in the game before trying again.
-\nIf you have just joined us, please wait ~10 minutes. If you are still having issues, please contact the Albion Guild Masters.`);
+2. You are a member of the Guild based in the server you have selected:
+  - Albion Europe: 🇪🇺 **Dignity Of War**
+  - Albion Americas: 🇺🇸 **DIG - Dignity of War**
+\nIf you have just joined us, please wait ~10 minutes. If you are still having issues, please contact the Albion Guild Masters in <#1039269706605002912>.`);
   });
 
   // Registration handling
+  it('should throw an error if the server is not passed from the command', async () => {
+    mockDto.server = undefined;
+    await expect(service.handleRegistration(mockDto, mockDiscordUser, mockDiscordMessage)).rejects.toThrowError(`Server was not specified, this shouldn't be possible. Pinging <@${mockDevUserId}>!`);
+  });
   it('should handle discord role adding errors', async () => {
     service.validateRegistrationAttempt = jest.fn().mockImplementation(() => true);
     discordService.getMemberRole = jest.fn().mockReturnValue({
-      id: mockAlbionInitiateRoleId,
+      id: mockAlbionUSMemberRoleId,
     });
     mockDiscordUser.roles.add = jest.fn()
       .mockResolvedValueOnce(true)
@@ -165,7 +186,7 @@ describe('AlbionRegistrationService', () => {
   it('should return thrown exception upon database error', async () => {
     service.validateRegistrationAttempt = jest.fn().mockImplementation(() => true);
     discordService.getMemberRole = jest.fn().mockReturnValue({
-      id: mockAlbionInitiateRoleId,
+      id: mockAlbionUSMemberRoleId,
     });
     mockAlbionRegistrationsRepository.upsert = jest.fn().mockImplementation(() => {
       throw new Error('Database done goofed');
@@ -175,7 +196,7 @@ describe('AlbionRegistrationService', () => {
   it('should handle discord nickname permission errors', async () => {
     service.validateRegistrationAttempt = jest.fn().mockImplementation(() => true);
     discordService.getMemberRole = jest.fn().mockReturnValue({
-      id: mockAlbionInitiateRoleId,
+      id: mockAlbionUSMemberRoleId,
     });
     mockDiscordUser.roles.add = jest.fn().mockReturnValue(true);
     mockDiscordUser.setNickname = jest.fn().mockImplementation(() => {
@@ -192,11 +213,11 @@ describe('AlbionRegistrationService', () => {
     await expect(service.handleRegistration(mockDto, mockDiscordUser, mockDiscordMessage)).rejects.toThrowError(`Sorry <@${mockDiscordUser.id}>, ${errorMsg}`);
   });
 
-  // Edge case handling
-  it('should handle successful registrations and return a message to the user', async () => {
+  // Successful paths
+  it('should handle successful US registration and return a message to the user', async () => {
     service.validateRegistrationAttempt = jest.fn().mockImplementation(() => true);
     discordService.getMemberRole = jest.fn().mockReturnValue({
-      id: mockAlbionInitiateRoleId,
+      id: mockAlbionUSMemberRoleId,
     });
     mockDiscordUser.roles.add = jest.fn().mockReturnValue(true);
     mockDiscordUser.setNickname = jest.fn().mockImplementation(() => {
@@ -205,18 +226,45 @@ describe('AlbionRegistrationService', () => {
 
     await expect(service.handleRegistration(mockDto, mockDiscordUser, mockDiscordMessage)).resolves.toBe(undefined);
 
-    const mockMasterRoleId = TestBootstrapper.mockConfig.albion.masterRole.discordRoleId;
-    const mockGuildMasterRoleId = TestBootstrapper.mockConfig.albion.guildMasterRole.discordRoleId;
+    const mockUSOfficerRoleId = TestBootstrapper.mockConfig.albion.guildUSOfficerRole.discordRoleId;
+    const mockUSLeaderRoleId = TestBootstrapper.mockConfig.albion.guildUSLeaderRole.discordRoleId;
 
     expect(mockDiscordMessage.channel.send).toBeCalledWith({
-      content: `## ✅ Thank you <@${mockDiscordUser.id}>, your character **${mockCharacter.Name}** has been verified! 🎉
+      content: `# ✅ Thank you <@${mockDiscordUser.id}>, your character **${mockCharacter.Name}** has been registered! 🎉
 
-* ➡️ Please read the information within <#${TestBootstrapper.mockConfig.discord.channels.albionInfopoint}> to be fully acquainted with the guild!
-* 👉️ **IMPORTANT**: [Grab opt-in roles for various content you're interested in](https://discord.com/channels/90078410642034688/1039269859814559764)!
+## 👉️👉️👉️️ NEXT STEP: <#${TestBootstrapper.mockConfig.discord.channels.albionUSRoles}>
 * ℹ️ Your Discord server nickname has been automatically changed to match your character name. You are free to change this back should you want to, but please make sure it resembles your in-game name.
-* 🔔 You have automatically been enrolled to our <#${TestBootstrapper.mockConfig.discord.channels.albionTownCrier}> announcements channel. If you wish to opt out, go to the [#welcome-to-albion](https://discord.com/channels/90078410642034688/1039268966905954394/1204480244405243954) channel, double tap the 🔔 icon.
+* 🔔 You have automatically been enrolled to our <#${TestBootstrapper.mockConfig.discord.channels.albionUSAnnouncements}> announcements channel. If you wish to opt out, go to <#${TestBootstrapper.mockConfig.discord.channels.albionUSRoles}>, double tap the 🔔 icon.
 
-CC <@&${mockMasterRoleId}>, <@&${mockGuildMasterRoleId}>`,
+CC <@&${mockUSLeaderRoleId}>, <@&${mockUSOfficerRoleId}>`,
+      flags: 4,
+    });
+    expect(mockDiscordMessage.delete).toBeCalled();
+  });
+  it('should handle successful EU registration and return a message to the user', async () => {
+    mockDto.server = AlbionServer.EUROPE;
+    service.validateRegistrationAttempt = jest.fn().mockImplementation(() => true);
+    discordService.getMemberRole = jest.fn().mockReturnValue({
+      id: mockAlbionEUMemberRoleId,
+    });
+    mockDiscordUser.roles.add = jest.fn().mockReturnValue(true);
+    mockDiscordUser.setNickname = jest.fn().mockImplementation(() => {
+      true;
+    });
+
+    await expect(service.handleRegistration(mockDto, mockDiscordUser, mockDiscordMessage)).resolves.toBe(undefined);
+
+    const mockEUOfficerRoleId = TestBootstrapper.mockConfig.albion.guildEUOfficerRole.discordRoleId;
+    const mockEULeaderRoleId = TestBootstrapper.mockConfig.albion.guildEULeaderRole.discordRoleId;
+
+    expect(mockDiscordMessage.channel.send).toBeCalledWith({
+      content: `# ✅ Thank you <@${mockDiscordUser.id}>, your character **${mockCharacter.Name}** has been registered! 🎉
+
+## 👉️👉️👉️️ NEXT STEP: <#${TestBootstrapper.mockConfig.discord.channels.albionEURoles}>
+* ℹ️ Your Discord server nickname has been automatically changed to match your character name. You are free to change this back should you want to, but please make sure it resembles your in-game name.
+* 🔔 You have automatically been enrolled to our <#${TestBootstrapper.mockConfig.discord.channels.albionEUAnnouncements}> announcements channel. If you wish to opt out, go to <#${TestBootstrapper.mockConfig.discord.channels.albionEURoles}>, double tap the 🔔 icon.
+
+CC <@&${mockEULeaderRoleId}>, <@&${mockEUOfficerRoleId}>`,
       flags: 4,
     });
     expect(mockDiscordMessage.delete).toBeCalled();
