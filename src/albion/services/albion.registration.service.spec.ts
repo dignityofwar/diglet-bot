@@ -181,7 +181,26 @@ describe('AlbionRegistrationService', () => {
       .mockImplementation(() => {
         throw new Error('Unable to add role');
       });
-    await expect(service.handleRegistration(mockDto, mockDiscordUser, mockDiscordMessage)).rejects.toThrowError(`Unable to add registration role(s) to "${mockDiscordUser.displayName}"! Pinging <@${mockDevUserId}>!\nErr: Unable to add role`);
+    await expect(service.handleRegistration(mockDto, mockDiscordUser, mockDiscordMessage)).rejects.toThrowError(`Unable to add roles to "${mockDiscordUser.displayName}"! Pinging <@${mockDevUserId}>!\nErr: Unable to add role`);
+  });
+  it('should add the correct number of roles, US', async () => {
+    service.validateRegistrationAttempt = jest.fn().mockImplementation(() => true);
+    mockDiscordUser.roles.add = jest.fn().mockReturnValue(true);
+    await expect(service.handleRegistration(mockDto, mockDiscordUser, mockDiscordMessage)).resolves.toBe(undefined);
+    expect(discordService.getMemberRole).toHaveBeenCalledWith(mockDiscordUser, TestBootstrapper.mockConfig.discord.roles.albionUSMember);
+    expect(discordService.getMemberRole).toHaveBeenCalledWith(mockDiscordUser, TestBootstrapper.mockConfig.discord.roles.albionUSRegistered);
+    expect(discordService.getMemberRole).toHaveBeenCalledWith(mockDiscordUser, TestBootstrapper.mockConfig.discord.roles.albionUSAnnouncements);
+    expect(mockDiscordUser.roles.add).toHaveBeenCalledTimes(3);
+  });
+  it('should add the correct number of roles, EU', async () => {
+    mockDto.server = AlbionServer.EUROPE;
+    service.validateRegistrationAttempt = jest.fn().mockImplementation(() => true);
+    mockDiscordUser.roles.add = jest.fn().mockReturnValue(true);
+    await expect(service.handleRegistration(mockDto, mockDiscordUser, mockDiscordMessage)).resolves.toBe(undefined);
+    expect(discordService.getMemberRole).toHaveBeenCalledWith(mockDiscordUser, TestBootstrapper.mockConfig.discord.roles.albionEUMember);
+    expect(discordService.getMemberRole).toHaveBeenCalledWith(mockDiscordUser, TestBootstrapper.mockConfig.discord.roles.albionEURegistered);
+    expect(discordService.getMemberRole).toHaveBeenCalledWith(mockDiscordUser, TestBootstrapper.mockConfig.discord.roles.albionEUAnnouncements);
+    expect(mockDiscordUser.roles.add).toHaveBeenCalledTimes(3);
   });
   it('should return thrown exception upon database error', async () => {
     service.validateRegistrationAttempt = jest.fn().mockImplementation(() => true);

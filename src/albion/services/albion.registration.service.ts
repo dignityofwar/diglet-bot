@@ -117,27 +117,27 @@ export class AlbionRegistrationService implements OnApplicationBootstrap {
 
     await this.validateRegistrationAttempt(dto, character, discordMember);
 
-    // Add the initiate, verified and towncrier roles. We are safe to assume these roles exist as they are checked at the validateRegistrationAttempt step.
+    // Add roles based on guild membership
+    const memberRole = dto.server === AlbionServer.AMERICAS ? this.config.get('discord.roles.albionUSMember') : this.config.get('discord.roles.albionEUMember');
+    const registeredRole = dto.server === AlbionServer.AMERICAS ? this.config.get('discord.roles.albionUSRegistered') : this.config.get('discord.roles.albionEURegistered');
+    const announcementRole = dto.server === AlbionServer.AMERICAS ? this.config.get('discord.roles.albionUSAnnouncements') : this.config.get('discord.roles.albionEUAnnouncements');
+
     try {
       await discordMember.roles.add(await this.discordService.getMemberRole(
         discordMember,
-        this.config.get('discord.roles.albionUSMember')
+        memberRole
       ));
       await discordMember.roles.add(await this.discordService.getMemberRole(
         discordMember,
-        this.config.get('discord.roles.albionUSRegistered')
+        registeredRole
       ));
       await discordMember.roles.add(await this.discordService.getMemberRole(
         discordMember,
-        this.config.get('discord.roles.albionEURegistered')
-      ));
-      await discordMember.roles.add(await this.discordService.getMemberRole(
-        discordMember,
-        this.config.get('discord.roles.albionUSAnnouncements')
+        announcementRole
       ));
     }
     catch (err) {
-      this.throwError(`Unable to add registration role(s) to "${discordMember.displayName}"! Pinging <@${this.config.get('discord.devUserId')}>!\nErr: ${err.message}`);
+      this.throwError(`Unable to add roles to "${discordMember.displayName}"! Pinging <@${this.config.get('discord.devUserId')}>!\nErr: ${err.message}`);
     }
 
     try {
