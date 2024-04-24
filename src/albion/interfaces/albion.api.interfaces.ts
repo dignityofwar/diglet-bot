@@ -1,3 +1,13 @@
+export enum AlbionServer {
+  AMERICAS = 'Americas',
+  EUROPE = 'Europe',
+}
+
+export enum AlbionApiEndpoint {
+  ALBION_AMERICAS = 'https://gameinfo.albiononline.com/api/gameinfo',
+  ALBION_EUROPE = 'https://gameinfo-ams.albiononline.com/api/gameinfo',
+}
+
 // Seemingly this interface appears to always return null
 interface AlbionEquipmentInterface {
   MainHand: string | null;

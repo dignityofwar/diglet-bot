@@ -5,7 +5,7 @@ import { GuildMember, Message, Role } from 'discord.js';
 import { ConfigService } from '@nestjs/config';
 import { AlbionApiService } from './albion.api.service';
 import { AlbionRegistrationsEntity } from '../../database/entities/albion.registrations.entity';
-import { AlbionPlayerInterface } from '../interfaces/albion.api.interfaces';
+import { AlbionPlayerInterface, AlbionServer } from '../interfaces/albion.api.interfaces';
 import { AlbionRoleMapInterface } from '../../config/albion.app.config';
 import { AlbionUtilities } from '../utilities/albion.utilities';
 import { AlbionGuildMembersEntity } from '../../database/entities/albion.guildmembers.entity';
@@ -112,7 +112,7 @@ export class AlbionScanningService {
     const statusMessage = await message.channel.send(`Gathering ${length} characters from ALB API... (attempt #${tries})`);
 
     for (const member of guildMembers) {
-      characterPromises.push(this.albionApiService.getCharacterById(member.characterId));
+      characterPromises.push(this.albionApiService.getCharacterById(member.characterId, AlbionServer.AMERICAS));
     }
 
     await statusMessage.delete();
@@ -175,7 +175,7 @@ export class AlbionScanningService {
       }
 
       // 1. Check if they're still in the guild
-      const guildId = this.config.get('albion.guildId');
+      const guildId = this.config.get('albion.guildIdAmericas');
 
       // Is the character still in the Guild?
       if (!character?.GuildId || character?.GuildId !== guildId) {
@@ -438,8 +438,8 @@ export class AlbionScanningService {
 
     // If no roles were found, they must have at least registered and initiate
     if (!highestPriorityRole) {
-      const initiateRole = roleMap.filter((role) => role.name === '@ALB/Initiate')[0];
-      const registeredRole = roleMap.filter((role) => role.name === '@ALB/Registered')[0];
+      const initiateRole = roleMap.filter((role) => role.name === '@ALB/US/Initiate')[0];
+      const registeredRole = roleMap.filter((role) => role.name === '@ALB/US/Registered')[0];
       const action = 'added';
       const reason = 'they have no roles but are registered!';
       inconsistencies.push({
@@ -494,7 +494,7 @@ export class AlbionScanningService {
     const statusMessage = await message.channel.send('## Starting Discord enforcement scan...');
 
     // First, get all the DIG guild members and parse them into an array
-    const guildMembers = await this.albionApiService.getAllGuildMembers(this.config.get('albion.guildId'));
+    const guildMembers = await this.albionApiService.getAllGuildMembers(this.config.get('albion.guildIdAmericas'), AlbionServer.AMERICAS);
     const guildMembersLength = guildMembers.length;
 
     const currentGuildMembers: AlbionGuildMembersEntity[] = await this.albionGuildMembersRepository.findAll();

@@ -6,6 +6,7 @@ import { AlbionRegisterDto } from '../dto/albion.register.dto';
 import { ReflectMetadataProvider } from '@discord-nestjs/core';
 import { AlbionRegistrationService } from '../services/albion.registration.service';
 import { TestBootstrapper } from '../../test.bootstrapper';
+import { AlbionServer } from '../interfaces/albion.api.interfaces';
 
 const expectedChannelId = TestBootstrapper.mockConfig.discord.channels.albionRegistration;
 
@@ -15,7 +16,7 @@ describe('AlbionRegisterCommand', () => {
 
   let mockDiscordInteraction: any;
   let mockDiscordUser: any;
-  const dto: AlbionRegisterDto = { character: 'Maelstrome26' };
+  const dto: AlbionRegisterDto = { character: 'Maelstrome26', server: AlbionServer.AMERICAS };
 
   beforeEach(async () => {
     TestBootstrapper.mockORM();

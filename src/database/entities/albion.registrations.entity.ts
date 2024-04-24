@@ -5,29 +5,44 @@ export interface AlbionRegistrationsEntityInterface {
   discordId: string;
   characterId: string;
   characterName: string;
+  guildId: 'btPZRoLvTUqLC7URnDRgSQ' | 'FOOOOO';
   manual: boolean;
   manualCreatedByDiscordId?: string;
   manualCreatedByDiscordName?: string;
 }
 
 @Entity()
+@Unique({
+  name: 'unique_discordId_characterId_characterName_guildId',
+  properties: ['discordId', 'characterId', 'characterName', 'guildId'], // Allows multiple characters, one per guild
+})
 export class AlbionRegistrationsEntity extends BaseEntity {
   @Property({
     nullable: false,
   })
-  @Unique()
   @Index()
     discordId: string;
 
-  @Property()
-  @Unique()
+  @Property({
+    nullable: false,
+  })
   @Index()
     characterId: string;
 
-  @Property()
+  @Property({
+    nullable: false,
+  })
     characterName: string;
 
-  @Property()
+  @Property({
+    nullable: false,
+  })
+    guildId: AlbionRegistrationsEntityInterface['guildId'];
+
+  @Property({
+    nullable: false,
+    default: false,
+  })
     manual = false;
 
   @Property({

@@ -219,7 +219,7 @@ export class TestBootstrapper {
     return {
       Id: 'BehrhjrfhK-_!FDHrd$£64tert3',
       Name: 'Maelstrome26',
-      GuildId: guildId ?? this.mockConfig.albion.guildId,
+      GuildId: guildId ?? this.mockConfig.albion.guildIdAmericas,
     } as any;
   }
 
@@ -243,26 +243,34 @@ export class TestBootstrapper {
 
   static readonly mockConfig = {
     albion: {
-      guildId: '54545423435',
-      guildMasterRole: { discordRoleId: '14546543371337' },
-      masterRole: { discordRoleId: '565544342364' },
+      guildIdAmericas: '54545423435',
+      guildIdEurope: '6567576868',
+      guildUSLeaderRole: { discordRoleId: '14546543371337' },
+      guildEULeaderRole: { discordRoleId: '34354579789809089' },
+      guildUSOfficerRole: { discordRoleId: '565544343342364' },
+      guildEUOfficerRole: { discordRoleId: '46343435879886' },
     },
     discord: {
       devUserId: '474839309484',
       channels: {
         albionRegistration: '396474759683473',
-        albionInfopoint: '387573839485',
-        albionTownCrier: '3845759049437495',
+        albionUSRoles: '387573839485',
+        albionEURoles: '457687978899',
+        albionUSAnnouncements: '3845759049437495',
+        albionEUAnnouncements: '4655756786797',
         albionScans: '4858696849494',
         ps2Verify: '558787980890809',
-        ps2Scans: '8558496070888',
         ps2Private: '9705950678045896095',
         ps2HowToRankUp: '84594873574837596',
+        ps2Scans: '8558496070888',
       },
       roles: {
-        albionInitiateRoleId: '123456789',
-        albionRegisteredRoleId: '1234567890',
-        albionTownCrierRoleId: '987654321',
+        albionUSMember: '123456789',
+        albionEUMember: '123456789',
+        albionUSRegistered: '1234567890',
+        albionEURegistered: '1234567890',
+        albionUSAnnouncements: '987654321',
+        albionEUAnnouncements: '4546878979',
         ps2Verified: '059769706045',
       },
     },
