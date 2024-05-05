@@ -11,7 +11,7 @@ import {
   AlbionServer,
 } from '../interfaces/albion.api.interfaces';
 
-const mockGuildId = TestBootstrapper.mockConfig.albion.guildIdAmericas;
+const mockGuildId = TestBootstrapper.mockConfig.albion.guildIdUS;
 
 describe('AlbionApiService', () => {
   let service: AlbionApiService;

@@ -25,7 +25,7 @@ export class AlbionDiscordEnforcementService {
     const statusMessage = await message.channel.send('## Starting Discord enforcement scan...');
 
     // First, get all the DIG guild members and parse them into an array
-    const guildMembers = await this.albionApiService.getAllGuildMembers(this.config.get('albion.guildIdAmericas'), AlbionServer.AMERICAS);
+    const guildMembers = await this.albionApiService.getAllGuildMembers(this.config.get('albion.guildIdUS'), AlbionServer.AMERICAS);
     const guildMembersLength = guildMembers.length;
 
     const currentGuildMembers: AlbionGuildMembersEntity[] = await this.albionGuildMembersRepository.findAll();

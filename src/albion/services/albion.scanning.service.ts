@@ -36,56 +36,49 @@ export class AlbionScanningService {
   // Pull the list of verified members from the database and check if they're still in the Guild
   // If they're not, remove the ALB/Registered role from them and any other non opt-in Albion roles e.g. ALB/Initiate, ALB/Squire etc.
   // Also send a message to the #albion-scans channel to denote this has happened.
-  async startScan(message: Message, dryRun = false) {
-    await message.edit('# Starting scan...');
+  async startScan(
+    message: Message,
+    dryRun = false,
+    server: AlbionServer = AlbionServer.AMERICAS
+  ) {
+    const emoji = this.serverEmoji(server);
+    await message.edit(`# ${emoji} Starting scan...`);
 
     const guildMembers: AlbionRegistrationsEntity[] = await this.albionRegistrationsRepository.findAll();
     const length = guildMembers.length;
 
-    if (length === 0) {
-      await message.edit('## ❌ No members were found in the database!\nStill running reverse role and Discord enforcement scans...');
-      // However, still perform the reverse role scan
-      await message.edit('# Task: [1/2] Performing reverse role scan...');
-      await this.reverseRoleScan(message, dryRun);
-
-      await message.edit('# Task: [2/2] Discord enforcement scan...');
-      await message.channel.send('## DISCORD ENFORCEMENT SCAN DISABLED!');
-      // await this.startScan(message, dryRun);
-      return;
-    }
-
-    await message.channel.send(`ℹ️ There are currently ${guildMembers.length} registered members on record.`);
+    await message.channel.send(`${emoji} ℹ️ There are currently ${guildMembers.length} registered members on record.`);
 
     let characters: Array<AlbionPlayerInterface | null>;
 
     try {
-      await message.edit(`# Task: [1/5] Gathering ${length} characters from the ALB API...`);
+      await message.edit(`# ${emoji} Task: [1/5] Gathering ${length} characters from the ALB API...`);
       characters = await this.gatherCharacters(guildMembers, message);
     }
     catch (err) {
-      await message.edit('## ❌ An error occurred while gathering data from the API!');
+      await message.edit(`## ${emoji}❌ An error occurred while gathering data from the API!`);
       return;
     }
 
     if (characters.length === 0) {
-      await message.edit('## ❌ No characters were gathered from the API!');
+      await message.edit(`## ${emoji}❌ No characters were gathered from the API!`);
       return;
     }
 
     try {
-      await message.edit(`# Task: [2/5] Checking ${length} characters for membership status...`);
+      await message.edit(`# ${emoji} Task: [2/5] Checking ${length} characters for membership status...`);
       await this.removeLeavers(characters, message, dryRun);
 
-      // Check if members have roles they shouldn't who are not registered
-      await message.edit('# Task: [3/5] Performing reverse role scan...');
+      // Check if members have roles they shouldn't have
+      await message.edit(`# ${emoji} Task: [3/5] Performing reverse role scan...`);
       await this.reverseRoleScan(message, dryRun);
 
-      await message.edit('# Task: [4/5] Checking for role inconsistencies...');
+      await message.edit(`# ${emoji} Task: [4/5] Checking for role inconsistencies...`);
       await this.roleInconsistencies(message, dryRun);
 
-      await message.edit('# Task: [5/5] Discord enforcement scan...');
+      await message.edit(`# ${emoji} Task: [5/5] Discord enforcement scan...`);
       await message.channel.send('## DISCORD ENFORCEMENT SCAN DISABLED!');
-      // await this.startScan(message, dryRun);
+      // await this.discordEnforcementScan(message, dryRun);
     }
     catch (err) {
       await message.edit('## ❌ An error occurred while scanning!');
@@ -93,10 +86,11 @@ export class AlbionScanningService {
     }
 
     // All done, clean up
-    await message.channel.send('## Scan complete!');
+    await message.channel.send(`## ${emoji} Scan complete!`);
     // If any of the tasks flagged for action, tell them now.
     if (this.actionRequired && !dryRun) {
-      const scanPingRoles = this.config.get('albion.scanPingRoles');
+      const configKey = server === AlbionServer.AMERICAS ? 'albion.pingLeaderRolesUS' : 'albion.pingLeaderRolesEU';
+      const scanPingRoles = this.config.get(configKey);
       await message.channel.send(`️🔔 <@&${scanPingRoles.join('>, <@&')}> Please review the above actions marked with (‼️) and make any necessary changes manually. To scan again without pinging Guildmasters or Masters, run the \`/albion-scan\` command with the \`dry-run\` flag set to \`true\`.`);
     }
     this.actionRequired = false;
@@ -105,7 +99,12 @@ export class AlbionScanningService {
     await message.delete();
   }
 
-  async gatherCharacters(guildMembers: AlbionRegistrationsEntity[], message: Message, tries = 0) {
+  async gatherCharacters(
+    guildMembers: AlbionRegistrationsEntity[],
+    message: Message,
+    tries = 0,
+    server: AlbionServer = AlbionServer.AMERICAS
+  ) {
     const characterPromises: Promise<AlbionPlayerInterface>[] = [];
     tries++;
     const length = guildMembers.length;
@@ -113,7 +112,7 @@ export class AlbionScanningService {
     const statusMessage = await message.channel.send(`Gathering ${length} characters from ALB API... (attempt #${tries})`);
 
     for (const member of guildMembers) {
-      characterPromises.push(this.albionApiService.getCharacterById(member.characterId, AlbionServer.AMERICAS));
+      characterPromises.push(this.albionApiService.getCharacterById(member.characterId, server));
     }
 
     await statusMessage.delete();
@@ -176,7 +175,7 @@ export class AlbionScanningService {
       }
 
       // 1. Check if they're still in the guild
-      const guildId = this.config.get('albion.guildIdAmericas');
+      const guildId = this.config.get('albion.guildIdUS');
 
       // Is the character still in the Guild?
       if (!character?.GuildId || character?.GuildId !== guildId) {
@@ -491,4 +490,7 @@ export class AlbionScanningService {
     return inconsistencies;
   }
 
+  serverEmoji(server: AlbionServer) {
+    return server === AlbionServer.AMERICAS ? '🇺🇸' : '🇪🇺';
+  }
 }

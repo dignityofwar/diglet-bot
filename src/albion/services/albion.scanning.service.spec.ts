@@ -45,7 +45,7 @@ describe('AlbionScanningService', () => {
   let mockCharacter: AlbionPlayerInterface;
 
   beforeEach(async () => {
-    mockCharacter = TestBootstrapper.getMockAlbionCharacter(TestBootstrapper.mockConfig.albion.guildIdAmericas);
+    mockCharacter = TestBootstrapper.getMockAlbionCharacter(TestBootstrapper.mockConfig.albion.guildIdUS);
     mockRegisteredMember = {
       id: 123456789,
       discordId: '123456789',
@@ -191,27 +191,13 @@ describe('AlbionScanningService', () => {
   ];
 
   // Execution flow
-  it('should gracefully handle no members in the database by calling the reverse role scan', async () => {
-    mockAlbionRegistrationsRepository.findAll = jest.fn().mockResolvedValueOnce([]);
-    service.reverseRoleScan = jest.fn().mockResolvedValue(undefined);
-    discordEnforcementService.startScan = jest.fn().mockResolvedValue(undefined);
-
-    await service.startScan(mockDiscordMessage);
-    expect(mockDiscordMessage.edit).toHaveBeenCalledWith('# Starting scan...');
-    expect(mockDiscordMessage.edit).toHaveBeenCalledWith('## ❌ No members were found in the database!\nStill running reverse role and Discord enforcement scans...');
-    expect(mockDiscordMessage.edit).toHaveBeenCalledWith('# Task: [1/2] Performing reverse role scan...');
-    expect(mockDiscordMessage.edit).toHaveBeenCalledWith('# Task: [2/2] Discord enforcement scan...');
-
-    expect(service.reverseRoleScan).toBeCalledTimes(1);
-    // expect(service.startScan).toBeCalledTimes(1);
-  });
   it('should send number of members on record', async () => {
     mockAlbionRegistrationsRepository.findAll = jest.fn().mockResolvedValueOnce([mockRegisteredMember, mockRegisteredMember]);
     service.gatherCharacters = jest.fn().mockResolvedValueOnce([mockCharacter, mockCharacter]);
     await service.startScan(mockDiscordMessage);
     expect(mockDiscordMessage.channel.send).toBeCalledWith('ℹ️ There are currently 2 registered members on record.');
   });
-  it('should handle errors with character gathering', async () => {
+  it('should handle errors with character gathering, Americas', async () => {
     mockAlbionRegistrationsRepository.findAll = jest.fn().mockResolvedValueOnce([mockRegisteredMember]);
     service.gatherCharacters = jest.fn().mockImplementation(() => {throw new Error('Operation went boom');});
     await service.startScan(mockDiscordMessage);
@@ -235,7 +221,7 @@ describe('AlbionScanningService', () => {
     expect(mockDiscordMessage.edit).toBeCalledWith('## ❌ An error occurred while scanning!');
     expect(mockDiscordMessage.channel.send).toBeCalledWith('Error: Operation went boom');
   });
-  it('should probably relay scan progress', async () => {
+  it('should properly relay scan progress', async () => {
     mockAlbionRegistrationsRepository.findAll = jest.fn().mockResolvedValueOnce([mockRegisteredMember]);
     service.gatherCharacters = jest.fn().mockResolvedValueOnce([mockCharacter]);
     service.removeLeavers = jest.fn().mockResolvedValueOnce([]);
@@ -243,13 +229,13 @@ describe('AlbionScanningService', () => {
     service.roleInconsistencies = jest.fn().mockResolvedValueOnce([]);
 
     await service.startScan(mockDiscordMessage);
-    expect(mockDiscordMessage.edit).toBeCalledWith('# Starting scan...');
-    expect(mockDiscordMessage.edit).toBeCalledWith('# Task: [1/5] Gathering 1 characters from the ALB API...');
-    expect(mockDiscordMessage.edit).toBeCalledWith('# Task: [2/5] Checking 1 characters for membership status...');
-    expect(mockDiscordMessage.edit).toBeCalledWith('# Task: [3/5] Performing reverse role scan...');
-    expect(mockDiscordMessage.edit).toBeCalledWith('# Task: [4/5] Checking for role inconsistencies...');
-    expect(mockDiscordMessage.edit).toBeCalledWith('# Task: [5/5] Discord enforcement scan...');
-    expect(mockDiscordMessage.channel.send).toBeCalledWith('## Scan complete!');
+    expect(mockDiscordMessage.edit).toBeCalledWith('# 🇺🇸 Starting scan...');
+    expect(mockDiscordMessage.edit).toBeCalledWith('# 🇺🇸 Task: [1/5] Gathering 1 characters from the ALB API...');
+    expect(mockDiscordMessage.edit).toBeCalledWith('# 🇺🇸 Task: [2/5] Checking 1 characters for membership status...');
+    expect(mockDiscordMessage.edit).toBeCalledWith('# 🇺🇸 Task: [3/5] Performing reverse role scan...');
+    expect(mockDiscordMessage.edit).toBeCalledWith('# 🇺🇸 Task: [4/5] Checking for role inconsistencies...');
+    expect(mockDiscordMessage.edit).toBeCalledWith('# 🇺🇸 Task: [5/5] Discord enforcement scan...');
+    expect(mockDiscordMessage.channel.send).toBeCalledWith('## 🇺🇸 Scan complete!');
     expect(mockDiscordMessage.channel.send).toBeCalledWith('------------------------------------------');
     expect(mockDiscordMessage.delete).toBeCalled();
 

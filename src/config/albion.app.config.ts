@@ -210,16 +210,18 @@ const rolesToRankDevelopment: AlbionRoleMapInterface[] = [
 ];
 const roleMap = process.env.ENVIRONMENT === 'production' ? rolesToRankProduction : rolesToRankDevelopment as AlbionRoleMapInterface[];
 const findRole = (roleName: string) => roleMap.filter((role) => role.name === roleName)[0];
-const scanPingRoles = [findRole('@ALB/US/Guildmaster').discordRoleId, findRole('@ALB/US/Master').discordRoleId];
+const pingLeaderRolesUS = [findRole('@ALB/US/Guildmaster').discordRoleId, findRole('@ALB/US/Master').discordRoleId];
+const pingLeaderRolesEU = [findRole('@ALB/EU/Archmage').discordRoleId, findRole('@ALB/EU/Magister').discordRoleId];
 
 export default () => ({
-  guildIdAmericas: 'btPZRoLvTUqLC7URnDRgSQ',
-  guildIdEurope: '0_zTfLfASD2Wtw6Tc-yckA',
+  guildIdUS: 'btPZRoLvTUqLC7URnDRgSQ',
+  guildIdEU: '0_zTfLfASD2Wtw6Tc-yckA',
   roleMap,
-  scanPingRoles,
+  pingLeaderRolesUS,
+  pingLeaderRolesEU,
   scanExcludedUsers: [], // Discord IDs
-  guildUSLeaderRole: findRole('@ALB/US/Guildmaster'),
-  guildEULeaderRole: findRole('@ALB/EU/Archmage'),
-  guildUSOfficerRole: findRole('@ALB/US/Master'),
-  guildEUOfficerRole: findRole('@ALB/EU/Magister'),
+  guildLeaderRoleUS: findRole('@ALB/US/Guildmaster'),
+  guildLeaderRoleEU: findRole('@ALB/EU/Archmage'),
+  guildOfficerRoleUS: findRole('@ALB/US/Master'),
+  guildOfficerRoleEU: findRole('@ALB/EU/Magister'),
 });
