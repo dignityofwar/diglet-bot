@@ -2,7 +2,7 @@
 import { Injectable } from '@nestjs/common';
 import _ from 'lodash';
 import { ConfigService } from '@nestjs/config';
-import { Test, TestingModule } from '@nestjs/testing';
+import { TestingModule } from '@nestjs/testing';
 import { MikroORM } from '@mikro-orm/core';
 
 const guildLeaderRoleUS = '44546543371337';

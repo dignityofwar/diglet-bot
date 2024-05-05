@@ -195,21 +195,21 @@ describe('AlbionScanningService', () => {
     mockAlbionRegistrationsRepository.findAll = jest.fn().mockResolvedValueOnce([mockRegisteredMember, mockRegisteredMember]);
     service.gatherCharacters = jest.fn().mockResolvedValueOnce([mockCharacter, mockCharacter]);
     await service.startScan(mockDiscordMessage);
-    expect(mockDiscordMessage.channel.send).toBeCalledWith('ℹ️ There are currently 2 registered members on record.');
+    expect(mockDiscordMessage.channel.send).toBeCalledWith('🇺🇸ℹ️ There are currently 2 registered members on record.');
   });
   it('should handle errors with character gathering, Americas', async () => {
     mockAlbionRegistrationsRepository.findAll = jest.fn().mockResolvedValueOnce([mockRegisteredMember]);
     service.gatherCharacters = jest.fn().mockImplementation(() => {throw new Error('Operation went boom');});
     await service.startScan(mockDiscordMessage);
-    expect(mockDiscordMessage.edit).toBeCalledWith('## ❌ An error occurred while gathering data from the API!');
+    expect(mockDiscordMessage.edit).toBeCalledWith('## 🇺🇸❌ An error occurred while gathering data from the API!');
   });
   it('should error when no characters return from the API', async () => {
     mockAlbionRegistrationsRepository.findAll = jest.fn().mockResolvedValueOnce([mockRegisteredMember]);
     service.gatherCharacters = jest.fn().mockResolvedValueOnce([]);
     await service.startScan(mockDiscordMessage);
-    expect(mockDiscordMessage.edit).toBeCalledWith('## ❌ No characters were gathered from the API!');
+    expect(mockDiscordMessage.edit).toBeCalledWith('## 🇺🇸❌ No characters were gathered from the API!');
   });
-  it('should properly relay errors from the remover or suggestions functions', async () => {
+  it('should properly relay errors from role inconsistencies', async () => {
     mockAlbionRegistrationsRepository.findAll = jest.fn().mockResolvedValueOnce([mockRegisteredMember]);
     service.gatherCharacters = jest.fn().mockResolvedValueOnce([mockCharacter]);
     service.removeLeavers = jest.fn().mockResolvedValueOnce([]);
@@ -218,7 +218,7 @@ describe('AlbionScanningService', () => {
       throw new Error('Operation went boom');
     });
     await service.startScan(mockDiscordMessage);
-    expect(mockDiscordMessage.edit).toBeCalledWith('## ❌ An error occurred while scanning!');
+    expect(mockDiscordMessage.edit).toHaveBeenLastCalledWith('## 🇺🇸❌ An error occurred while scanning!');
     expect(mockDiscordMessage.channel.send).toBeCalledWith('Error: Operation went boom');
   });
   it('should properly relay scan progress', async () => {

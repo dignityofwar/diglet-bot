@@ -47,7 +47,7 @@ export class AlbionScanningService {
     const guildMembers: AlbionRegistrationsEntity[] = await this.albionRegistrationsRepository.findAll();
     const length = guildMembers.length;
 
-    await message.channel.send(`${emoji} ℹ️ There are currently ${guildMembers.length} registered members on record.`);
+    await message.channel.send(`${emoji}ℹ️ There are currently ${guildMembers.length} registered members on record.`);
 
     let characters: Array<AlbionPlayerInterface | null>;
 
@@ -81,7 +81,7 @@ export class AlbionScanningService {
       // await this.discordEnforcementScan(message, dryRun);
     }
     catch (err) {
-      await message.edit('## ❌ An error occurred while scanning!');
+      await message.edit('## 🇺🇸❌ An error occurred while scanning!');
       await message.channel.send(`Error: ${err.message}`);
     }
 
@@ -91,6 +91,7 @@ export class AlbionScanningService {
     if (this.actionRequired && !dryRun) {
       const configKey = server === AlbionServer.AMERICAS ? 'albion.pingLeaderRolesUS' : 'albion.pingLeaderRolesEU';
       const scanPingRoles = this.config.get(configKey);
+      await message.channel.send(`️🔔 <@&${scanPingRoles.join('>, <@&')}> Please review the above actions marked with (‼️) and make any necessary changes manually. To scan again without pinging Guildmasters or Masters, run the \`/albion-scan\` command with the \`dry-run\` flag set to \`true\`.`);
       await message.channel.send(`️🔔 <@&${scanPingRoles.join('>, <@&')}> Please review the above actions marked with (‼️) and make any necessary changes manually. To scan again without pinging Guildmasters or Masters, run the \`/albion-scan\` command with the \`dry-run\` flag set to \`true\`.`);
     }
     this.actionRequired = false;
