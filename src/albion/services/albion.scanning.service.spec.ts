@@ -12,6 +12,7 @@ import { AlbionApiService } from './albion.api.service';
 import { AlbionUtilities } from '../utilities/albion.utilities';
 import { AlbionGuildMembersEntity } from '../../database/entities/albion.guildmembers.entity';
 import { TestBootstrapper } from '../../test.bootstrapper';
+import { AlbionDiscordEnforcementService } from './albion.discord.enforcement.service';
 
 const mockDevUserId = TestBootstrapper.mockConfig.discord.devUserId;
 const mockScanUserId = '1337';
@@ -34,6 +35,7 @@ const mockRegisteredName = '@ALB/US/Registered';
 
 describe('AlbionScanningService', () => {
   let service: AlbionScanningService;
+  let discordEnforcementService: AlbionDiscordEnforcementService;
   let mockDiscordUser: any;
   let mockDiscordMessage: any;
   let mockRegisteredMember: AlbionRegistrationsEntity;
@@ -71,6 +73,7 @@ describe('AlbionScanningService', () => {
     const moduleRef = await Test.createTestingModule({
       providers: [
         AlbionScanningService,
+        AlbionDiscordEnforcementService,
         ReflectMetadataProvider,
         AlbionApiService,
         AlbionUtilities,
@@ -99,6 +102,7 @@ describe('AlbionScanningService', () => {
     }).compile();
 
     service = moduleRef.get<AlbionScanningService>(AlbionScanningService);
+    discordEnforcementService = moduleRef.get<AlbionDiscordEnforcementService>(AlbionDiscordEnforcementService);
 
     const albionMerged = {
       ...TestBootstrapper.mockConfig.albion,
@@ -168,7 +172,7 @@ describe('AlbionScanningService', () => {
     expect(service).toBeDefined();
   });
 
-  const roles = [
+  const usRoles = [
     { id: '1158467537550454895', name: '@ALB/US/Guildmaster' },
     { id: '1158467574678429696', name: '@ALB/US/Master' },
     { id: '1158467840496635914', name: '@ALB/US/Squire' },
@@ -176,11 +180,21 @@ describe('AlbionScanningService', () => {
     { id: '1155987100928323594', name: '@ALB/US/Registered' },
   ];
 
+  const euRoles = [
+    { id: '1232802066414571631', name: '@ALB/EU/Archmage' },
+    { id: '1232802105564205126', name: '@ALB/EU/Magister' },
+    { id: '1232802165861384305', name: '@ALB/EU/Warcaster' },
+    { id: '1232802244219637893', name: '@ALB/EU/Adept' },
+    { id: '1232802285734727772', name: '@ALB/EU/Graduate' },
+    { id: '1232802355733336196', name: '@ALB/EU/Disciple' },
+    { id: '1232778554320879811', name: '@ALB/EU/Registered' },
+  ];
+
   // Execution flow
   it('should gracefully handle no members in the database by calling the reverse role scan', async () => {
     mockAlbionRegistrationsRepository.findAll = jest.fn().mockResolvedValueOnce([]);
     service.reverseRoleScan = jest.fn().mockResolvedValue(undefined);
-    service.discordEnforcementScan = jest.fn().mockResolvedValue(undefined);
+    discordEnforcementService.startScan = jest.fn().mockResolvedValue(undefined);
 
     await service.startScan(mockDiscordMessage);
     expect(mockDiscordMessage.edit).toHaveBeenCalledWith('# Starting scan...');
@@ -189,13 +203,13 @@ describe('AlbionScanningService', () => {
     expect(mockDiscordMessage.edit).toHaveBeenCalledWith('# Task: [2/2] Discord enforcement scan...');
 
     expect(service.reverseRoleScan).toBeCalledTimes(1);
-    // expect(service.discordEnforcementScan).toBeCalledTimes(1);
+    // expect(service.startScan).toBeCalledTimes(1);
   });
   it('should send number of members on record', async () => {
-    mockAlbionRegistrationsRepository.findAll = jest.fn().mockResolvedValueOnce([mockRegisteredMember]);
-    service.gatherCharacters = jest.fn().mockResolvedValueOnce([mockCharacter]);
+    mockAlbionRegistrationsRepository.findAll = jest.fn().mockResolvedValueOnce([mockRegisteredMember, mockRegisteredMember]);
+    service.gatherCharacters = jest.fn().mockResolvedValueOnce([mockCharacter, mockCharacter]);
     await service.startScan(mockDiscordMessage);
-    expect(mockDiscordMessage.channel.send).toBeCalledWith('ℹ️ There are currently 1 registered members on record.');
+    expect(mockDiscordMessage.channel.send).toBeCalledWith('ℹ️ There are currently 2 registered members on record.');
   });
   it('should handle errors with character gathering', async () => {
     mockAlbionRegistrationsRepository.findAll = jest.fn().mockResolvedValueOnce([mockRegisteredMember]);
@@ -260,7 +274,7 @@ describe('AlbionScanningService', () => {
     });
     await expect(service.reverseRoleScan(mockDiscordMessage)).rejects.toThrowError(`Reverse Role Scan: Error fetching role @ALB/US/Guildmaster! Err: ${errMsg}`);
   });
-  it('reverse scan should properly handle when no members were found for any roles', async () => {
+  it('reverse scan should properly handle when no members were found for any usRoles', async () => {
     mockDiscordMessage.guild.roles.fetch = jest.fn().mockImplementation(() => {
       return {
         members: [],
@@ -586,7 +600,7 @@ describe('AlbionScanningService', () => {
   const setupRoleTestMocks = (hasRoles: string[]) => {
     mockDiscordUser.roles.cache.has.mockImplementation((roleId: string) => hasRoles.includes(roleId));
     mockDiscordUser.guild.roles.cache.get = jest.fn().mockImplementation((roleId: string) => {
-      const role = roles.find(r => r.id === roleId);
+      const role = usRoles.find(r => r.id === roleId);
       return role ? { id: role.id, name: role.name } : null;
     });
   };
