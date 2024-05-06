@@ -734,6 +734,21 @@ describe('AlbionScanningService', () => {
       expect(mockAlbionRegistrationsRepository.removeAndFlush).toBeCalledTimes(0);
       expect(mockDiscordUser.roles.remove).toBeCalledTimes(0);
     });
+    it('should properly correctly update the message every 5 members', async () => {
+      mockAlbionRegistrationsRepository.find = jest.fn().mockResolvedValue(new Array(6).fill(mockRegisteredMemberUS),);
+      mockCharacterUS.GuildId = TestBootstrapper.mockConfig.albion.guildIdUS;
+      await service.removeLeavers(
+        new Array(6).fill(mockCharacterUS),
+        mockDiscordMessage,
+        false,
+        AlbionServer.AMERICAS
+      );
+
+      expect(mockDiscordMessage.channel.send).toBeCalledTimes(2);
+      expect(mockDiscordMessage.channel.send).toBeCalledWith('### 🇺🇸 Scanned 0/6 registered members...');
+      const sentMessage = mockDiscordMessage.channel.send.mock.results[0].value;
+      expect(sentMessage.edit).toBeCalledWith('### Scanned 5/6 registered members...');
+    });
   });
 
   describe('Reverse role scanning', () => {
