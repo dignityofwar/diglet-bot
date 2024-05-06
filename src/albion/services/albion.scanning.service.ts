@@ -428,8 +428,6 @@ export class AlbionScanningService {
       inconsistencies.forEach((inconsistency) => {
         suggestions.push(inconsistency.message);
       });
-
-      return actionRequired;
     }
 
     await scanCountMessage.delete();
@@ -451,8 +449,10 @@ export class AlbionScanningService {
     }
 
     if (suggestions.length > 0 && !dryRun) {
-      return true;
+      actionRequired = true;
     }
+
+    return actionRequired;
   }
 
   async checkRoleInconsistencies(
