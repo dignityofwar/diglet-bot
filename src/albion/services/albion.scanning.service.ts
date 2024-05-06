@@ -360,7 +360,7 @@ export class AlbionScanningService {
             }
             catch (err) {
               this.logger.error(`Reverse Role Scan: Error removing role ${role.name} from user ${discordMemberReal.id}! Err: ${err.message}`);
-              await message.channel.send(`Error removing role ${role.name} from user ${discordMemberReal.id}! Err: ${err.message}`);
+              await message.channel.send(`Error removing role "${role.name}" from user ${discordMemberReal.displayName}! Err: ${err.message}. Pinging <@${this.config.get('discord.devUserId')}>!`);
             }
           }
         }

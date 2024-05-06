@@ -765,6 +765,21 @@ describe('AlbionScanningService', () => {
       });
       await expect(service.reverseRoleScan(mockDiscordMessage)).rejects.toThrowError(`Reverse Role Scan: Error fetching role @ALB/US/Guildmaster! Err: ${errMsg}`);
     });
+    // I tried
+    // it('reverse scan should properly error upon Discord role removal error', async () => {
+    //    const errMsg = 'Discord don\'t like you';
+    //    mockDiscordMessage.guild.roles.fetch = jest.fn().mockImplementation(() => {
+    //      return {
+    //        name: 'FooRole',
+    //        members: new Map<string, any>(mockDiscordUser),
+    //      };
+    //    });
+    //    mockDiscordUser.roles.remove = jest.fn().mockImplementationOnce(() => {
+    //      throw new Error(errMsg);
+    //    });
+    //    await service.reverseRoleScan(mockDiscordMessage);
+    //    expect(mockDiscordMessage.channel.send).toHaveBeenCalledWith(`Reverse Role Scan: Error removing role "FooRole" from user ${mockDiscordUser.displayName} Err: ${errMsg}. Pinging <@${mockDevUserId}>!`);
+    //  });
     it('reverse scan should properly handle when no members were found for any usRoles', async () => {
       mockDiscordMessage.guild.roles.fetch = jest.fn().mockImplementation(() => {
         return {
