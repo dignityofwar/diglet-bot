@@ -42,9 +42,11 @@ export class AlbionScanningService {
     server: AlbionServer = AlbionServer.AMERICAS
   ) {
     const emoji = this.serverEmoji(server);
+    const guildId = server === AlbionServer.AMERICAS ? this.config.get('albion.guildIdUS') : this.config.get('albion.guildIdEU');
+
     await message.edit(`# ${emoji} Starting scan...`);
 
-    const guildMembers: AlbionRegistrationsEntity[] = await this.albionRegistrationsRepository.findAll();
+    const guildMembers: AlbionRegistrationsEntity[] = await this.albionRegistrationsRepository.find({ guildId });
     const length = guildMembers.length;
 
     await message.channel.send(`${emoji}ℹ️ There are currently ${guildMembers.length} registered members on record.`);
@@ -74,7 +76,7 @@ export class AlbionScanningService {
       await this.reverseRoleScan(message, dryRun);
 
       await message.edit(`# ${emoji} Task: [4/5] Checking for role inconsistencies...`);
-      await this.roleInconsistencies(message, dryRun);
+      await this.roleInconsistencies(message, dryRun, server);
 
       await message.edit(`# ${emoji} Task: [5/5] Discord enforcement scan...`);
       await message.channel.send('## DISCORD ENFORCEMENT SCAN DISABLED!');
@@ -368,21 +370,24 @@ export class AlbionScanningService {
 
   async roleInconsistencies(
     message: Message,
-    dryRun = false
+    dryRun = false,
+    server: AlbionServer = AlbionServer.AMERICAS
   ): Promise<void> {
     const suggestions: string[] = [];
+    const emoji = this.serverEmoji(server);
+    const guildId = server === AlbionServer.AMERICAS ? this.config.get('albion.guildIdUS') : this.config.get('albion.guildIdEU');
 
     // Refresh GuildMembers as some may have been booted / left
-    const guildMembers: AlbionRegistrationsEntity[] = await this.albionRegistrationsRepository.findAll();
+    const guildMembers: AlbionRegistrationsEntity[] = await this.albionRegistrationsRepository.find({ guildId });
 
-    const scanCountMessage = await message.channel.send(`### Scanning ${guildMembers.length} members for role inconsistencies... [0/${guildMembers.length}]`);
+    const scanCountMessage = await message.channel.send(`## ${emoji} Scanning ${guildMembers.length} members for role inconsistencies... [0/${guildMembers.length}]`);
     let count = 0;
 
     for (const member of guildMembers) {
       count++;
 
       if (count % 5 === 0) {
-        await scanCountMessage.edit(`### Scanning ${guildMembers.length} members for role inconsistencies... [${count}/${guildMembers.length}]`);
+        await scanCountMessage.edit(`## ${emoji} Scanning ${guildMembers.length} members for role inconsistencies... [${count}/${guildMembers.length}]`);
       }
       let discordMember: GuildMember | null = null;
 
@@ -406,18 +411,18 @@ export class AlbionScanningService {
     await scanCountMessage.delete();
 
     if (suggestions.length === 0) {
-      await message.channel.send('✅ No role inconsistencies were detected.');
+      await message.channel.send(`${emoji} ✅ No role inconsistencies were detected.`);
       return;
     }
 
-    await message.channel.send(`## 👀 ${suggestions.length} role inconsistencies detected!`);
+    await message.channel.send(`## ${emoji} 👀 ${suggestions.length} role inconsistencies detected!`);
 
     for (const suggestion of suggestions) {
       if (!suggestion) {
         this.logger.error('Attempted to send empty suggestion!');
         continue;
       }
-      const fakeMessage = await message.channel.send('---'); // Send a fake message first so it doesn't ping people
+      const fakeMessage = await message.channel.send('---'); // Send a fake message first, so it doesn't ping people
       await fakeMessage.edit(suggestion);
     }
 
@@ -426,7 +431,10 @@ export class AlbionScanningService {
     }
   }
 
-  async checkRoleInconsistencies(discordMember: GuildMember): Promise<RoleInconsistencyResult[]> {
+  async checkRoleInconsistencies(
+    discordMember: GuildMember,
+    server: AlbionServer = AlbionServer.AMERICAS
+  ): Promise<RoleInconsistencyResult[]> {
     // If the user is excluded from role inconsistency checks, skip them
     const excludedUsers: string[] = this.config.get('albion.scanExcludedUsers');
     if (excludedUsers.includes(discordMember.id)) {

@@ -6,7 +6,7 @@ import { ConfigService } from '@nestjs/config';
 import { EntityRepository } from '@mikro-orm/core';
 import { getRepositoryToken } from '@mikro-orm/nestjs';
 import { AlbionRegistrationsEntity } from '../../database/entities/albion.registrations.entity';
-import { AlbionPlayerInterface } from '../interfaces/albion.api.interfaces';
+import { AlbionPlayerInterface, AlbionServer } from '../interfaces/albion.api.interfaces';
 import { AlbionScanningService } from './albion.scanning.service';
 import { AlbionApiService } from './albion.api.service';
 import { AlbionUtilities } from '../utilities/albion.utilities';
@@ -192,25 +192,25 @@ describe('AlbionScanningService', () => {
 
   // Execution flow
   it('should send number of members on record', async () => {
-    mockAlbionRegistrationsRepository.findAll = jest.fn().mockResolvedValueOnce([mockRegisteredMember, mockRegisteredMember]);
+    mockAlbionRegistrationsRepository.find = jest.fn().mockResolvedValueOnce([mockRegisteredMember, mockRegisteredMember]);
     service.gatherCharacters = jest.fn().mockResolvedValueOnce([mockCharacter, mockCharacter]);
     await service.startScan(mockDiscordMessage);
     expect(mockDiscordMessage.channel.send).toBeCalledWith('🇺🇸ℹ️ There are currently 2 registered members on record.');
   });
   it('should handle errors with character gathering, Americas', async () => {
-    mockAlbionRegistrationsRepository.findAll = jest.fn().mockResolvedValueOnce([mockRegisteredMember]);
+    mockAlbionRegistrationsRepository.find = jest.fn().mockResolvedValueOnce([mockRegisteredMember]);
     service.gatherCharacters = jest.fn().mockImplementation(() => {throw new Error('Operation went boom');});
     await service.startScan(mockDiscordMessage);
     expect(mockDiscordMessage.edit).toBeCalledWith('## 🇺🇸❌ An error occurred while gathering data from the API!');
   });
   it('should error when no characters return from the API', async () => {
-    mockAlbionRegistrationsRepository.findAll = jest.fn().mockResolvedValueOnce([mockRegisteredMember]);
+    mockAlbionRegistrationsRepository.find = jest.fn().mockResolvedValueOnce([mockRegisteredMember]);
     service.gatherCharacters = jest.fn().mockResolvedValueOnce([]);
     await service.startScan(mockDiscordMessage);
     expect(mockDiscordMessage.edit).toBeCalledWith('## 🇺🇸❌ No characters were gathered from the API!');
   });
   it('should properly relay errors from role inconsistencies', async () => {
-    mockAlbionRegistrationsRepository.findAll = jest.fn().mockResolvedValueOnce([mockRegisteredMember]);
+    mockAlbionRegistrationsRepository.find = jest.fn().mockResolvedValueOnce([mockRegisteredMember]);
     service.gatherCharacters = jest.fn().mockResolvedValueOnce([mockCharacter]);
     service.removeLeavers = jest.fn().mockResolvedValueOnce([]);
     service.reverseRoleScan = jest.fn().mockResolvedValueOnce([]);
@@ -222,7 +222,7 @@ describe('AlbionScanningService', () => {
     expect(mockDiscordMessage.channel.send).toBeCalledWith('Error: Operation went boom');
   });
   it('should properly relay scan progress', async () => {
-    mockAlbionRegistrationsRepository.findAll = jest.fn().mockResolvedValueOnce([mockRegisteredMember]);
+    mockAlbionRegistrationsRepository.find = jest.fn().mockResolvedValueOnce([mockRegisteredMember]);
     service.gatherCharacters = jest.fn().mockResolvedValueOnce([mockCharacter]);
     service.removeLeavers = jest.fn().mockResolvedValueOnce([]);
     service.reverseRoleScan = jest.fn().mockResolvedValueOnce([]);
@@ -272,7 +272,7 @@ describe('AlbionScanningService', () => {
   // Happy path
   it('reverse scan should properly detect an unregistered member who has a role they shouldn\'t', async () => {
     // Force the AlbionsMembersEntity to be empty
-    mockAlbionRegistrationsRepository.findAll = jest.fn().mockResolvedValueOnce([]);
+    mockAlbionRegistrationsRepository.find = jest.fn().mockResolvedValueOnce([]);
 
     const mockedRoleToDelete = {
       name: 'ALB/Captain',
@@ -301,7 +301,7 @@ describe('AlbionScanningService', () => {
     expect(mockDiscordUser.roles.remove).toBeCalledWith(mockedRoleToDelete);
   });
   it('reverse scan should return no change message properly', async () => {
-    mockAlbionRegistrationsRepository.findAll = jest.fn().mockResolvedValueOnce([mockRegisteredMember]);
+    mockAlbionRegistrationsRepository.find = jest.fn().mockResolvedValueOnce([mockRegisteredMember]);
 
     const mockedRole = {
       name: 'ALB/Captain',
@@ -636,11 +636,11 @@ describe('AlbionScanningService', () => {
       await service.roleInconsistencies(mockDiscordMessage);
 
       if (testCase.expected.length === 0) {
-        expect(mockDiscordMessage.channel.send).toBeCalledWith('✅ No role inconsistencies were detected.');
+        expect(mockDiscordMessage.channel.send).toBeCalledWith('🇺🇸 ✅ No role inconsistencies were detected.');
         return;
       }
 
-      expect(mockDiscordMessage.channel.send).toBeCalledWith(`## 👀 ${result.length} role inconsistencies detected!`);
+      expect(mockDiscordMessage.channel.send).toBeCalledWith(`## 🇺🇸 👀 ${result.length} role inconsistencies detected!`);
       expect(mockDiscordMessage.channel.send).toBeCalledWith('---');
     });
   });
@@ -654,9 +654,13 @@ describe('AlbionScanningService', () => {
     expect((await service.checkRoleInconsistencies(mockDiscordUser)).length).toEqual(1);
   });
   it('roleInconsistencies should properly indicate progress when multiple users are involved', async () => {
-    mockAlbionRegistrationsRepository.findAll = jest.fn().mockResolvedValueOnce([mockRegisteredMember, mockRegisteredMember, mockRegisteredMember, mockRegisteredMember, mockRegisteredMember]);
+    mockAlbionRegistrationsRepository.find = jest.fn().mockResolvedValueOnce([mockRegisteredMember, mockRegisteredMember, mockRegisteredMember, mockRegisteredMember, mockRegisteredMember]);
     await service.roleInconsistencies(mockDiscordMessage);
-    expect(mockDiscordMessage.channel.send).toBeCalledWith('### Scanning 5 members for role inconsistencies... [0/5]');
-    // Tried making it also check the scanCountMessage but that is an absolute brain melter as it's a new instance of the message object...
+    expect(mockDiscordMessage.channel.send).toBeCalledWith('## 🇺🇸 Scanning 5 members for role inconsistencies... [0/5]');
+  });
+  it('roleInconsistencies should properly indicate progress when multiple users are involved for EU', async () => {
+    mockAlbionRegistrationsRepository.find = jest.fn().mockResolvedValueOnce([mockRegisteredMember, mockRegisteredMember, mockRegisteredMember, mockRegisteredMember, mockRegisteredMember]);
+    await service.roleInconsistencies(mockDiscordMessage, true, AlbionServer.EUROPE);
+    expect(mockDiscordMessage.channel.send).toBeCalledWith('## 🇪🇺 Scanning 5 members for role inconsistencies... [0/5]');
   });
 });
