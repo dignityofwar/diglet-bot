@@ -280,6 +280,7 @@ describe('AlbionScanningService', () => {
       service.gatherCharacters = jest.fn().mockImplementation(() => {throw new Error('Operation went boom');});
       await service.startScan(mockDiscordMessage);
       expect(mockDiscordMessage.edit).toBeCalledWith('## 🇺🇸 ❌ An error occurred while gathering data from the API!');
+      expect(mockDiscordMessage.channel.send).toBeCalledWith('Error: Operation went boom');
     });
     it('should error when no characters return from the API', async () => {
       mockAlbionRegistrationsRepository.find = jest.fn().mockResolvedValueOnce([mockRegisteredMemberUS]);

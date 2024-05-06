@@ -60,6 +60,7 @@ export class AlbionScanningService {
     }
     catch (err) {
       await message.edit(`## ${emoji} ❌ An error occurred while gathering data from the API!`);
+      await message.channel.send(`Error: ${err.message}`);
       return;
     }
 
