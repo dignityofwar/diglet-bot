@@ -85,8 +85,8 @@ describe('AlbionCronService', () => {
       send: jest.fn().mockResolvedValue(true),
     });
     await service.onApplicationBootstrap();
-    await service.runAlbionScans();
+    await service.runAlbionScansEU();
     // eslint-disable-next-line
-    expect((service as any).channel.send).toBeCalledTimes(2);
+    expect((service as any).channel.send).toBeCalledTimes(1);
   });
 });
