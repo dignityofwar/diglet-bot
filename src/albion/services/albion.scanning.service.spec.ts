@@ -138,7 +138,8 @@ describe('AlbionScanningService', () => {
       ...TestBootstrapper.mockConfig.albion,
       ...{
         scanExcludedUsers: [mockScanUserId],
-        scanPingRoles: [mockGuildLeaderRoleIdUS, mockGuildOfficerRoleIdUS],
+        pingLeaderRolesUS: [mockGuildLeaderRoleIdUS, mockGuildOfficerRoleIdUS],
+        pingLeaderRolesEU: [mockGuildLeaderRoleIdEU, mockGuildOfficerRoleIdEU],
         roleMap: [
           {
             name: mockGuildLeaderRoleNameUS,
@@ -234,12 +235,12 @@ describe('AlbionScanningService', () => {
         ],
       },
     };
-    const fulLData = {
+    const fullData = {
       ...TestBootstrapper.mockConfig,
       albion: albionMerged,
     };
 
-    TestBootstrapper.setupConfig(moduleRef, fulLData);
+    TestBootstrapper.setupConfig(moduleRef, fullData);
   });
 
   afterEach(() => {
@@ -283,7 +284,9 @@ describe('AlbionScanningService', () => {
     it('should error when no characters return from the API', async () => {
       mockAlbionRegistrationsRepository.find = jest.fn().mockResolvedValueOnce([mockRegisteredMemberUS]);
       service.gatherCharacters = jest.fn().mockResolvedValueOnce([]);
-      await service.startScan(mockDiscordMessage);
+
+      await service.startScan(mockDiscordMessage, false, AlbionServer.AMERICAS);
+
       expect(mockDiscordMessage.edit).toBeCalledWith('## 🇺🇸 ❌ No characters were gathered from the API!');
     });
     it('should properly relay errors from role inconsistencies', async () => {
@@ -294,18 +297,20 @@ describe('AlbionScanningService', () => {
       service.roleInconsistencies = jest.fn().mockImplementation(() => {
         throw new Error('Operation went boom');
       });
-      await service.startScan(mockDiscordMessage);
+
+      await service.startScan(mockDiscordMessage, false, AlbionServer.AMERICAS);
+
       expect(mockDiscordMessage.edit).toHaveBeenLastCalledWith('## 🇺🇸 ❌ An error occurred while scanning!');
       expect(mockDiscordMessage.channel.send).toBeCalledWith('Error: Operation went boom');
     });
-    it('should properly relay scan progress', async () => {
+    it('should properly communicate scan progress', async () => {
       mockAlbionRegistrationsRepository.find = jest.fn().mockResolvedValueOnce([mockRegisteredMemberUS]);
       service.gatherCharacters = jest.fn().mockResolvedValueOnce([mockCharacterUS]);
       service.removeLeavers = jest.fn().mockResolvedValueOnce([]);
       service.reverseRoleScan = jest.fn().mockResolvedValueOnce([]);
       service.roleInconsistencies = jest.fn().mockResolvedValueOnce([]);
 
-      await service.startScan(mockDiscordMessage);
+      await service.startScan(mockDiscordMessage, false, AlbionServer.AMERICAS);
       expect(mockDiscordMessage.edit).toBeCalledWith('# 🇺🇸 Starting scan...');
       expect(mockDiscordMessage.edit).toBeCalledWith('# 🇺🇸 Task: [1/5] Gathering 1 characters from the ALB API...');
       expect(mockDiscordMessage.edit).toBeCalledWith('# 🇺🇸 Task: [2/5] Checking 1 characters for membership status...');
@@ -315,12 +320,58 @@ describe('AlbionScanningService', () => {
       expect(mockDiscordMessage.channel.send).toBeCalledWith('## 🇺🇸 Scan complete!');
       expect(mockDiscordMessage.channel.send).toBeCalledWith('------------------------------------------');
       expect(mockDiscordMessage.delete).toBeCalled();
+    });
+    it('should properly communicate scan progress, EU', async () => {
+      mockAlbionRegistrationsRepository.find = jest.fn().mockResolvedValueOnce([mockRegisteredMemberEU]);
+      service.gatherCharacters = jest.fn().mockResolvedValueOnce([mockCharacterEU]);
+      service.removeLeavers = jest.fn().mockResolvedValueOnce([]);
+      service.reverseRoleScan = jest.fn().mockResolvedValueOnce([]);
+      service.roleInconsistencies = jest.fn().mockResolvedValueOnce([]);
+
+      await service.startScan(mockDiscordMessage, false, AlbionServer.EUROPE);
+      expect(mockDiscordMessage.edit).toBeCalledWith('# 🇪🇺 Starting scan...');
+      expect(mockDiscordMessage.edit).toBeCalledWith('# 🇪🇺 Task: [1/5] Gathering 1 characters from the ALB API...');
+      expect(mockDiscordMessage.edit).toBeCalledWith('# 🇪🇺 Task: [2/5] Checking 1 characters for membership status...');
+      expect(mockDiscordMessage.edit).toBeCalledWith('# 🇪🇺 Task: [3/5] Performing reverse role scan...');
+      expect(mockDiscordMessage.edit).toBeCalledWith('# 🇪🇺 Task: [4/5] Checking for role inconsistencies...');
+      expect(mockDiscordMessage.edit).toBeCalledWith('# 🇪🇺 Task: [5/5] Discord enforcement scan...');
+      expect(mockDiscordMessage.channel.send).toBeCalledWith('## 🇪🇺 Scan complete!');
+      expect(mockDiscordMessage.delete).toBeCalled();
+    });
+    it('should properly call all functions', async () => {
+      mockAlbionRegistrationsRepository.find = jest.fn().mockResolvedValueOnce([mockRegisteredMemberUS]);
+      service.gatherCharacters = jest.fn().mockResolvedValueOnce([mockCharacterUS]);
+      service.removeLeavers = jest.fn().mockResolvedValueOnce([]);
+      service.reverseRoleScan = jest.fn().mockResolvedValueOnce([]);
+      service.roleInconsistencies = jest.fn().mockResolvedValueOnce([]);
+
+      await service.startScan(mockDiscordMessage, false, AlbionServer.AMERICAS);
 
       // Also expect functions to actually be called
       expect(service.gatherCharacters).toBeCalledTimes(1);
       expect(service.removeLeavers).toBeCalledTimes(1);
       expect(service.reverseRoleScan).toBeCalledTimes(1);
       expect(service.roleInconsistencies).toBeCalledTimes(1);
+    });
+
+    it('should properly ping the correct leaders when action is required', async () => {
+      mockAlbionRegistrationsRepository.find = jest.fn()
+        .mockResolvedValueOnce([mockRegisteredMemberUS])
+        .mockResolvedValueOnce([mockRegisteredMemberEU]);
+      service.gatherCharacters = jest.fn()
+        .mockResolvedValue([mockCharacterUS])
+        .mockResolvedValue([mockCharacterEU]);
+      service.removeLeavers = jest.fn().mockResolvedValue(true);
+      service.reverseRoleScan = jest.fn().mockResolvedValue([]);
+      service.roleInconsistencies = jest.fn().mockResolvedValue([]);
+
+      const longText = 'Please review the above actions marked with (‼️) and make any necessary changes manually. To scan again without pinging, run the `/albion-scan` command with the `dry-run` flag set to `true`.';
+
+      await service.startScan(mockDiscordMessage, false, AlbionServer.AMERICAS);
+      expect(mockDiscordMessage.channel.send).toBeCalledWith(`🔔 <@&${mockGuildLeaderRoleIdUS}>, <@&${mockGuildOfficerRoleIdUS}> ${longText}`);
+
+      await service.startScan(mockDiscordMessage, false, AlbionServer.EUROPE);
+      expect(mockDiscordMessage.channel.send).toBeCalledWith(`🔔 <@&${mockGuildLeaderRoleIdEU}>, <@&${mockGuildOfficerRoleIdEU}> ${longText}`);
     });
   });
 

@@ -21,7 +21,6 @@ export interface RoleInconsistencyResult {
 @Injectable()
 export class AlbionScanningService {
   private readonly logger = new Logger(AlbionScanningService.name);
-  private actionRequired = false;
 
   constructor(
     private readonly albionApiService: AlbionApiService,
@@ -53,6 +52,8 @@ export class AlbionScanningService {
 
     let characters: Array<AlbionPlayerInterface | null>;
 
+    let actionRequired = false;
+
     try {
       await message.edit(`# ${emoji} Task: [1/5] Gathering ${length} characters from the ALB API...`);
       characters = await this.gatherCharacters(guildMembers, message);
@@ -69,18 +70,18 @@ export class AlbionScanningService {
 
     try {
       await message.edit(`# ${emoji} Task: [2/5] Checking ${length} characters for membership status...`);
-      await this.removeLeavers(characters, message, dryRun, server);
+      if (await this.removeLeavers(characters, message, dryRun, server)) actionRequired = true;
 
       // Check if members have roles they shouldn't have
       await message.edit(`# ${emoji} Task: [3/5] Performing reverse role scan...`);
       await this.reverseRoleScan(message, dryRun, server);
 
       await message.edit(`# ${emoji} Task: [4/5] Checking for role inconsistencies...`);
-      await this.roleInconsistencies(message, dryRun, server);
+      if (await this.roleInconsistencies(message, dryRun, server)) actionRequired = true;
 
       await message.edit(`# ${emoji} Task: [5/5] Discord enforcement scan...`);
       await message.channel.send('## DISCORD ENFORCEMENT SCAN DISABLED!');
-      // await this.discordEnforcementScan(message, dryRun, server);
+      // if (await this.discordEnforcementScan(message, dryRun, server)) actionRequired = true;
     }
     catch (err) {
       await message.edit('## 🇺🇸 ❌ An error occurred while scanning!');
@@ -90,13 +91,12 @@ export class AlbionScanningService {
     // All done, clean up
     await message.channel.send(`## ${emoji} Scan complete!`);
     // If any of the tasks flagged for action, tell them now.
-    if (this.actionRequired && !dryRun) {
+    if (actionRequired && !dryRun) {
       const configKey = server === AlbionServer.AMERICAS ? 'albion.pingLeaderRolesUS' : 'albion.pingLeaderRolesEU';
       const scanPingRoles = this.config.get(configKey);
-      await message.channel.send(`️🔔 <@&${scanPingRoles.join('>, <@&')}> Please review the above actions marked with (‼️) and make any necessary changes manually. To scan again without pinging Guildmasters or Masters, run the \`/albion-scan\` command with the \`dry-run\` flag set to \`true\`.`);
-      await message.channel.send(`️🔔 <@&${scanPingRoles.join('>, <@&')}> Please review the above actions marked with (‼️) and make any necessary changes manually. To scan again without pinging Guildmasters or Masters, run the \`/albion-scan\` command with the \`dry-run\` flag set to \`true\`.`);
+      const text = `🔔 <@&${scanPingRoles.join('>, <@&')}> Please review the above actions marked with (‼️) and make any necessary changes manually. To scan again without pinging, run the \`/albion-scan\` command with the \`dry-run\` flag set to \`true\`.`;
+      await message.channel.send(text);
     }
-    this.actionRequired = false;
     await message.channel.send('------------------------------------------');
 
     await message.delete();
@@ -140,7 +140,7 @@ export class AlbionScanningService {
     message: Message,
     dryRun = false,
     server: AlbionServer = AlbionServer.AMERICAS
-  ): Promise<void> {
+  ): Promise<boolean> {
     const emoji = this.serverEmoji(server);
     const guildId = server === AlbionServer.AMERICAS ? this.config.get('albion.guildIdUS') : this.config.get('albion.guildIdEU');
     // Save all the characters to a map we can easily pick out later via character ID
@@ -156,6 +156,7 @@ export class AlbionScanningService {
     const statusMessage = await message.channel.send(`### ${emoji} Scanned 0/${registeredMembers.length} registered members...`);
 
     let count = 0;
+    let actionRequired = false;
 
     const roleMaps: AlbionRoleMapInterface = this.config.get('albion.roleMap');
 
@@ -209,7 +210,7 @@ export class AlbionScanningService {
         }
         else if (leftServer) {
           leavers.push(`- ${emoji} ‼️🫥️ Discord member for Character **${character.Name}** has left the DIG Discord server. Their registration status has been removed. **They require booting from the Guild!**`);
-          this.actionRequired = true;
+          actionRequired = true;
         }
 
         if (!dryRun) {
@@ -259,7 +260,7 @@ export class AlbionScanningService {
     if (leavers.length === 0) {
       await message.channel.send(`${emoji} ✅ No leavers were detected.`);
       this.logger.log('No leavers were detected.');
-      return;
+      return actionRequired;
     }
 
     this.logger.log(`Sending ${leavers.length} changes to channel...`);
@@ -268,6 +269,8 @@ export class AlbionScanningService {
     for (const leaver of leavers) {
       await message.channel.send(leaver); // Send a fake message first, so it doesn't ping people
     }
+
+    return actionRequired;
   }
 
   async reverseRoleScan(
@@ -386,10 +389,11 @@ export class AlbionScanningService {
     message: Message,
     dryRun = false,
     server: AlbionServer = AlbionServer.AMERICAS
-  ): Promise<void> {
+  ): Promise<boolean> {
     const suggestions: string[] = [];
     const emoji = this.serverEmoji(server);
     const guildId = server === AlbionServer.AMERICAS ? this.config.get('albion.guildIdUS') : this.config.get('albion.guildIdEU');
+    let actionRequired = false;
 
     // Refresh GuildMembers as some may have been booted / left
     const guildMembers: AlbionRegistrationsEntity[] = await this.albionRegistrationsRepository.find({ guildId });
@@ -416,17 +420,23 @@ export class AlbionScanningService {
       // Get the role inconsistencies
       const inconsistencies = await this.checkRoleInconsistencies(discordMember, server);
 
+      if (inconsistencies.length > 0) {
+        actionRequired = true;
+      }
+
       // Construct the strings
       inconsistencies.forEach((inconsistency) => {
         suggestions.push(inconsistency.message);
       });
+
+      return actionRequired;
     }
 
     await scanCountMessage.delete();
 
     if (suggestions.length === 0) {
       await message.channel.send(`${emoji} ✅ No role inconsistencies were detected.`);
-      return;
+      return false;
     }
 
     await message.channel.send(`## ${emoji} 👀 ${suggestions.length} role inconsistencies detected!`);
@@ -441,7 +451,7 @@ export class AlbionScanningService {
     }
 
     if (suggestions.length > 0 && !dryRun) {
-      this.actionRequired = true;
+      return true;
     }
   }
 
