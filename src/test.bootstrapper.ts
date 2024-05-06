@@ -4,6 +4,12 @@ import _ from 'lodash';
 import { ConfigService } from '@nestjs/config';
 import { TestingModule } from '@nestjs/testing';
 import { MikroORM } from '@mikro-orm/core';
+import { AlbionServer } from './albion/interfaces/albion.api.interfaces';
+
+const guildLeaderRoleUS = '44546543371337';
+const guildLeaderRoleEU = '64354579789809089';
+const guildOfficerRoleUS = '465544343342364';
+const guildOfficerRoleEU = '66343435879886';
 
 // This file helps set up mocks for various tests, which have been copied and pasted across the suite, causing a lot of duplication.
 @Injectable()
@@ -215,11 +221,14 @@ export class TestBootstrapper {
     };
   }
 
-  static getMockAlbionCharacter(guildId) {
+  static getMockAlbionCharacter(
+    guildId,
+    server: AlbionServer = AlbionServer.AMERICAS
+  ) {
     return {
       Id: 'BehrhjrfhK-_!FDHrd$£64tert3',
-      Name: 'Maelstrome26',
-      GuildId: guildId ?? this.mockConfig.albion.guildIdAmericas,
+      Name: `Maelstrome26${server === AlbionServer.AMERICAS ? 'US' : 'EU'}`,
+      GuildId: guildId ?? server === AlbionServer.AMERICAS ? this.mockConfig.albion.guildIdUS : this.mockConfig.albion.guildIdEU,
     } as any;
   }
 
@@ -243,12 +252,12 @@ export class TestBootstrapper {
 
   static readonly mockConfig = {
     albion: {
-      guildIdAmericas: '44545423435',
-      guildIdEurope: '6567576868',
-      guildUSLeaderRole: { discordRoleId: '44546543371337' },
-      guildEULeaderRole: { discordRoleId: '64354579789809089' },
-      guildUSOfficerRole: { discordRoleId: '465544343342364' },
-      guildEUOfficerRole: { discordRoleId: '66343435879886' },
+      guildIdUS: '44545423435',
+      guildIdEU: '6567576868',
+      guildLeaderRoleUS: { discordRoleId: guildLeaderRoleUS },
+      guildLeaderRoleEU: { discordRoleId: guildLeaderRoleEU },
+      guildOfficerRoleUS: { discordRoleId: guildOfficerRoleUS },
+      guildOfficerRoleEU: { discordRoleId: guildOfficerRoleEU },
     },
     discord: {
       devUserId: '474839309484',
@@ -271,6 +280,8 @@ export class TestBootstrapper {
         albionEURegistered: '67845345346565',
         albionUSAnnouncements: '4566987855434',
         albionEUAnnouncements: '6879876745643543',
+        pingLeaderRolesUS: [guildLeaderRoleUS, guildOfficerRoleUS],
+        pingLeaderRolesEU: [guildLeaderRoleEU, guildOfficerRoleEU],
         ps2Verified: '059769706045',
       },
     },

@@ -52,7 +52,7 @@ export class AlbionRegistrationService implements OnApplicationBootstrap {
     }
 
     // 2. Check if the user is in the guild
-    const guildId = dto.server === AlbionServer.AMERICAS ? this.config.get('albion.guildIdAmericas') : this.config.get('albion.guildIdEurope');
+    const guildId = dto.server === AlbionServer.AMERICAS ? this.config.get('albion.guildIdUS') : this.config.get('albion.guildIdEU');
 
     if (character.GuildId !== guildId) {
       this.throwError(`Sorry <@${guildMember.id}>, the character **${character.Name}** has not been detected in the DIG guild. Please ensure that:\n
@@ -103,7 +103,7 @@ export class AlbionRegistrationService implements OnApplicationBootstrap {
       this.throwError(`Server was not specified, this shouldn't be possible. Pinging <@${this.config.get('discord.devUserId')}>!`);
     }
 
-    const guildId = dto.server === AlbionServer.AMERICAS ? this.config.get('albion.guildIdAmericas') : this.config.get('albion.guildIdEurope');
+    const guildId = dto.server === AlbionServer.AMERICAS ? this.config.get('albion.guildIdUS') : this.config.get('albion.guildIdEU');
 
     let character: AlbionPlayerInterface;
     try {
@@ -168,8 +168,8 @@ export class AlbionRegistrationService implements OnApplicationBootstrap {
 
     const rolesChannel = dto.server === AlbionServer.AMERICAS ? this.config.get('discord.channels.albionUSRoles') : this.config.get('discord.channels.albionEURoles');
     const announcementChannel = dto.server === AlbionServer.AMERICAS ? this.config.get('discord.channels.albionUSAnnouncements') : this.config.get('discord.channels.albionEUAnnouncements');
-    const albOfficerRole = dto.server === AlbionServer.AMERICAS ? this.config.get('albion.guildUSOfficerRole').discordRoleId : this.config.get('albion.guildEUOfficerRole').discordRoleId;
-    const albLeaderRole = dto.server === AlbionServer.AMERICAS ? this.config.get('albion.guildUSLeaderRole').discordRoleId : this.config.get('albion.guildEULeaderRole').discordRoleId;
+
+    const scanPingRoles = dto.server === AlbionServer.AMERICAS ? this.config.get('discord.roles.pingLeaderRolesUS') : this.config.get('discord.roles.pingLeaderRolesEU');
 
     // Successful!
     const messageContent = `# ✅ Thank you <@${discordMember.id}>, your character **${character.Name}** has been registered! 🎉
@@ -178,7 +178,7 @@ export class AlbionRegistrationService implements OnApplicationBootstrap {
 * ℹ️ Your Discord server nickname has been automatically changed to match your character name. You are free to change this back should you want to, but please make sure it resembles your in-game name.
 * 🔔 You have automatically been enrolled to our <#${announcementChannel}> announcements channel. If you wish to opt out, go to <#${rolesChannel}>, double tap the 🔔 icon.
 
-CC <@&${albLeaderRole}>, <@&${albOfficerRole}>`;
+CC <@&${scanPingRoles.join('>, <@&')}>`;
     await message.channel.send({
       content: messageContent,
       flags: MessageFlags.SuppressEmbeds,

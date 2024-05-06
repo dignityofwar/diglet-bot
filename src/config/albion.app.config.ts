@@ -96,14 +96,14 @@ const rolesToRankProduction: AlbionRoleMapInterface[] = [
   {
     name: '@ALB/US/Registered',
     discordRoleId: '1155987035472023702',
-    priority: 6,
+    priority: 7,
     keep: true,
     server: AlbionServer.AMERICAS,
   },
   {
     name: '@ALB/EU/Registered',
     discordRoleId: '1224609941260603402',
-    priority: 6,
+    priority: 7,
     keep: true,
     server: AlbionServer.EUROPE,
   },
@@ -196,30 +196,32 @@ const rolesToRankDevelopment: AlbionRoleMapInterface[] = [
   {
     name: '@ALB/US/Registered',
     discordRoleId: '1155987100928323594',
-    priority: 6,
+    priority: 7,
     keep: true,
     server: AlbionServer.AMERICAS,
   },
   {
     name: '@ALB/EU/Registered',
     discordRoleId: '1232778554320879811',
-    priority: 6,
+    priority: 7,
     keep: true,
     server: AlbionServer.EUROPE,
   },
 ];
 const roleMap = process.env.ENVIRONMENT === 'production' ? rolesToRankProduction : rolesToRankDevelopment as AlbionRoleMapInterface[];
 const findRole = (roleName: string) => roleMap.filter((role) => role.name === roleName)[0];
-const scanPingRoles = [findRole('@ALB/US/Guildmaster').discordRoleId, findRole('@ALB/US/Master').discordRoleId];
+const pingLeaderRolesUS = [findRole('@ALB/US/Guildmaster').discordRoleId, findRole('@ALB/US/Master').discordRoleId];
+const pingLeaderRolesEU = [findRole('@ALB/EU/Archmage').discordRoleId, findRole('@ALB/EU/Magister').discordRoleId];
 
 export default () => ({
-  guildIdAmericas: 'btPZRoLvTUqLC7URnDRgSQ',
-  guildIdEurope: '0_zTfLfASD2Wtw6Tc-yckA',
+  guildIdUS: 'btPZRoLvTUqLC7URnDRgSQ',
+  guildIdEU: '0_zTfLfASD2Wtw6Tc-yckA',
   roleMap,
-  scanPingRoles,
+  pingLeaderRolesUS,
+  pingLeaderRolesEU,
   scanExcludedUsers: [], // Discord IDs
-  guildUSLeaderRole: findRole('@ALB/US/Guildmaster'),
-  guildEULeaderRole: findRole('@ALB/EU/Archmage'),
-  guildUSOfficerRole: findRole('@ALB/US/Master'),
-  guildEUOfficerRole: findRole('@ALB/EU/Magister'),
+  guildLeaderRoleUS: findRole('@ALB/US/Guildmaster'),
+  guildLeaderRoleEU: findRole('@ALB/EU/Archmage'),
+  guildOfficerRoleUS: findRole('@ALB/US/Master'),
+  guildOfficerRoleEU: findRole('@ALB/EU/Magister'),
 });

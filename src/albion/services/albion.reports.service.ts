@@ -29,7 +29,7 @@ export class AlbionReportsService {
     let albionMembers: AlbionPlayerInterface[] = [];
 
     try {
-      albionMembers = await this.albionApiService.getAllGuildMembers(this.config.get('albion.guildIdAmericas'), AlbionServer.AMERICAS);
+      albionMembers = await this.albionApiService.getAllGuildMembers(this.config.get('albion.guildIdUS'), AlbionServer.AMERICAS);
     }
     catch (err) {
       this.logger.error(err);

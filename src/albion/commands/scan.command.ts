@@ -30,9 +30,6 @@ export class AlbionScanCommand {
     // Check if the command came from the correct channel ID
     const scanChannelId = this.config.get('discord.channels.albionScans');
 
-    await interaction[0].channel.send('SCANS ARE CURRENTLY DISABLED!');
-    return;
-
     // Check if channel is correct
     if (interaction[0].channelId !== scanChannelId) {
       return `Please use the <#${scanChannelId}> channel to perform Scans.`;
@@ -40,7 +37,7 @@ export class AlbionScanCommand {
 
     const message = await interaction[0].channel.send('Starting Albion Members scan...');
 
-    this.albionScanningService.startScan(message, dto.dryRun);
+    this.albionScanningService.startScan(message, dto.dryRun, dto.server);
 
     return `Albion Scan initiated!${dto.dryRun ? ' [DRY RUN, NO CHANGES WILL ACTUALLY BE PERFORMED]' : ''}`;
   }

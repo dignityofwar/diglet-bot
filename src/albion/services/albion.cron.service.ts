@@ -4,6 +4,7 @@ import { TextChannel } from 'discord.js';
 import { ConfigService } from '@nestjs/config';
 import { DiscordService } from '../../discord/discord.service';
 import { AlbionScanningService } from './albion.scanning.service';
+import { AlbionServer } from '../interfaces/albion.api.interfaces';
 
 @Injectable()
 export class AlbionCronService implements OnApplicationBootstrap {
@@ -32,15 +33,22 @@ export class AlbionCronService implements OnApplicationBootstrap {
     }
   }
 
-  // TODO: Re-enable when ready to test.
-  // @Cron('0 0 6,18 * * *')
-  async runAlbionScans(): Promise<void> {
-    this.logger.log('Running Albion Scans Cron');
+  @Cron('0 0 22,6 * * *')
+  async runAlbionScansUS(): Promise<void> {
+    this.logger.log('Running Albion Scans US Cron');
 
-    await this.channel.send('Starting daily scan...');
+    const message = await this.channel.send('Starting US Scans');
 
-    const message = await this.channel.send('Running daily Albion Scans');
+    await this.albionScanningService.startScan(message, true, AlbionServer.AMERICAS);
 
-    await this.albionScanningService.startScan(message);
+  }
+
+  @Cron('0 0 12,20 * * *')
+  async runAlbionScansEU(): Promise<void> {
+    this.logger.log('Running Albion Scans EU Cron');
+
+    const message = await this.channel.send('Starting EU Scans');
+
+    await this.albionScanningService.startScan(message, true, AlbionServer.EUROPE);
   }
 }

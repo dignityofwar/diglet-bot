@@ -35,7 +35,7 @@ describe('DiscordService', () => {
   });
 
   describe('getGuild', () => {
-    it('should call get method of guilds.cache of discordClient with correct guildIdAmericas', async () => {
+    it('should call get method of guilds.cache of discordClient with correct guildIdUS', async () => {
       const guildId = '123456789';
       const result = await service.getGuild(guildId);
       expect(result.id).toBe('123456789');

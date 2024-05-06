@@ -31,7 +31,7 @@ describe('AlbionRegistrationService', () => {
   beforeEach(async () => {
     TestBootstrapper.mockORM();
     mockAlbionRegistrationsRepository = TestBootstrapper.getMockEntityRepo();
-    mockCharacter = TestBootstrapper.getMockAlbionCharacter(TestBootstrapper.mockConfig.albion.guildIdAmericas) as any;
+    mockCharacter = TestBootstrapper.getMockAlbionCharacter(TestBootstrapper.mockConfig.albion.guildIdUS) as any;
     mockDiscordUser = TestBootstrapper.getMockDiscordUser();
     mockDiscordMessage = TestBootstrapper.getMockDiscordMessage();
 
@@ -127,7 +127,7 @@ describe('AlbionRegistrationService', () => {
   it('validation should return an error if there is a character registered under the same name on the same server, formatted for US', async () => {
     const discordMemberEntry = {
       characterName: 'TestCharacter',
-      guildId: TestBootstrapper.mockConfig.albion.guildIdAmericas,
+      guildId: TestBootstrapper.mockConfig.albion.guildIdUS,
     };
     mockAlbionRegistrationsRepository.find = jest.fn()
       .mockResolvedValueOnce([])
@@ -137,10 +137,10 @@ describe('AlbionRegistrationService', () => {
   });
   it('validation should return an error if there is a character registered under the same name on the same server, formatted for EU', async () => {
     mockDto.server = AlbionServer.EUROPE;
-    mockCharacter.GuildId = TestBootstrapper.mockConfig.albion.guildIdEurope;
+    mockCharacter.GuildId = TestBootstrapper.mockConfig.albion.guildIdEU;
     const discordMemberEntry = {
       characterName: 'TestCharacter',
-      guildId: TestBootstrapper.mockConfig.albion.guildIdEurope,
+      guildId: TestBootstrapper.mockConfig.albion.guildIdEU,
     };
     mockAlbionRegistrationsRepository.find = jest.fn()
       .mockResolvedValueOnce([])
@@ -245,8 +245,8 @@ describe('AlbionRegistrationService', () => {
 
     await expect(service.handleRegistration(mockDto, mockDiscordUser, mockDiscordMessage)).resolves.toBe(undefined);
 
-    const mockUSOfficerRoleId = TestBootstrapper.mockConfig.albion.guildUSOfficerRole.discordRoleId;
-    const mockUSLeaderRoleId = TestBootstrapper.mockConfig.albion.guildUSLeaderRole.discordRoleId;
+    const mockUSOfficerRoleId = TestBootstrapper.mockConfig.albion.guildOfficerRoleUS.discordRoleId;
+    const mockUSLeaderRoleId = TestBootstrapper.mockConfig.albion.guildLeaderRoleUS.discordRoleId;
 
     expect(mockDiscordMessage.channel.send).toBeCalledWith({
       content: `# ✅ Thank you <@${mockDiscordUser.id}>, your character **${mockCharacter.Name}** has been registered! 🎉
@@ -273,8 +273,8 @@ CC <@&${mockUSLeaderRoleId}>, <@&${mockUSOfficerRoleId}>`,
 
     await expect(service.handleRegistration(mockDto, mockDiscordUser, mockDiscordMessage)).resolves.toBe(undefined);
 
-    const mockEUOfficerRoleId = TestBootstrapper.mockConfig.albion.guildEUOfficerRole.discordRoleId;
-    const mockEULeaderRoleId = TestBootstrapper.mockConfig.albion.guildEULeaderRole.discordRoleId;
+    const mockEUOfficerRoleId = TestBootstrapper.mockConfig.albion.guildOfficerRoleEU.discordRoleId;
+    const mockEULeaderRoleId = TestBootstrapper.mockConfig.albion.guildLeaderRoleEU.discordRoleId;
 
     expect(mockDiscordMessage.channel.send).toBeCalledWith({
       content: `# ✅ Thank you <@${mockDiscordUser.id}>, your character **${mockCharacter.Name}** has been registered! 🎉
