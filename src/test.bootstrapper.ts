@@ -4,6 +4,7 @@ import _ from 'lodash';
 import { ConfigService } from '@nestjs/config';
 import { TestingModule } from '@nestjs/testing';
 import { MikroORM } from '@mikro-orm/core';
+import { AlbionServer } from './albion/interfaces/albion.api.interfaces';
 
 const guildLeaderRoleUS = '44546543371337';
 const guildLeaderRoleEU = '64354579789809089';
@@ -220,11 +221,14 @@ export class TestBootstrapper {
     };
   }
 
-  static getMockAlbionCharacter(guildId) {
+  static getMockAlbionCharacter(
+    guildId,
+    server: AlbionServer = AlbionServer.AMERICAS
+  ) {
     return {
       Id: 'BehrhjrfhK-_!FDHrd$£64tert3',
-      Name: 'Maelstrome26',
-      GuildId: guildId ?? this.mockConfig.albion.guildIdUS,
+      Name: `Maelstrome26${server === AlbionServer.AMERICAS ? 'US' : 'EU'}`,
+      GuildId: guildId ?? server === AlbionServer.AMERICAS ? this.mockConfig.albion.guildIdUS : this.mockConfig.albion.guildIdEU,
     } as any;
   }
 

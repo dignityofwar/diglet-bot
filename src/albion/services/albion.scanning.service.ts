@@ -58,32 +58,32 @@ export class AlbionScanningService {
       characters = await this.gatherCharacters(guildMembers, message);
     }
     catch (err) {
-      await message.edit(`## ${emoji}❌ An error occurred while gathering data from the API!`);
+      await message.edit(`## ${emoji} ❌ An error occurred while gathering data from the API!`);
       return;
     }
 
     if (characters.length === 0) {
-      await message.edit(`## ${emoji}❌ No characters were gathered from the API!`);
+      await message.edit(`## ${emoji} ❌ No characters were gathered from the API!`);
       return;
     }
 
     try {
       await message.edit(`# ${emoji} Task: [2/5] Checking ${length} characters for membership status...`);
-      await this.removeLeavers(characters, message, dryRun);
+      await this.removeLeavers(characters, message, dryRun, server);
 
       // Check if members have roles they shouldn't have
       await message.edit(`# ${emoji} Task: [3/5] Performing reverse role scan...`);
-      await this.reverseRoleScan(message, dryRun);
+      await this.reverseRoleScan(message, dryRun, server);
 
       await message.edit(`# ${emoji} Task: [4/5] Checking for role inconsistencies...`);
       await this.roleInconsistencies(message, dryRun, server);
 
       await message.edit(`# ${emoji} Task: [5/5] Discord enforcement scan...`);
       await message.channel.send('## DISCORD ENFORCEMENT SCAN DISABLED!');
-      // await this.discordEnforcementScan(message, dryRun);
+      // await this.discordEnforcementScan(message, dryRun, server);
     }
     catch (err) {
-      await message.edit('## 🇺🇸❌ An error occurred while scanning!');
+      await message.edit('## 🇺🇸 ❌ An error occurred while scanning!');
       await message.channel.send(`Error: ${err.message}`);
     }
 
@@ -138,8 +138,11 @@ export class AlbionScanningService {
   async removeLeavers(
     characters: AlbionPlayerInterface[],
     message: Message,
-    dryRun = false
+    dryRun = false,
+    server: AlbionServer = AlbionServer.AMERICAS
   ): Promise<void> {
+    const emoji = this.serverEmoji(server);
+    const guildId = server === AlbionServer.AMERICAS ? this.config.get('albion.guildIdUS') : this.config.get('albion.guildIdEU');
     // Save all the characters to a map we can easily pick out later via character ID
     const charactersMap = new Map<string, AlbionPlayerInterface>();
     const leavers: string[] = [];
@@ -148,9 +151,9 @@ export class AlbionScanningService {
     }
 
     // Get the registered members from the database
-    const registeredMembers: AlbionRegistrationsEntity[] = await this.albionRegistrationsRepository.findAll();
+    const registeredMembers: AlbionRegistrationsEntity[] = await this.albionRegistrationsRepository.find({ guildId });
 
-    const statusMessage = await message.channel.send(`### Scanned 0/${registeredMembers.length} registered members...`);
+    const statusMessage = await message.channel.send(`### ${emoji} Scanned 0/${registeredMembers.length} registered members...`);
 
     let count = 0;
 
@@ -158,7 +161,7 @@ export class AlbionScanningService {
 
     // Force a role fetch for each role, so we get an accurate list of members
     for (const roleMap of Object.values(roleMaps)) {
-      // Force fetch the role so we get a proper list of updated members
+      // Force fetch the role, so we get a proper list of updated members
       await message.guild.roles.fetch(roleMap.discordRoleId, { force: true });
     }
 
@@ -178,8 +181,6 @@ export class AlbionScanningService {
       }
 
       // 1. Check if they're still in the guild
-      const guildId = this.config.get('albion.guildIdUS');
-
       // Is the character still in the Guild?
       if (!character?.GuildId || character?.GuildId !== guildId) {
         this.logger.log(`User ${character.Name} has left the Guild`);
@@ -201,13 +202,13 @@ export class AlbionScanningService {
       if (leftGuild || leftServer) {
         // Construct the appropriate message
         if (leftGuild && leftServer) {
-          leavers.push(`- 💁 Character / Player ${character.Name} has left **both** the DIG server and the Guild. They are dead to us now 💅`);
+          leavers.push(`- ${emoji} 💁 Character / Player ${character.Name} has left **both** the DIG server and the Guild. They are dead to us now 💅`);
         }
         else if (leftGuild && discordMember) {
-          leavers.push(`- 👋 <@${discordMember.id}>'s character **${character.Name}** has left the Guild but remains on the Discord server. Their roles and registration status have been stripped.`);
+          leavers.push(`- ${emoji} 👋 <@${discordMember.id}>'s character **${character.Name}** has left the Guild but remains on the Discord server. Their roles and registration status have been stripped.`);
         }
         else if (leftServer) {
-          leavers.push(`- ‼️🫥️ Discord member for Character **${character.Name}** has left the DIG Discord server. Their registration status has been removed. **They require booting from the Guild!**`);
+          leavers.push(`- ${emoji} ‼️🫥️ Discord member for Character **${character.Name}** has left the DIG Discord server. Their registration status has been removed. **They require booting from the Guild!**`);
           this.actionRequired = true;
         }
 
@@ -216,7 +217,12 @@ export class AlbionScanningService {
           if (discordMember) {
             // Remove all roles from the user
             for (const roleMap of Object.values(roleMaps)) {
-              // Force fetch the role so we get a proper list of updated members
+              // If role is not for the correct server, skip it
+              if (roleMap.server !== server) {
+                continue;
+              }
+
+              // Force fetch the role, so we get a proper list of updated members
               const role = message.guild.roles.cache.get(roleMap.discordRoleId);
               // Check if the user still has the role
               const hasRole = role.members.has(discordMember.id);
@@ -251,28 +257,36 @@ export class AlbionScanningService {
     await statusMessage.delete();
 
     if (leavers.length === 0) {
-      await message.channel.send('✅ No leavers were detected.');
+      await message.channel.send(`${emoji} ✅ No leavers were detected.`);
       this.logger.log('No leavers were detected.');
       return;
     }
 
     this.logger.log(`Sending ${leavers.length} changes to channel...`);
-    await message.channel.send(`## 🚪 ${leavers.length} leavers detected!`);
+    await message.channel.send(`## ${emoji} 🚪 ${leavers.length} leavers detected!`);
 
     for (const leaver of leavers) {
       await message.channel.send(leaver); // Send a fake message first, so it doesn't ping people
     }
   }
 
-  async reverseRoleScan(message: Message, dryRun = false) {
+  async reverseRoleScan(
+    message: Message,
+    dryRun = false,
+    server: AlbionServer = AlbionServer.AMERICAS
+  ) {
+    const guildId = server === AlbionServer.AMERICAS ? this.config.get('albion.guildIdUS') : this.config.get('albion.guildIdEU');
+    const emoji = this.serverEmoji(server);
     // Get the registered members from the database again as they may have changed
-    const guildMembers: AlbionRegistrationsEntity[] = await this.albionRegistrationsRepository.findAll();
+    const guildMembers: AlbionRegistrationsEntity[] = await this.albionRegistrationsRepository.find({ guildId });
 
     // Loop through each role, starting with Guildmaster, and check if anyone has it who are not registered
     const roleMap: AlbionRoleMapInterface[] = this.config.get('albion.roleMap');
-    const roleMapLength = roleMap.length;
+    // Filter down to remove the opposite server's roles
+    const roleMapFiltered = roleMap.filter((role) => role.server === server);
+    const roleMapLength = roleMapFiltered.length;
 
-    const scanMessage = await message.channel.send(`### Scanning ${roleMapLength} Discord roles for members who are falsely registered...`);
+    const scanMessage = await message.channel.send(`### ${emoji} Scanning ${roleMapLength} Discord roles for members who are falsely registered...`);
     const scanCountMessage = await message.channel.send('foo');
 
     const invalidUsers: string[] = [];
@@ -355,7 +369,7 @@ export class AlbionScanningService {
 
     // Display list of invalid users
     if (invalidUsers.length > 0) {
-      await message.channel.send(`## 🚨 ${invalidUsers.length} invalid users detected via Reverse Role Scan!\nThese users have been **automatically** stripped of their incorrect roles.`);
+      await message.channel.send(`## ${emoji} 🚨 ${invalidUsers.length} invalid users detected via Reverse Role Scan!\nThese users have been **automatically** stripped of their incorrect roles.`);
 
       for (const invalidUser of invalidUsers) {
         const lineMessage = await message.channel.send('foo');
@@ -364,7 +378,7 @@ export class AlbionScanningService {
       return;
     }
     else {
-      await message.channel.send('✅ No invalid users were detected via Reverse Role Scan.');
+      await message.channel.send(`${emoji} ✅ No invalid users were detected via Reverse Role Scan.`);
     }
   }
 
