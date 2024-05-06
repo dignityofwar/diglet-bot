@@ -48,6 +48,7 @@ const mockRegisteredNameEU = '@ALB/EU/Registered';
 describe('AlbionScanningService', () => {
   let service: AlbionScanningService;
   let discordEnforcementService: AlbionDiscordEnforcementService;
+  let albionApiService: AlbionApiService;
   let mockDiscordUser: any;
   let mockDiscordMessage: any;
   let mockAlbionGuildMember: AlbionGuildMembersEntity;
@@ -131,6 +132,7 @@ describe('AlbionScanningService', () => {
 
     service = moduleRef.get<AlbionScanningService>(AlbionScanningService);
     discordEnforcementService = moduleRef.get<AlbionDiscordEnforcementService>(AlbionDiscordEnforcementService);
+    albionApiService = moduleRef.get<AlbionApiService>(AlbionApiService);
 
     const albionMerged = {
       ...TestBootstrapper.mockConfig.albion,
@@ -320,6 +322,68 @@ describe('AlbionScanningService', () => {
       expect(service.reverseRoleScan).toBeCalledTimes(1);
       expect(service.roleInconsistencies).toBeCalledTimes(1);
     });
+  });
+
+  describe('Gather characters', () => {
+    it('should properly gather characters from the API', async () => {
+      albionApiService.getCharacterById = jest.fn().mockResolvedValueOnce(mockCharacterUS);
+      const result = await service.gatherCharacters(
+        [mockRegisteredMemberUS],
+        mockDiscordMessage,
+        0,
+        AlbionServer.AMERICAS,
+      );
+      expect(mockDiscordMessage.channel.send).toBeCalledWith('🇺🇸 Gathering 1 characters from the Americas ALB API... (attempt #1)');
+      expect(result).toEqual([mockCharacterUS]);
+    });
+    it('should properly gather characters from the EU API', async () => {
+      albionApiService.getCharacterById = jest.fn().mockResolvedValueOnce(mockCharacterEU);
+      const result = await service.gatherCharacters(
+        [mockRegisteredMemberUS],
+        mockDiscordMessage,
+        0,
+        AlbionServer.EUROPE,
+      );
+      expect(mockDiscordMessage.channel.send).toBeCalledWith('🇪🇺 Gathering 1 characters from the Europe ALB API... (attempt #1)');
+      expect(result).toEqual([mockCharacterEU]);
+    });
+    it('should properly denote number of tries', async () => {
+      albionApiService.getCharacterById = jest.fn().mockResolvedValueOnce(mockCharacterEU);
+      await service.gatherCharacters(
+        [mockRegisteredMemberUS],
+        mockDiscordMessage,
+        1,
+        AlbionServer.EUROPE,
+      );
+      expect(mockDiscordMessage.channel.send).toBeCalledWith('🇪🇺 Gathering 1 characters from the Europe ALB API... (attempt #2)');
+    });
+    it('should fail on the tries exhaustion', async () => {
+      albionApiService.getCharacterById = jest.fn().mockResolvedValueOnce(mockCharacterEU);
+      const result = await service.gatherCharacters(
+        [mockRegisteredMemberUS],
+        mockDiscordMessage,
+        3,
+        AlbionServer.EUROPE,
+      );
+      expect(mockDiscordMessage.channel.send).toBeCalledWith(`## ❌ An error occurred while gathering data for 1 characters! Giving up after 3 tries! Pinging <@${mockDevUserId}>!`);
+      expect(result).toEqual(null);
+    });
+    it('should retry in 10s if the API call failed, properly denoting progress', async () => {
+      jest.spyOn(global, 'setTimeout');
+      albionApiService.getCharacterById = jest.fn()
+        .mockRejectedValueOnce(new Error('Operation went boom'))
+        .mockResolvedValueOnce(mockCharacterUS);
+      await service.gatherCharacters(
+        [mockRegisteredMemberUS],
+        mockDiscordMessage,
+        0,
+        AlbionServer.AMERICAS,
+      );
+      expect(setTimeout).toHaveBeenCalledTimes(1);
+      expect(setTimeout).toHaveBeenLastCalledWith(expect.any(Function), 10000);
+      expect(mockDiscordMessage.channel.send).toBeCalledWith('## ⚠️ Couldn\'t gather characters from Americas ALB API. Retrying in 10s...');
+      expect(mockDiscordMessage.channel.send).toBeCalledWith('🇺🇸 Gathering 1 characters from the Americas ALB API... (attempt #2)');
+    }, 15000);
   });
 
   describe('Leavers scanning', () => {

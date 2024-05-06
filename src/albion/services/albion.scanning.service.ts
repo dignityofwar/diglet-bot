@@ -108,30 +108,30 @@ export class AlbionScanningService {
     tries = 0,
     server: AlbionServer = AlbionServer.AMERICAS
   ) {
+    const emoji = this.serverEmoji(server);
     const characterPromises: Promise<AlbionPlayerInterface>[] = [];
     tries++;
     const length = guildMembers.length;
-
-    const statusMessage = await message.channel.send(`Gathering ${length} characters from ALB API... (attempt #${tries})`);
+    if (tries > 3) {
+      await message.channel.send(`## ❌ An error occurred while gathering data for ${length} characters! Giving up after 3 tries! Pinging <@${this.config.get('discord.devUserId')}>!`);
+      return null;
+    }
+    const statusMessage = await message.channel.send(`${emoji} Gathering ${length} characters from the ${server} ALB API... (attempt #${tries})`);
 
     for (const member of guildMembers) {
       characterPromises.push(this.albionApiService.getCharacterById(member.characterId, server));
     }
 
-    await statusMessage.delete();
-
     try {
+      await statusMessage.delete();
       return await Promise.all(characterPromises);
     }
     catch (err) {
-      if (tries === 3) {
-        await statusMessage.channel.send(`## ❌ An error occurred while gathering data for ${length} characters! Giving up after 3 tries! Pinging <@${this.config.get('discord.devUserId')}>!`);
-        return null;
-      }
-
-      await statusMessage.edit(`## ⚠️ Couldn't gather ${length} characters from ALB API. Retrying in 10s (attempt #${tries})...`);
+      await statusMessage.delete();
+      const tempMessage = await message.channel.send(`## ⚠️ Couldn't gather characters from ${server} ALB API. Retrying in 10s...`);
       await new Promise(resolve => setTimeout(resolve, 10000));
-      return this.gatherCharacters(guildMembers, statusMessage, tries);
+      await tempMessage.delete();
+      return this.gatherCharacters(guildMembers, message, tries, server);
     }
   }
 
