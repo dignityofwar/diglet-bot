@@ -39,7 +39,7 @@ export class AlbionCronService implements OnApplicationBootstrap {
 
     const message = await this.channel.send('Starting US Scans');
 
-    await this.albionScanningService.startScan(message, false, AlbionServer.AMERICAS);
+    await this.albionScanningService.startScan(message, true, AlbionServer.AMERICAS);
 
   }
 
@@ -49,6 +49,6 @@ export class AlbionCronService implements OnApplicationBootstrap {
 
     const message = await this.channel.send('Starting EU Scans');
 
-    await this.albionScanningService.startScan(message, false, AlbionServer.EUROPE);
+    await this.albionScanningService.startScan(message, true, AlbionServer.EUROPE);
   }
 }
