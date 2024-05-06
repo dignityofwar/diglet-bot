@@ -56,7 +56,7 @@ export class AlbionScanningService {
 
     try {
       await message.edit(`# ${emoji} Task: [1/5] Gathering ${length} characters from the ALB API...`);
-      characters = await this.gatherCharacters(guildMembers, message);
+      characters = await this.gatherCharacters(guildMembers, message, 0, server);
     }
     catch (err) {
       await message.edit(`## ${emoji} ❌ An error occurred while gathering data from the API!`);
