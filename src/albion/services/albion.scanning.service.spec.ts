@@ -493,6 +493,7 @@ describe('AlbionScanningService', () => {
         return {
           ...mockedRole,
           members: {
+            // eslint-disable-next-line max-nested-callbacks
             has: jest.fn().mockImplementationOnce(() => true),
           },
         };
@@ -519,6 +520,7 @@ describe('AlbionScanningService', () => {
         return {
           ...mockedRole,
           members: {
+            // eslint-disable-next-line max-nested-callbacks
             has: jest.fn().mockImplementationOnce(() => true),
           },
         };
