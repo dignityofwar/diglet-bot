@@ -96,14 +96,14 @@ const rolesToRankProduction: AlbionRoleMapInterface[] = [
   {
     name: '@ALB/US/Registered',
     discordRoleId: '1155987035472023702',
-    priority: 6,
+    priority: 7,
     keep: true,
     server: AlbionServer.AMERICAS,
   },
   {
     name: '@ALB/EU/Registered',
     discordRoleId: '1224609941260603402',
-    priority: 6,
+    priority: 7,
     keep: true,
     server: AlbionServer.EUROPE,
   },
@@ -196,14 +196,14 @@ const rolesToRankDevelopment: AlbionRoleMapInterface[] = [
   {
     name: '@ALB/US/Registered',
     discordRoleId: '1155987100928323594',
-    priority: 6,
+    priority: 7,
     keep: true,
     server: AlbionServer.AMERICAS,
   },
   {
     name: '@ALB/EU/Registered',
     discordRoleId: '1232778554320879811',
-    priority: 6,
+    priority: 7,
     keep: true,
     server: AlbionServer.EUROPE,
   },

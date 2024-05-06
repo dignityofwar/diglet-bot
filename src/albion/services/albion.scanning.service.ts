@@ -14,7 +14,7 @@ import { AlbionDiscordEnforcementService } from './albion.discord.enforcement.se
 export interface RoleInconsistencyResult {
   id: string,
   name: string,
-  action: 'added' | 'removed', // For testing purposes
+  action: 'added' | 'removed' | 'missingEntryRole', // For testing purposes
   message: string
 }
 
@@ -400,7 +400,7 @@ export class AlbionScanningService {
       }
 
       // Get the role inconsistencies
-      const inconsistencies = await this.checkRoleInconsistencies(discordMember);
+      const inconsistencies = await this.checkRoleInconsistencies(discordMember, server);
 
       // Construct the strings
       inconsistencies.forEach((inconsistency) => {
@@ -435,6 +435,7 @@ export class AlbionScanningService {
     discordMember: GuildMember,
     server: AlbionServer = AlbionServer.AMERICAS
   ): Promise<RoleInconsistencyResult[]> {
+    const serverEmoji = this.serverEmoji(server);
     // If the user is excluded from role inconsistency checks, skip them
     const excludedUsers: string[] = this.config.get('albion.scanExcludedUsers');
     if (excludedUsers.includes(discordMember.id)) {
@@ -442,36 +443,69 @@ export class AlbionScanningService {
     }
 
     const inconsistencies: RoleInconsistencyResult[] = [];
-    const highestPriorityRole = this.albionUtilities.getHighestAlbionRole(discordMember);
+    const highestPriorityRole = this.albionUtilities.getHighestAlbionRole(discordMember, server);
     const roleMap: AlbionRoleMapInterface[] = this.config.get('albion.roleMap');
 
     // If no roles were found, they must have at least registered and initiate
     if (!highestPriorityRole) {
-      const initiateRole = roleMap.filter((role) => role.name === '@ALB/US/Initiate')[0];
-      const registeredRole = roleMap.filter((role) => role.name === '@ALB/US/Registered')[0];
+      let entryRole: AlbionRoleMapInterface;
+      let registeredRole: AlbionRoleMapInterface;
+      if (server === AlbionServer.AMERICAS) {
+        entryRole = roleMap.filter((role) => role.name === '@ALB/US/Initiate')[0];
+        registeredRole = roleMap.filter((role) => role.name === '@ALB/US/Registered')[0];
+      }
+      else if (server === AlbionServer.EUROPE) {
+        entryRole = roleMap.filter((role) => role.name === '@ALB/EU/Disciple')[0];
+        registeredRole = roleMap.filter((role) => role.name === '@ALB/EU/Registered')[0];
+      }
+      else {
+        throw new Error('Invalid server!');
+      }
+
       const action = 'added';
       const reason = 'they have no roles but are registered!';
       inconsistencies.push({
-        id: initiateRole.discordRoleId,
-        name: initiateRole.name,
+        id: entryRole.discordRoleId,
+        name: entryRole.name,
         action,
-        message: `- ‼️ <@${discordMember.id}> requires role **${initiateRole.name}** to be ${action} because ${reason}`,
+        message: `- ${serverEmoji} ‼️ <@${discordMember.id}> requires role **${entryRole.name}** to be ${action} because ${reason}`,
       });
       inconsistencies.push({
         id: registeredRole.discordRoleId,
         name: registeredRole.name,
         action,
-        message: `- ‼️ <@${discordMember.id}> requires role **${registeredRole.name}** to be ${action} because ${reason}`,
+        message: `- ${serverEmoji} ‼️ <@${discordMember.id}> requires role **${registeredRole.name}** to be ${action} because ${reason}`,
       });
       return inconsistencies;
     }
 
+    // If their highest role is registered, this shouldn't be the case. They should have at least the entry level role.
+    // We need to get the role for the server they're on, and the priority above the registered priority.
+    if (highestPriorityRole.name.includes('Registered')) {
+      const entryRole = roleMap.filter((role) => role.server === server && role.priority === highestPriorityRole.priority - 1)[0];
+      const action = 'added';
+      const reason = 'they are registered but don\'t have at least the entry level role!';
+
+      inconsistencies.push({
+        id: entryRole.discordRoleId,
+        name: entryRole.name,
+        action,
+        message: `- ${serverEmoji} ‼️ <@${discordMember.id}> requires role **${entryRole.name}** to be ${action} because ${reason}`,
+      });
+      return inconsistencies;
+    }
+
+    // Otherwise, this is based off priority of the highest priority role.
     roleMap.forEach((role) => {
+      // If the role is for the wrong server, skip it
+      if (role.server !== server) {
+        return;
+      }
       const shouldHaveRole = role.priority === highestPriorityRole?.priority || (role.priority > highestPriorityRole?.priority && role.keep);
       const hasRole = discordMember.roles.cache.has(role.discordRoleId);
 
       let changed = false;
-      let emoji = '➕';
+      let emoji = `${serverEmoji} ➕`;
       let action = 'added' as 'added' | 'removed';
       let reason = `their highest role is **${highestPriorityRole.name}**, and the role is marked as "keep".`;
 
@@ -481,7 +515,7 @@ export class AlbionScanningService {
 
       if (!shouldHaveRole && hasRole && !role.keep) {
         changed = true;
-        emoji = '➖';
+        emoji = `${serverEmoji} ➖`;
         action = 'removed';
         reason = `their highest role is **${highestPriorityRole.name}**, and the role is not marked as "keep".`;
       }
