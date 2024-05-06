@@ -1,6 +1,15 @@
-import { Param, ParamType } from '@discord-nestjs/core';
+import { Choice, Param, ParamType } from '@discord-nestjs/core';
+import { AlbionServer } from '../interfaces/albion.api.interfaces';
 
 export class AlbionScanDto {
+  @Choice(AlbionServer)
+  @Param({
+    name: 'server',
+    description:
+      'Which server to scan for? Americas or Europe?',
+    required: true,
+  })
+    server: AlbionServer;
   @Param({
     name: 'dry-run',
     description:
