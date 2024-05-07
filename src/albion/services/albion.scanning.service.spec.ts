@@ -1088,6 +1088,46 @@ describe('AlbionScanningService', () => {
       expect(mockDiscordMessage.channel.send).toBeCalledWith('## 🇪🇺 🚨 3 errors detected via Reverse Role Scan!\nAffected users have been **automatically** stripped of their incorrect roles.');
       expect(mockDiscordUser.roles.remove).toBeCalledTimes(3);
     });
+    it('should detect any roles that require removal but take no action in dry run mode', async () => {
+      mockAlbionRegistrationsRepository.find = jest.fn().mockResolvedValueOnce([]);
+
+      // Add role they shouldn't have
+      mockDiscordUser.roles.cache = new Map([
+        [mockDiscipleRoleId, TestBootstrapper.getMockDiscordRole('ALB/EU/Disciple')],
+      ]);
+
+      // Mock the Discord API to return the mocked Discord user
+      mockDiscordMessage.guild.members.fetch = jest.fn().mockResolvedValue(mockDiscordUser);
+
+      // Ensure when we call for the members of the role the same user is returned.
+      mockDiscordMessage.guild.roles.fetch = jest.fn()
+        .mockImplementation((roleId: string) => {
+          const roleIdsToReturn = [mockDiscipleRoleId];
+
+          // If requested role ID is in the roleIdsToReturnArray, return a mock of the role with the user within it, otherwise mock the role without the user
+          if (roleIdsToReturn.includes(roleId)) {
+            return {
+              name: 'ALB/MockedRole',
+              id: roleId,
+              members: new Map([
+                [mockDiscordUser.id, mockDiscordUser],
+              ]),
+            };
+          }
+          else {
+            return {
+              name: 'ALB/MockedRole',
+              id: roleId,
+              members: [],
+            };
+          }
+        });
+
+      await service.reverseRoleScan(mockDiscordMessage, true, AlbionServer.EUROPE);
+      expect(mockDiscordMessage.channel.send).toBeCalledWith('### 🇪🇺 Scanning 6 Discord roles for members who are falsely registered...');
+      expect(mockDiscordMessage.channel.send).toBeCalledWith('## 🇪🇺 🚨 1 errors detected via Reverse Role Scan!\nAffected users have been **automatically** stripped of their incorrect roles.');
+      expect(mockDiscordUser.roles.remove).toBeCalledTimes(0);
+    });
   });
 
   describe('Role inconsistencies scanning', () => {
