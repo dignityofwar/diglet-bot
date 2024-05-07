@@ -356,5 +356,54 @@ describe('AlbionApiService', () => {
         .resolves
         .toStrictEqual(properResult);
     });
+    it('should return a character based on exact match amongst partial matches', async () => {
+      const correctResult = { Id: 'be_K9ekCTg-bNzlmgNHZ5w', Name: 'Lilith1' };
+      const searchResponse = {
+        data: {
+          guilds: [],
+          players: [
+            correctResult,
+            { Id: 'syYdtLFvQZeqUR_ifCFdBA', Name: 'Lilith13' },
+            { Id: '48fUbTddSfSc-nu9ru2QEw', Name: 'lilith1324' },
+            { Id: 'CGgdqmeJRNOA86VLKpUvzw', Name: 'Lilith1527' },
+          ],
+        },
+      };
+
+      jest.spyOn(AlbionAxiosFactory.prototype, 'createAlbionApiEuropeClient').mockReturnValue({
+        defaults: {
+          baseURL: AlbionApiEndpoint.ALBION_EUROPE,
+        },
+        get: jest.fn()
+          .mockResolvedValueOnce(searchResponse)
+          .mockResolvedValueOnce({ data: correctResult }),
+      } as any);
+
+      await expect(service.getCharacter('Lilith1', AlbionServer.EUROPE))
+        .resolves
+        .toStrictEqual(correctResult);
+    });
+    it('should return a character named Dedalus17', async () => {
+      const correctResult = { Id: '2RqNHDa6R7-pLCY5DqdOig', Name: 'Dedalus17' };
+      const searchResponse = {
+        data: {
+          guilds: [],
+          players: [
+            correctResult,
+          ],
+        },
+      };
+
+      jest.spyOn(AlbionAxiosFactory.prototype, 'createAlbionApiEuropeClient').mockReturnValue({
+        defaults: {
+          baseURL: AlbionApiEndpoint.ALBION_EUROPE,
+        },
+        get: jest.fn().mockResolvedValueOnce(searchResponse).mockResolvedValueOnce({ data: correctResult }),
+      } as any);
+
+      await expect(service.getCharacter('Dedalus17', AlbionServer.EUROPE))
+        .resolves
+        .toStrictEqual(correctResult);
+    });
   });
 });
