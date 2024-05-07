@@ -169,7 +169,7 @@ export class AlbionRegistrationService implements OnApplicationBootstrap {
     const rolesChannel = dto.server === AlbionServer.AMERICAS ? this.config.get('discord.channels.albionUSRoles') : this.config.get('discord.channels.albionEURoles');
     const announcementChannel = dto.server === AlbionServer.AMERICAS ? this.config.get('discord.channels.albionUSAnnouncements') : this.config.get('discord.channels.albionEUAnnouncements');
 
-    const scanPingRoles = dto.server === AlbionServer.AMERICAS ? this.config.get('discord.roles.pingLeaderRolesUS') : this.config.get('discord.roles.pingLeaderRolesEU');
+    const scanPingRoles = dto.server === AlbionServer.AMERICAS ? this.config.get('albion.pingLeaderRolesUS') : this.config.get('albion.pingLeaderRolesEU');
 
     // Successful!
     const messageContent = `# ✅ Thank you <@${discordMember.id}>, your character **${character.Name}** has been registered! 🎉
