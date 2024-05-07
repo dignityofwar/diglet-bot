@@ -91,7 +91,6 @@ export class AlbionRegistrationService implements OnApplicationBootstrap {
     // 4. Check if the user has already registered a character
     const discordMember = await this.albionRegistrationsRepository.find({ discordId: guildMember.id, guildId });
     if (discordMember.length > 0) {
-      const serverName = dto.server === AlbionServer.AMERICAS ? 'Americas' : 'Europe';
       const leaderName = dto.server === AlbionServer.AMERICAS ? 'Guild Masters' : 'Archmages';
       this.throwError(`Sorry <@${guildMember.id}>, you have already registered a character named **${discordMember[0].characterName}** for the ${serverName} Guild. We don't allow multiple Guild characters to be registered to the same Discord user, as there is little point to it. If you believe this to be in error, or if you have registered the wrong character, please contact the Albion ${leaderName} in <#1039269706605002912>.`);
     }
