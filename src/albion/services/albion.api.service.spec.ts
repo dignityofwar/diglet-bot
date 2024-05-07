@@ -381,5 +381,27 @@ describe('AlbionApiService', () => {
         .resolves
         .toStrictEqual(correctResult);
     });
+    it('should return a character named Dedalus17', async () => {
+      const correctResult = { Id: '2RqNHDa6R7-pLCY5DqdOig', Name: 'Dedalus17' };
+      const searchResponse = {
+        data: {
+          guilds: [],
+          players: [
+            correctResult,
+          ],
+        },
+      };
+
+      jest.spyOn(AlbionAxiosFactory.prototype, 'createAlbionApiEuropeClient').mockReturnValue({
+        defaults: {
+          baseURL: AlbionApiEndpoint.ALBION_EUROPE,
+        },
+        get: jest.fn().mockResolvedValueOnce(searchResponse).mockResolvedValueOnce({ data: correctResult }),
+      } as any);
+
+      await expect(service.getCharacter('Dedalus17', AlbionServer.EUROPE))
+        .resolves
+        .toStrictEqual(correctResult);
+    });
   });
 });
