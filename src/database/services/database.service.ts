@@ -32,7 +32,7 @@ export class DatabaseService {
 
     try {
       await this.activityRepository.persistAndFlush(entity);
-      this.logger.debug(`Updated activity for ${member.id}`);
+      this.logger.verbose(`Updated activity for ${member.id}`);
     }
     catch (err) {
       console.error(err);

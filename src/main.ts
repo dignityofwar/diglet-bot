@@ -11,8 +11,10 @@ async function bootstrap() {
 
 function determineLogLevels(envLogLevel: string | undefined): LogLevel[] {
   switch (envLogLevel) {
-    case 'debug':
+    case 'verbose':
       return ['log', 'error', 'warn', 'debug', 'verbose'];
+    case 'debug':
+      return ['log', 'error', 'warn', 'debug'];
     case 'info':
       return ['log', 'error', 'warn'];
     case 'warn':
