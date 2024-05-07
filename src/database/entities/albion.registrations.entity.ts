@@ -5,7 +5,7 @@ export interface AlbionRegistrationsEntityInterface {
   discordId: string;
   characterId: string;
   characterName: string;
-  guildId: 'btPZRoLvTUqLC7URnDRgSQ' | 'FOOOOO';
+  guildId: string;
   manual: boolean;
   manualCreatedByDiscordId?: string;
   manualCreatedByDiscordName?: string;

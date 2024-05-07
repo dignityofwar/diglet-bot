@@ -273,7 +273,7 @@ describe('AlbionScanningService', () => {
       mockAlbionRegistrationsRepository.find = jest.fn().mockResolvedValueOnce([mockRegisteredMemberUS, mockRegisteredMemberUS]);
       service.gatherCharacters = jest.fn().mockResolvedValueOnce([mockCharacterUS, mockCharacterUS]);
       await service.startScan(mockDiscordMessage);
-      expect(mockDiscordMessage.channel.send).toBeCalledWith('🇺🇸ℹ️ There are currently 2 registered members on record.');
+      expect(mockDiscordMessage.channel.send).toBeCalledWith('🇺🇸 ℹ️ There are currently 2 registered members on record.');
     });
     it('should handle errors with character gathering, Americas', async () => {
       mockAlbionRegistrationsRepository.find = jest.fn().mockResolvedValueOnce([mockRegisteredMemberUS]);
@@ -781,7 +781,7 @@ describe('AlbionScanningService', () => {
     //    await service.reverseRoleScan(mockDiscordMessage);
     //    expect(mockDiscordMessage.channel.send).toHaveBeenCalledWith(`Reverse Role Scan: Error removing role "FooRole" from user ${mockDiscordUser.displayName} Err: ${errMsg}. Pinging <@${mockDevUserId}>!`);
     //  });
-    it('reverse scan should properly handle when no members were found for any usRoles', async () => {
+    it('reverse scan should properly handle when no members were found for any roles', async () => {
       mockDiscordMessage.guild.roles.fetch = jest.fn().mockImplementation(() => {
         return {
           members: [],
@@ -814,7 +814,7 @@ describe('AlbionScanningService', () => {
           };
         });
 
-      await service.reverseRoleScan(mockDiscordMessage, false, AlbionServer.AMERICAS);
+      await service.reverseRoleScan(mockDiscordMessage, true, AlbionServer.AMERICAS);
       expect(mockDiscordMessage.channel.send).toBeCalledWith('foo'); // For scanCountMessage
       expect(mockDiscordMessage.channel.send).toBeCalledWith('### 🇺🇸 Scanning 7 Discord roles for members who are falsely registered...');
       expect(mockDiscordMessage.channel.send).toBeCalledWith('## 🇺🇸 🚨 1 invalid users detected via Reverse Role Scan!\nThese users have been **automatically** stripped of their incorrect roles.');
@@ -852,6 +852,52 @@ describe('AlbionScanningService', () => {
       expect(mockDiscordMessage.channel.send).toBeCalledWith('## 🇪🇺 🚨 1 invalid users detected via Reverse Role Scan!\nThese users have been **automatically** stripped of their incorrect roles.');
       expect(mockDiscordMessage.channel.send).toBeCalledWith('foo'); // For invalid user line
       expect(mockDiscordUser.roles.remove).toBeCalledWith(mockedRoleToDelete);
+    });
+    it('reverse scan should properly ignore a US scan from manipulating EU members', async () => {
+      mockAlbionRegistrationsRepository.find = jest.fn().mockResolvedValueOnce([mockRegisteredMemberUS]);
+
+      // Ensure the mock Discord user ID matches the mock EU Registered Member
+      mockDiscordUser.id = mockRegisteredMemberUS.discordId;
+
+      // Add a blend of US and EU roles to the user
+      mockDiscordUser.roles.cache = new Map([
+        [mockRegisteredRoleIdUS, TestBootstrapper.getMockDiscordRole('ALB/US/Registered')],
+        [mockRegisteredRoleIdEU, TestBootstrapper.getMockDiscordRole('ALB/EU/Registered')],
+        [mockSquireRoleId, TestBootstrapper.getMockDiscordRole('ALB/US/Squire')],
+        [mockDiscipleRoleId, TestBootstrapper.getMockDiscordRole('ALB/EU/Disciple')],
+      ]);
+
+      // Mock the Discord API to return the mocked Discord user
+      mockDiscordMessage.guild.members.fetch = jest.fn().mockResolvedValue(mockDiscordUser);
+
+      // Ensure when we call for the members of the role the same user is returned.
+      mockDiscordMessage.guild.roles.fetch = jest.fn()
+        .mockImplementation((roleId: string) => {
+          const roleIdsToReturn = [mockRegisteredRoleIdUS, mockRegisteredRoleIdEU, mockSquireRoleId, mockDiscipleRoleId];
+
+          // If requested role ID is in the roleIdsToReturnArray, return a mock of the role with the user within it, otherwise mock the role without the user
+          if (roleIdsToReturn.includes(roleId)) {
+            return {
+              name: 'ALB/MockedRole',
+              id: roleId,
+              members: new Map([
+                [mockDiscordUser.id, mockDiscordUser],
+              ]),
+            };
+          }
+          else {
+            return {
+              name: 'ALB/MockedRole',
+              id: roleId,
+              members: [],
+            };
+          }
+        });
+
+      await service.reverseRoleScan(mockDiscordMessage, false, AlbionServer.AMERICAS);
+      expect(mockDiscordMessage.channel.send).toBeCalledWith('### 🇺🇸 Scanning 7 Discord roles for members who are falsely registered...');
+      expect(mockDiscordMessage.channel.send).toBeCalledWith('🇺🇸 ✅ No invalid users were detected via Reverse Role Scan.');
+      expect(mockDiscordUser.roles.remove).toBeCalledTimes(0);
     });
     it('reverse scan should return no change message properly for a registered member', async () => {
       mockAlbionRegistrationsRepository.find = jest.fn().mockResolvedValueOnce([mockRegisteredMemberUS]);
