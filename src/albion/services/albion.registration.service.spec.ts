@@ -136,7 +136,7 @@ describe('AlbionRegistrationService', () => {
         .mockResolvedValueOnce([])
         .mockResolvedValueOnce([discordMemberEntry]);
 
-      await expect(service.validateRegistrationAttempt(mockDto, mockCharacter, mockDiscordUser)).rejects.toThrowError(`Sorry <@${mockDiscordUser.id}>, you have already registered a character named **${discordMemberEntry.characterName}** for the Americas Guild. We don't allow multiple Guild characters to be registered to the same Discord user, as there is little point to it. If you believe this to be in error, or if you have registered the wrong character, please contact the Albion Guild Masters in <#1039269706605002912>.`);
+      await expect(service.validateRegistrationAttempt(mockDto, mockCharacter, mockDiscordUser)).rejects.toThrowError(`Sorry <@${mockDiscordUser.id}>, you have already registered a character named **${discordMemberEntry.characterName}** for the 🇺🇸 Americas Guild. We don't allow multiple Guild characters to be registered to the same Discord user, as there is little point to it. If you believe this to be in error, or if you have registered the wrong character, please contact the Albion Guild Masters in <#1039269706605002912>.`);
     });
     it('should return an error if there is a character registered under the same name on the same server, formatted for EU', async () => {
       mockDto.server = AlbionServer.EUROPE;
@@ -149,7 +149,7 @@ describe('AlbionRegistrationService', () => {
         .mockResolvedValueOnce([])
         .mockResolvedValueOnce([discordMemberEntry]);
 
-      await expect(service.validateRegistrationAttempt(mockDto, mockCharacter, mockDiscordUser)).rejects.toThrowError(`Sorry <@${mockDiscordUser.id}>, you have already registered a character named **${discordMemberEntry.characterName}** for the Europe Guild. We don't allow multiple Guild characters to be registered to the same Discord user, as there is little point to it. If you believe this to be in error, or if you have registered the wrong character, please contact the Albion Archmages in <#1039269706605002912>.`);
+      await expect(service.validateRegistrationAttempt(mockDto, mockCharacter, mockDiscordUser)).rejects.toThrowError(`Sorry <@${mockDiscordUser.id}>, you have already registered a character named **${discordMemberEntry.characterName}** for the 🇪🇺 Europe Guild. We don't allow multiple Guild characters to be registered to the same Discord user, as there is little point to it. If you believe this to be in error, or if you have registered the wrong character, please contact the Albion Archmages in <#1039269706605002912>.`);
     });
     it('should return true if no existing registration was found', async () => {
       mockAlbionRegistrationsRepository.find = jest.fn()
