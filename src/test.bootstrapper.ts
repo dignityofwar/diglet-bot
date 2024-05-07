@@ -258,6 +258,8 @@ export class TestBootstrapper {
       guildLeaderRoleEU: { discordRoleId: guildLeaderRoleEU },
       guildOfficerRoleUS: { discordRoleId: guildOfficerRoleUS },
       guildOfficerRoleEU: { discordRoleId: guildOfficerRoleEU },
+      pingLeaderRolesUS: [guildLeaderRoleUS, guildOfficerRoleUS],
+      pingLeaderRolesEU: [guildLeaderRoleEU, guildOfficerRoleEU],
     },
     discord: {
       devUserId: '474839309484',
