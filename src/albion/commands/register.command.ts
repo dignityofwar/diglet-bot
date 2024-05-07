@@ -36,15 +36,9 @@ export class AlbionRegisterCommand {
     const member = interaction[0].member as GuildMember;
     const message = await interaction[0].channel.send('🔍 Running registration process...');
 
-    try {
-      await this.albionRegistrationService.handleRegistration(dto, member, message);
-    }
-    catch (err) {
-      await message.edit(`⛔️ **ERROR:** ${err.message}`);
-      this.logger.error(err.message);
-    }
+    this.albionRegistrationService.registrationMessageProxy(dto, member, message);
 
     // Successful! Success message now within handleRegistration.
-    return '';
+    return 'Registration request sent!';
   }
 }
