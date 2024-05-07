@@ -294,7 +294,7 @@ export class AlbionScanningService {
     // Get the registered members from the database again as they may have changed
     const albGuildMembers: AlbionRegistrationsEntity[] = await this.albionRegistrationsRepository.find({ guildId });
 
-    const invalidUsers: string[] = [];
+    const errorsDetected: string[] = [];
 
     // Loop each role and scan them
     let count = 0;
@@ -355,7 +355,7 @@ export class AlbionScanningService {
             if (hasRole) {
               const dryRunText = dryRun ? ' (DRY RUN)' : '';
               // Member actually has the role, now remove it from them
-              invalidUsers.push(`- ⚠️${dryRunText} <@${discordMemberFresh.id}> had role **${role.name}** but was not registered!`);
+              errorsDetected.push(`- ⚠️${dryRunText} <@${discordMemberFresh.id}> had role **${role.name}** but was not registered!`);
 
               if (!dryRun) {
                 try {
@@ -383,10 +383,10 @@ export class AlbionScanningService {
     await scanCountMessage.delete();
 
     // Display list of invalid users
-    if (invalidUsers.length > 0) {
-      await message.channel.send(`## ${emoji} 🚨 ${invalidUsers.length} invalid users detected via Reverse Role Scan!\nThese users have been **automatically** stripped of their incorrect roles.`);
+    if (errorsDetected.length > 0) {
+      await message.channel.send(`## ${emoji} 🚨 ${errorsDetected.length} errors detected via Reverse Role Scan!\nAffected users have been **automatically** stripped of their incorrect roles.`);
 
-      for (const invalidUser of invalidUsers) {
+      for (const invalidUser of errorsDetected) {
         const lineMessage = await message.channel.send('.');
         await lineMessage.edit(invalidUser);
       }
