@@ -374,7 +374,9 @@ describe('AlbionApiService', () => {
         defaults: {
           baseURL: AlbionApiEndpoint.ALBION_EUROPE,
         },
-        get: jest.fn().mockResolvedValueOnce(searchResponse),
+        get: jest.fn()
+          .mockResolvedValueOnce(searchResponse)
+          .mockResolvedValueOnce({ data: correctResult }),
       } as any);
 
       await expect(service.getCharacter('Lilith1', AlbionServer.EUROPE))
