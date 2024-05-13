@@ -23,7 +23,7 @@ export class AlbionApiService {
     return await this.queryCharacter(characterId, server);
   }
 
-  private async queryCharacter(characterId: string, server: AlbionServer): Promise<AlbionPlayerInterface> {
+  async queryCharacter(characterId: string, server: AlbionServer): Promise<AlbionPlayerInterface> {
     const request = new AlbionAxiosFactory().createApiClient(server);
 
     const response: AlbionPlayersResponseInterface = await request.get(`/players/${characterId}`);
@@ -35,7 +35,7 @@ export class AlbionApiService {
     return response.data;
   }
 
-  private async getCharacterId(characterName: string, server: AlbionServer): Promise<string> {
+  async getCharacterId(characterName: string, server: AlbionServer): Promise<string> {
     const request = new AlbionAxiosFactory().createApiClient(server);
     const query = `/search?q=${characterName}`;
     this.logger.debug(`Querying Albion API for character ID: ${request.defaults.baseURL}${query}`);
