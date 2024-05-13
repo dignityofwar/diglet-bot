@@ -32,8 +32,6 @@ export class AlbionApiService {
       this.throwError(`character ID \`${characterId}\` does not match API response consistently. Pinging <@${this.config.get('discord.devUserId')}>!`);
     }
 
-    this.logger.log(`Character ${characterId} JSON: ${JSON.stringify(response.data)}`);
-
     return response.data;
   }
 
