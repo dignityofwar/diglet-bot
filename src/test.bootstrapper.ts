@@ -226,7 +226,7 @@ export class TestBootstrapper {
     server: AlbionServer = AlbionServer.AMERICAS
   ) {
     return {
-      Id: 'BehrhjrfhK-_!FDHrd$£64tert3',
+      Id: 'clhoV9OdRm-5BuYQYZBT_Q',
       Name: `Maelstrome26${server === AlbionServer.AMERICAS ? 'US' : 'EU'}`,
       GuildId: guildId ?? server === AlbionServer.AMERICAS ? this.mockConfig.albion.guildIdUS : this.mockConfig.albion.guildIdEU,
     } as any;

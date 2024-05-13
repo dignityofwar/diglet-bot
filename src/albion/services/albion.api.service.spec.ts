@@ -405,5 +405,22 @@ describe('AlbionApiService', () => {
         .resolves
         .toStrictEqual(correctResult);
     });
+    it('should return a character ID for Lugasi', async () => {
+      const correctResultJson = '{"guilds":[],"players":[{"Id":"JRlDBmqHS86m764x-jc96g","Name":"Lugasi","GuildId":"0_zTfLfASD2Wtw6Tc-yckA","GuildName":"Dignity Of War","AllianceId":"t4Fl03pZRzaYTEczrDAesA","AllianceName":"DIG","Avatar":"","AvatarRing":"","KillFame":1391737,"DeathFame":2094479,"FameRatio":0.66,"totalKills":null,"gvgKills":null,"gvgWon":null}]}';
+      const searchResponse = {
+        data: JSON.parse(correctResultJson),
+      };
+
+      jest.spyOn(AlbionAxiosFactory.prototype, 'createAlbionApiEuropeClient').mockReturnValue({
+        defaults: {
+          baseURL: AlbionApiEndpoint.ALBION_EUROPE,
+        },
+        get: jest.fn().mockResolvedValueOnce(searchResponse),
+      } as any);
+
+      await expect(service.getCharacterId('Lugasi', AlbionServer.EUROPE))
+        .resolves
+        .toStrictEqual('JRlDBmqHS86m764x-jc96g');
+    });
   });
 });

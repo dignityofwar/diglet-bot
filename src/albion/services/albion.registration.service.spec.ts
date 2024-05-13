@@ -163,12 +163,15 @@ describe('AlbionRegistrationService', () => {
       mockDto.server = AlbionServer.EUROPE;
       mockCharacter.GuildId = 'utter nonsense';
 
+      const endpoint = `https://gameinfo-ams.albiononline.com/api/gameinfo/players/${mockCharacter.Id}`;
+
       await expect(service.validateRegistrationAttempt(mockDto, mockCharacter, mockDiscordUser)).rejects.toThrowError(`Sorry <@${mockDiscordUser.id}>, the character **${mockCharacter.Name}** has not been detected in the DIG 🇪🇺 Europe Guild. Please ensure that:\n
 1. You have spelt the name **exactly** correct (case sensitive).
 2. You are a member of the Guild "**Dignity Of War**".
 3. You have waited ~10 minutes before trying again (sometimes our data source is slow).
 4. You have waited 1 hour before trying again.
-\nIf you are still having issues, please contact \`@ALB/EU/Archmage\` in <#1039269706605002912>.`);
+\nIf you are still having issues, please contact \`@ALB/EU/Archmage\` in <#1039269706605002912>.
+\n||DEV DEBUG: [Gameinfo link](${endpoint}) \nCharacter JSON: \`${JSON.stringify(mockCharacter)}\`||`);
     });
   });
 
