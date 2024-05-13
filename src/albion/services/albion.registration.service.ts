@@ -62,8 +62,16 @@ export class AlbionRegistrationService implements OnApplicationBootstrap {
     if (character.GuildId !== guildId) {
       const endpointsuffix = dto.server === AlbionServer.AMERICAS ? 'gameinfo' : 'gameinfo-ams';
       const endpoint = `https://${endpointsuffix}.albiononline.com/api/gameinfo/players/${character.Id}`;
+      const characterInfo = {
+        Id: character.Id,
+        Name: character.Name,
+        GuildId: character.GuildId ?? 'N/A',
+        GuildName: character.GuildName ?? 'N/A',
+        AllianceName: character.AllianceName ?? 'N/A',
+        AllianceId: character.AllianceId ?? 'N/A',
+      };
 
-      this.logger.error(`Character "${character.Name}" is not in the DIG ${serverName} Guild! Guild ID detected: ${character.GuildId}, Character JSON: ${JSON.stringify(character)}`);
+      this.logger.error(`Character "${character.Name}" is not in the DIG ${serverName} Guild! Guild ID detected: ${character.GuildId}, Character JSON: ${JSON.stringify(characterInfo)}`);
 
       this.throwError(`Sorry <@${discordMember.id}>, the character **${character.Name}** has not been detected in the DIG ${serverName} Guild. Please ensure that:\n
 1. You have spelt the name **exactly** correct (case sensitive).
@@ -71,7 +79,7 @@ export class AlbionRegistrationService implements OnApplicationBootstrap {
 3. You have waited ~10 minutes before trying again (sometimes our data source is slow).
 4. You have waited 1 hour before trying again.
 \nIf you are still having issues, please contact \`${rankName}\` in <#1039269706605002912>.
-\n||DEV DEBUG: [Gameinfo link](${endpoint}) \nCharacter JSON: \`${JSON.stringify(character)}\`||`);
+\n||DEV DEBUG: [Gameinfo link](${endpoint}) \nCharacter JSON: \`${JSON.stringify(characterInfo)}\`||`);
     }
 
     // 3. Check if the character has already been registered on the same server
