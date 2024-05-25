@@ -147,11 +147,14 @@ export class PurgeService {
     for (const member of purgableMembers.values()) {
       count++;
 
+      const name = member.displayName || member.nickname || member.user.username;
+      const date = new Date(member.joinedTimestamp).toLocaleString();
+
       if (!dryRun) {
-        await this.discordService.kickMember(member, message, 'Purge: Not onboarded');
+        await this.discordService.kickMember(member, message, `Purge on ${date}: Not onboarded`);
       }
-      this.logger.log(`Kicked ${member.nickname || member.user.username} (${member.user.id})`);
-      lastKickedString += `- ${prefix}🥾 Kicked ${member.nickname || member.user.username} (${member.user.id})\n`;
+      this.logger.log(`Kicked ${name} (${member.user.id})`);
+      lastKickedString += `- ${prefix}🥾 Kicked ${name} (${member.user.id})\n`;
 
       // Every 5 members or last member, send a status update
       if (count % 5 === 0 || count === total) {
@@ -167,7 +170,7 @@ export class PurgeService {
       }
     }
 
-    this.logger.log(`${purgableMembers.size} members kicked.`);
-    await message.channel.send(`${prefix}**${purgableMembers.size}** members kicked.`);
+    this.logger.log(`${purgableMembers.size} members purged.`);
+    await message.channel.send(`${prefix}**${purgableMembers.size}** members purged.`);
   }
 }
