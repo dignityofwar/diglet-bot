@@ -4,6 +4,7 @@ import { TextChannel } from 'discord.js';
 import { ConfigService } from '@nestjs/config';
 import { DiscordService } from '../../discord/discord.service';
 import { ActivityService } from './activity.service';
+import * as Sentry from '@sentry/node';
 
 @Injectable()
 export class ActivityCronService implements OnApplicationBootstrap {
@@ -39,6 +40,17 @@ export class ActivityCronService implements OnApplicationBootstrap {
 
     await this.channel.send('Starting activity scan cron');
 
+    const checkInId = Sentry.captureCheckIn({
+      monitorSlug: 'digletbot-scans',
+      status: 'in_progress',
+    });
+
     await this.activityService.scanAndRemoveLeavers(this.channel);
+
+    Sentry.captureCheckIn({
+      checkInId,
+      monitorSlug: 'digletbot-scans',
+      status: 'ok',
+    });
   }
 }
