@@ -64,7 +64,9 @@ export class ActivityService {
       }
     }
 
+    const remaining = allActivityMembers.length - leavers.length;
+
     await statusMessage.delete();
-    await channel.send(`Activity scan complete. Removed **${leavers.length}** leavers out of activity records.`);
+    await channel.send(`Activity scan complete. Removed **${leavers.length}** leavers out of activity records. **${remaining}** records remaining.`);
   }
 }
