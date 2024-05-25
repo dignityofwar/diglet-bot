@@ -3,7 +3,7 @@
   "extends": [
     "config:recommended"
   ],
-  "automergeType": "branch",
+  "automergeType": "pr",
   "lockFileMaintenance": {
     "enabled": true,
     "automerge": true
