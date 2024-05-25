@@ -41,6 +41,8 @@
     "@nestjs/config": "2.3.4",
     "@nestjs/core": "9.4.3",
     "@nestjs/schedule": "^3.0.4",
+    "@sentry/node": "^8.4.0",
+    "@sentry/profiling-node": "^8.4.0",
     "axios": "^1.6.8",
     "bufferutil": "^4.0.8",
     "class-transformer": "0.5.1",

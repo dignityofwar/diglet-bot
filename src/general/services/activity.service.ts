@@ -67,4 +67,14 @@ export class ActivityService {
     await statusMessage.delete();
     await channel.send(`Activity scan complete. Removed **${leavers.length}** leavers out of activity records. **${remaining}** records remaining.`);
   }
+
+  async getInactives(): Promise<ActivityEntity[]> {
+    const allRecords = await this.activityRepository.findAll();
+
+    // Get records that are older than 90 days
+    const ninetyDaysAgo = new Date();
+    ninetyDaysAgo.setDate(ninetyDaysAgo.getDate() - 90);
+
+    return allRecords.filter(record => record.lastActivity < ninetyDaysAgo);
+  }
 }
