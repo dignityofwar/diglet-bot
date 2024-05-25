@@ -153,7 +153,7 @@ describe('PurgeService', () => {
     expect(mockMessage.channel.send).toHaveBeenCalledWith('Kicking started...');
     expect(mockMessage.channel.send).toHaveBeenCalledWith(`- 🥾 Kicked ${purgables[0].nickname} (${purgables[0].user.id})\n`);
     expect(mockMessage.channel.send).toHaveBeenCalledWith('🫰 Kicking progress: [1/1] (100%)');
-    expect(mockMessage.channel.send).toHaveBeenCalledWith(`**${purgables.length}** members kicked.`);
+    expect(mockMessage.channel.send).toHaveBeenCalledWith(`**${purgables.length}** members purged.`);
     expect(mockMessage.channel.send).toHaveBeenCalledTimes(5);
   });
 
@@ -178,7 +178,7 @@ describe('PurgeService', () => {
     expect(mockMessage.channel.send).toHaveBeenCalledWith('🫰 Kicking progress: [5/6] (83%)');
     expect(mockMessage.channel.send).toHaveBeenCalledWith('- 🥾 Kicked 1-5-nick (1-5)\n');
     expect(mockMessage.channel.send).toHaveBeenCalledWith('🫰 Kicking progress: [6/6] (100%)');
-    expect(mockMessage.channel.send).toHaveBeenCalledWith(`**${purgables.length}** members kicked.`);
+    expect(mockMessage.channel.send).toHaveBeenCalledWith(`**${purgables.length}** members purged.`);
   });
 
   it('should NOT call the kick function for each purgable member for a DRY RUN', async () => {
@@ -200,6 +200,6 @@ describe('PurgeService', () => {
     expect(mockMessage.channel.send).toHaveBeenCalledWith('Kicking started...');
     expect(mockMessage.channel.send).toHaveBeenCalledWith(`- [DRY RUN] 🥾 Kicked ${purgables[0].nickname} (${purgables[0].user.id})\n`);
     expect(mockMessage.channel.send).toHaveBeenCalledWith('[DRY RUN] 🫰 Kicking progress: [1/1] (100%)');
-    expect(mockMessage.channel.send).toHaveBeenCalledWith(`[DRY RUN] **${purgables.length}** members kicked.`);
+    expect(mockMessage.channel.send).toHaveBeenCalledWith(`[DRY RUN] **${purgables.length}** members purged.`);
   });
 });
