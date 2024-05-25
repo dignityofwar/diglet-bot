@@ -1,6 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { GuildTextBasedChannel } from 'discord.js';
-import { DiscordService } from '../../discord/discord.service';
 import { InjectRepository } from '@mikro-orm/nestjs';
 import { EntityRepository } from '@mikro-orm/core';
 import { ActivityEntity } from '../../database/entities/activity.entity';
@@ -10,7 +9,6 @@ export class ActivityService {
   private readonly logger = new Logger(ActivityService.name);
 
   constructor(
-    private readonly discordService: DiscordService,
     @InjectRepository(ActivityEntity) private readonly activityRepository: EntityRepository<ActivityEntity>,
   ) {}
 
@@ -28,7 +26,7 @@ export class ActivityService {
     for (const activeMember of allActivityMembers) {
       scanCount++;
 
-      if (scanCount % 10 === 0) {
+      if (scanCount % 10 === 0 || scanCount === allActivityMembers.length) {
         await statusMessage.edit(`Scanning activity records... ${scanCount} of ${allActivityMembers.length}`);
       }
       try {
@@ -40,9 +38,9 @@ export class ActivityService {
         this.logger.log(`Scanned activity record for ${activeMember.discordNickname} (${activeMember.discordId})`);
       }
       catch (err) {
-        const error = `Error removing activity record for ${activeMember.discordNickname} (${activeMember.discordId})`;
+        const error = `Error removing activity record for ${activeMember.discordNickname} (${activeMember.discordId}). Error: ${err.message}`;
         this.logger.error(error);
-        statusMessage.channel.send(error);
+        channel.send(error);
       }
     }
 
@@ -60,7 +58,7 @@ export class ActivityService {
 
     if (batchMessages.length > 0) {
       for (const batch of batchMessages) {
-        await statusMessage.channel.send(batch);
+        await channel.send(batch);
       }
     }
 
