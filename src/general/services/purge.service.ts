@@ -9,7 +9,8 @@ export interface PurgableMemberList {
     ps2Verified: Collection<string, GuildMember>;
     foxhole: Collection<string, GuildMember>;
     albion: Collection<string, GuildMember>;
-    albionRegistered: Collection<string, GuildMember>;
+    albionUSRegistered: Collection<string, GuildMember>;
+    albionEURegistered: Collection<string, GuildMember>;
   }
   totalMembers: number;
   totalBots: number;
@@ -31,14 +32,15 @@ export class PurgeService {
     const ps2VerifiedRole = message.guild.roles.cache.find(role => role.name === 'PS2/Verified');
     const foxholeRole = message.guild.roles.cache.find(role => role.name === 'Foxhole');
     const albionRole = message.guild.roles.cache.find(role => role.name === 'Albion Online');
-    const albionRegisteredRole = message.guild.roles.cache.find(role => role.name === 'ALB/Registered');
+    const albionUSRegistered = message.guild.roles.cache.find(role => role.name === 'ALB/US/Registered');
+    const albionEURegistered = message.guild.roles.cache.find(role => role.name === 'ALB/EU/Registered');
 
     if (!onboardedRole) {
       await message.channel.send('Could not find onboarded role. Please create a role called "Onboarded" and try again.');
       return;
     }
 
-    if (!ps2Role || !ps2VerifiedRole || !foxholeRole || !albionRole || !albionRegisteredRole) {
+    if (!ps2Role || !ps2VerifiedRole || !foxholeRole || !albionRole || !albionUSRegistered || !albionEURegistered) {
       await message.channel.send('Could not find game roles. Please create roles called "Planetside2", "Foxhole", and "Albion Online" and try again.');
       return;
     }
@@ -54,13 +56,13 @@ export class PurgeService {
       await message.channel.send('Error fetching guild members. Please try again.');
       return;
     }
-    await statusMessage.edit(`${members.size} members found. Sorting members...`);
+    await statusMessage.edit(`${members.size} members found. Sorting members by username...`);
     this.logger.log(`${members.size} members found`);
 
     // Sort the members
     members.sort((a, b) => {
-      const aName = a.nickname || a.user.username;
-      const bName = b.nickname || b.user.username;
+      const aName = a.displayName || a.nickname || a.user.username;
+      const bName = b.displayName || b.nickname || b.user.username;
       if (aName < bName) {
         return -1;
       }
@@ -102,7 +104,8 @@ export class PurgeService {
         ps2Verified: members.filter(member => this.isNotOnboarded(member, onboardedRole) && member.roles.cache.has(ps2VerifiedRole.id)),
         foxhole: members.filter(member => this.isNotOnboarded(member, onboardedRole) && member.roles.cache.has(foxholeRole.id)),
         albion: members.filter(member => this.isNotOnboarded(member, onboardedRole) && member.roles.cache.has(albionRole.id)),
-        albionRegistered: members.filter(member => this.isNotOnboarded(member, onboardedRole) && member.roles.cache.has(albionRegisteredRole.id)),
+        albionUSRegistered: members.filter(member => this.isNotOnboarded(member, onboardedRole) && member.roles.cache.has(albionUSRegistered.id)),
+        albionEURegistered: members.filter(member => this.isNotOnboarded(member, onboardedRole) && member.roles.cache.has(albionEURegistered.id)),
       },
       totalMembers: members.size,
       totalBots: members.filter(member => member.user.bot).size,

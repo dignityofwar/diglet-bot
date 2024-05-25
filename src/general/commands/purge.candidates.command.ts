@@ -96,7 +96,7 @@ Note, these numbers will not add up to total numbers, as a member can be in mult
 - Total PS2 verified kicked: **${purgableMembers.purgableByGame.ps2Verified.size}**
 - Total Foxhole kicked: **${purgableMembers.purgableByGame.foxhole.size}**
 - Total Albion kicked: **${purgableMembers.purgableByGame.albion.size}**
-- Total ALB Registered kicked: **${purgableMembers.purgableByGame.albionRegistered.size}**`
+- Total ALB Registered kicked: **${purgableMembers.purgableByGame.albionUSRegistered.size}**`
     );
 
     this.logger.log('All batches sent.');
