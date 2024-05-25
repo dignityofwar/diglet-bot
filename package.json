@@ -25,7 +25,7 @@
   },
   "engines": {
     "npm": ">=10.5.0",
-    "pnpm": ">=8.15.6",
+    "pnpm": ">=9.1.2",
     "node": ">=18.20.1 <19.0.0"
   },
   "dependencies": {
@@ -41,6 +41,8 @@
     "@nestjs/config": "2.3.4",
     "@nestjs/core": "9.4.3",
     "@nestjs/schedule": "^3.0.4",
+    "@sentry/node": "^8.4.0",
+    "@sentry/profiling-node": "^8.4.0",
     "axios": "^1.6.8",
     "bufferutil": "^4.0.8",
     "class-transformer": "0.5.1",
