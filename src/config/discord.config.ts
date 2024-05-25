@@ -7,6 +7,7 @@ export default () => ({
     albionUSAnnouncements: process.env.CHANNEL_ALBION_US_ANNOUNCEMENTS,
     albionEUAnnouncements: process.env.CHANNEL_ALBION_EU_ANNOUNCEMENTS,
     albionScans: process.env.CHANNEL_ALBION_SCANS,
+    botJobs: process.env.CHANNEL_BOT_JOBS,
     ps2Verify: process.env.CHANNEL_PS2_VERIFY,
     ps2Private: process.env.CHANNEL_PS2_PRIVATE,
     ps2HowToRankUp: process.env.CHANNEL_PS2_HOW_TO_RANK_UP,
