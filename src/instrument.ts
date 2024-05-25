@@ -5,6 +5,7 @@ import { nodeProfilingIntegration } from '@sentry/profiling-node';
 Sentry.init({
   dsn: 'https://e4f532343360a2d2444f319c0ef1b720@o4507319323262976.ingest.de.sentry.io/4507319324901456',
   environment: process.env.ENVIRONMENT,
+  release: process.env.VERSION,
   integrations: [
     nodeProfilingIntegration(),
   ],
