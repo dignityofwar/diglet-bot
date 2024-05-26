@@ -37,7 +37,7 @@ export class PS2GameScanningService {
     this.suggestionsCount = 0;
   }
 
-  async gatherCharacters(outfitMembers, statusMessage: Message, tries = 0) {
+  async gatherCharacters(outfitMembers: PS2MembersEntity[], statusMessage: Message, tries = 0) {
     const characterPromises: Promise<CensusCharacterWithOutfitInterface>[] = [];
     tries++;
     const length = outfitMembers.length;
@@ -93,7 +93,7 @@ export class PS2GameScanningService {
       await this.removeLeavers(characters, outfitMembers, message, dryRun);
 
       await message.edit(`Checking ${length} characters for role inconsistencies...`);
-      await this.checkForSuggestions(characters, outfitMembers, message);
+      await this.checkForSuggestions(outfitMembers, message);
     }
     catch (err) {
       await message.edit('## ❌ An error occurred while scanning!');
@@ -214,7 +214,7 @@ export class PS2GameScanningService {
     }
   }
 
-  async checkForSuggestions(characters: CensusCharacterWithOutfitInterface[], outfitMembers: PS2MembersEntity[], message: Message) {
+  async checkForSuggestions(outfitMembers: PS2MembersEntity[], message: Message) {
     // Check if there are any characters in the outfit that have invalid discord permissions
 
     const rankMap: PS2RankMapInterface = this.config.get('ps2.rankMap');
