@@ -84,8 +84,8 @@ importers:
         specifier: ^6.0.3
         version: 6.0.4
       websocket-ts:
-        specifier: ^1.1.1
-        version: 1.1.1
+        specifier: ^2.0.0
+        version: 2.1.5
     devDependencies:
       '@mikro-orm/cli':
         specifier: 5.9.8
@@ -3247,8 +3247,8 @@ packages:
       webpack-cli:
         optional: true
 
-  websocket-ts@1.1.1:
-    resolution: {integrity: sha512-rm+S60J74Ckw5iizzgID12ju+OfaHAa6dhXhULIOrXkl0e05RzxfY42/vMStpz5jWL3iz9mkyjPcFUY1IgI0fw==}
+  websocket-ts@2.1.5:
+    resolution: {integrity: sha512-rCNl9w6Hsir1azFm/pbjBEFzLD/gi7Th5ZgOxMifB6STUfTSovYAzryWw0TRvSZ1+Qu1Z5Plw4z42UfTNA9idA==}
 
   whatwg-url@5.0.0:
     resolution: {integrity: sha512-saE57nupxk6v3HY35+jzBwYa0rKSy0XR8JSxZPwgLr7ys0IBzhGviA1/TUGJLmSVqs8pb9AnvICXEuOHLprYTw==}
@@ -6898,7 +6898,7 @@ snapshots:
       - esbuild
       - uglify-js
 
-  websocket-ts@1.1.1: {}
+  websocket-ts@2.1.5: {}
 
   whatwg-url@5.0.0:
     dependencies:
