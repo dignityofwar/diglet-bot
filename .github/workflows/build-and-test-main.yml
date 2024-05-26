@@ -42,8 +42,8 @@ jobs:
       - name: Run tests with coverage
         run: pnpm test:ci
 
-      - name: Generating coverage badges
-        uses: jpb06/jest-badges-action@v1.9.19
+      - name: Generate coverage badges
+        uses: jpb06/coverage-badges-action
         with:
           branches: main
           coverage-summary-path: ./src/coverage/coverage-summary.json
