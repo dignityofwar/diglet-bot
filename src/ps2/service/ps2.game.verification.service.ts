@@ -225,7 +225,7 @@ export class PS2GameVerificationService implements OnApplicationBootstrap {
     }, 1000 * 5);
   }
 
-  private async handleVerification(deathEvent: Death) {
+  public async handleVerification(deathEvent: Death) {
     this.logger.debug('Handling PS2 verification');
     const character = this.monitoringCharacters.get(deathEvent.character_id) ?? null;
 
@@ -235,6 +235,11 @@ export class PS2GameVerificationService implements OnApplicationBootstrap {
     }
 
     const message = this.messagesMap.get(character.character_id) ?? null;
+
+    if (!message) {
+      this.logger.error('Message was not found!');
+      return await this.handleFailedVerification(character, 'Discord message related to this request is missing! Please try again. If this keeps happening, please contact Maelstrome.', null, true);
+    }
 
     // Validate the death event was the same player suiciding with a VS frag grenade.
     const isSuicide = deathEvent.attacker_character_id === deathEvent.character_id;
