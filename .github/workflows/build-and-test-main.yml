@@ -1,4 +1,4 @@
-name: Node.js CI
+name: Build & Test Main
 
 on:
   workflow_call:
@@ -44,7 +44,7 @@ jobs:
 
       - name: SonarCloud Scan
         uses: SonarSource/sonarcloud-github-action@master
-        with:
+        env:
           SONAR_TOKEN: ${{ secrets.SONARCLOUD_TOKEN }}
 
       - name: Generate coverage badges

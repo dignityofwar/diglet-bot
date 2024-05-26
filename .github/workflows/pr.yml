@@ -6,3 +6,4 @@ jobs:
   test:
     name: Build & Test
     uses: ./.github/workflows/build-and-test-pr.yml
+    secrets: inherit
