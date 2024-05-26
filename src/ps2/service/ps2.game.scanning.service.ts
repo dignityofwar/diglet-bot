@@ -147,7 +147,7 @@ export class PS2GameScanningService {
       this.charactersMap.set(character.character_id, character);
     }
 
-    // Do the checks
+    // Get the info required to do the check
     for (const member of outfitMembers) {
       const character = this.charactersMap.get(member.characterId);
 
@@ -159,59 +159,75 @@ export class PS2GameScanningService {
       catch (err) {
         // No discord member means they've left the server
         this.logger.log(`User ${character.name.first} has left the server`);
-
-        if (!dryRun) {
-          await this.ps2MembersRepository.getEntityManager().removeAndFlush(member);
-        }
-
-        this.changesMap.set(member.characterId, {
-          character,
-          discordMember: null,
-          change: `- 🫥️ Discord member for Character **${character.name.first}** has left the DIG server. Their verification status has been removed.`,
-        });
-        continue;
       }
 
-      // Is the character still in the outfit?
-      if (character?.outfit_info && character?.outfit_info.outfit_id === this.config.get('ps2.outfitId')) {
-        continue;
-      }
+      await this.processLeaverRemoval(member, character, discordMember, message, dryRun);
+    }
+  }
 
-      // If not in the outfit, strip 'em
-      this.logger.log(`User ${character.name.first} has left the outfit`);
+  async processLeaverRemoval(
+    member: PS2MembersEntity,
+    character: CensusCharacterWithOutfitInterface,
+    discordMember: GuildMember | null,
+    message: Message,
+    dryRun = false
+  ): Promise<void> {
+    if (!dryRun) {
+      await this.ps2MembersRepository.getEntityManager().removeAndFlush(member);
+    }
 
-      const rankMaps: PS2RankMapInterface = this.config.get('ps2.rankMap');
-
-      // Remove all private roles from the user
-      for (const rankMap of Object.values(rankMaps)) {
-        const role = message.guild.roles.cache.get(rankMap.discordRoleId);
-        // Check if the user has the role to remove in the first place
-        const hasRole = discordMember.roles.cache.has(rankMap.discordRoleId);
-
-        if (!hasRole) {
-          continue;
-        }
-
-        if (!dryRun) {
-          try {
-            await discordMember.roles.remove(rankMap.discordRoleId);
-          }
-          catch (err) {
-            await message.channel.send(`ERROR: Unable to remove role "${role.name}" from ${character.name.first} (${character.character_id}). Pinging <@${this.config.get('discord.devUserId')}>!`);
-          }
-        }
-      }
-
-      if (!dryRun) {
-        await this.ps2MembersRepository.getEntityManager().removeAndFlush(member);
-      }
-
+    if (!discordMember) {
       this.changesMap.set(member.characterId, {
         character,
-        discordMember,
-        change: `- 👋 <@${discordMember.id}>'s character **${character.name.first}** has left the outfit. Their roles and verification status have been stripped.`,
+        discordMember: null,
+        change: `- 🫥️ Discord member for Character **${character.name.first}** has left the DIG server. Their verification status has been removed.`,
       });
     }
+
+    // If still in outfit, nothing to do
+    if (character?.outfit_info && character?.outfit_info.outfit_id === this.config.get('ps2.outfitId')) {
+      return;
+    }
+
+    // If not in the outfit, strip 'em
+    this.logger.log(`User ${character.name.first} has left the outfit`);
+
+    const rankMaps: PS2RankMapInterface = this.config.get('ps2.rankMap');
+
+    // Remove all private roles from the user
+    for (const rankMap of Object.values(rankMaps)) {
+      const role = message.guild.roles.cache.get(rankMap.discordRoleId);
+      // Check if the user has the role to remove in the first place
+      const hasRole = discordMember.roles.cache.has(rankMap.discordRoleId);
+
+      // If they don't have the role, skip
+      if (!hasRole) {
+        continue;
+      }
+
+      // If dry run, don't actually remove the role
+      if (dryRun) {
+        continue;
+      }
+
+      try {
+        await discordMember.roles.remove(rankMap.discordRoleId);
+      }
+      catch (err) {
+        await message.channel.send(`ERROR: Unable to remove role "${role.name}" from ${character.name.first} (${character.character_id}). Pinging <@${this.config.get('discord.devUserId')}>!`);
+      }
+    }
+
+    // If not dry run, delete their record
+    if (!dryRun) {
+      await this.ps2MembersRepository.getEntityManager().removeAndFlush(member);
+    }
+
+    this.changesMap.set(member.characterId, {
+      character,
+      discordMember,
+      change: `- 👋 <@${discordMember.id}>'s character **${character.name.first}** has left the outfit. Their roles and verification status have been stripped.`,
+    });
   }
 
   async checkForSuggestions(outfitMembers: PS2MembersEntity[], message: Message) {
