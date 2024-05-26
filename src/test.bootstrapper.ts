@@ -121,6 +121,7 @@ export class TestBootstrapper {
             removeAttachments: jest.fn(),
           };
         }),
+        sendTyping: jest.fn(),
       },
       member: this.getMockDiscordUser(),
       roles: {

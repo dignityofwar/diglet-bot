@@ -25,8 +25,13 @@ describe('PS2GameVerificationService', () => {
   let ps2MembersRepository: EntityRepository<PS2MembersEntity>;
 
   let mockDiscordUser: any;
+  let mockDiscordMessage: any;
   let mockPS2Character: CensusCharacterWithOutfitInterface;
   let mockEntityManager: jest.Mocked<EntityManager>;
+  let mockDeathEvent: any;
+
+  // Spies consts
+  let editMessageSpy;
 
   beforeEach(async () => {
     TestBootstrapper.mockORM();
@@ -51,6 +56,7 @@ describe('PS2GameVerificationService', () => {
             getChannel: jest.fn(),
             getUser: jest.fn(),
             getRole: jest.fn(),
+            getMemberRole: jest.fn(),
           },
         },
         {
@@ -82,7 +88,25 @@ describe('PS2GameVerificationService', () => {
 
     // A mock instance of a GuildMember
     mockDiscordUser = TestBootstrapper.getMockDiscordUser();
+    mockDiscordMessage = TestBootstrapper.getMockDiscordMessage();
     mockPS2Character = TestBootstrapper.getMockPS2Character(mockCharacterId, mockOutfitId) as any;
+
+    mockDeathEvent = {
+      character_id: mockPS2Character.character_id,
+      attacker_character_id: mockPS2Character.character_id,
+    } as any ;
+
+    // Handle map mocking
+    service['monitoringCharacters'] = new Map();
+    service['monitoringCharacters'].set(mockPS2Character.character_id, mockPS2Character);
+    service['messagesMap'] = new Map();
+    service['messagesMap'].set(mockPS2Character.character_id, mockDiscordMessage);
+
+    // Filled spies
+    editMessageSpy = jest.spyOn(service as any, 'editMessage').mockResolvedValue(true);
+    jest.spyOn(service['logger'], 'error');
+    jest.spyOn(service['logger'], 'warn');
+    jest.spyOn(service['logger'], 'log');
   });
 
   describe('onApplicationBootstrap', () => {
@@ -165,41 +189,38 @@ describe('PS2GameVerificationService', () => {
         attacker_character_id: 'attacker_character',
       } as any ;
 
-      jest.spyOn(service['logger'], 'warn');
-
       await service.handleVerification(deathEvent);
 
       expect(service['logger'].warn).toHaveBeenCalledWith('Received message somehow not related to monitored characters! unmonitored_character');
     });
 
     it('should handle missing messages', async () => {
-      const deathEvent = {
-        character_id: 'unmonitored_character',
-        attacker_character_id: 'attacker_character',
-      } as any ;
+      service['messagesMap'] = new Map();
 
-      jest.spyOn(service['logger'], 'error');
+      const handleFailedVerificationSpy = jest.spyOn(service as any, 'handleFailedVerification').mockReturnValue(true);
+
+      await service.handleVerification(mockDeathEvent);
+
+      expect(service['logger'].error).toHaveBeenCalledWith('Message was not found!');
+      expect(handleFailedVerificationSpy).toHaveBeenCalledWith(mockPS2Character, 'Discord message related to this request is missing! Please try again. If this keeps happening, please contact Maelstrome.', null, true);
+    });
+
+    it('should handle non suicides', async () => {
+      const deathEvent = mockDeathEvent;
+      deathEvent.attacker_character_id = 'someoneelse';
 
       await service.handleVerification(deathEvent);
 
-      expect(service['logger'].error).toHaveBeenCalledWith('Message was not found!');
+      expect(editMessageSpy).toHaveBeenCalledWith(`## Verification status for \`${mockPS2Character.name.first}\`: ⏳__Pending__\n\n⚠️ Death for character "${mockPS2Character.name.first}" detected, but it wasn't a suicide. Type **/suicide** in the game chat in VR Training for the quickest way to do this.`, mockDiscordMessage);
     });
-    //
-    // it('should handle suicide death events', async () => {
-    //   const character = { character_id: 'monitored_character', name: { first: 'TestName' } };
-    //   service['monitoringCharacters'].set('monitored_character', character);
-    //   const deathEvent = {
-    //     character_id: 'monitored_character',
-    //     attacker_character_id: 'monitored_character',
-    //   };
-    //
-    //   jest.spyOn(service, 'handleSuccessfulVerification').mockImplementation(async () => {});
-    //   jest.spyOn(service['logger'], 'log');
-    //
-    //   await service['handleVerification'](deathEvent);
-    //
-    //   expect(service['logger'].log).toHaveBeenCalledWith('Death event for TestName validated!');
-    //   expect(service.handleSuccessfulVerification).toHaveBeenCalledWith(character);
-    // });
+
+    it('should handle successfully', async () => {
+      const handleSuccessfulVerificationSpy = jest.spyOn(service as any, 'handleSuccessfulVerification').mockReturnValue(true);
+
+      await service.handleVerification(mockDeathEvent);
+
+      expect(service['logger'].log).toHaveBeenCalledWith(`Death event for ${mockPS2Character.name.first} validated!`);
+      expect(handleSuccessfulVerificationSpy).toHaveBeenCalledWith(mockPS2Character);
+    });
   });
 });
