@@ -229,7 +229,7 @@ export class PS2GameVerificationService implements OnApplicationBootstrap {
     this.logger.debug('Handling PS2 verification');
     const character = this.monitoringCharacters.get(deathEvent.character_id) ?? null;
 
-    if (!character || !character.character_id) {
+    if (!character?.character_id) {
       this.logger.warn(`Received message somehow not related to monitored characters! ${deathEvent.character_id}`);
       return;
     }
