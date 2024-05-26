@@ -43,7 +43,7 @@ jobs:
         run: pnpm test:ci
 
       - name: Generate coverage badges
-        uses: jpb06/coverage-badges-action@v1
+        uses: jpb06/coverage-badges-action@latest
         with:
           branches: main
           coverage-summary-path: ./src/coverage/coverage-summary.json
