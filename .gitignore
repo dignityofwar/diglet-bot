@@ -3,7 +3,7 @@ node_modules
 .env
 dist
 yarn-error.log
-src/coverage
+coverage
 
 # Stop npm being comitted
 package-lock.json

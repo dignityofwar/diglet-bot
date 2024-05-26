@@ -201,54 +201,60 @@ export class AlbionScanningService {
         leftServer = true;
       }
 
-      if (leftGuild || leftServer) {
-        // Construct the appropriate message
-        if (leftGuild && leftServer) {
-          leavers.push(`- ${emoji} 💁 Character / Player ${character.Name} has left **both** the DIG server and the Guild. They are dead to us now 💅`);
-        }
-        else if (leftGuild && discordMember) {
-          leavers.push(`- ${emoji} 👋 <@${discordMember.id}>'s character **${character.Name}** has left the Guild but remains on the Discord server. Their roles and registration status have been stripped.`);
-        }
-        else if (leftServer) {
-          leavers.push(`- ${emoji} ‼️🫥️ Discord member for Character **${character.Name}** has left the DIG Discord server. Their registration status has been removed. **They require booting from the Guild!**`);
-          actionRequired = true;
+      // If they remain, nothing left to do
+      if (!leftGuild && !leftServer) {
+        continue;
+      }
+
+      // Construct the appropriate message
+      if (leftGuild && leftServer) {
+        leavers.push(`- ${emoji} 💁 Character / Player ${character.Name} has left **both** the DIG server and the Guild. They are dead to us now 💅`);
+      }
+      else if (leftGuild && discordMember) {
+        leavers.push(`- ${emoji} 👋 <@${discordMember.id}>'s character **${character.Name}** has left the Guild but remains on the Discord server. Their roles and registration status have been stripped.`);
+      }
+      else if (leftServer) {
+        leavers.push(`- ${emoji} ‼️🫥️ Discord member for Character **${character.Name}** has left the DIG Discord server. Their registration status has been removed. **They require booting from the Guild!**`);
+        actionRequired = true;
+      }
+
+      // If dry run, nothing left to do.
+      if (dryRun) {
+        continue;
+      }
+
+      // Delete their registration record
+      try {
+        await this.albionRegistrationsRepository.removeAndFlush(member);
+      }
+      catch (err) {
+        await message.channel.send(`ERROR: Unable to remove Albion Character "${character.Name}" (${character.Id}) from registration database! Pinging <@${this.config.get('discord.devUserId')}>!`);
+      }
+
+      // If Discord member does not exist, there are no discord actions to take.
+      if (!discordMember) {
+        continue;
+      }
+
+      // Strip their roles if they still remain on the server
+      // Remove all roles from the user
+      for (const roleMap of Object.values(roleMaps)) {
+        // If role is not for the correct server, skip it
+        if (roleMap.server !== server) {
+          continue;
         }
 
-        if (!dryRun) {
-          // Strip their roles if they still remain on the server
-          if (discordMember) {
-            // Remove all roles from the user
-            for (const roleMap of Object.values(roleMaps)) {
-              // If role is not for the correct server, skip it
-              if (roleMap.server !== server) {
-                continue;
-              }
+        // Force fetch the role, so we get a proper list of updated members
+        const role = message.guild.roles.cache.get(roleMap.discordRoleId);
+        // Check if the user still has the role
+        const hasRole = role.members.has(discordMember.id);
 
-              // Force fetch the role, so we get a proper list of updated members
-              const role = message.guild.roles.cache.get(roleMap.discordRoleId);
-              // Check if the user still has the role
-              const hasRole = role.members.has(discordMember.id);
-
-              if (hasRole) {
-                try {
-                  await discordMember.roles.remove(roleMap.discordRoleId);
-                }
-                catch (err) {
-                  await message.channel.send(`ERROR: Unable to remove role "${role.name}" from ${character.Name} (${character.Id}). Err: "${err.message}". Pinging <@${this.config.get('discord.devUserId')}>!`);
-                }
-              }
-            }
-          }
+        if (hasRole) {
           try {
-            await this.albionRegistrationsRepository.removeAndFlush(member);
-            // // Also flush them from the Guild Members table if they're in there
-            // const guildMember = await this.albionGuildMembersRepository.findOne({ characterId: member.characterId });
-            // if (guildMember) {
-            //   await this.albionGuildMembersRepository.removeAndFlush(guildMember);
-            // }
+            await discordMember.roles.remove(roleMap.discordRoleId);
           }
           catch (err) {
-            await message.channel.send(`ERROR: Unable to remove Albion Character "${character.Name}" (${character.Id}) from registration database! Pinging <@${this.config.get('discord.devUserId')}>!`);
+            await message.channel.send(`ERROR: Unable to remove role "${role.name}" from ${character.Name} (${character.Id}). Err: "${err.message}". Pinging <@${this.config.get('discord.devUserId')}>!`);
           }
         }
       }

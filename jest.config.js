@@ -20,7 +20,7 @@ module.exports = {
     '!**/*.module.ts', // Exclude module files, really hard to test with not much value
     '!main.ts', // Exclude main.ts, as it's the entrypoint to the app
   ],
-  coverageDirectory: 'coverage',
+  coverageDirectory: '../coverage',
   coverageReporters: ['json-summary', 'text', 'lcov'],
   setupFilesAfterEnv: ['./jest-preload.js'],
 };
