@@ -48,6 +48,7 @@ jobs:
           branches: main
           coverage-summary-path: ./src/coverage/coverage-summary.json
           commit-message: "ci(bot): Update coverage badges"
+          badges-icon: jest
 
       # Need to wait a little bit for the last commit to fully register with GH, then pull it in
       - uses: GuillaumeFalourd/wait-sleep-action@v1
