@@ -214,41 +214,44 @@ export class AlbionScanningService {
           actionRequired = true;
         }
 
-        if (!dryRun) {
-          // Strip their roles if they still remain on the server
-          if (discordMember) {
-            // Remove all roles from the user
-            for (const roleMap of Object.values(roleMaps)) {
-              // If role is not for the correct server, skip it
-              if (roleMap.server !== server) {
-                continue;
-              }
+        // If dry run, nothing left to do.
+        if (dryRun) {
+          continue;
+        }
 
-              // Force fetch the role, so we get a proper list of updated members
-              const role = message.guild.roles.cache.get(roleMap.discordRoleId);
-              // Check if the user still has the role
-              const hasRole = role.members.has(discordMember.id);
+        // Delete their registration record
+        try {
+          await this.albionRegistrationsRepository.removeAndFlush(member);
+        }
+        catch (err) {
+          await message.channel.send(`ERROR: Unable to remove Albion Character "${character.Name}" (${character.Id}) from registration database! Pinging <@${this.config.get('discord.devUserId')}>!`);
+        }
 
-              if (hasRole) {
-                try {
-                  await discordMember.roles.remove(roleMap.discordRoleId);
-                }
-                catch (err) {
-                  await message.channel.send(`ERROR: Unable to remove role "${role.name}" from ${character.Name} (${character.Id}). Err: "${err.message}". Pinging <@${this.config.get('discord.devUserId')}>!`);
-                }
-              }
+        // If Discord member does not exist, there are no discord actions to take.
+        if (!discordMember) {
+          continue;
+        }
+
+        // Strip their roles if they still remain on the server
+        // Remove all roles from the user
+        for (const roleMap of Object.values(roleMaps)) {
+          // If role is not for the correct server, skip it
+          if (roleMap.server !== server) {
+            continue;
+          }
+
+          // Force fetch the role, so we get a proper list of updated members
+          const role = message.guild.roles.cache.get(roleMap.discordRoleId);
+          // Check if the user still has the role
+          const hasRole = role.members.has(discordMember.id);
+
+          if (hasRole) {
+            try {
+              await discordMember.roles.remove(roleMap.discordRoleId);
             }
-          }
-          try {
-            await this.albionRegistrationsRepository.removeAndFlush(member);
-            // // Also flush them from the Guild Members table if they're in there
-            // const guildMember = await this.albionGuildMembersRepository.findOne({ characterId: member.characterId });
-            // if (guildMember) {
-            //   await this.albionGuildMembersRepository.removeAndFlush(guildMember);
-            // }
-          }
-          catch (err) {
-            await message.channel.send(`ERROR: Unable to remove Albion Character "${character.Name}" (${character.Id}) from registration database! Pinging <@${this.config.get('discord.devUserId')}>!`);
+            catch (err) {
+              await message.channel.send(`ERROR: Unable to remove role "${role.name}" from ${character.Name} (${character.Id}). Err: "${err.message}". Pinging <@${this.config.get('discord.devUserId')}>!`);
+            }
           }
         }
       }
