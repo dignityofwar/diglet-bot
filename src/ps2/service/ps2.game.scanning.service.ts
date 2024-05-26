@@ -161,7 +161,7 @@ export class PS2GameScanningService {
         this.logger.log(`User ${character.name.first} has left the server`);
 
         if (!dryRun) {
-          await this.ps2MembersRepository.removeAndFlush(member);
+          await this.ps2MembersRepository.getEntityManager().removeAndFlush(member);
         }
 
         this.changesMap.set(member.characterId, {
@@ -203,7 +203,7 @@ export class PS2GameScanningService {
       }
 
       if (!dryRun) {
-        await this.ps2MembersRepository.removeAndFlush(member);
+        await this.ps2MembersRepository.getEntityManager().removeAndFlush(member);
       }
 
       this.changesMap.set(member.characterId, {
