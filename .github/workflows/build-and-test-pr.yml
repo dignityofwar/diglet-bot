@@ -42,12 +42,7 @@ jobs:
       - name: Run tests with coverage
         run: pnpm test:ci
 
-      - name: Print SONARCLOUD_TOKEN
-        run: echo "SONARCLOUD_TOKEN - $SONAR_TOKEN"
-        env:
-          SONAR_TOKEN: ${{ secrets.SONARCLOUD_TOKEN }}
-
       - name: SonarCloud Scan
         uses: SonarSource/sonarcloud-github-action@master
-        env:
+        with:
           SONAR_TOKEN: ${{ secrets.SONARCLOUD_TOKEN }}

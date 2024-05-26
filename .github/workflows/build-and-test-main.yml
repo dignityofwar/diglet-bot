@@ -44,7 +44,7 @@ jobs:
 
       - name: SonarCloud Scan
         uses: SonarSource/sonarcloud-github-action@master
-        env:
+        with:
           SONAR_TOKEN: ${{ secrets.SONARCLOUD_TOKEN }}
 
       - name: Generate coverage badges
