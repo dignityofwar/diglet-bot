@@ -70,7 +70,7 @@ importers:
         version: 3.9.7
       ps2census:
         specifier: ^4.6.0
-        version: 4.6.0(bufferutil@4.0.8)(utf-8-validate@6.0.4)
+        version: 4.7.1(bufferutil@4.0.8)(utf-8-validate@6.0.4)
       reflect-metadata:
         specifier: 0.1.14
         version: 0.1.14
@@ -1363,8 +1363,8 @@ packages:
   asynckit@0.4.0:
     resolution: {integrity: sha512-Oei9OH4tRh0YqU3GxhX79dM/mwVgvbZJaSNaRk+bshkj0S5cfHcgYakreBjrHwatXKbz+IoIdYLxrKim2MjW0Q==}
 
-  axios@1.4.0:
-    resolution: {integrity: sha512-S4XCWMEmzvo64T9GfvQDOXgYRDJ/wsSZc7Jvdgx5u1sd0JwsuPLqb3SYmusag+edF6ziyMensPVqLTSc1PiSEA==}
+  axios@1.6.7:
+    resolution: {integrity: sha512-/hDJGff6/c7u0hDkvkGxR/oy6CbCs8ziCsC7SqmhjfozqiJGc8Z11wrv9z9lYfY4K8l+H9TpjcMDX0xOZmx+RA==}
 
   axios@1.7.2:
     resolution: {integrity: sha512-2A8QhOMrbomlDuiLeK9XibIBzuHeRcqqNOHp0Cyp5EoJ1IFDh+XZH3A6BkXtv0K4gFGCI0Y4BM7B1wOEi0Rmgw==}
@@ -2747,8 +2747,8 @@ packages:
   proxy-from-env@1.1.0:
     resolution: {integrity: sha512-D+zkORCbA9f1tdWRK0RaCR3GPv50cMxcrz4X8k5LTSUD1Dkw47mKJEZQNunItRTkWwgtaUSo1RVFRIG9ZXiFYg==}
 
-  ps2census@4.6.0:
-    resolution: {integrity: sha512-UbcfvvE7UFn3E2vSGQfcYmP3L2zeSp3jPVVE3ViSJ8wuMW6aXrB71sm/B85/oThu4ydWXPii9fy7DtS8BF6F7A==}
+  ps2census@4.7.1:
+    resolution: {integrity: sha512-8fYTUs5bqfTIQKPc/39swcjVaF64o74MdLsldLRVvPitYpu9EVw8xeiZyNqEfSLzblxjedPWXRDOp1JkFOY07Q==}
     engines: {node: '>=14.0.0'}
     peerDependencies:
       bufferutil: ^4.0.7
@@ -3297,8 +3297,8 @@ packages:
     resolution: {integrity: sha512-7KxauUdBmSdWnmpaGFg+ppNjKF8uNLry8LyzjauQDOVONfFLNKrKvQOxZ/VuTIcS/gge/YNahf5RIIQWTSarlg==}
     engines: {node: ^12.13.0 || ^14.15.0 || >=16.0.0}
 
-  ws@8.13.0:
-    resolution: {integrity: sha512-x9vcZYTrFPC7aSIbj7sRCYo7L/Xb8Iy+pW0ng0wt2vCJv7M9HOMy0UoN3rr+IFC7hb7vXoqS+P9ktyLLLhO+LA==}
+  ws@8.16.0:
+    resolution: {integrity: sha512-HS0c//TP7Ina87TfiPUz1rQzMhHrl/SG2guqRcTOIUYD2q8uhUdNHZYJUaQ8aTGPzCh+c6oawMKW35nFl1dxyQ==}
     engines: {node: '>=10.0.0'}
     peerDependencies:
       bufferutil: ^4.0.1
@@ -4896,7 +4896,7 @@ snapshots:
 
   asynckit@0.4.0: {}
 
-  axios@1.4.0:
+  axios@1.6.7:
     dependencies:
       follow-redirects: 1.15.6
       form-data: 4.0.0
@@ -5710,9 +5710,9 @@ snapshots:
 
   isexe@2.0.0: {}
 
-  isomorphic-ws@5.0.0(ws@8.13.0(bufferutil@4.0.8)(utf-8-validate@6.0.4)):
+  isomorphic-ws@5.0.0(ws@8.16.0(bufferutil@4.0.8)(utf-8-validate@6.0.4)):
     dependencies:
-      ws: 8.13.0(bufferutil@4.0.8)(utf-8-validate@6.0.4)
+      ws: 8.16.0(bufferutil@4.0.8)(utf-8-validate@6.0.4)
 
   istanbul-lib-coverage@3.2.2: {}
 
@@ -6480,12 +6480,12 @@ snapshots:
 
   proxy-from-env@1.1.0: {}
 
-  ps2census@4.6.0(bufferutil@4.0.8)(utf-8-validate@6.0.4):
+  ps2census@4.7.1(bufferutil@4.0.8)(utf-8-validate@6.0.4):
     dependencies:
-      axios: 1.4.0
+      axios: 1.6.7
       eventemitter3: 5.0.1
-      isomorphic-ws: 5.0.0(ws@8.13.0(bufferutil@4.0.8)(utf-8-validate@6.0.4))
-      ws: 8.13.0(bufferutil@4.0.8)(utf-8-validate@6.0.4)
+      isomorphic-ws: 5.0.0(ws@8.16.0(bufferutil@4.0.8)(utf-8-validate@6.0.4))
+      ws: 8.16.0(bufferutil@4.0.8)(utf-8-validate@6.0.4)
     optionalDependencies:
       bufferutil: 4.0.8
       utf-8-validate: 6.0.4
@@ -6980,7 +6980,7 @@ snapshots:
       imurmurhash: 0.1.4
       signal-exit: 3.0.7
 
-  ws@8.13.0(bufferutil@4.0.8)(utf-8-validate@6.0.4):
+  ws@8.16.0(bufferutil@4.0.8)(utf-8-validate@6.0.4):
     optionalDependencies:
       bufferutil: 4.0.8
       utf-8-validate: 6.0.4
