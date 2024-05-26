@@ -225,22 +225,27 @@ export class PS2GameVerificationService implements OnApplicationBootstrap {
     }, 1000 * 5);
   }
 
-  private async handleVerification(deathEvent: Death) {
+  public async handleVerification(deathEvent: Death) {
     this.logger.debug('Handling PS2 verification');
     const character = this.monitoringCharacters.get(deathEvent.character_id) ?? null;
-    const message = this.messagesMap.get(character.character_id) ?? null;
-    const guildMember = this.guildMembersMap.get(character.character_id) ?? null;
 
-    if (!character) {
-      this.logger.error(`Could not find character with ID ${deathEvent.character_id}`);
-      await this.handleFailedVerification(character, `Could not find character. Pinging bot dev: <@${this.config.get('discord.devUserId')}> DEBUG: \`${deathEvent.character_id}\` from Death Event not found amongst monitored characters!`, guildMember);
+    if (!character?.character_id) {
+      this.logger.warn(`Received message somehow not related to monitored characters! ${deathEvent.character_id}`);
+      return;
+    }
+
+    const message = this.messagesMap.get(character.character_id) ?? null;
+
+    if (!message) {
+      this.logger.error('Message was not found!');
+      return await this.handleFailedVerification(character, 'Discord message related to this request is missing! Please try again. If this keeps happening, please contact Maelstrome.', null, true);
     }
 
     // Validate the death event was the same player suiciding with a VS frag grenade.
     const isSuicide = deathEvent.attacker_character_id === deathEvent.character_id;
 
     if (!isSuicide) {
-      await this.editMessage(`## Verification status for \`${character.name.first}\`: ⏳__Pending__\n\n⚠️ Death for character "${character.name.first}" detected, but it wasn't a suicide. Type **/suicide** in the game chat for the quickest way to do this.`, message);
+      await this.editMessage(`## Verification status for \`${character.name.first}\`: ⏳__Pending__\n\n⚠️ Death for character "${character.name.first}" detected, but it wasn't a suicide. Type **/suicide** in the game chat in VR Training for the quickest way to do this.`, message);
       return;
     }
 
@@ -248,7 +253,7 @@ export class PS2GameVerificationService implements OnApplicationBootstrap {
     await this.handleSuccessfulVerification(character);
   }
 
-  private async handleFailedVerification(character: CensusCharacterWithOutfitInterface, failureReason: string, guildMember: GuildMember, isError = false, unwatch = true) {
+  private async handleFailedVerification(character: CensusCharacterWithOutfitInterface, failureReason: string, guildMember?: GuildMember | null, isError = false, unwatch = true) {
     this.logger.debug('Handling failed verification');
 
     const message = this.messagesMap.get(character.character_id) ?? null;
@@ -279,7 +284,9 @@ export class PS2GameVerificationService implements OnApplicationBootstrap {
       }
     }
 
-    await message.channel.send(`😔 <@${guildMember.id}> your in game character "${character.name.first}" could not be verified! Please read the reason as to why above. Feel free to contact the PS2 Leaders for assistance.`);
+    if (guildMember) {
+      await message.channel.send(`😔 <@${guildMember.id}> your in game character "${character.name.first}" could not be verified! Please read the reason as to why above. Feel free to contact the PS2 Leaders for assistance.`);
+    }
   }
 
   private async handleSuccessfulVerification(character: CensusCharacterWithOutfitInterface) {
