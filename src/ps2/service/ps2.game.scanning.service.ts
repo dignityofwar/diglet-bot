@@ -111,7 +111,7 @@ export class PS2GameScanningService {
     }
 
     for (const change of this.changesMap.values()) {
-      const fakeMessage = await message.channel.send('dummy'); // Send a fake message first so it doesn't ping people
+      const fakeMessage = await message.channel.send('dummy'); // Send a fake message first, so it doesn't ping people
       await fakeMessage.edit(change.change);
     }
 
@@ -126,7 +126,7 @@ export class PS2GameScanningService {
 
     for (const change of this.suggestionsMap.values()) {
       for (const suggestion of change) {
-        const fakeMessage = await message.channel.send('dummy'); // Send a fake message first so it doesn't ping people
+        const fakeMessage = await message.channel.send('dummy'); // Send a fake message first, so it doesn't ping people
         await fakeMessage.edit(suggestion.change);
       }
     }
