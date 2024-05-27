@@ -16,7 +16,7 @@ importers:
         version: 5.3.14(@nestjs/common@9.4.3(class-transformer@0.5.1)(class-validator@0.14.1)(reflect-metadata@0.1.13)(rxjs@7.8.1))(@nestjs/core@9.4.3(@nestjs/common@9.4.3(class-transformer@0.5.1)(class-validator@0.14.1)(reflect-metadata@0.1.13)(rxjs@7.8.1))(reflect-metadata@0.1.13)(rxjs@7.8.1))(discord.js@14.15.2)(reflect-metadata@0.1.13)(rxjs@7.8.1)
       '@mikro-orm/core':
         specifier: 5.9.8
-        version: 5.9.8(@mikro-orm/mariadb@5.9.8(@mikro-orm/core@5.9.8)(@mikro-orm/migrations@5.9.8)(@mikro-orm/seeder@5.9.8))(@mikro-orm/migrations@5.9.8(@mikro-orm/core@5.9.8)(@types/node@20.12.12))(@mikro-orm/seeder@5.9.8(@mikro-orm/core@5.9.8))
+        version: 5.9.8(@mikro-orm/mariadb@5.9.8)(@mikro-orm/migrations@5.9.8)(@mikro-orm/seeder@5.9.8)
       '@mikro-orm/mariadb':
         specifier: 5.9.8
         version: 5.9.8(@mikro-orm/core@5.9.8)(@mikro-orm/migrations@5.9.8)(@mikro-orm/seeder@5.9.8)
@@ -25,7 +25,7 @@ importers:
         version: 5.9.8(@mikro-orm/core@5.9.8)(@types/node@20.12.12)
       '@mikro-orm/nestjs':
         specifier: ^5.2.3
-        version: 5.2.3(@mikro-orm/core@5.9.8(@mikro-orm/mariadb@5.9.8(@mikro-orm/core@5.9.8)(@mikro-orm/migrations@5.9.8)(@mikro-orm/seeder@5.9.8))(@mikro-orm/migrations@5.9.8(@mikro-orm/core@5.9.8)(@types/node@20.12.12))(@mikro-orm/seeder@5.9.8(@mikro-orm/core@5.9.8)))(@nestjs/common@9.4.3(class-transformer@0.5.1)(class-validator@0.14.1)(reflect-metadata@0.1.13)(rxjs@7.8.1))(@nestjs/core@9.4.3(@nestjs/common@9.4.3(class-transformer@0.5.1)(class-validator@0.14.1)(reflect-metadata@0.1.13)(rxjs@7.8.1))(reflect-metadata@0.1.13)(rxjs@7.8.1))
+        version: 5.2.3(@mikro-orm/core@5.9.8(@mikro-orm/mariadb@5.9.8)(@mikro-orm/migrations@5.9.8)(@mikro-orm/seeder@5.9.8))(@nestjs/common@9.4.3(class-transformer@0.5.1)(class-validator@0.14.1)(reflect-metadata@0.1.13)(rxjs@7.8.1))(@nestjs/core@9.4.3(@nestjs/common@9.4.3(class-transformer@0.5.1)(class-validator@0.14.1)(reflect-metadata@0.1.13)(rxjs@7.8.1))(reflect-metadata@0.1.13)(rxjs@7.8.1))
       '@mikro-orm/seeder':
         specifier: 5.9.8
         version: 5.9.8(@mikro-orm/core@5.9.8)
@@ -46,10 +46,10 @@ importers:
         version: 3.0.4(@nestjs/common@9.4.3(class-transformer@0.5.1)(class-validator@0.14.1)(reflect-metadata@0.1.13)(rxjs@7.8.1))(@nestjs/core@9.4.3(@nestjs/common@9.4.3(class-transformer@0.5.1)(class-validator@0.14.1)(reflect-metadata@0.1.13)(rxjs@7.8.1))(reflect-metadata@0.1.13)(rxjs@7.8.1))(reflect-metadata@0.1.13)
       '@sentry/node':
         specifier: ^8.4.0
-        version: 8.4.0
+        version: 8.5.0
       '@sentry/profiling-node':
         specifier: ^8.4.0
-        version: 8.4.0
+        version: 8.5.0
       axios:
         specifier: ^1.7.2
         version: 1.7.2
@@ -932,16 +932,16 @@ packages:
     resolution: {integrity: sha512-jjmJywLAFoWeBi1W7994zZyiNWPIiqRRNAmSERxyg93xRGzNYvGjlZ0gR6x0F4gPRi2+0O6S71kOZYyr3cxaIQ==}
     engines: {node: '>=v14.0.0', npm: '>=7.0.0'}
 
-  '@sentry/core@8.4.0':
-    resolution: {integrity: sha512-0eACPlJvKloFIlcT1c/vjGnvqxLxpGyGuSsU7uonrkmBqIRwLYXWtR4PoHapysKtjPVoHAn9au50ut6ymC2V8Q==}
+  '@sentry/core@8.5.0':
+    resolution: {integrity: sha512-SO3ddBzGdha+Oflp+IKwBxj+7ds1q69OAT3VsypTd+WUFQdI9DIhR92Bjf+QQZCIzUNOi79VWOh3aOi3f6hMnw==}
     engines: {node: '>=14.18'}
 
-  '@sentry/node@8.4.0':
-    resolution: {integrity: sha512-k0uqG2F8BQWATIEghA1jQ0tBAr9mJsyS+ZiruXjbixy8kd7+ZM1CCiqeqqrYaanS0hI0mvtg9uxTQzBa1SMQsA==}
+  '@sentry/node@8.5.0':
+    resolution: {integrity: sha512-t9cHAx/wLJYtdVf2XlzKlRJGvwdAp1wjzG0tC4E1Znx74OuUS1cFNo5WrGuOi0/YcWSxiJaxBvtUcsWK86fIgw==}
     engines: {node: '>=14.18'}
 
-  '@sentry/opentelemetry@8.4.0':
-    resolution: {integrity: sha512-1YXLuRHMhzPzoiD8Pzts5GlZY4V5GSXGn5aBmFlJ13vSrUK6C4qhPfZMboppntPihOxupCPg3XP76ZMj6+XuOg==}
+  '@sentry/opentelemetry@8.5.0':
+    resolution: {integrity: sha512-AbxFUNjuTKQ9ugZrssmGtPxWkBr4USNoP7GjaaGCNwNzvIVYCa+i8dv7BROJiW2lsxNAremULEbh+nbVmhGxDA==}
     engines: {node: '>=14.18'}
     peerDependencies:
       '@opentelemetry/api': ^1.8.0
@@ -950,17 +950,17 @@ packages:
       '@opentelemetry/sdk-trace-base': ^1.23.0
       '@opentelemetry/semantic-conventions': ^1.23.0
 
-  '@sentry/profiling-node@8.4.0':
-    resolution: {integrity: sha512-Alb8PBosq58SfnFkGUwfbahHvZhGIkNmmO3+IqsryPihHmimVD0WgBY7zoIPu1cWfH/JBBjMSu2wC+q0hY3k3g==}
+  '@sentry/profiling-node@8.5.0':
+    resolution: {integrity: sha512-nEXJqVNfZWYi4PakQXBZCJeH59UlnBv+zaYftDNUUXttCmzRXpL1ujNm5mJrJHlWjV7tgIFw02HW3nh2yyKOkw==}
     engines: {node: '>=14.18'}
     hasBin: true
 
-  '@sentry/types@8.4.0':
-    resolution: {integrity: sha512-mHUaaYEQCNukzYsTLp4rP2NNO17vUf+oSGS6qmhrsGqmGNICKw2CIwJlPPGeAkq9Y4tiUOye2m5OT1xsOtxLIw==}
+  '@sentry/types@8.5.0':
+    resolution: {integrity: sha512-eDgkSmKI4+XL0QZm4H3j/n1RgnrbnjXZmjj+LsfccRZQwbPu9bWlc8q7Y7Ty1gOsoUpX+TecNLp2a8CRID4KHA==}
     engines: {node: '>=14.18'}
 
-  '@sentry/utils@8.4.0':
-    resolution: {integrity: sha512-oDF0RVWW0AyEnsP1x4McHUvQSAxJgx3G6wM9Sb4wc1F8rwsHnCtGHc+WRZ5Gd2AXC5EGkfbg5919+1ku/L4Dww==}
+  '@sentry/utils@8.5.0':
+    resolution: {integrity: sha512-fdrCzo8SAYiw9JBhkJPqYqJkDXZ/wICzN7+zcXIuzKNhE1hdoFjeKcPnpUI3bKZCG6e3hT1PTYQXhVw7GIZV9w==}
     engines: {node: '>=14.18'}
 
   '@sinclair/typebox@0.27.8':
@@ -3833,8 +3833,8 @@ snapshots:
   '@mikro-orm/cli@5.9.8(@mikro-orm/mariadb@5.9.8(@mikro-orm/core@5.9.8)(@mikro-orm/migrations@5.9.8)(@mikro-orm/seeder@5.9.8))(@mikro-orm/migrations@5.9.8(@mikro-orm/core@5.9.8)(@types/node@20.12.12))(@mikro-orm/seeder@5.9.8(@mikro-orm/core@5.9.8))':
     dependencies:
       '@jercle/yargonaut': 1.1.5
-      '@mikro-orm/core': 5.9.8(@mikro-orm/mariadb@5.9.8(@mikro-orm/core@5.9.8)(@mikro-orm/migrations@5.9.8)(@mikro-orm/seeder@5.9.8))(@mikro-orm/migrations@5.9.8(@mikro-orm/core@5.9.8)(@types/node@20.12.12))(@mikro-orm/seeder@5.9.8(@mikro-orm/core@5.9.8))
-      '@mikro-orm/knex': 5.9.8(@mikro-orm/core@5.9.8(@mikro-orm/mariadb@5.9.8(@mikro-orm/core@5.9.8)(@mikro-orm/migrations@5.9.8)(@mikro-orm/seeder@5.9.8))(@mikro-orm/migrations@5.9.8(@mikro-orm/core@5.9.8)(@types/node@20.12.12))(@mikro-orm/seeder@5.9.8(@mikro-orm/core@5.9.8)))(@mikro-orm/migrations@5.9.8(@mikro-orm/core@5.9.8)(@types/node@20.12.12))
+      '@mikro-orm/core': 5.9.8(@mikro-orm/mariadb@5.9.8)(@mikro-orm/migrations@5.9.8)(@mikro-orm/seeder@5.9.8)
+      '@mikro-orm/knex': 5.9.8(@mikro-orm/core@5.9.8(@mikro-orm/mariadb@5.9.8)(@mikro-orm/migrations@5.9.8)(@mikro-orm/seeder@5.9.8))(@mikro-orm/migrations@5.9.8(@mikro-orm/core@5.9.8)(@types/node@20.12.12))
       fs-extra: 11.1.1
       tsconfig-paths: 4.2.0
       yargs: 17.7.2
@@ -3853,7 +3853,7 @@ snapshots:
       - supports-color
       - tedious
 
-  '@mikro-orm/core@5.9.8(@mikro-orm/mariadb@5.9.8(@mikro-orm/core@5.9.8)(@mikro-orm/migrations@5.9.8)(@mikro-orm/seeder@5.9.8))(@mikro-orm/migrations@5.9.8(@mikro-orm/core@5.9.8)(@types/node@20.12.12))(@mikro-orm/seeder@5.9.8(@mikro-orm/core@5.9.8))':
+  '@mikro-orm/core@5.9.8(@mikro-orm/mariadb@5.9.8)(@mikro-orm/migrations@5.9.8)(@mikro-orm/seeder@5.9.8)':
     dependencies:
       acorn-loose: 8.3.0
       acorn-walk: 8.2.0
@@ -3867,9 +3867,9 @@ snapshots:
       '@mikro-orm/migrations': 5.9.8(@mikro-orm/core@5.9.8)(@types/node@20.12.12)
       '@mikro-orm/seeder': 5.9.8(@mikro-orm/core@5.9.8)
 
-  '@mikro-orm/knex@5.9.8(@mikro-orm/core@5.9.8(@mikro-orm/mariadb@5.9.8(@mikro-orm/core@5.9.8)(@mikro-orm/migrations@5.9.8)(@mikro-orm/seeder@5.9.8))(@mikro-orm/migrations@5.9.8(@mikro-orm/core@5.9.8)(@types/node@20.12.12))(@mikro-orm/seeder@5.9.8(@mikro-orm/core@5.9.8)))(@mikro-orm/migrations@5.9.8(@mikro-orm/core@5.9.8)(@types/node@20.12.12))':
+  '@mikro-orm/knex@5.9.8(@mikro-orm/core@5.9.8(@mikro-orm/mariadb@5.9.8)(@mikro-orm/migrations@5.9.8)(@mikro-orm/seeder@5.9.8))(@mikro-orm/migrations@5.9.8(@mikro-orm/core@5.9.8)(@types/node@20.12.12))':
     dependencies:
-      '@mikro-orm/core': 5.9.8(@mikro-orm/mariadb@5.9.8(@mikro-orm/core@5.9.8)(@mikro-orm/migrations@5.9.8)(@mikro-orm/seeder@5.9.8))(@mikro-orm/migrations@5.9.8(@mikro-orm/core@5.9.8)(@types/node@20.12.12))(@mikro-orm/seeder@5.9.8(@mikro-orm/core@5.9.8))
+      '@mikro-orm/core': 5.9.8(@mikro-orm/mariadb@5.9.8)(@mikro-orm/migrations@5.9.8)(@mikro-orm/seeder@5.9.8)
       fs-extra: 11.1.1
       knex: 2.5.1
       sqlstring: 2.3.3
@@ -3882,8 +3882,8 @@ snapshots:
 
   '@mikro-orm/mariadb@5.9.8(@mikro-orm/core@5.9.8)(@mikro-orm/migrations@5.9.8)(@mikro-orm/seeder@5.9.8)':
     dependencies:
-      '@mikro-orm/core': 5.9.8(@mikro-orm/mariadb@5.9.8(@mikro-orm/core@5.9.8)(@mikro-orm/migrations@5.9.8)(@mikro-orm/seeder@5.9.8))(@mikro-orm/migrations@5.9.8(@mikro-orm/core@5.9.8)(@types/node@20.12.12))(@mikro-orm/seeder@5.9.8(@mikro-orm/core@5.9.8))
-      '@mikro-orm/knex': 5.9.8(@mikro-orm/core@5.9.8(@mikro-orm/mariadb@5.9.8(@mikro-orm/core@5.9.8)(@mikro-orm/migrations@5.9.8)(@mikro-orm/seeder@5.9.8))(@mikro-orm/migrations@5.9.8(@mikro-orm/core@5.9.8)(@types/node@20.12.12))(@mikro-orm/seeder@5.9.8(@mikro-orm/core@5.9.8)))(@mikro-orm/migrations@5.9.8(@mikro-orm/core@5.9.8)(@types/node@20.12.12))
+      '@mikro-orm/core': 5.9.8(@mikro-orm/mariadb@5.9.8)(@mikro-orm/migrations@5.9.8)(@mikro-orm/seeder@5.9.8)
+      '@mikro-orm/knex': 5.9.8(@mikro-orm/core@5.9.8(@mikro-orm/mariadb@5.9.8)(@mikro-orm/migrations@5.9.8)(@mikro-orm/seeder@5.9.8))(@mikro-orm/migrations@5.9.8(@mikro-orm/core@5.9.8)(@types/node@20.12.12))
       mariadb: 2.5.6
     optionalDependencies:
       '@mikro-orm/migrations': 5.9.8(@mikro-orm/core@5.9.8)(@types/node@20.12.12)
@@ -3901,8 +3901,8 @@ snapshots:
 
   '@mikro-orm/migrations@5.9.8(@mikro-orm/core@5.9.8)(@types/node@20.12.12)':
     dependencies:
-      '@mikro-orm/core': 5.9.8(@mikro-orm/mariadb@5.9.8(@mikro-orm/core@5.9.8)(@mikro-orm/migrations@5.9.8)(@mikro-orm/seeder@5.9.8))(@mikro-orm/migrations@5.9.8(@mikro-orm/core@5.9.8)(@types/node@20.12.12))(@mikro-orm/seeder@5.9.8(@mikro-orm/core@5.9.8))
-      '@mikro-orm/knex': 5.9.8(@mikro-orm/core@5.9.8(@mikro-orm/mariadb@5.9.8(@mikro-orm/core@5.9.8)(@mikro-orm/migrations@5.9.8)(@mikro-orm/seeder@5.9.8))(@mikro-orm/migrations@5.9.8(@mikro-orm/core@5.9.8)(@types/node@20.12.12))(@mikro-orm/seeder@5.9.8(@mikro-orm/core@5.9.8)))(@mikro-orm/migrations@5.9.8(@mikro-orm/core@5.9.8)(@types/node@20.12.12))
+      '@mikro-orm/core': 5.9.8(@mikro-orm/mariadb@5.9.8)(@mikro-orm/migrations@5.9.8)(@mikro-orm/seeder@5.9.8)
+      '@mikro-orm/knex': 5.9.8(@mikro-orm/core@5.9.8(@mikro-orm/mariadb@5.9.8)(@mikro-orm/migrations@5.9.8)(@mikro-orm/seeder@5.9.8))(@mikro-orm/migrations@5.9.8(@mikro-orm/core@5.9.8)(@types/node@20.12.12))
       fs-extra: 11.1.1
       knex: 2.5.1
       umzug: 3.3.1(@types/node@20.12.12)
@@ -3919,16 +3919,16 @@ snapshots:
       - supports-color
       - tedious
 
-  '@mikro-orm/nestjs@5.2.3(@mikro-orm/core@5.9.8(@mikro-orm/mariadb@5.9.8(@mikro-orm/core@5.9.8)(@mikro-orm/migrations@5.9.8)(@mikro-orm/seeder@5.9.8))(@mikro-orm/migrations@5.9.8(@mikro-orm/core@5.9.8)(@types/node@20.12.12))(@mikro-orm/seeder@5.9.8(@mikro-orm/core@5.9.8)))(@nestjs/common@9.4.3(class-transformer@0.5.1)(class-validator@0.14.1)(reflect-metadata@0.1.13)(rxjs@7.8.1))(@nestjs/core@9.4.3(@nestjs/common@9.4.3(class-transformer@0.5.1)(class-validator@0.14.1)(reflect-metadata@0.1.13)(rxjs@7.8.1))(reflect-metadata@0.1.13)(rxjs@7.8.1))':
+  '@mikro-orm/nestjs@5.2.3(@mikro-orm/core@5.9.8(@mikro-orm/mariadb@5.9.8)(@mikro-orm/migrations@5.9.8)(@mikro-orm/seeder@5.9.8))(@nestjs/common@9.4.3(class-transformer@0.5.1)(class-validator@0.14.1)(reflect-metadata@0.1.13)(rxjs@7.8.1))(@nestjs/core@9.4.3(@nestjs/common@9.4.3(class-transformer@0.5.1)(class-validator@0.14.1)(reflect-metadata@0.1.13)(rxjs@7.8.1))(reflect-metadata@0.1.13)(rxjs@7.8.1))':
     dependencies:
-      '@mikro-orm/core': 5.9.8(@mikro-orm/mariadb@5.9.8(@mikro-orm/core@5.9.8)(@mikro-orm/migrations@5.9.8)(@mikro-orm/seeder@5.9.8))(@mikro-orm/migrations@5.9.8(@mikro-orm/core@5.9.8)(@types/node@20.12.12))(@mikro-orm/seeder@5.9.8(@mikro-orm/core@5.9.8))
+      '@mikro-orm/core': 5.9.8(@mikro-orm/mariadb@5.9.8)(@mikro-orm/migrations@5.9.8)(@mikro-orm/seeder@5.9.8)
       '@nestjs/common': 9.4.3(class-transformer@0.5.1)(class-validator@0.14.1)(reflect-metadata@0.1.13)(rxjs@7.8.1)
       '@nestjs/core': 9.4.3(@nestjs/common@9.4.3(class-transformer@0.5.1)(class-validator@0.14.1)(reflect-metadata@0.1.13)(rxjs@7.8.1))(reflect-metadata@0.1.13)(rxjs@7.8.1)
 
   '@mikro-orm/seeder@5.9.8(@mikro-orm/core@5.9.8)':
     dependencies:
       '@faker-js/faker': 7.6.0
-      '@mikro-orm/core': 5.9.8(@mikro-orm/mariadb@5.9.8(@mikro-orm/core@5.9.8)(@mikro-orm/migrations@5.9.8)(@mikro-orm/seeder@5.9.8))(@mikro-orm/migrations@5.9.8(@mikro-orm/core@5.9.8)(@types/node@20.12.12))(@mikro-orm/seeder@5.9.8(@mikro-orm/core@5.9.8))
+      '@mikro-orm/core': 5.9.8(@mikro-orm/mariadb@5.9.8)(@mikro-orm/migrations@5.9.8)(@mikro-orm/seeder@5.9.8)
       fs-extra: 11.1.1
       globby: 11.1.0
 
@@ -4308,12 +4308,12 @@ snapshots:
 
   '@sapphire/snowflake@3.5.3': {}
 
-  '@sentry/core@8.4.0':
+  '@sentry/core@8.5.0':
     dependencies:
-      '@sentry/types': 8.4.0
-      '@sentry/utils': 8.4.0
+      '@sentry/types': 8.5.0
+      '@sentry/utils': 8.5.0
 
-  '@sentry/node@8.4.0':
+  '@sentry/node@8.5.0':
     dependencies:
       '@opentelemetry/api': 1.8.0
       '@opentelemetry/context-async-hooks': 1.24.1(@opentelemetry/api@1.8.0)
@@ -4337,42 +4337,42 @@ snapshots:
       '@opentelemetry/sdk-trace-base': 1.24.1(@opentelemetry/api@1.8.0)
       '@opentelemetry/semantic-conventions': 1.24.1
       '@prisma/instrumentation': 5.14.0
-      '@sentry/core': 8.4.0
-      '@sentry/opentelemetry': 8.4.0(@opentelemetry/api@1.8.0)(@opentelemetry/core@1.24.1(@opentelemetry/api@1.8.0))(@opentelemetry/instrumentation@0.51.1(@opentelemetry/api@1.8.0))(@opentelemetry/sdk-trace-base@1.24.1(@opentelemetry/api@1.8.0))(@opentelemetry/semantic-conventions@1.24.1)
-      '@sentry/types': 8.4.0
-      '@sentry/utils': 8.4.0
+      '@sentry/core': 8.5.0
+      '@sentry/opentelemetry': 8.5.0(@opentelemetry/api@1.8.0)(@opentelemetry/core@1.24.1(@opentelemetry/api@1.8.0))(@opentelemetry/instrumentation@0.51.1(@opentelemetry/api@1.8.0))(@opentelemetry/sdk-trace-base@1.24.1(@opentelemetry/api@1.8.0))(@opentelemetry/semantic-conventions@1.24.1)
+      '@sentry/types': 8.5.0
+      '@sentry/utils': 8.5.0
     optionalDependencies:
       opentelemetry-instrumentation-fetch-node: 1.2.0
     transitivePeerDependencies:
       - supports-color
 
-  '@sentry/opentelemetry@8.4.0(@opentelemetry/api@1.8.0)(@opentelemetry/core@1.24.1(@opentelemetry/api@1.8.0))(@opentelemetry/instrumentation@0.51.1(@opentelemetry/api@1.8.0))(@opentelemetry/sdk-trace-base@1.24.1(@opentelemetry/api@1.8.0))(@opentelemetry/semantic-conventions@1.24.1)':
+  '@sentry/opentelemetry@8.5.0(@opentelemetry/api@1.8.0)(@opentelemetry/core@1.24.1(@opentelemetry/api@1.8.0))(@opentelemetry/instrumentation@0.51.1(@opentelemetry/api@1.8.0))(@opentelemetry/sdk-trace-base@1.24.1(@opentelemetry/api@1.8.0))(@opentelemetry/semantic-conventions@1.24.1)':
     dependencies:
       '@opentelemetry/api': 1.8.0
       '@opentelemetry/core': 1.24.1(@opentelemetry/api@1.8.0)
       '@opentelemetry/instrumentation': 0.51.1(@opentelemetry/api@1.8.0)
       '@opentelemetry/sdk-trace-base': 1.24.1(@opentelemetry/api@1.8.0)
       '@opentelemetry/semantic-conventions': 1.24.1
-      '@sentry/core': 8.4.0
-      '@sentry/types': 8.4.0
-      '@sentry/utils': 8.4.0
+      '@sentry/core': 8.5.0
+      '@sentry/types': 8.5.0
+      '@sentry/utils': 8.5.0
 
-  '@sentry/profiling-node@8.4.0':
+  '@sentry/profiling-node@8.5.0':
     dependencies:
-      '@sentry/core': 8.4.0
-      '@sentry/node': 8.4.0
-      '@sentry/types': 8.4.0
-      '@sentry/utils': 8.4.0
+      '@sentry/core': 8.5.0
+      '@sentry/node': 8.5.0
+      '@sentry/types': 8.5.0
+      '@sentry/utils': 8.5.0
       detect-libc: 2.0.3
       node-abi: 3.62.0
     transitivePeerDependencies:
       - supports-color
 
-  '@sentry/types@8.4.0': {}
+  '@sentry/types@8.5.0': {}
 
-  '@sentry/utils@8.4.0':
+  '@sentry/utils@8.5.0':
     dependencies:
-      '@sentry/types': 8.4.0
+      '@sentry/types': 8.5.0
 
   '@sinclair/typebox@0.27.8': {}
 
