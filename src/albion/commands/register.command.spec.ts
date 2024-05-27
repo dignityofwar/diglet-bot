@@ -12,7 +12,6 @@ const expectedChannelId = TestBootstrapper.mockConfig.discord.channels.albionReg
 
 describe('AlbionRegisterCommand', () => {
   let command: AlbionRegisterCommand;
-  let albionRegistrationService: AlbionRegistrationService;
 
   let mockDiscordInteraction: any;
   let mockDiscordUser: any;
@@ -41,7 +40,6 @@ describe('AlbionRegisterCommand', () => {
     }).compile();
 
     command = module.get<AlbionRegisterCommand>(AlbionRegisterCommand);
-    albionRegistrationService = module.get<AlbionRegistrationService>(AlbionRegistrationService);
     TestBootstrapper.setupConfig(module);
 
     mockDiscordInteraction = TestBootstrapper.getMockDiscordInteraction(expectedChannelId, mockDiscordUser);
