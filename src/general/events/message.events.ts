@@ -18,7 +18,7 @@ export class MessageEvents {
   ) {}
 
   async handleMessageEvent(member: GuildMember, type: string): Promise<void> {
-    if (!member || !member.user) {
+    if (!member?.user) {
       throw new Error(`Message ${type} event could not be processed as the GuildMember was not found.`);
     }
     if (member.user.bot) return;
