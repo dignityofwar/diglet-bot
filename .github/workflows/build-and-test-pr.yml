@@ -4,7 +4,7 @@ on:
   workflow_call:
 
 jobs:
-  build:
+  build-test:
     runs-on: ubuntu-latest
     outputs:
       store-path: ${{ steps.pnpm-cache.outputs.STORE_PATH }}
@@ -44,6 +44,15 @@ jobs:
 
       - name: Run tests with coverage
         run: pnpm test:ci
+
+  code-quality:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          submodules: true
 
       - name: SonarCloud Scan
         uses: SonarSource/sonarcloud-github-action@master
