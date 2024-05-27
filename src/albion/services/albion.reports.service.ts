@@ -7,7 +7,7 @@ import { ConfigService } from '@nestjs/config';
 import { AlbionUtilities } from '../utilities/albion.utilities';
 import { Message } from 'discord.js';
 import { AlbionApiService } from './albion.api.service';
-import { AlbionPlayerInterface } from '../interfaces/albion.api.interfaces';
+import { AlbionPlayerInterface, AlbionServer } from '../interfaces/albion.api.interfaces';
 
 export class AlbionReportsService {
   private readonly logger = new Logger(AlbionReportsService.name);
@@ -29,7 +29,7 @@ export class AlbionReportsService {
     let albionMembers: AlbionPlayerInterface[] = [];
 
     try {
-      albionMembers = await this.albionApiService.getAllGuildMembers(this.config.get('albion.guildId'));
+      albionMembers = await this.albionApiService.getAllGuildMembers(this.config.get('albion.guildIdUS'), AlbionServer.AMERICAS);
     }
     catch (err) {
       this.logger.error(err);
@@ -87,16 +87,16 @@ export class AlbionReportsService {
 
       // Push to the correct array based on the role
       switch (highestRole.name) {
-        case '@ALB/Initiate':
+        case '@ALB/US/Initiate':
           membersReport.initiates.push(line);
           break;
-        case '@ALB/Squire':
+        case '@ALB/US/Squire':
           membersReport.squires.push(line);
           break;
-        case '@ALB/Captain':
-        case '@ALB/General':
-        case '@ALB/Master':
-        case '@ALB/Guildmaster':
+        case '@ALB/US/Captain':
+        case '@ALB/US/General':
+        case '@ALB/US/Master':
+        case '@ALB/US/Guildmaster':
           membersReport.leadership.push(line);
           break;
       }
@@ -172,7 +172,7 @@ export class AlbionReportsService {
         continue;
       }
 
-      if (highestRole.name === '@ALB/Initiate' && diffInDays >= 14) {
+      if (highestRole.name === '@ALB/US/Initiate' && diffInDays >= 14) {
         membersReport.candidates.push(`- ${member.characterName} / <@${discordMember.id}> - registered ${discordRelativeCode}`);
       }
     }

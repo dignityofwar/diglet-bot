@@ -1,4 +1,4 @@
-name: Node.js CI
+name: Build & Test PR
 
 on:
   workflow_call:
@@ -17,12 +17,12 @@ jobs:
       - name: Install Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 18.20.2
+          node-version: 20.13.1
 
       - name: Setup pnpm
-        uses: pnpm/action-setup@v3
+        uses: pnpm/action-setup@v4
         with:
-          version: 8.15.7
+          version: 9.1.2
           run_install: false
 
       - uses: actions/cache@v4
@@ -41,3 +41,8 @@ jobs:
 
       - name: Run tests with coverage
         run: pnpm test:ci
+
+      - name: SonarCloud Scan
+        uses: SonarSource/sonarcloud-github-action@master
+        env:
+          SONAR_TOKEN: ${{ secrets.SONARCLOUD_TOKEN }}

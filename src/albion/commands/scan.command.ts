@@ -37,7 +37,7 @@ export class AlbionScanCommand {
 
     const message = await interaction[0].channel.send('Starting Albion Members scan...');
 
-    this.albionScanningService.startScan(message, dto.dryRun);
+    this.albionScanningService.startScan(message, dto.dryRun, dto.server);
 
     return `Albion Scan initiated!${dto.dryRun ? ' [DRY RUN, NO CHANGES WILL ACTUALLY BE PERFORMED]' : ''}`;
   }

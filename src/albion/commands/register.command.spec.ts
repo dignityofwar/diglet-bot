@@ -6,6 +6,7 @@ import { AlbionRegisterDto } from '../dto/albion.register.dto';
 import { ReflectMetadataProvider } from '@discord-nestjs/core';
 import { AlbionRegistrationService } from '../services/albion.registration.service';
 import { TestBootstrapper } from '../../test.bootstrapper';
+import { AlbionServer } from '../interfaces/albion.api.interfaces';
 
 const expectedChannelId = TestBootstrapper.mockConfig.discord.channels.albionRegistration;
 
@@ -15,7 +16,7 @@ describe('AlbionRegisterCommand', () => {
 
   let mockDiscordInteraction: any;
   let mockDiscordUser: any;
-  const dto: AlbionRegisterDto = { character: 'Maelstrome26' };
+  const dto: AlbionRegisterDto = { character: 'Maelstrome26', server: AlbionServer.AMERICAS };
 
   beforeEach(async () => {
     TestBootstrapper.mockORM();
@@ -27,8 +28,7 @@ describe('AlbionRegisterCommand', () => {
         {
           provide: AlbionRegistrationService,
           useValue: {
-            isValidRegistrationAttempt: jest.fn(),
-            handleVerification: jest.fn(),
+            registrationMessageProxy: jest.fn(),
           },
         },
         {
@@ -57,28 +57,11 @@ describe('AlbionRegisterCommand', () => {
     expect(await command.onAlbionRegisterCommand(dto, mockDiscordInteraction)).toBe(`Please use the <#${expectedChannelId}> channel to register.`);
   });
 
-  it('should return errors from the registration process', async () => {
-    albionRegistrationService.handleRegistration = jest.fn().mockImplementation(() => {
-      throw new Error('Some error handling registration');
-    });
-
+  it('should return a response to the user', async () => {
     const result = await command.onAlbionRegisterCommand(dto, mockDiscordInteraction);
 
-    // Check that send was called with the expected argument
     expect(mockDiscordInteraction[0].channel.send).toHaveBeenCalledWith('🔍 Running registration process...');
 
-    // Capture the mock message object returned by send
-    const sentMessage = mockDiscordInteraction[0].channel.send.mock.results[0].value;
-
-    // Check that the edit method on the sentMessage was called with the expected argument
-    expect(sentMessage.edit).toHaveBeenCalledWith('⛔️ **ERROR:** Some error handling registration');
-
-    // Check the final result
-    expect(result).toBe('');
-  });
-
-  it('should return no response', async () => {
-    albionRegistrationService.handleRegistration = jest.fn().mockImplementation(() => true);
-    expect(await command.onAlbionRegisterCommand(dto, mockDiscordInteraction)).toBe('');
+    expect(result).toBe('Registration request sent!');
   });
 });

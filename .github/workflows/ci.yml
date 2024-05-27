@@ -8,11 +8,13 @@ jobs:
   build:
     name: Build & Test
     uses: ./.github/workflows/build-and-test-main.yml
+    secrets: inherit
 
   release:
     name: Create Release
     needs: build
     uses: ./.github/workflows/release.yml
+    secrets: inherit
 
   publish:
     name: Build & Publish container

@@ -1,9 +1,9 @@
-FROM node:18.20.2
+FROM node:20.13.1
 
 ARG VERSION
 ENV VERSION=${VERSION}
 
-RUN npm install -g pnpm@8.15.7
+RUN npm install -g pnpm@9.1.2
 
 COPY . /app
 

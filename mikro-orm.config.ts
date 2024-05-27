@@ -17,7 +17,7 @@ const config: MariaDbOptions = {
   password: process.env.DB_PASSWORD,
   dbName: process.env.DB_NAME,
   // extensions: [SeedManager, EntityGenerator],
-  debug: true,
+  debug: process.env.DB_DEBUG === 'true',
   migrations: {
     path: './src/database/migrations',
     transactional: false,

@@ -193,7 +193,7 @@ describe('PurgeService', () => {
   //   expect(mockMessage.channel.send).toHaveBeenCalledWith('Kicking started...');
   //   expect(mockMessage.channel.send).toHaveBeenCalledWith(`- 🥾 Kicked ${purgables[0].nickname} (${purgables[0].user.id})\n`);
   //   expect(mockMessage.channel.send).toHaveBeenCalledWith('🫰 Kicking progress: [1/1] (100%)');
-  //   expect(mockMessage.channel.send).toHaveBeenCalledWith(`**${purgables.length}** members kicked.`);
+  //   expect(mockMessage.channel.send).toHaveBeenCalledWith(`**${purgables.length}** members purged.`);
   //   expect(mockMessage.channel.send).toHaveBeenCalledTimes(5);
   // });
 
@@ -224,7 +224,7 @@ describe('PurgeService', () => {
   //       expect(mockMessage.channel.send).toHaveBeenCalledWith('🫰 Kicking progress: [5/6] (83%)');
   //       expect(mockMessage.channel.send).toHaveBeenCalledWith('- 🥾 Kicked 1-5-nick (1-5)\n');
   //       expect(mockMessage.channel.send).toHaveBeenCalledWith('🫰 Kicking progress: [6/6] (100%)');
-  //       expect(mockMessage.channel.send).toHaveBeenCalledWith(`**${purgables.length}** members kicked.`);
+  //       expect(mockMessage.channel.send).toHaveBeenCalledWith(`**${purgables.length}** members purged.`);
   //     });
   //
   //     it('should NOT call the kick function for each purgable member for a DRY RUN', async () => {
@@ -250,6 +250,28 @@ describe('PurgeService', () => {
   //     });
   //   });
 
+  it('should NOT call the kick function for each purgable member for a DRY RUN', async () => {
+    // Mock forEach implementation
+    const purgables = createMockMember({
+      isBot: false,
+      roles: { onboarded: false },
+      withinGrace: false,
+      active: true,
+    }, 1);
+
+    await service.kickPurgableMembers(
+      mockMessage as any,
+      new Collection(purgables.map(member => [member.user.id, member])),
+      true,
+    );
+
+    expect(discordService.kickMember).toHaveBeenCalledTimes(0);
+    expect(mockMessage.channel.send).toHaveBeenCalledWith(`Kicking ${purgables.length} purgable members...`);
+    expect(mockMessage.channel.send).toHaveBeenCalledWith('Kicking started...');
+    expect(mockMessage.channel.send).toHaveBeenCalledWith(`- [DRY RUN] 🥾 Kicked ${purgables[0].nickname} (${purgables[0].user.id})\n`);
+    expect(mockMessage.channel.send).toHaveBeenCalledWith('[DRY RUN] 🫰 Kicking progress: [1/1] (100%)');
+    expect(mockMessage.channel.send).toHaveBeenCalledWith(`[DRY RUN] **${purgables.length}** members purged.`);
+  });
   // describe('isPurgable', () => {
   //   it('should correctly mark someone as NOT purgable if they are active and HAVE been onboarded', async () => {
   //     const mockMember = createMockMember({

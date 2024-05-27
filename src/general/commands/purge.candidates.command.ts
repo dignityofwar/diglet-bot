@@ -44,7 +44,8 @@ export class PurgeCandidatesCommand {
       if (purgableMembers.purgableByGame[game].size > 0) {
         const batch: string[] = [];
         purgableMembers.purgableByGame[game].each((member: GuildMember) => {
-          batch.push(`- [${game.toUpperCase()}] <@${member.user.id}> / ${member.nickname || member.user.username}, joined <t:${Math.floor(member.joinedTimestamp / 1000)}:R>\n`);
+          const name = member.displayName || member.nickname || member.user.username;
+          batch.push(`- [${game.toUpperCase()}] <@${member.user.id}> / ${name}, joined <t:${Math.floor(member.joinedTimestamp / 1000)}:R>\n`);
           gameMemberIds.push(member.user.id);
         });
         await channel.send(`## ${game.toUpperCase()}`);
@@ -60,7 +61,9 @@ export class PurgeCandidatesCommand {
     const batch: string[] = [];
     purgableMembers.purgableMembers.each((member: GuildMember) => {
       if (!gameMemberIds.includes(member.user.id)) {
-        batch.push(`- [NONE] <@${member.user.id}> / ${member.nickname || member.user.username}, joined <t:${Math.floor(member.joinedTimestamp / 1000)}:R>\n`);
+        const name = member.displayName || member.nickname || member.user.username;
+
+        batch.push(`- [NONE] <@${member.user.id}> / ${name}, joined <t:${Math.floor(member.joinedTimestamp / 1000)}:R>\n`);
       }
     });
 
@@ -96,7 +99,8 @@ Note, these numbers will not add up to total numbers, as a member can be in mult
 - Total PS2 verified kicked: **${purgableMembers.purgableByGame.ps2Verified.size}**
 - Total Foxhole kicked: **${purgableMembers.purgableByGame.foxhole.size}**
 - Total Albion kicked: **${purgableMembers.purgableByGame.albion.size}**
-- Total ALB Registered kicked: **${purgableMembers.purgableByGame.albionRegistered.size}**`
+- Total ALB US kicked: **${purgableMembers.purgableByGame.albionUSRegistered.size}**
+- Total ALB EU kicked: **${purgableMembers.purgableByGame.albionEURegistered.size}**`
     );
 
     this.logger.log('All batches sent.');
