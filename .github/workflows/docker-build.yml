@@ -55,3 +55,9 @@ jobs:
           tags: |
             maelstromeous/applications:digletbot-${{ inputs.version }}
             maelstromeous/applications:digletbot-latest
+
+      - name: SonarCloud Scan with version attached
+        uses: SonarSource/sonarcloud-github-action@master
+        env:
+          SONAR_TOKEN: ${{ secrets.SONARCLOUD_TOKEN }}
+          SONAR_SCANNER_OPTS: -Dsonar.projectVersion=${{ inputs.version }}

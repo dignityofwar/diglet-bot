@@ -45,11 +45,6 @@ jobs:
       - name: Run tests with coverage
         run: pnpm test:ci
 
-      - name: SonarCloud Scan
-        uses: SonarSource/sonarcloud-github-action@master
-        env:
-          SONAR_TOKEN: ${{ secrets.SONARCLOUD_TOKEN }}
-
       - name: Generate coverage badges
         uses: jpb06/coverage-badges-action@latest
         with:
