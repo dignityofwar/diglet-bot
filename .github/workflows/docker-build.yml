@@ -54,17 +54,3 @@ jobs:
           tags: |
             maelstromeous/applications:digletbot-${{ inputs.version }}
             maelstromeous/applications:digletbot-latest
-  run-sonarcloud:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-          submodules: true
-
-      - name: SonarCloud Scan with version attached
-        uses: SonarSource/sonarcloud-github-action@master
-        env:
-          SONAR_TOKEN: ${{ secrets.SONARCLOUD_TOKEN }}
-          SONAR_SCANNER_OPTS: -Dsonar.projectVersion=${{ inputs.version }}
