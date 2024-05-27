@@ -396,7 +396,6 @@ export class AlbionScanningService {
         const lineMessage = await message.channel.send('.');
         await lineMessage.edit(invalidUser);
       }
-      return;
     }
     else {
       await message.channel.send(`${emoji} ✅ No invalid users were detected via Reverse Role Scan.`);
