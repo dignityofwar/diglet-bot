@@ -33,8 +33,8 @@ export class ActivityCronService implements OnApplicationBootstrap {
     }
   }
 
-  // Run activity data scans every day at midnight
-  @Cron('0 0 * * *')
+  // Run activity data scans to keep activity data refreshed
+  @Cron('0 */3 * * *')
   async runActivityDataScans(): Promise<void> {
     this.logger.log('Running Activity Data scans Cron');
 
