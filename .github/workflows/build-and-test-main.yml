@@ -36,7 +36,7 @@ jobs:
       - name: Install Dependencies
         run: pnpm install
 
-      - name: Check if linter runs properly
+      - name: Run linter check
         run: pnpm lint
 
       - name: Check if app builds properly
