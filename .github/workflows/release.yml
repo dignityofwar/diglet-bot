@@ -40,3 +40,4 @@ jobs:
         with:
           tag: ${{ steps.version.outputs.newTag }}
           generateReleaseNotes: true
+          makeLatest: true

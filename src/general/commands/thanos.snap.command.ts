@@ -19,7 +19,7 @@ export class ThanosSnapCommand {
 
   @Handler()
 
-  async onPurgeCandidatesCommand(
+  async onThanosSnapCommand(
     @InteractionEvent(SlashCommandPipe) dto: ThanosSnapDto,
     @EventParams() interaction: ChatInputCommandInteraction[]
   ): Promise<void> {
@@ -37,8 +37,8 @@ export class ThanosSnapCommand {
     const purgableMembers = await this.purgeService.getPurgableMembers(message);
 
     if (purgableMembers.purgableMembers.size === 0) {
-      this.logger.log('✅ All members are onboarded! Nothing to do! They have been saved from Thanos, this time.');
-      await channel.send('All members are onboarded!');
+      this.logger.log('✅ All members are onboarded and active! Nothing to do! They have been saved from Thanos, this time.');
+      await channel.send('All members are onboarded and active! They have been saved from Thanos, this time.');
       return;
     }
 
