@@ -49,7 +49,8 @@ export class PurgeCandidatesCommand {
           gameMemberIds.push(member.user.id);
         });
         await channel.send(`## ${game.toUpperCase()}`);
-        // Go through the batches by groups of 20 and spit out the members
+
+        // Go through the batches by groups of 20 and spit out the lines
         for (let i = 0; i < batch.length; i += 20) {
           const tempMessage = await channel.send('foo');
           await tempMessage.edit(`${batch.slice(i, i + 20).join('')}`);
@@ -76,9 +77,9 @@ export class PurgeCandidatesCommand {
     }
 
     // Send the batches
-    for (let k = 0; k < purgableMembersBatched.length; k++) {
+    for (const batchMsg of purgableMembersBatched) {
       const tempMessage = await channel.send('foo');
-      await tempMessage.edit(purgableMembersBatched[k]);
+      await tempMessage.edit(batchMsg);
     }
 
     this.logger.log(`Found ${purgableMembersBatched.length} batches of 20 members who are not onboarded. Sending batches...`);

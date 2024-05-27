@@ -14,8 +14,6 @@ const guildOfficerRoleEU = '66343435879886';
 // This file helps set up mocks for various tests, which have been copied and pasted across the suite, causing a lot of duplication.
 @Injectable()
 export class TestBootstrapper {
-  static mockGuildsStore: any = {};
-
   static getMockEntityRepo() {
     return {
       find: jest.fn(),
