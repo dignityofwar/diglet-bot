@@ -1,6 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { InjectDiscordClient } from '@discord-nestjs/core';
-import { Channel, Client, Guild, GuildMember, Message, Role } from 'discord.js';
+import { Channel, Client, Collection, Guild, GuildMember, Message, Role } from 'discord.js';
 
 @Injectable()
 export class DiscordService {
@@ -93,5 +93,31 @@ export class DiscordService {
     catch (err) {
       this.logger.error('Failed to delete message', err);
     }
+  }
+
+  async getRoleMembersFromMessage(message: Message, roleId: string): Promise<Collection<string, GuildMember>> {
+    let discordRole: Role;
+
+    try {
+      // Force fetch the role to get the correct members
+      discordRole = await message.guild.roles.fetch(
+        roleId,
+        { cache: false, force: true }
+      );
+    }
+    catch (err) {
+      const error = `Unable to grab role members! Does not exist?: ${err.message}`;
+      this.logger.error(error);
+      throw new Error(error);
+    }
+
+    // If for some reason the role didn't throw an error but doesn't exist
+    if (!discordRole) {
+      const error = 'Unable to grab role members! Returned empty!';
+      this.logger.error(error);
+      throw new Error(error);
+    }
+
+    return discordRole.members;
   }
 }

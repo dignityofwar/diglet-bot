@@ -1,7 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@mikro-orm/nestjs';
 import { EntityRepository } from '@mikro-orm/core';
-import { GuildMember, Message, Role } from 'discord.js';
+import { Collection, GuildMember, Message, Role } from 'discord.js';
 import { ConfigService } from '@nestjs/config';
 import { AlbionApiService } from './albion.api.service';
 import { AlbionRegistrationsEntity } from '../../database/entities/albion.registrations.entity';
@@ -9,7 +9,7 @@ import { AlbionPlayerInterface, AlbionServer } from '../interfaces/albion.api.in
 import { AlbionRoleMapInterface } from '../../config/albion.app.config';
 import { AlbionUtilities } from '../utilities/albion.utilities';
 import { AlbionGuildMembersEntity } from '../../database/entities/albion.guildmembers.entity';
-import { AlbionDiscordEnforcementService } from './albion.discord.enforcement.service';
+import { DiscordService } from '../../discord/discord.service';
 
 export interface RoleInconsistencyResult {
   id: string,
@@ -24,7 +24,7 @@ export class AlbionScanningService {
 
   constructor(
     private readonly albionApiService: AlbionApiService,
-    private readonly discordEnforcementService: AlbionDiscordEnforcementService,
+    private readonly discordService: DiscordService,
     private readonly config: ConfigService,
     private readonly albionUtilities: AlbionUtilities,
     @InjectRepository(AlbionRegistrationsEntity) private readonly albionRegistrationsRepository: EntityRepository<AlbionRegistrationsEntity>,
@@ -82,7 +82,6 @@ export class AlbionScanningService {
 
       await message.edit(`# ${emoji} Task: [5/5] Discord enforcement scan...`);
       await message.channel.send(`${emoji} DISCORD ENFORCEMENT SCAN DISABLED!`);
-      // if (await this.discordEnforcementScan(message, dryRun, server)) actionRequired = true;
     }
     catch (err) {
       await message.edit('## 🇺🇸 ❌ An error occurred while scanning!');
@@ -225,7 +224,7 @@ export class AlbionScanningService {
 
       // Delete their registration record
       try {
-        await this.albionRegistrationsRepository.removeAndFlush(member);
+        await this.albionRegistrationsRepository.getEntityManager().removeAndFlush(member);
       }
       catch (err) {
         await message.channel.send(`ERROR: Unable to remove Albion Character "${character.Name}" (${character.Id}) from registration database! Pinging <@${this.config.get('discord.devUserId')}>!`);
@@ -303,37 +302,16 @@ export class AlbionScanningService {
     const errorsDetected: string[] = [];
 
     // Loop each role and scan them
-    let count = 0;
     for (const role of roleMapServer) {
-      count++;
-      let discordRole: Role;
-
-      await scanCountMessage.edit(`Scanning role **${role.name}** [${count}/${roleMapLength}]...`);
+      let roleMembers: Collection<string, GuildMember>;
 
       try {
-        // Force fetch the role to get the correct members
-        discordRole = await message.guild.roles.fetch(
-          role.discordRoleId,
-          { cache: false, force: true }
-        );
+        roleMembers = await this.discordService.getRoleMembersFromMessage(message, role.discordRoleId);
       }
       catch (err) {
-        const error = `Reverse Role Scan: Error fetching role ${role.name}! Err: ${err.message}`;
+        const error = `Error fetching role "${role.name}"! Err: ${err.message}. Pinging <@${this.config.get('discord.devUserId')}>!`;
         this.logger.error(error);
-        throw new Error(error);
-      }
-
-      // If for some reason the role didn't throw an error but doesn't exist
-      if (!discordRole) {
-        const error = `Reverse Role Scan: Role ${role.name} does not seem to exist!`;
-        this.logger.error(error);
-        throw new Error(error);
-      }
-
-      // Get the members of the role
-      const roleMembers = discordRole.members;
-      if (!roleMembers) {
-        this.logger.error(`Reverse Role Scan: No members were found for role ${role.name}!`);
+        await message.channel.send(error);
         continue;
       }
 
@@ -358,24 +336,26 @@ export class AlbionScanningService {
             // Now check if the user actually has the role, rather than assuming they do as they're not a registered member
             const hasRole = discordMemberFresh.roles.cache.has(discordRole.id);
 
-            if (hasRole) {
-              const dryRunText = dryRun ? ' (DRY RUN)' : '';
-              // Member actually has the role, now remove it from them
-              errorsDetected.push(`- ⚠️${dryRunText} <@${discordMemberFresh.id}> had role **${role.name}** but was not registered!`);
+            if (!hasRole) {
+              continue;
+            }
 
-              if (!dryRun) {
-                try {
-                  await discordMemberFresh.roles.remove(discordRole);
-                  this.logger.debug(`Reverse Role Scan: Removed role from user ${discordMemberFresh.id}!`);
-                }
-                catch (err) {
-                  this.logger.error(`Reverse Role Scan: Error removing role ${role.name} from user ${discordMemberFresh.id}! Err: ${err.message}`);
-                  await message.channel.send(`Error removing role "${role.name}" from user ${discordMemberFresh.displayName}! Err: ${err.message}. Pinging <@${this.config.get('discord.devUserId')}>!`);
-                }
-              }
-              else {
-                this.logger.log(`Reverse Role Scan: Would have removed role "${role.name}" from user ${discordMemberFresh.id}!`);
-              }
+            const dryRunText = dryRun ? ' (DRY RUN)' : '';
+            // Member actually has the role, now remove it from them
+            errorsDetected.push(`- ⚠️${dryRunText} <@${discordMemberFresh.id}> had role **${role.name}** but was not registered!`);
+
+            if (dryRun) {
+              this.logger.log(`Reverse Role Scan: Would have removed role "${role.name}" from user ${discordMemberFresh.id}!`);
+              continue;
+            }
+
+            try {
+              await discordMemberFresh.roles.remove(discordRole);
+              this.logger.debug(`Reverse Role Scan: Removed role from user ${discordMemberFresh.id}!`);
+            }
+            catch (err) {
+              this.logger.error(`Reverse Role Scan: Error removing role ${role.name} from user ${discordMemberFresh.id}! Err: ${err.message}`);
+              await message.channel.send(`Error removing role "${role.name}" from user ${discordMemberFresh.displayName}! Err: ${err.message}. Pinging <@${this.config.get('discord.devUserId')}>!`);
             }
           }
           catch {
@@ -396,7 +376,6 @@ export class AlbionScanningService {
         const lineMessage = await message.channel.send('.');
         await lineMessage.edit(invalidUser);
       }
-      return;
     }
     else {
       await message.channel.send(`${emoji} ✅ No invalid users were detected via Reverse Role Scan.`);

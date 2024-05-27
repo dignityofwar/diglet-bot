@@ -47,7 +47,6 @@ const mockRegisteredNameEU = '@ALB/EU/Registered';
 
 describe('AlbionScanningService', () => {
   let service: AlbionScanningService;
-  let discordEnforcementService: AlbionDiscordEnforcementService;
   let albionApiService: AlbionApiService;
   let mockDiscordUser: any;
   let mockDiscordMessage: any;
@@ -131,7 +130,6 @@ describe('AlbionScanningService', () => {
     }).compile();
 
     service = moduleRef.get<AlbionScanningService>(AlbionScanningService);
-    discordEnforcementService = moduleRef.get<AlbionDiscordEnforcementService>(AlbionDiscordEnforcementService);
     albionApiService = moduleRef.get<AlbionApiService>(AlbionApiService);
 
     const albionMerged = {
