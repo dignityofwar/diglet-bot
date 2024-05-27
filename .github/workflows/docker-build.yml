@@ -13,7 +13,6 @@ on:
 jobs:
   build-docker-images:
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -55,6 +54,14 @@ jobs:
           tags: |
             maelstromeous/applications:digletbot-${{ inputs.version }}
             maelstromeous/applications:digletbot-latest
+  run-sonarcloud:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          submodules: true
 
       - name: SonarCloud Scan with version attached
         uses: SonarSource/sonarcloud-github-action@master
