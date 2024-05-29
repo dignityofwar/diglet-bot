@@ -34,8 +34,6 @@ describe('PS2GameVerificationService', () => {
   let editMessageSpy;
 
   beforeEach(async () => {
-    TestBootstrapper.mockORM();
-
     const mockPS2VerificationAttemptRepository = TestBootstrapper.getMockRepositoryInjected({});
     const mockPS2MembersRepository = TestBootstrapper.getMockRepositoryInjected({});
 

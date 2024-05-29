@@ -31,7 +31,7 @@ export class DatabaseService {
     entity.lastActivity = new Date();
 
     try {
-      await this.activityRepository.persistAndFlush(entity);
+      await this.activityRepository.getEntityManager().persistAndFlush(entity);
       this.logger.verbose(`Updated activity for ${member.id}`);
     }
     catch (err) {

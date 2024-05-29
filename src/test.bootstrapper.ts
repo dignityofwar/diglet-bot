@@ -29,6 +29,12 @@ export class TestBootstrapper {
       getRepository: jest.fn().mockReturnValue({
         find: jest.fn(),
       }),
+      getEntityManager: jest.fn().mockResolvedValue({
+        findOne: jest.fn(),
+        find: jest.fn(),
+        persistAndFlush: jest.fn(),
+        removeAndFlush: jest.fn(),
+      }),
     } as any;
 
     const mockInit = jest.spyOn(MikroORM, 'init');
@@ -44,8 +50,14 @@ export class TestBootstrapper {
       findAll: jest.fn().mockResolvedValue([entity]),
       create: jest.fn(),
       upsert: jest.fn(),
-      persistAndFlush: jest.fn().mockResolvedValue([entity]),
-      removeAndFlush: jest.fn(),
+      getEntityManager: jest.fn().mockImplementation(() => {
+        return {
+          findOne: jest.fn().mockResolvedValue([entity]),
+          find: jest.fn().mockResolvedValue([entity]),
+          persistAndFlush: jest.fn().mockResolvedValue([entity]),
+          removeAndFlush: jest.fn().mockResolvedValue([entity]),
+        };
+      }),
     } as any;
   }
 

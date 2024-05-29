@@ -18,7 +18,6 @@ describe('AlbionRegisterCommand', () => {
   const dto: AlbionRegisterDto = { character: 'Maelstrome26', server: AlbionServer.AMERICAS };
 
   beforeEach(async () => {
-    TestBootstrapper.mockORM();
     mockDiscordUser = TestBootstrapper.getMockDiscordUser();
     const module: TestingModule = await Test.createTestingModule({
       providers: [
