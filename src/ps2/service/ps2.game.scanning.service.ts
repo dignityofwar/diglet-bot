@@ -37,19 +37,19 @@ export class PS2GameScanningService {
     this.suggestionsCount = 0;
   }
 
-  async gatherCharacters(outfitMembers: PS2MembersEntity[], statusMessage: Message, tries = 0) {
-    const characterPromises: Promise<CensusCharacterWithOutfitInterface>[] = [];
+  async gatherCharacters(outfitMembers: PS2MembersEntity[], statusMessage: Message, tries = 0, waitTime = 10000) {
+    const characterPromises = [];
     tries++;
     const length = outfitMembers.length;
 
     await statusMessage.edit(`Gathering ${length} characters from Census... (attempt #${tries})`);
 
     for (const member of outfitMembers) {
-      characterPromises.push(this.censusService.getCharacterById(member.characterId));
+      characterPromises.push(() => this.censusService.getCharacterById(member.characterId));
     }
 
     try {
-      return await Promise.all(characterPromises);
+      return await Promise.all(characterPromises.map(promiseFunc => promiseFunc()));
     }
     catch (err) {
       if (tries === 3) {
@@ -59,8 +59,8 @@ export class PS2GameScanningService {
       }
 
       await statusMessage.edit(`## ⚠️ Couldn't gather ${length} characters from Census, likely due to Census timeout issues. Retrying in 10s (attempt #${tries})...`);
-      await new Promise(resolve => setTimeout(resolve, 10000));
-      return this.gatherCharacters(outfitMembers, statusMessage, tries);
+      await new Promise(resolve => setTimeout(resolve, waitTime));
+      return this.gatherCharacters(outfitMembers, statusMessage, tries, waitTime);
     }
   }
 
