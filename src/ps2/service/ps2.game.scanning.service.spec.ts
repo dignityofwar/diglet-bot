@@ -90,7 +90,7 @@ describe('PS2GameScanningService', () => {
       expect(result).toEqual([outfitMembers[0], outfitMembers[1]]);
     });
 
-    it('should handle error and retry up to 3 times', async () => {
+    it('should handle errors / outages and retry up to 3 times', async () => {
       const outfitMembers = [TestBootstrapper.getMockPS2Character(mockCharacterId, mockOutfitId)];
       const error = new Error('Census timeout');
       mockCensusService.getCharacterById = jest.fn().mockRejectedValue(error);
@@ -102,6 +102,16 @@ describe('PS2GameScanningService', () => {
       // Couldn't check the other 3 times, tests in promise loops is weird as shit man
       expect(mockDiscordMessage.edit).toHaveBeenCalledWith('## ❌ An error occurred while gathering 1 characters! Giving up after 3 tries.');
       expect(mockDiscordMessage.channel.send).toHaveBeenCalledWith(`Error: ${error.message}`);
+      expect(result).toBeNull();
+    });
+
+    it('should handle characters that don\'t exist', async () => {
+      const error = new Error('Character with ID **12345** does not exist');
+      mockCensusService.getCharacterById = jest.fn().mockRejectedValue(error);
+
+      const result = await service.gatherCharacters([TestBootstrapper.getMockPS2Character(mockCharacterId, mockOutfitId)], mockDiscordMessage, 0, 500);
+
+      expect(mockDiscordMessage.channel.send).toBeCalledWith(`## ❌ An error occurred while gathering characters from Census! The character does not exist. ${error}`);
       expect(result).toBeNull();
     });
   });
