@@ -4,7 +4,7 @@ import { ConfigService } from '@nestjs/config';
 
 import { ReflectMetadataProvider } from '@discord-nestjs/core';
 import { PS2MembersEntity } from '../../database/entities/ps2.members.entity';
-import { EntityManager, EntityRepository } from '@mikro-orm/core';
+import { EntityManager } from '@mikro-orm/core';
 import { getRepositoryToken } from '@mikro-orm/nestjs';
 import { TestBootstrapper } from '../../test.bootstrapper';
 import { PS2GameScanningService } from './ps2.game.scanning.service';
@@ -16,7 +16,6 @@ const mockOutfitId = TestBootstrapper.mockConfig.ps2.outfitId;
 describe('PS2GameScanningService', () => {
   let service: PS2GameScanningService;
   let mockCensusService: CensusApiService;
-  let ps2MembersRepository: EntityRepository<PS2MembersEntity>;
   let mockDiscordMessage: any;
 
   let mockEntityManager: jest.Mocked<EntityManager>;
@@ -54,7 +53,6 @@ describe('PS2GameScanningService', () => {
 
     service = moduleRef.get<PS2GameScanningService>(PS2GameScanningService);
     mockCensusService = moduleRef.get(CensusApiService) as jest.Mocked<CensusApiService>;
-    ps2MembersRepository = moduleRef.get(getRepositoryToken(PS2MembersEntity));
 
     // Mocks
     mockDiscordMessage = TestBootstrapper.getMockDiscordMessage();
