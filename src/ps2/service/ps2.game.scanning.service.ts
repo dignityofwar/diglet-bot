@@ -52,6 +52,12 @@ export class PS2GameScanningService {
       return await Promise.all(characterPromises.map(promiseFunc => promiseFunc()));
     }
     catch (err) {
+      // If error message says does not exist, return null
+      if (err.message.includes('does not exist')) {
+        await statusMessage.channel.send(`## ❌ An error occurred while gathering characters from Census! The character does not exist. Error: ${err.message}`);
+        return null;
+      }
+
       if (tries === 3) {
         await statusMessage.edit(`## ❌ An error occurred while gathering ${length} characters! Giving up after 3 tries.`);
         await statusMessage.channel.send(`Error: ${err.message}`);
