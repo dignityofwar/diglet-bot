@@ -231,7 +231,7 @@ export class TestBootstrapper {
     } as any;
   }
 
-  static getMockPS2Character(characterId, outfitId) {
+  static getMockPS2Character(characterId: string, outfitId: string) {
     return {
       character_id: characterId,
       name: {
