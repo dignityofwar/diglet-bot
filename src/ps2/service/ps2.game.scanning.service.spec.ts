@@ -111,7 +111,7 @@ describe('PS2GameScanningService', () => {
 
       const result = await service.gatherCharacters([TestBootstrapper.getMockPS2Character(mockCharacterId, mockOutfitId)], mockDiscordMessage, 0, 500);
 
-      expect(mockDiscordMessage.channel.send).toBeCalledWith(`## ❌ An error occurred while gathering characters from Census! The character does not exist. ${error}`);
+      expect(mockDiscordMessage.channel.send).toBeCalledWith(`❌ An error occurred while gathering characters from Census! The character does not exist. ${error}`);
       expect(result).toBeNull();
     });
   });

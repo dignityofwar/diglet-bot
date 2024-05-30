@@ -54,7 +54,7 @@ export class PS2GameScanningService {
     catch (err) {
       // If error message says does not exist, return null
       if (err.message.includes('does not exist')) {
-        await statusMessage.channel.send(`## ❌ An error occurred while gathering characters from Census! The character does not exist. Error: ${err.message}`);
+        await statusMessage.channel.send(`❌ An error occurred while gathering characters from Census! The character does not exist. Error: ${err.message}`);
         return null;
       }
 
@@ -70,6 +70,7 @@ export class PS2GameScanningService {
     }
   }
 
+  // Main execution
   async startScan(originalMessage: Message, dryRun = false) {
     const message = await originalMessage.edit('Starting scan...');
 
