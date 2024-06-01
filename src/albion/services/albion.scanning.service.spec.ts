@@ -455,7 +455,7 @@ describe('AlbionScanningService', () => {
       expect(mockDiscordMessage.channel.send).toBeCalledWith('## 🇺🇸 🚪 1 leavers detected!');
       expect(mockDiscordMessage.channel.send).toBeCalledWith(`- 🇺🇸 👋 <@${mockDiscordUser.id}>'s character **${mockCharacterUS.Name}** has left the Guild but remains on the Discord server. Their roles and registration status have been stripped.`);
       expect(mockDiscordUser.roles.remove).toBeCalled();
-      expect(mockAlbionRegistrationsRepository.removeAndFlush).toBeCalled();
+      expect(mockAlbionRegistrationsRepository.getEntityManager().removeAndFlush).toBeCalled();
     });
     it('should properly handle guild only leavers who have joined a new guild, EU', async () => {
       // Mock the Albion API response to denote the character has left the guild
@@ -500,7 +500,7 @@ describe('AlbionScanningService', () => {
       expect(mockDiscordMessage.channel.send).toBeCalledWith('## 🇺🇸 🚪 1 leavers detected!');
       expect(mockDiscordMessage.channel.send).toBeCalledWith(`- 🇺🇸 👋 <@${mockDiscordUser.id}>'s character **${mockCharacterUS.Name}** has left the Guild but remains on the Discord server. Their roles and registration status have been stripped.`);
       expect(mockDiscordUser.roles.remove).toBeCalled();
-      expect(mockAlbionRegistrationsRepository.removeAndFlush).toBeCalled();
+      expect(mockAlbionRegistrationsRepository.getEntityManager().removeAndFlush).toBeCalled();
     });
     it('should properly handle server only leavers, US', async () => {
       mockCharacterUS.GuildId = TestBootstrapper.mockConfig.albion.guildIdUS;
