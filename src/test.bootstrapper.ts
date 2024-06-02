@@ -17,6 +17,7 @@ export class TestBootstrapper {
   static getMockEntityRepo() {
     return {
       find: jest.fn(),
+      findOne: jest.fn(),
       create: jest.fn(),
       upsert: jest.fn(),
     } as any;
@@ -128,6 +129,7 @@ export class TestBootstrapper {
         },
       },
       guild: this.getMockGuild('1234567890'),
+      react: jest.fn(),
     } as any;
   }
 
@@ -156,14 +158,10 @@ export class TestBootstrapper {
             fetch: jest.fn().mockImplementation(() => this.getMockDiscordUser()),
           },
         },
+        member: mockDiscordUser,
         user: mockDiscordUser.user,
         channel: {
-          send: jest.fn().mockImplementation(() => {
-            return {
-              edit: jest.fn(),
-              react: jest.fn(),
-            };
-          }),
+          send: jest.fn().mockReturnValue(TestBootstrapper.getMockDiscordMessage()),
         },
         reply: jest.fn(),
       },
@@ -178,6 +176,14 @@ export class TestBootstrapper {
       user: {
         bot: false,
       },
+    };
+  }
+
+  static getMockDiscordTextChannel() {
+    return {
+      id: '1234567890', // A mock channel ID
+      name: 'test-text-channel', // A mock channel name
+      send: jest.fn(),
     };
   }
 
