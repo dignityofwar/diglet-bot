@@ -55,8 +55,8 @@ export class AlbionRegistrationService implements OnApplicationBootstrap {
     const guildId = dto.server === AlbionServer.AMERICAS ? this.config.get('albion.guildIdUS') : this.config.get('albion.guildIdEU');
 
     // Fragments
-    const serverName = dto.server === AlbionServer.AMERICAS ? '🇺🇸 Americas' : '🇪🇺 Europe';
-    const guildName = dto.server === AlbionServer.AMERICAS ? 'DIG - Dignity of War' : 'Dignity Of War';
+    const serverEmoji = dto.server === AlbionServer.AMERICAS ? '🇺🇸' : '🇪🇺';
+    const guildName = dto.server === AlbionServer.AMERICAS ? `${serverEmoji} DIG - Dignity of War` : `${serverEmoji} Dignity Of War`;
     const rankName = dto.server === AlbionServer.AMERICAS ? '@ALB/US/Guildmaster' : '@ALB/EU/Archmage';
 
     if (character.GuildId !== guildId) {
@@ -71,14 +71,10 @@ export class AlbionRegistrationService implements OnApplicationBootstrap {
         AllianceId: character.AllianceId ?? 'N/A',
       };
 
-      this.logger.error(`Character "${character.Name}" is not in the DIG ${serverName} Guild! Guild ID detected: ${character.GuildId}, Character JSON: ${JSON.stringify(characterInfo)}`);
-
-      this.throwError(`Sorry <@${discordMember.id}>, the character **${character.Name}** has not been detected in the DIG ${serverName} Guild. Please ensure that:\n
-1. You have spelt the name **exactly** correct (case sensitive).
-2. You are a member of the Guild "**${guildName}**".
-3. You have waited ~10 minutes before trying again (sometimes our data source is slow).
-4. You have waited 1 hour before trying again.
-\nIf you are still having issues, please contact \`${rankName}\` in <#1039269706605002912>.
+      this.throwError(`Sorry <@${discordMember.id}>, the character **${character.Name}** has not been detected in the **${guildName}** Guild.
+\n➡️**Please ensure you have spelt your character __exactly__ correct as it appears in-game**. If you have mis-spelt it, please run the command again with the correct spelling.
+\n⏳We will automatically retry your registration attempt at the top of the hour over the next 24 hours. Sometimes our data source lags, so please be patient. **If you are not a member of DIG, this WILL fail regardless!!!**
+\nIf _after_ 24 hours this has not worked, please contact \`${rankName}\` in <#1039269706605002912> for assistance.
 \n||DEV DEBUG: [Gameinfo link](${endpoint}) \nCharacter JSON: \`${JSON.stringify(characterInfo)}\`||`);
     }
 
@@ -106,7 +102,7 @@ export class AlbionRegistrationService implements OnApplicationBootstrap {
     const guildMember = await this.albionRegistrationsRepository.find({ discordId: discordMember.id, guildId });
     if (guildMember.length > 0) {
       const leaderName = dto.server === AlbionServer.AMERICAS ? 'Guild Masters' : 'Archmages';
-      this.throwError(`Sorry <@${discordMember.id}>, you have already registered a character named **${guildMember[0].characterName}** for the ${serverName} Guild. We don't allow multiple Guild characters to be registered to the same Discord user, as there is little point to it. If you believe this to be in error, or if you have registered the wrong character, please contact the Albion ${leaderName} in <#1039269706605002912>.`);
+      this.throwError(`Sorry <@${discordMember.id}>, you have already registered a character named **${guildMember[0].characterName}** for the ${guildName} Guild. We don't allow multiple Guild characters to be registered to the same Discord user, as there is little point to it. If you believe this to be in error, or if you have registered the wrong character, please contact the Albion ${leaderName} in <#1039269706605002912>.`);
     }
 
     this.logger.debug(`Registration attempt for "${character.Name}" is valid`);

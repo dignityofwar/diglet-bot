@@ -136,7 +136,7 @@ describe('AlbionRegistrationService', () => {
         .mockResolvedValueOnce([])
         .mockResolvedValueOnce([discordMemberEntry]);
 
-      await expect(service.validateRegistrationAttempt(mockDto, mockCharacter, mockDiscordUser)).rejects.toThrowError(`Sorry <@${mockDiscordUser.id}>, you have already registered a character named **${discordMemberEntry.characterName}** for the 🇺🇸 Americas Guild. We don't allow multiple Guild characters to be registered to the same Discord user, as there is little point to it. If you believe this to be in error, or if you have registered the wrong character, please contact the Albion Guild Masters in <#1039269706605002912>.`);
+      await expect(service.validateRegistrationAttempt(mockDto, mockCharacter, mockDiscordUser)).rejects.toThrowError(`Sorry <@${mockDiscordUser.id}>, you have already registered a character named **${discordMemberEntry.characterName}** for the 🇺🇸 DIG - Dignity of War Guild. We don't allow multiple Guild characters to be registered to the same Discord user, as there is little point to it. If you believe this to be in error, or if you have registered the wrong character, please contact the Albion Guild Masters in <#1039269706605002912>.`);
     });
     it('should return an error if there is a character registered under the same name on the same server, formatted for EU', async () => {
       mockDto.server = AlbionServer.EUROPE;
@@ -149,7 +149,7 @@ describe('AlbionRegistrationService', () => {
         .mockResolvedValueOnce([])
         .mockResolvedValueOnce([discordMemberEntry]);
 
-      await expect(service.validateRegistrationAttempt(mockDto, mockCharacter, mockDiscordUser)).rejects.toThrowError(`Sorry <@${mockDiscordUser.id}>, you have already registered a character named **${discordMemberEntry.characterName}** for the 🇪🇺 Europe Guild. We don't allow multiple Guild characters to be registered to the same Discord user, as there is little point to it. If you believe this to be in error, or if you have registered the wrong character, please contact the Albion Archmages in <#1039269706605002912>.`);
+      await expect(service.validateRegistrationAttempt(mockDto, mockCharacter, mockDiscordUser)).rejects.toThrowError(`Sorry <@${mockDiscordUser.id}>, you have already registered a character named **${discordMemberEntry.characterName}** for the 🇪🇺 Dignity Of War Guild. We don't allow multiple Guild characters to be registered to the same Discord user, as there is little point to it. If you believe this to be in error, or if you have registered the wrong character, please contact the Albion Archmages in <#1039269706605002912>.`);
     });
     it('should return true if no existing registration was found', async () => {
       mockAlbionRegistrationsRepository.find = jest.fn()
@@ -159,9 +159,33 @@ describe('AlbionRegistrationService', () => {
       await expect(service.validateRegistrationAttempt(mockDto, mockCharacter, mockDiscordUser)).resolves.toBe(true);
     });
 
+    it('should handle characters that are not in the US guild', async () => {
+      mockDto.server = AlbionServer.AMERICAS;
+      mockCharacter.GuildId = 'utter nonsense';
+      mockCharacter.Name = 'Maelstrome26US';
+
+      const mockCharacterInfo = {
+        Id: mockCharacter.Id,
+        Name: mockCharacter.Name,
+        GuildId: 'utter nonsense',
+        GuildName: 'N/A',
+        AllianceName: 'N/A',
+        AllianceId: 'N/A',
+      };
+
+      const endpoint = `https://gameinfo.albiononline.com/api/gameinfo/players/${mockCharacter.Id}`;
+
+      await expect(service.validateRegistrationAttempt(mockDto, mockCharacter, mockDiscordUser)).rejects.toThrowError(`Sorry <@${mockDiscordUser.id}>, the character **${mockCharacter.Name}** has not been detected in the **🇺🇸 DIG - Dignity of War** Guild.
+\n➡️**Please ensure you have spelt your character __exactly__ correct as it appears in-game**. If you have mis-spelt it, please run the command again with the correct spelling.
+\n⏳We will automatically retry your registration attempt at the top of the hour over the next 24 hours. Sometimes our data source lags, so please be patient. **If you are not a member of DIG, this WILL fail regardless!!!**
+\nIf _after_ 24 hours this has not worked, please contact \`@ALB/US/Guildmaster\` in <#1039269706605002912> for assistance.
+\n||DEV DEBUG: [Gameinfo link](${endpoint}) \nCharacter JSON: \`${JSON.stringify(mockCharacterInfo)}\`||`);
+    });
+
     it('should handle characters that are not in the EU guild', async () => {
       mockDto.server = AlbionServer.EUROPE;
       mockCharacter.GuildId = 'utter nonsense';
+      mockCharacter.Name = 'Maelstrome26EU';
 
       const mockCharacterInfo = {
         Id: mockCharacter.Id,
@@ -174,12 +198,10 @@ describe('AlbionRegistrationService', () => {
 
       const endpoint = `https://gameinfo-ams.albiononline.com/api/gameinfo/players/${mockCharacter.Id}`;
 
-      await expect(service.validateRegistrationAttempt(mockDto, mockCharacter, mockDiscordUser)).rejects.toThrowError(`Sorry <@${mockDiscordUser.id}>, the character **${mockCharacter.Name}** has not been detected in the DIG 🇪🇺 Europe Guild. Please ensure that:\n
-1. You have spelt the name **exactly** correct (case sensitive).
-2. You are a member of the Guild "**Dignity Of War**".
-3. You have waited ~10 minutes before trying again (sometimes our data source is slow).
-4. You have waited 1 hour before trying again.
-\nIf you are still having issues, please contact \`@ALB/EU/Archmage\` in <#1039269706605002912>.
+      await expect(service.validateRegistrationAttempt(mockDto, mockCharacter, mockDiscordUser)).rejects.toThrowError(`Sorry <@${mockDiscordUser.id}>, the character **${mockCharacter.Name}** has not been detected in the **🇪🇺 Dignity Of War** Guild.
+\n➡️**Please ensure you have spelt your character __exactly__ correct as it appears in-game**. If you have mis-spelt it, please run the command again with the correct spelling.
+\n⏳We will automatically retry your registration attempt at the top of the hour over the next 24 hours. Sometimes our data source lags, so please be patient. **If you are not a member of DIG, this WILL fail regardless!!!**
+\nIf _after_ 24 hours this has not worked, please contact \`@ALB/EU/Archmage\` in <#1039269706605002912> for assistance.
 \n||DEV DEBUG: [Gameinfo link](${endpoint}) \nCharacter JSON: \`${JSON.stringify(mockCharacterInfo)}\`||`);
     });
   });
