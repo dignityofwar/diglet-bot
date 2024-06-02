@@ -49,3 +49,16 @@ jobs:
         uses: SonarSource/sonarcloud-github-action@master
         env:
           SONAR_TOKEN: ${{ secrets.SONARCLOUD_TOKEN }}
+
+      - name: Simulate new version
+        id: version
+        uses: phips28/gh-action-bump-version@master
+        with:
+          target-branch: main
+          skip-commit: true
+          skip-push: true
+
+      # Echo what version this would be
+      - name: Echo new version
+        run: "echo 'New Version: ${{ steps.version.outputs.newTag }}'"
+
