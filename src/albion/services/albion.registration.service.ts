@@ -97,22 +97,15 @@ export class AlbionRegistrationService implements OnApplicationBootstrap {
     discordChannelId: string
   ) {
     // Any failures here will be caught then mention the user with the error.
-    try {
-      const data = await this.getInfo(characterName, server, discordMemberId, discordGuildId);
-      const channel = await this.discordService.getChannel(discordChannelId) as TextChannel;
+    const data = await this.getInfo(characterName, server, discordMemberId, discordGuildId);
+    const channel = await this.discordService.getChannel(discordChannelId) as TextChannel;
 
-      this.logger.debug(`Handling Albion character "${data.character.Name}" registration for "${data.discordMember.displayName}" on server "${data.server}"`);
+    this.logger.debug(`Handling Albion character "${data.character.Name}" registration for "${data.discordMember.displayName}" on server "${data.server}"`);
 
-      await this.validate(data);
+    await this.validate(data);
 
-      // If we got here, we can safely register the character
-      await this.registerCharacter(data, channel);
-    }
-    catch (err) {
-      // Rethrow with mention of Discord user
-      this.logger.error(`Registration failed for character "${characterName}"! Err: ${err.message}`);
-      throw new Error(`Sorry <@${discordMemberId}>, ${err.message}`);
-    }
+    // If we got here, we can safely register the character
+    await this.registerCharacter(data, channel);
   }
 
   private throwError(error: string) {

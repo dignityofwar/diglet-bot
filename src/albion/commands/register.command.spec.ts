@@ -12,9 +12,11 @@ const expectedChannelId = TestBootstrapper.mockConfig.discord.channels.albionReg
 
 describe('AlbionRegisterCommand', () => {
   let command: AlbionRegisterCommand;
+  let albionRegistrationService: AlbionRegistrationService;
 
   let mockDiscordInteraction: any;
   let mockDiscordUser: any;
+  let mockDiscordMessage: any;
   const dto: AlbionRegisterDto = { character: 'Maelstrome26', server: AlbionServer.AMERICAS };
 
   beforeEach(async () => {
@@ -27,7 +29,7 @@ describe('AlbionRegisterCommand', () => {
         {
           provide: AlbionRegistrationService,
           useValue: {
-            registrationMessageProxy: jest.fn(),
+            handleRegistration: jest.fn(),
           },
         },
         {
@@ -38,28 +40,78 @@ describe('AlbionRegisterCommand', () => {
         },
       ],
     }).compile();
-
-    command = module.get<AlbionRegisterCommand>(AlbionRegisterCommand);
     TestBootstrapper.setupConfig(module);
 
+    command = module.get<AlbionRegisterCommand>(AlbionRegisterCommand);
+    albionRegistrationService = module.get<AlbionRegistrationService>(AlbionRegistrationService);
+
     mockDiscordInteraction = TestBootstrapper.getMockDiscordInteraction(expectedChannelId, mockDiscordUser);
+    mockDiscordMessage = TestBootstrapper.getMockDiscordMessage();
   });
 
   it('should be defined', () => {
     expect(command).toBeDefined();
   });
 
-  it('should return a message if command did not come from the correct channel', async () => {
-    mockDiscordInteraction[0].channelId = '1234';
+  describe('onAlbionRegisterCommand', () => {
+    it('should return a message if command did not come from the correct channel', async () => {
+      mockDiscordInteraction[0].channelId = '1234';
 
-    expect(await command.onAlbionRegisterCommand(dto, mockDiscordInteraction)).toBe(`Please use the <#${expectedChannelId}> channel to register.`);
+      expect(await command.onAlbionRegisterCommand(dto, mockDiscordInteraction)).toBe(`Please use the <#${expectedChannelId}> channel to register.`);
+    });
+    it('should return a response to the user', async () => {
+      const result = await command.onAlbionRegisterCommand(dto, mockDiscordInteraction);
+
+      expect(mockDiscordInteraction[0].channel.send).toHaveBeenCalledWith('🔍 Running registration process...');
+
+      expect(result).toBe('Registration request sent!');
+
+      // Can't mock the registrationCommandProxy call as it's outside of the async flow cos Discord Commands suck.
+    });
   });
 
-  it('should return a response to the user', async () => {
-    const result = await command.onAlbionRegisterCommand(dto, mockDiscordInteraction);
+  describe('registrationCommandProxy', () => {
+    it('should call the registration service', async () => {
+      await command.registrationCommandProxy(
+        dto.character,
+        dto.server,
+        mockDiscordUser.id,
+        mockDiscordUser.guild.id,
+        mockDiscordInteraction[0].channelId,
+        mockDiscordMessage
+      );
 
-    expect(mockDiscordInteraction[0].channel.send).toHaveBeenCalledWith('🔍 Running registration process...');
+      expect(albionRegistrationService.handleRegistration).toHaveBeenCalledWith(
+        dto.character,
+        dto.server,
+        mockDiscordUser.id,
+        mockDiscordUser.guild.id,
+        mockDiscordInteraction[0].channelId
+      );
+      expect(mockDiscordMessage.delete).toHaveBeenCalled();
+    });
+    it('should handle errors from the registration service', async () => {
+      const errorMessage = `Sorry <@${mockDiscordUser.id}>, Something went boom!`;
+      albionRegistrationService.handleRegistration = jest.fn().mockRejectedValue(new Error(errorMessage));
 
-    expect(result).toBe('Registration request sent!');
+      await command.registrationCommandProxy(
+        dto.character,
+        dto.server,
+        mockDiscordUser.id,
+        mockDiscordUser.guild.id,
+        mockDiscordInteraction[0].channelId,
+        mockDiscordMessage
+      );
+
+      expect(albionRegistrationService.handleRegistration).toHaveBeenCalledWith(
+        dto.character,
+        dto.server,
+        mockDiscordUser.id,
+        mockDiscordUser.guild.id,
+        mockDiscordInteraction[0].channelId
+      );
+      expect(mockDiscordMessage.channel.send).toHaveBeenCalledWith(`⛔️ **ERROR:** ${errorMessage}`);
+      expect(mockDiscordMessage.delete).toHaveBeenCalled();
+    });
   });
 });

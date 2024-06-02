@@ -71,7 +71,7 @@ export class AlbionRegisterCommand {
       );
     }
     catch (err) {
-      await message.edit(`⛔️ **ERROR:** ${err.message}`);
+      await message.channel.send(`⛔️ **ERROR:** ${err.message}`);
       this.logger.error(err.message);
     }
 

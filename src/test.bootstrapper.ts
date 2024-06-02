@@ -157,6 +157,7 @@ export class TestBootstrapper {
             fetch: jest.fn().mockImplementation(() => this.getMockDiscordUser()),
           },
         },
+        member: mockDiscordUser,
         user: mockDiscordUser.user,
         channel: {
           send: jest.fn().mockImplementation(() => {
