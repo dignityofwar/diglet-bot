@@ -7,3 +7,7 @@ jobs:
     name: Build & Test
     uses: ./.github/workflows/build-and-test-pr.yml
     secrets: inherit
+  version:
+    name: Proposed version
+    uses: ./.github/workflows/pr-version.yaml
+    needs: test

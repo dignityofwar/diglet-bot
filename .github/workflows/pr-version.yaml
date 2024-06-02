@@ -1,0 +1,36 @@
+---
+name: PR Proposed Version
+
+on:
+  workflow_call:
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    outputs:
+      version: ${{ steps.version.outputs.newTag }}
+    steps:
+      - name: Checkout source code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+
+      # Needed as when a badge is updated, checkout for some reason won't pull it in
+      - name: Ensure the very latest commit has been pulled
+        run: |
+          git fetch origin main
+          git reset --hard origin/main
+
+      - name: Simulate new version
+        id: version
+        uses: phips28/gh-action-bump-version@master
+        with:
+          target-branch: main
+          skip-commit: true
+          skip-push: true
+
+      # Echo what version this would be
+      - name: Echo new version
+        run: "echo 'New Version: ${{ steps.version.outputs.newTag }}'"
