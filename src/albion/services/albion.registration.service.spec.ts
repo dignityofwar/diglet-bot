@@ -187,31 +187,49 @@ describe('AlbionRegistrationService', () => {
 
     describe('checkAlreadyRegistered', () => {
       it('should return an error if the character has already been registered by a leaver', async () => {
-        mockAlbionRegistrationsRepository.findOne = jest.fn().mockResolvedValue([{ discordId: '123456789' }]);
+        mockAlbionRegistrationsRepository.findOne = jest.fn()
+          .mockResolvedValueOnce({ discordId: '123456789' })
+          .mockResolvedValueOnce(null);
         discordService.getGuildMember = jest.fn().mockResolvedValue(null);
 
         await expect(service.validate(mockRegistrationData)).rejects.toThrowError(`Sorry <@${mockDiscordUser.id}>, character **${mockCharacter.Name}** has already been registered for the ${mockRegistrationData.serverEmoji} ${mockRegistrationData.guildName} Guild, but the user who registered it has left the server.\n\n${contactMessage}`);
       });
       it('should return an error if the character has already been registered by a leaver, EU', async () => {
-        mockAlbionRegistrationsRepository.findOne = jest.fn().mockResolvedValue([{ discordId: '123456789' }]);
+        mockAlbionRegistrationsRepository.findOne = jest.fn()
+          .mockResolvedValueOnce({ discordId: '123456789' })
+          .mockResolvedValueOnce(null);
         discordService.getGuildMember = jest.fn().mockResolvedValue(null);
 
         await expect(service.validate(mockRegistrationDataEU)).rejects.toThrowError(`Sorry <@${mockDiscordUser.id}>, character **${mockCharacter.Name}** has already been registered for the ${mockRegistrationDataEU.serverEmoji} ${mockRegistrationDataEU.guildName} Guild, but the user who registered it has left the server.\n\n${contactMessageEU}`);
       });
-      it('should return an error if there is a character registered under the same name on the same server, formatted for US', async () => {
-        mockAlbionRegistrationsRepository.findOne = jest.fn().mockResolvedValue([{ discordId: '123456789' }]);
+      it('should throw if Discord user has a registration, US', async () => {
+        const alreadyRegisteredCharacter = {
+          discordId: mockRegistrationDataEU.discordMember.id,
+          characterName: 'MuricanDad',
+        };
+        mockAlbionRegistrationsRepository.findOne = jest.fn()
+          .mockResolvedValueOnce(null)
+          .mockResolvedValueOnce(alreadyRegisteredCharacter);
         discordService.getGuildMember = jest.fn().mockResolvedValue(mockDiscordUser);
 
-        await expect(service.validate(mockRegistrationData)).rejects.toThrowError(`Sorry <@${mockDiscordUser.id}>, you have already registered a character named **${mockRegistrationData.character.Name}** for the ${mockRegistrationData.serverEmoji} ${mockRegistrationData.guildName} Guild. We don't allow multiple character registrations to the same Discord user.\n\n${contactMessage}`);
+        await expect(service.validate(mockRegistrationData)).rejects.toThrowError(`Sorry <@${mockRegistrationData.discordMember.id}>, you have already registered a character named **${alreadyRegisteredCharacter.characterName}** for the ${mockRegistrationData.serverEmoji} ${mockRegistrationData.guildName} Guild. We don't allow multiple character registrations to the same Discord user.\n\n${contactMessage}`);
       });
-      it('should return an error if there is a character registered under the same name on the same server, formatted for EU', async () => {
-        mockAlbionRegistrationsRepository.findOne = jest.fn().mockResolvedValue([{ discordId: '123456789' }]);
+      it('should throw if Discord user has a registration, EU', async () => {
+        const alreadyRegisteredCharacter = {
+          discordId: mockRegistrationDataEU.discordMember.id,
+          characterName: 'SomeGuyYouKnow',
+        };
+        mockAlbionRegistrationsRepository.findOne = jest.fn()
+          .mockResolvedValueOnce(null)
+          .mockResolvedValueOnce(alreadyRegisteredCharacter);
         discordService.getGuildMember = jest.fn().mockResolvedValue(mockDiscordUser);
 
-        await expect(service.validate(mockRegistrationDataEU)).rejects.toThrowError(`Sorry <@${mockDiscordUser.id}>, you have already registered a character named **${mockRegistrationData.character.Name}** for the 🇪🇺 Dignity Of War Guild. We don't allow multiple character registrations to the same Discord user.\n\n${contactMessageEU}`);
+        await expect(service.validate(mockRegistrationDataEU)).rejects.toThrowError(`Sorry <@${mockRegistrationDataEU.discordMember.id}>, you have already registered a character named **${alreadyRegisteredCharacter.characterName}** for the 🇪🇺 Dignity Of War Guild. We don't allow multiple character registrations to the same Discord user.\n\n${contactMessageEU}`);
       });
       it('should return an error if the character has already been registered by another person (but still on server)', async () => {
-        mockAlbionRegistrationsRepository.findOne = jest.fn().mockResolvedValue([{ discordId: '123456789' }]);
+        mockAlbionRegistrationsRepository.findOne = jest.fn()
+          .mockResolvedValueOnce({ discordId: mockDiscordUser.id })
+          .mockResolvedValueOnce(null);
         const mockDiscordUser2 = TestBootstrapper.getMockDiscordUser();
         mockDiscordUser2.id = '987654321';
         mockDiscordUser2.displayName = 'TestUser2';

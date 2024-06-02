@@ -138,13 +138,29 @@ export class AlbionRegistrationService implements OnApplicationBootstrap {
   }
 
   private async checkAlreadyRegistered(data: RegistrationData) {
-    const foundMember = await this.albionRegistrationsRepository.findOne({
+    const contactMessage = `If you believe this to be in error, please contact \`${data.guildPingable}\` in <#1039269706605002912>.`;
+
+    const foundByCharacter = await this.albionRegistrationsRepository.findOne({
       characterId: data.character.Id,
       guildId: data.guildId,
     });
 
-    if (!foundMember) {
+    const foundByDiscord = await this.albionRegistrationsRepository.findOne({
+      guildId: data.guildId,
+      discordId: String(data.discordMember.user.id),
+    });
+
+    console.log(foundByDiscord);
+    console.log(data.discordMember);
+    console.log(data.discordMember.user.id);
+
+    // No previous registrations found
+    if (!foundByCharacter && !foundByDiscord) {
       return;
+    }
+
+    if (foundByDiscord?.discordId) {
+      this.throwError(`Sorry <@${data.discordMember.id}>, you have already registered a character named **${foundByDiscord.characterName}** for the ${data.serverEmoji} ${data.guildName} Guild. We don't allow multiple character registrations to the same Discord user.\n\n${contactMessage}`);
     }
 
     // Get the original Discord user, if possible
@@ -152,27 +168,19 @@ export class AlbionRegistrationService implements OnApplicationBootstrap {
     try {
       originalDiscordMember = await this.discordService.getGuildMember(
         data.discordMember.guild.id,
-        foundMember.discordId
+        foundByCharacter.discordId
       );
     }
     catch (err) {
       this.logger.warn(`Unable to find original Discord user for character "${data.character.Name}"! Err: ${err.message}`);
     }
 
-    const contactMessage = `If you believe this to be in error, please contact \`${data.guildPingable}\` in <#1039269706605002912>.`;
-
     // If the person who originally registered the character has left the server
-    if (!originalDiscordMember) {
+    if (!originalDiscordMember?.user?.id) {
       this.throwError(`Sorry <@${data.discordMember.id}>, character **${data.character.Name}** has already been registered for the ${data.serverEmoji} ${data.guildName} Guild, but the user who registered it has left the server.\n\n${contactMessage}`);
     }
-
-    // If the same discord user is trying to register another character, disallow it
-    if (originalDiscordMember.id === data.discordMember.id) {
-      this.throwError(`Sorry <@${data.discordMember.id}>, you have already registered a character named **${data.character.Name}** for the ${data.serverEmoji} ${data.guildName} Guild. We don't allow multiple character registrations to the same Discord user.\n\n${contactMessage}`);
-    }
-
-    // Otherwise it's already registered by someone else.
     this.throwError(`Sorry <@${data.discordMember.id}>, character **${data.character.Name}** has already been registered for the ${data.serverEmoji} ${data.guildName} Guild by Discord user \`@${originalDiscordMember.displayName}\`.\n\n${contactMessage}`);
+    return;
   }
 
   private async checkIfInGuild(data: RegistrationData) {

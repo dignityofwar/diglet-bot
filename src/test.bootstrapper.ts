@@ -75,7 +75,6 @@ export class TestBootstrapper {
         username: 'mockuser',
         bot: isBot,
       },
-
     } as any;
   }
 
