@@ -1,11 +1,9 @@
 ---
 name: PR Proposed Version
-
 on:
-  workflow_call:
-
+  pull_request:
 jobs:
-  release:
+  proposed-version:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout source code
@@ -15,6 +13,7 @@ jobs:
         id: version
         uses: phips28/gh-action-bump-version@master
         with:
+          target-branch: THIS BRANCH
           skip-commit: true
           skip-push: true
 
