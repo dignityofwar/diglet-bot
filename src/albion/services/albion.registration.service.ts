@@ -6,7 +6,7 @@ import {
   AlbionRegistrationsEntity,
 } from '../../database/entities/albion.registrations.entity';
 import { EntityRepository } from '@mikro-orm/core';
-import { Channel, GuildMember, Message, MessageFlags, TextChannel } from 'discord.js';
+import { Channel, GuildMember, MessageFlags, TextChannel } from 'discord.js';
 import { AlbionPlayerInterface, AlbionServer } from '../interfaces/albion.api.interfaces';
 import { AlbionApiService } from './albion.api.service';
 

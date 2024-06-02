@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
+/* eslint-disable @typescript-eslint/no-explicit-any,max-nested-callbacks */
 import { Test } from '@nestjs/testing';
 import { AlbionRegistrationService, RegistrationData } from './albion.registration.service';
 import { DiscordService } from '../../discord/discord.service';
