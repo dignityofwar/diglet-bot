@@ -13,6 +13,7 @@ jobs:
         id: version
         uses: phips28/gh-action-bump-version@master
         with:
+          target-branch: ${{ github.ref_name }}
           skip-commit: true
           skip-push: true
 
