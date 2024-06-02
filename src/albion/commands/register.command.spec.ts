@@ -59,14 +59,20 @@ describe('AlbionRegisterCommand', () => {
 
       expect(await command.onAlbionRegisterCommand(dto, mockDiscordInteraction)).toBe(`Please use the <#${expectedChannelId}> channel to register.`);
     });
-    it('should return a response to the user', async () => {
+    it('should return a response to the user and call the proxy', async () => {
+      command.registrationCommandProxy = jest.fn();
       const result = await command.onAlbionRegisterCommand(dto, mockDiscordInteraction);
 
       expect(mockDiscordInteraction[0].channel.send).toHaveBeenCalledWith('🔍 Running registration process...');
-
       expect(result).toBe('Registration request sent!');
-
-      // Can't mock the registrationCommandProxy call as it's outside of the async flow cos Discord Commands suck.
+      expect(command.registrationCommandProxy).toHaveBeenCalledWith(
+        dto.character,
+        dto.server,
+        mockDiscordUser.id,
+        mockDiscordUser.guild.id,
+        mockDiscordInteraction[0].channelId,
+        expect.any(Object),
+      );
     });
   });
 

@@ -289,7 +289,6 @@ describe('AlbionRegistrationService', () => {
       albionApiService.getCharacter = jest.fn().mockImplementation(() => {
         throw new Error(errorMsg);
       });
-      const errorString = `Sorry <@${mockDiscordUser.id}>, ${errorMsg}`;
 
       await expect(service.handleRegistration(
         mockRegistrationData.character.Name,
@@ -297,7 +296,7 @@ describe('AlbionRegistrationService', () => {
         mockRegistrationData.discordMember.id,
         'foo1234',
         TestBootstrapper.getMockDiscordTextChannel().id,
-      )).rejects.toThrowError(errorString);
+      )).rejects.toThrowError(errorMsg);
       expect(service['logger'].error).toHaveBeenCalledWith(`Registration failed for character "${mockRegistrationData.character.Name}"! Err: ${errorMsg}`);
     });
     it('should properly handle discord errors, mentioning the user', async () => {
@@ -306,7 +305,6 @@ describe('AlbionRegistrationService', () => {
       discordService.getChannel = jest.fn().mockImplementation(() => {
         throw new Error(errorMsg);
       });
-      const errorString = `Sorry <@${mockDiscordUser.id}>, ${errorMsg}`;
 
       await expect(service.handleRegistration(
         mockRegistrationData.character.Name,
@@ -314,16 +312,15 @@ describe('AlbionRegistrationService', () => {
         mockRegistrationData.discordMember.id,
         'foo1234',
         TestBootstrapper.getMockDiscordTextChannel().id,
-      )).rejects.toThrowError(errorString);
+      )).rejects.toThrowError(errorMsg);
       expect(service['logger'].error).toHaveBeenCalledWith(`Registration failed for character "${mockRegistrationData.character.Name}"! Err: ${errorMsg}`);
     });
-    it('should properly handle validation errors, mentioning the user', async () => {
+    it('should properly handle validation errors', async () => {
       const errorMsg = 'Character is not in the guild!';
       service.getInfo = jest.fn().mockResolvedValue(mockRegistrationData);
       service.validate = jest.fn().mockImplementation(() => {
         throw new Error(errorMsg);
       });
-      const errorString = `Sorry <@${mockDiscordUser.id}>, ${errorMsg}`;
 
       await expect(service.handleRegistration(
         mockRegistrationData.character.Name,
@@ -331,7 +328,7 @@ describe('AlbionRegistrationService', () => {
         mockRegistrationData.discordMember.id,
         'foo1234',
         TestBootstrapper.getMockDiscordTextChannel().id,
-      )).rejects.toThrowError(errorString);
+      )).rejects.toThrowError(errorMsg);
       expect(service['logger'].error).toHaveBeenCalledWith(`Registration failed for character "${mockRegistrationData.character.Name}"! Err: ${errorMsg}`);
     });
     it('should add the correct number of roles, US', async () => {

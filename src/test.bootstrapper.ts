@@ -129,6 +129,7 @@ export class TestBootstrapper {
         },
       },
       guild: this.getMockGuild('1234567890'),
+      react: jest.fn(),
     } as any;
   }
 
@@ -160,12 +161,7 @@ export class TestBootstrapper {
         member: mockDiscordUser,
         user: mockDiscordUser.user,
         channel: {
-          send: jest.fn().mockImplementation(() => {
-            return {
-              edit: jest.fn(),
-              react: jest.fn(),
-            };
-          }),
+          send: jest.fn().mockReturnValue(TestBootstrapper.getMockDiscordMessage()),
         },
         reply: jest.fn(),
       },
