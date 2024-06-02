@@ -217,7 +217,7 @@ describe('AlbionRegistrationService', () => {
         mockDiscordUser2.displayName = 'TestUser2';
         discordService.getGuildMember = jest.fn().mockResolvedValue(mockDiscordUser2);
 
-        await expect(service.validate(mockRegistrationData)).rejects.toThrowError(`Sorry <@${mockDiscordUser.id}>, character **${mockCharacter.Name}** has already been registered for the ${mockRegistrationData.serverEmoji} ${mockRegistrationData.guildName} Guild by Discord user **${mockDiscordUser2.displayName}**.\n\n${contactMessage}`);
+        await expect(service.validate(mockRegistrationData)).rejects.toThrowError(`Sorry <@${mockDiscordUser.id}>, character **${mockCharacter.Name}** has already been registered for the ${mockRegistrationData.serverEmoji} ${mockRegistrationData.guildName} Guild by Discord user \`@${mockDiscordUser2.displayName}\`.\n\n${contactMessage}`);
       });
       it('should handle Discord failures', async () => {
         mockAlbionRegistrationsRepository.findOne = jest.fn().mockResolvedValue([{ discordId: '123456789' }]);
