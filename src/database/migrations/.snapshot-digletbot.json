@@ -316,12 +316,20 @@
           "unique": false
         },
         {
-          "keyName": "unique_discordId_characterId_characterName_guildId",
+          "keyName": "unique_guild_discord",
           "columnNames": [
-            "discord_id",
-            "character_id",
-            "character_name",
-            "guild_id"
+            "guild_id",
+            "discord_id"
+          ],
+          "composite": true,
+          "primary": false,
+          "unique": true
+        },
+        {
+          "keyName": "unique_guild_character",
+          "columnNames": [
+            "guild_id",
+            "character_id"
           ],
           "composite": true,
           "primary": false,
