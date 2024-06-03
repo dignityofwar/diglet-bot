@@ -13,8 +13,12 @@ export interface AlbionRegistrationsEntityInterface {
 
 @Entity()
 @Unique({
-  name: 'unique_discordId_characterId_characterName_guildId',
-  properties: ['discordId', 'characterId', 'characterName', 'guildId'], // Allows multiple characters, one per guild
+  name: 'unique_guild_character',
+  properties: ['guildId', 'characterId'], // Allows only one character per guild
+})
+@Unique({
+  name: 'unique_guild_discord',
+  properties: ['guildId', 'discordId'], // Allows only one character per guild
 })
 export class AlbionRegistrationsEntity extends BaseEntity {
   @Property({
