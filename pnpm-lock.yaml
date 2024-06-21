@@ -61,7 +61,7 @@ importers:
         version: 4.17.21
       ps2census:
         specifier: ^4.6.0
-        version: 4.7.1
+        version: 4.7.2
     devDependencies:
       '@mikro-orm/cli':
         specifier: 5.9.8
@@ -1372,9 +1372,6 @@ packages:
 
   asynckit@0.4.0:
     resolution: {integrity: sha512-Oei9OH4tRh0YqU3GxhX79dM/mwVgvbZJaSNaRk+bshkj0S5cfHcgYakreBjrHwatXKbz+IoIdYLxrKim2MjW0Q==}
-
-  axios@1.6.7:
-    resolution: {integrity: sha512-/hDJGff6/c7u0hDkvkGxR/oy6CbCs8ziCsC7SqmhjfozqiJGc8Z11wrv9z9lYfY4K8l+H9TpjcMDX0xOZmx+RA==}
 
   axios@1.7.2:
     resolution: {integrity: sha512-2A8QhOMrbomlDuiLeK9XibIBzuHeRcqqNOHp0Cyp5EoJ1IFDh+XZH3A6BkXtv0K4gFGCI0Y4BM7B1wOEi0Rmgw==}
@@ -2723,8 +2720,8 @@ packages:
   proxy-from-env@1.1.0:
     resolution: {integrity: sha512-D+zkORCbA9f1tdWRK0RaCR3GPv50cMxcrz4X8k5LTSUD1Dkw47mKJEZQNunItRTkWwgtaUSo1RVFRIG9ZXiFYg==}
 
-  ps2census@4.7.1:
-    resolution: {integrity: sha512-8fYTUs5bqfTIQKPc/39swcjVaF64o74MdLsldLRVvPitYpu9EVw8xeiZyNqEfSLzblxjedPWXRDOp1JkFOY07Q==}
+  ps2census@4.7.2:
+    resolution: {integrity: sha512-AQNCCVIRKeM/MKGhsOP8Bubv65wtEVZogLQGvKhWLiNzE7L9cpD5QaKAe/eUD+ilOtwPwW3Um5pEhCqHuq+MSQ==}
     engines: {node: '>=14.0.0'}
     peerDependencies:
       bufferutil: ^4.0.7
@@ -3251,8 +3248,8 @@ packages:
     resolution: {integrity: sha512-7KxauUdBmSdWnmpaGFg+ppNjKF8uNLry8LyzjauQDOVONfFLNKrKvQOxZ/VuTIcS/gge/YNahf5RIIQWTSarlg==}
     engines: {node: ^12.13.0 || ^14.15.0 || >=16.0.0}
 
-  ws@8.16.0:
-    resolution: {integrity: sha512-HS0c//TP7Ina87TfiPUz1rQzMhHrl/SG2guqRcTOIUYD2q8uhUdNHZYJUaQ8aTGPzCh+c6oawMKW35nFl1dxyQ==}
+  ws@8.17.0:
+    resolution: {integrity: sha512-uJq6108EgZMAl20KagGkzCKfMEjxmKvZHG7Tlq0Z6nOky7YF7aq4mOx6xK8TJ/i1LeK4Qus7INktacctDgY8Ow==}
     engines: {node: '>=10.0.0'}
     peerDependencies:
       bufferutil: ^4.0.1
@@ -4902,14 +4899,6 @@ snapshots:
 
   asynckit@0.4.0: {}
 
-  axios@1.6.7:
-    dependencies:
-      follow-redirects: 1.15.6
-      form-data: 4.0.0
-      proxy-from-env: 1.1.0
-    transitivePeerDependencies:
-      - debug
-
   axios@1.7.2:
     dependencies:
       follow-redirects: 1.15.6
@@ -5706,9 +5695,9 @@ snapshots:
 
   isexe@2.0.0: {}
 
-  isomorphic-ws@5.0.0(ws@8.16.0):
+  isomorphic-ws@5.0.0(ws@8.17.0):
     dependencies:
-      ws: 8.16.0
+      ws: 8.17.0
 
   istanbul-lib-coverage@3.2.2: {}
 
@@ -6449,12 +6438,12 @@ snapshots:
 
   proxy-from-env@1.1.0: {}
 
-  ps2census@4.7.1:
+  ps2census@4.7.2:
     dependencies:
-      axios: 1.6.7
+      axios: 1.7.2
       eventemitter3: 5.0.1
-      isomorphic-ws: 5.0.0(ws@8.16.0)
-      ws: 8.16.0
+      isomorphic-ws: 5.0.0(ws@8.17.0)
+      ws: 8.17.0
     transitivePeerDependencies:
       - debug
 
@@ -6924,7 +6913,7 @@ snapshots:
       imurmurhash: 0.1.4
       signal-exit: 3.0.7
 
-  ws@8.16.0: {}
+  ws@8.17.0: {}
 
   ws@8.17.1: {}
 
