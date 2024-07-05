@@ -37,21 +37,27 @@ export class PS2GameScanningService {
     this.suggestionsCount = 0;
   }
 
-  async gatherCharacters(outfitMembers: PS2MembersEntity[], statusMessage: Message, tries = 0) {
-    const characterPromises: Promise<CensusCharacterWithOutfitInterface>[] = [];
+  async gatherCharacters(outfitMembers: PS2MembersEntity[], statusMessage: Message, tries = 0, waitTime = 10000) {
+    const characterPromises = [];
     tries++;
     const length = outfitMembers.length;
 
     await statusMessage.edit(`Gathering ${length} characters from Census... (attempt #${tries})`);
 
     for (const member of outfitMembers) {
-      characterPromises.push(this.censusService.getCharacterById(member.characterId));
+      characterPromises.push(() => this.censusService.getCharacterById(member.characterId));
     }
 
     try {
-      return await Promise.all(characterPromises);
+      return await Promise.all(characterPromises.map(promiseFunc => promiseFunc()));
     }
     catch (err) {
+      // If error message says does not exist, return null
+      if (err.message.includes('does not exist')) {
+        await statusMessage.channel.send(`❌ An error occurred while gathering characters from Census! The character does not exist. Error: ${err.message}`);
+        return null;
+      }
+
       if (tries === 3) {
         await statusMessage.edit(`## ❌ An error occurred while gathering ${length} characters! Giving up after 3 tries.`);
         await statusMessage.channel.send(`Error: ${err.message}`);
@@ -59,11 +65,12 @@ export class PS2GameScanningService {
       }
 
       await statusMessage.edit(`## ⚠️ Couldn't gather ${length} characters from Census, likely due to Census timeout issues. Retrying in 10s (attempt #${tries})...`);
-      await new Promise(resolve => setTimeout(resolve, 10000));
-      return this.gatherCharacters(outfitMembers, statusMessage, tries);
+      await new Promise(resolve => setTimeout(resolve, waitTime));
+      return this.gatherCharacters(outfitMembers, statusMessage, tries, waitTime);
     }
   }
 
+  // Main execution
   async startScan(originalMessage: Message, dryRun = false) {
     const message = await originalMessage.edit('Starting scan...');
 

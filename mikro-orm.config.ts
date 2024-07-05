@@ -3,7 +3,7 @@ import { Logger } from '@nestjs/common';
 import { MariaDbOptions } from '@mikro-orm/mariadb/MariaDbMikroORM';
 
 const logger = new Logger('MikroORM');
-const port = Number(process.env.DB_PORT) ?? 3306;
+const port = Number(process.env.DB_PORT) || 3306;
 
 const config: MariaDbOptions = {
   entities: ['./dist/src/database/entities'],

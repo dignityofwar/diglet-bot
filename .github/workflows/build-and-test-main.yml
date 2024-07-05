@@ -11,7 +11,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          fetch-depth: 2
+          fetch-depth: 0
           submodules: true
 
       - name: Install Node.js
@@ -36,16 +36,14 @@ jobs:
       - name: Install Dependencies
         run: pnpm install
 
+      - name: Run linter check
+        run: pnpm lint
+
       - name: Check if app builds properly
         run: pnpm build
 
       - name: Run tests with coverage
         run: pnpm test:ci
-
-      - name: SonarCloud Scan
-        uses: SonarSource/sonarcloud-github-action@master
-        env:
-          SONAR_TOKEN: ${{ secrets.SONARCLOUD_TOKEN }}
 
       - name: Generate coverage badges
         uses: jpb06/coverage-badges-action@latest
@@ -54,6 +52,23 @@ jobs:
           coverage-summary-path: ./coverage/coverage-summary.json
           commit-message: "ci(bot): Update coverage badges"
           badges-icon: jest
+
+      - name: Calculate the new version
+        id: version
+        uses: phips28/gh-action-bump-version@master
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          target-branch: main
+          skip-commit: 'true'
+          skip-tag: 'true'
+          skip-push:  'true'
+
+      - name: SonarCloud Scan with version attached
+        uses: SonarSource/sonarcloud-github-action@master
+        env:
+          SONAR_TOKEN: ${{ secrets.SONARCLOUD_TOKEN }}
+          SONAR_SCANNER_OPTS: -Dsonar.projectVersion=${{ steps.version.outputs.newTag }}
 
       # Need to wait a little bit for the last commit to fully register with GH, then pull it in
       - uses: GuillaumeFalourd/wait-sleep-action@v1

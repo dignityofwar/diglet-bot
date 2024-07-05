@@ -14,11 +14,10 @@ const guildOfficerRoleEU = '66343435879886';
 // This file helps set up mocks for various tests, which have been copied and pasted across the suite, causing a lot of duplication.
 @Injectable()
 export class TestBootstrapper {
-  static mockGuildsStore: any = {};
-
   static getMockEntityRepo() {
     return {
       find: jest.fn(),
+      findOne: jest.fn(),
       create: jest.fn(),
       upsert: jest.fn(),
     } as any;
@@ -76,7 +75,6 @@ export class TestBootstrapper {
         username: 'mockuser',
         bot: isBot,
       },
-
     } as any;
   }
 
@@ -130,6 +128,7 @@ export class TestBootstrapper {
         },
       },
       guild: this.getMockGuild('1234567890'),
+      react: jest.fn(),
     } as any;
   }
 
@@ -158,14 +157,10 @@ export class TestBootstrapper {
             fetch: jest.fn().mockImplementation(() => this.getMockDiscordUser()),
           },
         },
+        member: mockDiscordUser,
         user: mockDiscordUser.user,
         channel: {
-          send: jest.fn().mockImplementation(() => {
-            return {
-              edit: jest.fn(),
-              react: jest.fn(),
-            };
-          }),
+          send: jest.fn().mockReturnValue(TestBootstrapper.getMockDiscordMessage()),
         },
         reply: jest.fn(),
       },
@@ -180,6 +175,14 @@ export class TestBootstrapper {
       user: {
         bot: false,
       },
+    };
+  }
+
+  static getMockDiscordTextChannel() {
+    return {
+      id: '1234567890', // A mock channel ID
+      name: 'test-text-channel', // A mock channel name
+      send: jest.fn(),
     };
   }
 
@@ -233,7 +236,7 @@ export class TestBootstrapper {
     } as any;
   }
 
-  static getMockPS2Character(characterId, outfitId) {
+  static getMockPS2Character(characterId: string, outfitId: string) {
     return {
       character_id: characterId,
       name: {

@@ -52,7 +52,7 @@ describe('AlbionApiService', () => {
 
     await expect(service.getCharacter('who.dis', AlbionServer.AMERICAS))
       .rejects
-      .toThrowError('character **who.dis** does not seem to exist on the Americas server. Please ensure: \n1. You\'ve supplied your **exact** character name (case sensitive).\n2. You\'ve chosen the correct Albion server.\n3. Your character is older than 48 hours.');
+      .toThrowError('Character **who.dis** does not seem to exist on the Americas server. Please ensure: \n1. You\'ve supplied your **exact** character name (case sensitive).\n2. You\'ve chosen the correct Albion server.\n3. Your character is older than 48 hours.');
   });
 
   it('should return a character based on exact match amongst partial matches', async () => {
@@ -133,7 +133,7 @@ describe('AlbionApiService', () => {
 
     await expect(service.getCharacter('Maelstrome', AlbionServer.AMERICAS))
       .rejects
-      .toThrowError(`character ID \`${id}\` does not match API response consistently. Pinging <@${TestBootstrapper.mockConfig.discord.devUserId}>!`);
+      .toThrowError(`Character ID \`${id}\` does not match API response consistently. Pinging <@${TestBootstrapper.mockConfig.discord.devUserId}>!`);
   });
 
   it('should handle a character having duplicates, as long as only one of them is in the guild', async () => {

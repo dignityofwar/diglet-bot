@@ -8,6 +8,13 @@ This project is now considered **stable**, and is now versioned appropriately vi
 [![CI](https://github.com/dignityofwar/diglet-bot/actions/workflows/ci.yml/badge.svg)](https://github.com/dignityofwar/diglet-bot/actions/workflows/ci.yml)
 ![Jest coverage](./badges/coverage-total.svg)
 ![Lines](./badges/coverage-lines.svg)
+[![Lines of Code](https://sonarcloud.io/api/project_badges/measure?project=dignityofwar_diglet-bot&metric=ncloc)](https://sonarcloud.io/summary/new_code?id=dignityofwar_diglet-bot)
+[![Reliability Rating](https://sonarcloud.io/api/project_badges/measure?project=dignityofwar_diglet-bot&metric=reliability_rating)](https://sonarcloud.io/summary/new_code?id=dignityofwar_diglet-bot)
+[![Security Rating](https://sonarcloud.io/api/project_badges/measure?project=dignityofwar_diglet-bot&metric=security_rating)](https://sonarcloud.io/summary/new_code?id=dignityofwar_diglet-bot)
+[![Maintainability Rating](https://sonarcloud.io/api/project_badges/measure?project=dignityofwar_diglet-bot&metric=sqale_rating)](https://sonarcloud.io/summary/new_code?id=dignityofwar_diglet-bot)
+[![Code Smells](https://sonarcloud.io/api/project_badges/measure?project=dignityofwar_diglet-bot&metric=code_smells)](https://sonarcloud.io/summary/new_code?id=dignityofwar_diglet-bot)
+[![Technical Debt](https://sonarcloud.io/api/project_badges/measure?project=dignityofwar_diglet-bot&metric=sqale_index)](https://sonarcloud.io/summary/new_code?id=dignityofwar_diglet-bot)
+[![Vulnerabilities](https://sonarcloud.io/api/project_badges/measure?project=dignityofwar_diglet-bot&metric=vulnerabilities)](https://sonarcloud.io/summary/new_code?id=dignityofwar_diglet-bot)
 
 ## System Requirements
 - Install brew (on linux), or your own package manager, I'm not your mum!
@@ -36,6 +43,6 @@ While this project is designed for a Mac ecosystem, it can be run on WSL, but yo
 # Troubleshooting
 ## Running migration:up fails
 ```
-Error: MikroORM config file not found in ['./src/mikro-orm.config.js', './mikro-orm.config.js']
+Error: MikroORM config file not found in ['./src/mikro-orm.config.ts', './mikro-orm.config.ts']
 ```
 This is due to ts-node not properly transpiling typescript into javascript which the package understands. To get round this, you can run `pnpm build` to in effect create the files for the migration to be able to run. Don't ask me why it works, it just does.
