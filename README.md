@@ -43,6 +43,6 @@ While this project is designed for a Mac ecosystem, it can be run on WSL, but yo
 # Troubleshooting
 ## Running migration:up fails
 ```
-Error: MikroORM config file not found in ['./src/mikro-orm.config.js', './mikro-orm.config.js']
+Error: MikroORM config file not found in ['./src/mikro-orm.config.ts', './mikro-orm.config.ts']
 ```
 This is due to ts-node not properly transpiling typescript into javascript which the package understands. To get round this, you can run `pnpm build` to in effect create the files for the migration to be able to run. Don't ask me why it works, it just does.

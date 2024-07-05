@@ -1,4 +1,3 @@
-version: "3"
 services:
   diglet-bot-db:
     container_name: digletbot-db
