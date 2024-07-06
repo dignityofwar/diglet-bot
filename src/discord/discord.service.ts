@@ -94,4 +94,21 @@ export class DiscordService {
       this.logger.error('Failed to delete message', err);
     }
   }
+
+  async batchSend(messages: string[], originMessage: Message): Promise<void> {
+    let count = 0;
+
+    // Loop each of the messages and carve them up into batches of 10
+    const batchMessages = [];
+    for (const message of messages) {
+      count++;
+      if (count % 10 === 0 || count === messages.length) {
+        batchMessages.push(message);
+      }
+    }
+
+    for (const batch of batchMessages) {
+      await originMessage.channel.send(batch);
+    }
+  }
 }

@@ -1,7 +1,9 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { Collection, GuildMember, Message, Role } from 'discord.js';
 import { DiscordService } from '../../discord/discord.service';
-import { DatabaseService } from '../../database/services/database.service';
+import { ActivityEntity } from '../../database/entities/activity.entity';
+import { EntityRepository } from '@mikro-orm/core';
+import { InjectRepository } from '@mikro-orm/nestjs';
 
 export interface PurgableMemberList {
   purgableMembers: Collection<string, GuildMember>;
@@ -25,7 +27,7 @@ export class PurgeService {
 
   constructor(
     private readonly discordService: DiscordService,
-    private readonly databaseService: DatabaseService
+    @InjectRepository(ActivityEntity) private readonly activityRepository: EntityRepository<ActivityEntity>,
   ) {}
 
   async getPurgableMembers(message: Message): Promise<PurgableMemberList> {
@@ -84,7 +86,7 @@ export class PurgeService {
       return 0;
     });
 
-    await statusMessage.edit(`Refreshing member cache [0/${members.size}]...`);
+    await statusMessage.edit(`Refreshing member cache [0/${members.size}] (0%)...`);
 
     const batchSize = 25; // Define the size of each batch
 
@@ -103,21 +105,23 @@ export class PurgeService {
         console.log(batch);
       }
 
-      await statusMessage.edit(`Refreshing member cache [${m}/${members.size}]...`);
+      const percent = Math.floor((m / members.size) * 100);
+
+      await statusMessage.edit(`Refreshing member cache [${m}/${members.size}] (${percent}%)...`);
     }
 
-    await statusMessage.delete();
+    await statusMessage.edit('Crunching the numbers...');
 
     // Filter out bots and people who are onboarded already
-    return {
-      purgableMembers: members.filter(member => this.isPurgable(member, activeMembers, onboardedRole)),
+    const results = {
+      purgableMembers: members.filter(async member => await this.isPurgable(member, activeMembers, onboardedRole)),
       purgableByGame: {
-        ps2: members.filter(member => this.isPurgable(member, activeMembers, onboardedRole) && member.roles.cache.has(ps2Role.id)),
-        ps2Verified: members.filter(member => this.isPurgable(member, activeMembers, onboardedRole) && member.roles.cache.has(ps2VerifiedRole.id)),
-        foxhole: members.filter(member => this.isPurgable(member, activeMembers, onboardedRole) && member.roles.cache.has(foxholeRole.id)),
-        albion: members.filter(member => this.isPurgable(member, activeMembers, onboardedRole) && member.roles.cache.has(albionRole.id)),
-        albionUSRegistered: members.filter(member => this.isPurgable(member, activeMembers, onboardedRole) && member.roles.cache.has(albionUSRegistered.id)),
-        albionEURegistered: members.filter(member => this.isPurgable(member, activeMembers, onboardedRole) && member.roles.cache.has(albionEURegistered.id)),
+        ps2: members.filter(async member => await this.isPurgable(member, activeMembers, onboardedRole) && member.roles.cache.has(ps2Role.id)),
+        ps2Verified: members.filter(async member => await this.isPurgable(member, activeMembers, onboardedRole) && member.roles.cache.has(ps2VerifiedRole.id)),
+        foxhole: members.filter(async member => await this.isPurgable(member, activeMembers, onboardedRole) && member.roles.cache.has(foxholeRole.id)),
+        albion: members.filter(async member => await this.isPurgable(member, activeMembers, onboardedRole) && member.roles.cache.has(albionRole.id)),
+        albionUSRegistered: members.filter(async member => await this.isPurgable(member, activeMembers, onboardedRole) && member.roles.cache.has(albionUSRegistered.id)),
+        albionEURegistered: members.filter(async member => await this.isPurgable(member, activeMembers, onboardedRole) && member.roles.cache.has(albionEURegistered.id)),
       },
       totalMembers: members.size,
       totalBots: members.filter(member => member.user.bot).size,
@@ -129,13 +133,23 @@ export class PurgeService {
         }
       }).size,
     };
+
+    await statusMessage.delete();
+
+    return results;
   }
 
-  // Hydrates the active members from the database with the discord user, then adds the lastActivity timestamp
+  // Builds a map of active members and hydrates their GuildMember objects, for later comparison in isPurgable.
   async getActiveMembers(message: Message) : Promise<Collection<string, GuildMember>> {
     this.logger.log('Getting active Discord members...');
 
-    const actives = await this.databaseService.getActives();
+    const thresholdDate = new Date();
+    thresholdDate.setDate(thresholdDate.getDate() - 90);
+
+    const actives = await this.activityRepository.find({
+      lastActivity: { $gt: thresholdDate },
+    });
+
     const activeMembers: Collection<string, GuildMember> = new Collection();
     for (const member of actives) {
       activeMembers.set(
@@ -150,23 +164,24 @@ export class PurgeService {
     return activeMembers;
   }
 
-  isPurgable(member: GuildMember, activeMembers: Collection<string, GuildMember>, onboardedRole: Role): boolean {
-    // Ignore bots
+  async isPurgable(member: GuildMember, activeMembers: Collection<string, GuildMember>, onboardedRole: Role): Promise<boolean> {
+    // Ignore bots.
     if (member.user.bot) {
       return false;
     }
 
-    // If not in the active members list, we don't care about their circumstances, boot them.
-    // See DatabaseService.getActives() for how we determine active members.
+    const weekInMs = 604800000;
+    // Don't boot people brand new to the server, give them 1 weeks grace period.
+    if (member.joinedTimestamp > Date.now() - weekInMs) {
+      return false;
+    }
+
+    // If not in the active members map, and are outside their grace period, boot them.
     if (!activeMembers.has(member.user.id)) {
       return true;
     }
 
-    const weekInMs = 604800000;
-    // Don't boot people brand new to the server, give them 1 weeks grace period
-    if (member.joinedTimestamp > Date.now() - weekInMs) {
-      return false;
-    }
+    // If all else does not match, if they don't have the onboarded role, boot them.
     return !member.roles.cache.has(onboardedRole.id);
   }
 
@@ -191,7 +206,7 @@ export class PurgeService {
       const date = new Date(member.joinedTimestamp).toLocaleString();
 
       if (!dryRun) {
-        await this.discordService.kickMember(member, message, `Purge on ${date}: Not onboarded`);
+        await this.discordService.kickMember(member, message, `Automatic purge on ${date}`);
       }
       this.logger.log(`Kicked ${name} (${member.user.id})`);
       lastKickedString += `- ${prefix}🥾 Kicked ${name} (${member.user.id})\n`;

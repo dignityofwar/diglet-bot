@@ -3,14 +3,13 @@ import { Test } from '@nestjs/testing';
 import { ConfigService } from '@nestjs/config';
 import { PurgeService } from './purge.service';
 import { TestBootstrapper } from '../../test.bootstrapper';
-import { Collection, GuildMember } from 'discord.js';
+import { Collection } from 'discord.js';
 import { DiscordService } from '../../discord/discord.service';
 import { DatabaseService } from '../../database/services/database.service';
 
 describe('PurgeService', () => {
   let service: PurgeService;
   let mockMessage: any;
-  let mockRole: any;
   let discordService: DiscordService;
 
   beforeEach(async () => {
@@ -41,7 +40,6 @@ describe('PurgeService', () => {
     discordService.deleteMessage = jest.fn().mockReturnValue(() => true);
 
     mockMessage = TestBootstrapper.getMockDiscordMessage();
-    mockRole = TestBootstrapper.getMockDiscordRole('123');
 
     mockMessage.guild.roles.cache.find = jest.fn().mockReturnValue({
       id: '123',

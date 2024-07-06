@@ -33,7 +33,7 @@ export class PurgeCandidatesCommand {
       return;
     }
 
-    await message.edit(`Found ${purgableMembers.purgableMembers.size} members who are not onboarded. Generating list...`);
+    await message.edit(`Found ${purgableMembers.purgableMembers.size} members who are not onboarded or are inactive. Generating list...`);
 
     // Hold a list of member IDs that will be sent by the below
     const gameMemberIds: string[] = [];

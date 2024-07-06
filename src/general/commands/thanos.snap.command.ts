@@ -3,7 +3,7 @@ import { ApplicationCommandType, ChatInputCommandInteraction } from 'discord.js'
 import { Logger } from '@nestjs/common';
 import { PurgeService } from '../services/purge.service';
 import { SlashCommandPipe } from '@discord-nestjs/common';
-import { ThanosSnapDto } from '../dto/thanos.snap.dto';
+import { DryRunDto } from '../dto/dry.run.dto';
 
 @Command({
   name: 'thanos-snap',
@@ -18,9 +18,8 @@ export class ThanosSnapCommand {
   ) {}
 
   @Handler()
-
   async onThanosSnapCommand(
-    @InteractionEvent(SlashCommandPipe) dto: ThanosSnapDto,
+    @InteractionEvent(SlashCommandPipe) dto: DryRunDto,
     @EventParams() interaction: ChatInputCommandInteraction[]
   ): Promise<void> {
     const channel = interaction[0].channel;

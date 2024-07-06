@@ -92,7 +92,7 @@ describe('ActivityCronService', () => {
       await activityCronService.runActivityDataScans();
 
       expect(mockChannel.send).toHaveBeenCalledWith('Starting activity scan cron');
-      expect(activityService.scanAndRemoveLeavers).toHaveBeenCalledWith(mockChannel);
+      expect(activityService.startScan).toHaveBeenCalledWith(mockChannel);
     });
   });
 });

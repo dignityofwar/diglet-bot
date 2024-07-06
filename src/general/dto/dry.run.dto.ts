@@ -1,6 +1,6 @@
 import { Param, ParamType } from '@discord-nestjs/core';
 
-export class ThanosSnapDto {
+export class DryRunDto {
   @Param({
     name: 'dry-run',
     description:

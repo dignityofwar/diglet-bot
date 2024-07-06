@@ -13,7 +13,7 @@ import { DatabaseService } from '../database/services/database.service';
 import { VoiceStateEvents } from './events/voice.state.events';
 import { ActivityScanCommand } from './commands/activity.scan.command';
 import { ActivityService } from './services/activity.service';
-import { ActivityCronService } from './services/activity.cron.service';
+// import { ActivityCronService } from './services/activity.cron.service';
 
 @Module({
   imports: [DiscordModule.forFeature(), ConfigModule, DatabaseModule],
@@ -35,7 +35,7 @@ import { ActivityCronService } from './services/activity.cron.service';
     VoiceStateEvents,
 
     // Cron Services
-    ActivityCronService,
+    // ActivityCronService,
   ],
 })
 export class GeneralModule {}
