@@ -31,7 +31,7 @@ describe('ActivityCronService', () => {
         {
           provide: ActivityService,
           useValue: {
-            scanAndRemoveLeavers: jest.fn(),
+            startScan: jest.fn(),
           },
         },
         Logger,
@@ -89,10 +89,10 @@ describe('ActivityCronService', () => {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (activityCronService as any).channel = mockChannel;
 
-      await activityCronService.runActivityDataScans();
+      await activityCronService.runActivityLeaverScans();
 
-      expect(mockChannel.send).toHaveBeenCalledWith('Starting activity scan cron');
-      expect(activityService.startScan).toHaveBeenCalledWith(mockChannel);
+      expect(mockChannel.send).toHaveBeenCalledWith('Starting activity leaver scan cron...');
+      expect(activityService.startScan).toHaveBeenCalledWith(mockChannel, false);
     });
   });
 });

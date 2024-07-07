@@ -1,5 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { GuildTextBasedChannel, Message } from 'discord.js';
+import { Message, TextChannel } from 'discord.js';
 import { InjectRepository } from '@mikro-orm/nestjs';
 import { EntityRepository } from '@mikro-orm/core';
 import { ActivityEntity } from '../../database/entities/activity.entity';
@@ -15,7 +15,7 @@ export class ActivityService {
   ) {}
 
   // Gets list of members who are in the activity list who have left and remove them from activity
-  async startScan(channel: GuildTextBasedChannel, dryRun: boolean): Promise<void> {
+  async startScan(channel: TextChannel, dryRun: boolean): Promise<void> {
     const stepMessage = await channel.send('# Starting Activity Leaver Scan');
 
     await stepMessage.edit('## 1: Getting active member list...');
@@ -36,7 +36,7 @@ export class ActivityService {
     const batchMessages = [];
 
     let progressPercent = '0';
-    const statusMessage = await originMessage.channel.send(`Scanning member list... 0 of ${allActivityMembers.length} (${progressPercent}%)`);
+    const statusMessage = await originMessage.channel.send(`Scanning member list for leavers... 0 of ${allActivityMembers.length} (${progressPercent}%)`);
 
     for (const activityMember of allActivityMembers) {
       scanCount++;
@@ -76,9 +76,9 @@ export class ActivityService {
       this.logger.log(`Removed activity record for leaver ${activityRecord.discordNickname} (${activityRecord.discordId})`);
     }
     catch (err) {
-      const error = `Error removing activity record for leaver ${activityRecord.discordNickname} (${activityRecord.discordId})`;
+      const error = `Error removing activity record for leaver ${activityRecord.discordNickname} (${activityRecord.discordId}). Error: ${err.message}`;
       this.logger.error(error);
-      await originMessage.channel.send(error);
+      throw new Error(error);
     }
   }
 }
