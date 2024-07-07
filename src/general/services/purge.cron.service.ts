@@ -1,5 +1,4 @@
 import { Injectable, Logger, OnApplicationBootstrap } from '@nestjs/common';
-import { Cron } from '@nestjs/schedule';
 import { TextChannel } from 'discord.js';
 import { ConfigService } from '@nestjs/config';
 import { DiscordService } from '../../discord/discord.service';
