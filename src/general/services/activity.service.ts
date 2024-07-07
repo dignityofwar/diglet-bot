@@ -1,5 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { Message, TextChannel } from 'discord.js';
+import { GuildTextBasedChannel, Message, TextChannel } from 'discord.js';
 import { InjectRepository } from '@mikro-orm/nestjs';
 import { EntityRepository } from '@mikro-orm/core';
 import { ActivityEntity } from '../../database/entities/activity.entity';
@@ -15,7 +15,7 @@ export class ActivityService {
   ) {}
 
   // Gets list of members who are in the activity list who have left and remove them from activity
-  async startScan(channel: TextChannel, dryRun: boolean): Promise<void> {
+  async startScan(channel: GuildTextBasedChannel | TextChannel, dryRun: boolean): Promise<void> {
     const stepMessage = await channel.send('# Starting Activity Leaver Scan');
 
     await stepMessage.edit('## 1: Getting active member list...');

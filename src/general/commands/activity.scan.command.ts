@@ -31,7 +31,7 @@ export class ActivityScanCommand {
       await channel.send('## This is a dry run! No members will be kicked!');
     }
 
-    this.activityService.startScan(interaction[0].channel, dto.dryRun);
+    this.activityService.startScan(channel, dto.dryRun);
 
     this.logger.log('Activity scan command executed!');
   }
