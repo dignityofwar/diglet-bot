@@ -20,6 +20,7 @@ interface MockMemberOptions {
   }
   withinGrace: boolean;
   active: boolean
+  nickname?: string;
 }
 
 describe('PurgeService', () => {
@@ -713,6 +714,55 @@ describe('PurgeService', () => {
       expect(mockMessage.channel.send).toHaveBeenCalledWith(`[DRY RUN] **${count}** members purged.`);
     });
   });
+
+  describe('sortMembers', () => {
+    it('should sort members by display name', () => {
+      const members = new Collection<string, GuildMember>();
+      const mockMembers = createMockMember({ isBot: false, roles: { onboarded: true }, withinGrace: false, active: true }, 3);
+      members.set(mockMembers.members[0].user.id, { ...mockMembers.members[0], displayName: 'Charlie' });
+      members.set(mockMembers.members[1].user.id, { ...mockMembers.members[1], displayName: 'Alice' });
+      members.set(mockMembers.members[2].user.id, { ...mockMembers.members[2], displayName: 'Bob' });
+
+      const sortedMembers = service.sortMembers(members);
+
+      const sortedKeys = sortedMembers.map(member => member.user.id);
+      expect(sortedKeys).toEqual([mockMembers.members[1].user.id, mockMembers.members[2].user.id, mockMembers.members[0].user.id]); // Alice, Bob, Charlie
+    });
+
+    it('should sort members by nickname when display name is absent', () => {
+      const members = new Collection<string, GuildMember>();
+      const mockMembers = createMockMember({ isBot: false, roles: { onboarded: true }, withinGrace: false, active: true }, 3);
+      members.set(mockMembers.members[0].user.id, mockMembers.members[0]);
+      members.set(mockMembers.members[1].user.id, mockMembers.members[1]);
+      members.set(mockMembers.members[2].user.id, mockMembers.members[2]);
+
+      const sortedMembers = service.sortMembers(members);
+
+      const sortedKeys = sortedMembers.map(member => member.user.id);
+      expect(sortedKeys).toEqual([mockMembers.members[0].user.id, mockMembers.members[1].user.id, mockMembers.members[2].user.id]); // 1-0Nick, 1-1Nick, 1-2Nick
+    });
+
+    it('should sort members by username when display name and nickname are absent', () => {
+      const members = new Collection<string, GuildMember>();
+      const mockMembers = createMockMember({ isBot: false, roles: { onboarded: true }, withinGrace: false, active: true }, 3);
+      members.set(mockMembers.members[0].user.id, { ...mockMembers.members[0], nickname: null });
+      members.set(mockMembers.members[1].user.id, { ...mockMembers.members[1], nickname: null });
+      members.set(mockMembers.members[2].user.id, { ...mockMembers.members[2], nickname: null });
+
+      const sortedMembers = service.sortMembers(members);
+
+      const sortedKeys = sortedMembers.map(member => member.user.id);
+      expect(sortedKeys).toEqual([mockMembers.members[0].user.id, mockMembers.members[1].user.id, mockMembers.members[2].user.id]); // 1-0Nick, 1-1Nick, 1-2Nick
+    });
+
+    it('should return an empty collection when input is empty', () => {
+      const members = new Collection<string, GuildMember>();
+
+      const sortedMembers = service.sortMembers(members);
+
+      expect(sortedMembers.size).toBe(0);
+    });
+  });
 });
 
 function createMockMember(options: MockMemberOptions, returnCount: number, key = 1): { members: any[], actives: any[]} {
@@ -722,6 +772,7 @@ function createMockMember(options: MockMemberOptions, returnCount: number, key =
   const actives: any[] = [];
   let count = 0;
   while (count < returnCount) {
+    const nickname = options.nickname || `${key}-${count.toString()}Nick`;
     const member = {
       joinedTimestamp: options.withinGrace ? Date.now() - 100000 : 1234567890,
       user: {
@@ -729,7 +780,7 @@ function createMockMember(options: MockMemberOptions, returnCount: number, key =
         bot: options.isBot,
         username: `${key}-${count.toString()}User`,
       },
-      nickname: `${key}-${count.toString()}Nick`,
+      nickname,
       roles: {
         cache: {
           has: () => options.roles.onboarded,
