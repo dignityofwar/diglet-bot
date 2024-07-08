@@ -377,6 +377,8 @@ describe('PurgeService', () => {
       const result = await service.resolveActiveMembers(mockMessage, false);
 
       expect(result.size).toBe(2);
+      expect(activityService.removeActivityRecord).toHaveBeenCalledWith(mockActives[1], false);
+      expect(activityService.removeActivityRecord).toHaveBeenCalledTimes(2);
     });
   });
 
