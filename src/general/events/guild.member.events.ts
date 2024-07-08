@@ -26,7 +26,7 @@ export class GuildMemberEvents {
       this.logger.log(`Removed activity record for leaver ${activityRecord.discordNickname} (${activityRecord.discordId})`);
     }
     else {
-      this.logger.warn(`No activity record was found for leaver ${activityRecord.discordNickname} (${activityRecord.discordId}), likely left immediately after joining.`);
+      this.logger.warn(`No activity record was found for leaver ${member.displayName} (${member.id}), likely left immediately after joining.`);
     }
   }
 }

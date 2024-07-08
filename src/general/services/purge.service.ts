@@ -139,7 +139,10 @@ export class PurgeService {
     }
   }
 
-  async getPurgableMembers(message: Message, dryRun = true): Promise<PurgableMemberList> {
+  async getPurgableMembers(
+    message: Message,
+    dryRun = true
+  ): Promise<PurgableMemberList> {
     let onboardedRole: Role;
     let ps2Role: Role;
     let ps2VerifiedRole: Role;
