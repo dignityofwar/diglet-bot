@@ -82,6 +82,63 @@ export class PurgeService {
     };
   }
 
+  async startPurge(
+    originMessage: Message,
+    dryRun = true,
+    interactionMember: GuildMember | null = null
+  ): Promise<void> {
+    await originMessage.channel.send('https://media.giphy.com/media/ie76dJeem4xBDcf83e/giphy.gif');
+
+    const statusMessage = await originMessage.channel.send('Snapping fingers...');
+
+    let purgableMembers: PurgableMemberList;
+
+    try {
+      purgableMembers = await this.getPurgableMembers(originMessage, dryRun);
+    }
+    catch (err) {
+      const string = `## ❌ Error commencing the purge!\n${err.message}`;
+      this.logger.error(string);
+      await statusMessage.edit(string);
+      return;
+    }
+
+    if (purgableMembers.purgableMembers.size === 0) {
+      const string = '## ✅ All members are active and onboarded.\nThey have been saved from Thanos, this time...';
+      this.logger.log(string);
+      await originMessage.channel.send(string);
+      return;
+    }
+
+    await statusMessage.edit(`Found ${purgableMembers.purgableMembers.size} members who have disobeyed Thanos...\nI don't feel too good Mr Stark...`);
+
+    // I don't feel too good Mr Stark...
+    await originMessage.channel.send('https://media2.giphy.com/media/XzkGfRsUweB9ouLEsE/giphy.gif');
+
+    // Let the purge commence...
+    try {
+      await this.kickPurgableMembers(
+        originMessage,
+        purgableMembers.purgableMembers,
+        dryRun
+      );
+    }
+    catch (err) {
+      const string = `## ❌ Error purging members!\n${err.message}`;
+      this.logger.error(string);
+      await statusMessage.edit(string);
+    }
+
+    // Thanos is pleased
+    await originMessage.channel.send('https://media1.tenor.com/m/g0oFjHy6W1cAAAAC/thanos-smile.gif');
+
+    await originMessage.channel.send(`## ✅ Purge complete.\n**${purgableMembers.purgableMembers.size}** members have been purged from the server. It is now recommended to run the Scanners found in #albion-scans and #ps2-scans.`);
+
+    if (interactionMember) {
+      await originMessage.channel.send(`Thanos thanks you for your service, <@${interactionMember.user.id}>.`);
+    }
+  }
+
   async getPurgableMembers(message: Message, dryRun = true): Promise<PurgableMemberList> {
     let onboardedRole: Role;
     let ps2Role: Role;
@@ -104,8 +161,7 @@ export class PurgeService {
     catch (err) {
       const string = `Preflight checks failed! Err: ${err.message}`;
       this.logger.error(string);
-      await message.channel.send(string);
-      return;
+      throw new Error(string);
     }
 
     // 2. Get a list of active members and hydrate their cache.

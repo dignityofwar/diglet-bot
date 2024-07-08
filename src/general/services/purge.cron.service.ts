@@ -18,7 +18,7 @@ export class PurgeCronService implements OnApplicationBootstrap {
   async onApplicationBootstrap(): Promise<void> {
     this.logger.log('Initializing Purge Cron Service');
 
-    const channelId = this.config.get('discord.channels.');
+    const channelId = this.config.get('discord.channels.botJobs');
 
     // Check if the channel exists
     this.channel = await this.discordService.getChannel(channelId) as TextChannel;
@@ -32,9 +32,9 @@ export class PurgeCronService implements OnApplicationBootstrap {
   }
 
   // @Cron('0 0 6,18 * * *')
-  // async runPurge(): Promise<void> {
-  //   this.logger.log('Running Purge Cron');
-  //   const message = await this.channel.send('Running weekly purge scans');
-  //   await this.purgeService.kickPurgableMembers(message);
-  // }
+  async runPurge(): Promise<void> {
+    this.logger.log('Running Purge Cron');
+    const message = await this.channel.send('Starting weekly purge scan...');
+    await this.purgeService.startPurge(message, true);
+  }
 }

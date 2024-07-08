@@ -169,6 +169,131 @@ describe('PurgeService', () => {
     expect(service).toBeDefined();
   });
 
+  describe('startPurge', () => {
+    it('should handle preflightChecks errors', async () => {
+      // Create a placeholder for the new message
+      const newStatusMessage = TestBootstrapper.getMockDiscordMessage();
+
+      // Mock send to return the exact instance of the new message so tests continue to work.
+      mockMessage.channel.send = jest.fn().mockImplementation(async () => {
+        return newStatusMessage;
+      });
+      service.preflightChecks = jest.fn().mockImplementation(() => {
+        throw new Error('Test error');
+      });
+
+      expect(await service.startPurge(mockMessage as any, false)).toBe(undefined);
+
+      expect(newStatusMessage.edit).toHaveBeenCalledWith('## ❌ Error commencing the purge!\n' +
+        'Preflight checks failed! Err: Test error');
+    });
+
+    it('should handle any errors from getPurgableMembers', async () => {
+      // Create a placeholder for the new message
+      const newStatusMessage = TestBootstrapper.getMockDiscordMessage();
+
+      // Mock send to return the exact instance of the new message so tests continue to work.
+      mockMessage.channel.send = jest.fn().mockImplementation(async () => {
+        return newStatusMessage;
+      });
+      service.getPurgableMembers = jest.fn().mockImplementation(() => {
+        throw new Error('Something went boom');
+      });
+
+      expect(await service.startPurge(mockMessage as any, false)).toBe(undefined);
+
+      expect(newStatusMessage.edit).toHaveBeenCalledWith('## ❌ Error commencing the purge!\n' +
+        'Something went boom');
+    });
+
+    it('should respond accordingly when there are no purgables', async () => {
+      service.getPurgableMembers = jest.fn().mockResolvedValue({
+        purgableMembers: new Collection(),
+        totalMembers: 0,
+        totalBots: 0,
+        totalHumans: 0,
+        inGracePeriod: 0,
+        inactive: 0,
+      });
+
+      expect(await service.startPurge(mockMessage as any, false)).toBe(undefined);
+
+      expect(mockMessage.channel.send).toHaveBeenCalledWith('## ✅ All members are active and onboarded.\nThey have been saved from Thanos, this time...');
+    });
+
+    it('should handle errors from the kick purgable members function', async () => {
+      service.kickPurgableMembers = jest.fn().mockImplementation(() => {
+        throw new Error('Something went boom when kicking!');
+      });
+
+      // Create a placeholder for the new message
+      const newStatusMessage = TestBootstrapper.getMockDiscordMessage();
+
+      // Mock send to return the exact instance of the new message so tests continue to work.
+      mockMessage.channel.send = jest.fn().mockImplementation(async () => {
+        return newStatusMessage;
+      });
+      const returnedData = {
+        purgableMembers: generatedMembers,
+        totalMembers: 1,
+        totalBots: 1,
+        totalHumans: 1,
+        inGracePeriod: 1,
+        inactive: 1,
+      };
+      service.getPurgableMembers = jest.fn().mockResolvedValue(returnedData);
+
+      const mockDiscordUser = TestBootstrapper.getMockDiscordUser();
+
+      expect(await service.startPurge(
+        mockMessage as any,
+        false,
+        mockDiscordUser,
+      )).toBe(undefined);
+
+      expect(service.kickPurgableMembers).toHaveBeenCalledWith(mockMessage, returnedData.purgableMembers, false);
+      expect(newStatusMessage.edit).toHaveBeenCalledWith('## ❌ Error purging members!\nSomething went boom when kicking!');
+    });
+
+    it('should respond commence the purge when purgables exist, and communicate progress', async () => {
+      service.kickPurgableMembers = jest.fn();
+
+      // Create a placeholder for the new message
+      const newStatusMessage = TestBootstrapper.getMockDiscordMessage();
+
+      // Mock send to return the exact instance of the new message so tests continue to work.
+      mockMessage.channel.send = jest.fn().mockImplementation(async () => {
+        return newStatusMessage;
+      });
+      const returnedData = {
+        purgableMembers: generatedMembers,
+        totalMembers: 50,
+        totalBots: 4,
+        totalHumans: 46,
+        inGracePeriod: 5,
+        inactive: 6,
+      };
+      service.getPurgableMembers = jest.fn().mockResolvedValue(returnedData);
+
+      const mockDiscordUser = TestBootstrapper.getMockDiscordUser();
+
+      expect(await service.startPurge(
+        mockMessage as any,
+        false,
+        mockDiscordUser,
+      )).toBe(undefined);
+
+      expect(mockMessage.channel.send).toHaveBeenCalledWith('https://media.giphy.com/media/ie76dJeem4xBDcf83e/giphy.gif');
+      expect(mockMessage.channel.send).toHaveBeenCalledWith('Snapping fingers...');
+      expect(newStatusMessage.edit).toHaveBeenCalledWith(`Found ${returnedData.purgableMembers.size} members who have disobeyed Thanos...\nI don't feel too good Mr Stark...`);
+      expect(mockMessage.channel.send).toHaveBeenCalledWith('https://media2.giphy.com/media/XzkGfRsUweB9ouLEsE/giphy.gif');
+      expect(service.kickPurgableMembers).toHaveBeenCalledWith(mockMessage, returnedData.purgableMembers, false);
+      expect(mockMessage.channel.send).toHaveBeenCalledWith('https://media1.tenor.com/m/g0oFjHy6W1cAAAAC/thanos-smile.gif');
+      expect(mockMessage.channel.send).toHaveBeenCalledWith(`## ✅ Purge complete.\n**${returnedData.purgableMembers.size}** members have been purged from the server. It is now recommended to run the Scanners found in #albion-scans and #ps2-scans.`);
+      expect(mockMessage.channel.send).toHaveBeenCalledWith(`Thanos thanks you for your service, <@${mockDiscordUser.id}>.`);
+    });
+  });
+
   describe('preflightChecks', () => {
     it('should return the roles in order', async () => {
       mockRoleAlbionEURegistered.name = 'AlbionEURegistered';
@@ -261,13 +386,20 @@ describe('PurgeService', () => {
 
   describe('getPurgableMembers', () => {
     it('should handle preflightChecks errors', async () => {
+      // Create a placeholder for the new message
+      const newStatusMessage = TestBootstrapper.getMockDiscordMessage();
+
+      // Mock send to return the exact instance of the new message so tests continue to work.
+      mockMessage.channel.send = jest.fn().mockImplementation(async () => {
+        return newStatusMessage;
+      });
       service.preflightChecks = jest.fn().mockImplementation(() => {
         throw new Error('Test error');
       });
 
-      expect(await service.getPurgableMembers(mockMessage as any, true)).toBe(undefined);
+      expect(await service.startPurge(mockMessage as any, false)).toBe(undefined);
 
-      expect(mockMessage.channel.send).toHaveBeenCalledWith('Preflight checks failed! Err: Test error');
+      expect(newStatusMessage.edit).toHaveBeenCalledWith('## ❌ Error commencing the purge!\nPreflight checks failed! Err: Test error');
     });
     it('should handle errors when fetching members list from Discord', async () => {
       service.resolveActiveMembers = jest.fn().mockResolvedValue(new Collection(activeMembers));

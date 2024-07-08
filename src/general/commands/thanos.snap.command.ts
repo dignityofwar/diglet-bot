@@ -22,6 +22,7 @@ export class ThanosSnapCommand {
     @InteractionEvent(SlashCommandPipe) dto: DryRunDto,
     @EventParams() interaction: ChatInputCommandInteraction[]
   ): Promise<void> {
+    this.logger.log('Executing Thanos Snap Command');
     const channel = interaction[0].channel;
     await interaction[0].reply('I am... inevitable.');
 
@@ -29,31 +30,8 @@ export class ThanosSnapCommand {
       await channel.send('## This is a dry run! No members will be kicked!');
     }
 
-    await channel.send('https://media.giphy.com/media/ie76dJeem4xBDcf83e/giphy.gif');
+    const message = await channel.send('https://media.giphy.com/media/ie76dJeem4xBDcf83e/giphy.gif');
 
-    const message = await channel.send('Snapping fingers...');
-
-    const purgableMembers = await this.purgeService.getPurgableMembers(message, dto.dryRun);
-
-    if (purgableMembers.purgableMembers.size === 0) {
-      this.logger.log('✅ All members are onboarded and active! Nothing to do! They have been saved from Thanos, this time.');
-      await channel.send('All members are onboarded and active! They have been saved from Thanos, this time.');
-      return;
-    }
-
-    await message.edit(`Found ${purgableMembers.purgableMembers.size} members who are not onboarded...\nI don't feel too good Mr Stark...`);
-
-    // I don't feel too good Mr Stark...
-    await message.channel.send('https://media2.giphy.com/media/XzkGfRsUweB9ouLEsE/giphy.gif');
-
-    await this.purgeService.kickPurgableMembers(
-      message,
-      purgableMembers.purgableMembers,
-      dto.dryRun
-    );
-
-    await message.channel.send('https://media1.tenor.com/m/g0oFjHy6W1cAAAAC/thanos-smile.gif');
-
-    await message.channel.send(`✅ <@${interaction[0].member.user.id}> Purge complete. **${purgableMembers.purgableMembers.size}** members have been removed from the server. It is now recommended to run the Scanners found in #albion-scans and #ps2-scans.`);
+    this.purgeService.startPurge(message, dto.dryRun);
   }
 }
