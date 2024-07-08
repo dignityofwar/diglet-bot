@@ -5,6 +5,7 @@ import { ActivityEntity } from '../../database/entities/activity.entity';
 import { EntityRepository } from '@mikro-orm/core';
 import { InjectRepository } from '@mikro-orm/nestjs';
 import { ActivityService } from './activity.service';
+import { ConfigService } from '@nestjs/config';
 
 export interface PurgableMemberList {
   purgableMembers: Collection<string, GuildMember>;
@@ -30,10 +31,11 @@ export class PurgeService {
   constructor(
     private readonly discordService: DiscordService,
     private readonly activityService: ActivityService,
+    private readonly config: ConfigService,
     @InjectRepository(ActivityEntity) private readonly activityRepository: EntityRepository<ActivityEntity>,
   ) {}
 
-  async getPurgableMembers(message: Message, dryRun = true): Promise<PurgableMemberList> {
+  preflightChecks(message: Message) {
     const onboardedRole = message.guild.roles.cache.find(role => role.name === 'Onboarded');
     const ps2Role = message.guild.roles.cache.find(role => role.name === 'Planetside2');
     const ps2VerifiedRole = message.guild.roles.cache.find(role => role.name === 'PS2/Verified');
@@ -42,14 +44,67 @@ export class PurgeService {
     const albionUSRegistered = message.guild.roles.cache.find(role => role.name === 'ALB/US/Registered');
     const albionEURegistered = message.guild.roles.cache.find(role => role.name === 'ALB/EU/Registered');
 
-    // 1. Preflight
+    const devUserId = this.config.get('discord.devUserId');
+
+    // 1. Preflight checks
     if (!onboardedRole) {
-      await message.channel.send('Could not find onboarded role. Please create a role called "Onboarded" and try again.');
-      return;
+      throw new Error(`Could not find Onboarded role! Pinging Bot Dev <@${devUserId}>!`);
     }
 
-    if (!ps2Role || !ps2VerifiedRole || !foxholeRole || !albionRole || !albionUSRegistered || !albionEURegistered) {
-      await message.channel.send('Could not find game roles. Please create roles called "Planetside2", "Foxhole", and "Albion Online" and try again.');
+    if (!ps2Role) {
+      throw new Error(`Could not find Planetside2 role! Pinging Bot Dev <@${devUserId}>!`);
+    }
+
+    if (!ps2VerifiedRole) {
+      throw new Error(`Could not find PS2/Verified role! Pinging Bot Dev <@${devUserId}>!`);
+    }
+
+    if (!foxholeRole) {
+      throw new Error(`Could not find Foxhole role! Pinging Bot Dev <@${devUserId}>!`);
+    }
+
+    if (!albionRole) {
+      throw new Error(`Could not find Albion Online role! Pinging Bot Dev <@${devUserId}>!`);
+    }
+
+    if (!albionUSRegistered || !albionEURegistered) {
+      throw new Error(`Could not find Albion Online registered role(s)! Pinging Bot Dev <@${devUserId}>!`);
+    }
+
+    return {
+      onboardedRole,
+      ps2Role,
+      ps2VerifiedRole,
+      foxholeRole,
+      albionRole,
+      albionUSRegistered,
+      albionEURegistered,
+    };
+  }
+
+  async getPurgableMembers(message: Message, dryRun = true): Promise<PurgableMemberList> {
+    let onboardedRole: Role;
+    let ps2Role: Role;
+    let ps2VerifiedRole: Role;
+    let foxholeRole: Role;
+    let albionRole: Role;
+    let albionUSRegistered: Role;
+    let albionEURegistered: Role;
+
+    try {
+      const roles = this.preflightChecks(message);
+      onboardedRole = roles.onboardedRole;
+      ps2Role = roles.ps2Role;
+      ps2VerifiedRole = roles.ps2VerifiedRole;
+      foxholeRole = roles.foxholeRole;
+      albionRole = roles.albionRole;
+      albionUSRegistered = roles.albionUSRegistered;
+      albionEURegistered = roles.albionEURegistered;
+    }
+    catch (err) {
+      const string = `Preflight checks failed! Err: ${err.message}`;
+      this.logger.error(string);
+      await message.channel.send(string);
       return;
     }
 
@@ -65,22 +120,23 @@ export class PurgeService {
       members = await message.guild.members.fetch();
     }
     catch (err) {
-      await message.channel.send('Error fetching Discord server members. Please try again.');
+      const string = `Error fetching Discord server members. Err: ${err.message}`;
+      this.logger.error(string);
+      await message.channel.send(string);
       return;
     }
     this.logger.log(`${members.size} members found`);
     await statusMessage.edit(`${members.size} members found. Sorting members...`);
 
-    // Sort the members alphabetically so we don't lose our minds in the output
+    // Sort the members alphabetically, so we don't lose our minds in the output
     members = this.sortMembers(members);
-
-    await statusMessage.edit(`Refreshing member cache [0/${members.size}] (0%)...`);
-
+    // Convert to an array for easier slicing and batching.
+    const membersArray = Array.from(members.values());
     const batchSize = 25; // Define the size of each batch
 
     // Refresh the cache of each member
+    await statusMessage.edit(`Refreshing member cache [0/${members.size}] (0%)...`);
     for (let m = 0; m < members.size; m += batchSize) {
-      const membersArray = Array.from(members.values());
       const batch = membersArray.slice(m, m + batchSize);
       const promises = batch.map(member => member.fetch());
 
@@ -88,9 +144,9 @@ export class PurgeService {
         await Promise.all(promises);
       }
       catch (err) {
-        await message.channel.send(`Error refreshing member cache: ${err.message}`);
-        this.logger.error(`Error refreshing member cache: ${err.message}`);
-        console.log(batch);
+        const string = `Error refreshing member cache. Err: ${err.message}`;
+        await message.channel.send(string);
+        this.logger.error(string);
       }
 
       const percent = Math.floor((m / members.size) * 100);
@@ -222,10 +278,10 @@ export class PurgeService {
       count++;
 
       const name = member.displayName || member.nickname || member.user.username;
-      const date = new Date(member.joinedTimestamp).toLocaleString();
+      const date = new Date().toLocaleString();
 
       if (!dryRun) {
-        await this.discordService.kickMember(member, message, `Automatic purge on ${date}`);
+        await this.discordService.kickMember(member, message, `Automatic purge: ${date}`);
         // Removal of activity records is handled by the guildRemoveMember event listener.
       }
       this.logger.log(`Kicked ${name} (${member.user.id})`);

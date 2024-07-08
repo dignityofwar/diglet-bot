@@ -41,6 +41,21 @@ describe('PurgeService', () => {
   const botCount = 4;
   const inactiveCount = 6;
 
+  const mockRoleOnboarded = TestBootstrapper.getMockDiscordRole('353464645454');
+  mockRoleOnboarded.name = 'Onboarded';
+  const mockRolePS2 = TestBootstrapper.getMockDiscordRole('123456789');
+  mockRolePS2.name = 'Planetside2';
+  const mockRolePS2Verified = TestBootstrapper.getMockDiscordRole('234567890');
+  mockRolePS2Verified.name = 'PS2Verified';
+  const mockRoleFoxhole = TestBootstrapper.getMockDiscordRole('345678901');
+  mockRoleFoxhole.name = 'Foxhole';
+  const mockRoleAlbion = TestBootstrapper.getMockDiscordRole('456789012');
+  mockRoleAlbion.name = 'Albion';
+  const mockRoleAlbionUSRegistered = TestBootstrapper.getMockDiscordRole('567890123');
+  mockRoleAlbionUSRegistered.name = 'AlbionUSRegistered';
+  const mockRoleAlbionEURegistered = TestBootstrapper.getMockDiscordRole('678901234');
+  const devUserId = TestBootstrapper.mockConfig.discord.devUserId;
+
   beforeEach(async () => {
     const moduleRef = await Test.createTestingModule({
       providers: [
@@ -76,6 +91,21 @@ describe('PurgeService', () => {
 
     mockMessage.guild.roles.cache.find = jest.fn().mockReturnValue({
       id: '123',
+    });
+    // Mock fetch implementation
+    mockMessage.guild.members.fetch = jest.fn().mockImplementation(() => {
+      return {
+        size: generatedMembers.size,
+        sort: () => generatedMembers,
+        filter: (callback: (value: GuildMember, key: string, collection: Collection<string, GuildMember>) => key is string) => new Collection(generatedMembers.filter(callback).map(member => [member.user.id, member])),
+        values: () => generatedMembers.map(member => {
+          return {
+            ...member,
+            fetch: jest.fn().mockResolvedValue(member),
+            kick: jest.fn().mockImplementation(() => true),
+          };
+        }),
+      };
     });
 
     activeMembers.clear();
@@ -139,27 +169,166 @@ describe('PurgeService', () => {
     expect(service).toBeDefined();
   });
 
+  describe('preflightChecks', () => {
+    it('should return the roles in order', async () => {
+      mockRoleAlbionEURegistered.name = 'AlbionEURegistered';
+
+      mockMessage.guild.roles.cache.find = jest.fn()
+        .mockReturnValueOnce(mockRoleOnboarded)
+        .mockReturnValueOnce(mockRolePS2)
+        .mockReturnValueOnce(mockRolePS2Verified)
+        .mockReturnValueOnce(mockRoleFoxhole)
+        .mockReturnValueOnce(mockRoleAlbion)
+        .mockReturnValueOnce(mockRoleAlbionUSRegistered)
+        .mockReturnValueOnce(mockRoleAlbionEURegistered);
+
+      const result = service.preflightChecks(mockMessage as any);
+
+      expect(result.onboardedRole).toBe(mockRoleOnboarded);
+      expect(result.ps2Role).toBe(mockRolePS2);
+      expect(result.ps2VerifiedRole).toBe(mockRolePS2Verified);
+      expect(result.foxholeRole).toBe(mockRoleFoxhole);
+      expect(result.albionRole).toBe(mockRoleAlbion);
+      expect(result.albionUSRegistered).toBe(mockRoleAlbionUSRegistered);
+      expect(result.albionEURegistered).toBe(mockRoleAlbionEURegistered);
+    });
+
+    it('should throw an error if the Onboarded role does not exist', async () => {
+      mockMessage.guild.roles.cache.find = jest.fn()
+        .mockReturnValueOnce(null);
+
+      expect(() => service.preflightChecks(mockMessage as any)).toThrow(`Could not find Onboarded role! Pinging Bot Dev <@${devUserId}>!`);
+    });
+    it('should throw an error if the Planetside2 role does not exist', async () => {
+      mockMessage.guild.roles.cache.find = jest.fn()
+        .mockReturnValueOnce(mockRoleOnboarded)
+        .mockReturnValueOnce(null);
+
+      expect(() => service.preflightChecks(mockMessage as any)).toThrow(`Could not find Planetside2 role! Pinging Bot Dev <@${devUserId}>!`);
+    });
+    it('should throw an error if the PS2/Verified role does not exist', async () => {
+      mockMessage.guild.roles.cache.find = jest.fn()
+        .mockReturnValueOnce(mockRoleOnboarded)
+        .mockReturnValueOnce(mockRolePS2)
+        .mockReturnValueOnce(null);
+
+      expect(() => service.preflightChecks(mockMessage as any)).toThrow(`Could not find PS2/Verified role! Pinging Bot Dev <@${devUserId}>!`);
+    });
+    it('should throw an error if the Foxhole role does not exist', async () => {
+      mockMessage.guild.roles.cache.find = jest.fn()
+        .mockReturnValueOnce(mockRoleOnboarded)
+        .mockReturnValueOnce(mockRolePS2)
+        .mockReturnValueOnce(mockRolePS2Verified)
+        .mockReturnValueOnce(null);
+
+      expect(() => service.preflightChecks(mockMessage as any)).toThrow(`Could not find Foxhole role! Pinging Bot Dev <@${devUserId}>!`);
+    });
+    it('should throw an error if the Albion Online role does not exist', async () => {
+      mockMessage.guild.roles.cache.find = jest.fn()
+        .mockReturnValueOnce(mockRoleOnboarded)
+        .mockReturnValueOnce(mockRolePS2)
+        .mockReturnValueOnce(mockRolePS2Verified)
+        .mockReturnValueOnce(mockRoleFoxhole)
+        .mockReturnValueOnce(null);
+
+      expect(() => service.preflightChecks(mockMessage as any)).toThrow(`Could not find Albion Online role! Pinging Bot Dev <@${devUserId}>!`);
+    });
+    it('should throw an error if the Albion Online registered US role does not exist', async () => {
+      mockMessage.guild.roles.cache.find = jest.fn()
+        .mockReturnValueOnce(mockRoleOnboarded)
+        .mockReturnValueOnce(mockRolePS2)
+        .mockReturnValueOnce(mockRolePS2Verified)
+        .mockReturnValueOnce(mockRoleFoxhole)
+        .mockReturnValueOnce(mockRoleAlbion)
+        .mockReturnValueOnce(null);
+
+      expect(() => service.preflightChecks(mockMessage as any)).toThrow(`Could not find Albion Online registered role(s)! Pinging Bot Dev <@${devUserId}>!`);
+    });
+
+    it('should throw an error if the Albion Online registered EU role does not exist', async () => {
+      mockMessage.guild.roles.cache.find = jest.fn()
+        .mockReturnValueOnce(mockRoleOnboarded)
+        .mockReturnValueOnce(mockRolePS2)
+        .mockReturnValueOnce(mockRolePS2Verified)
+        .mockReturnValueOnce(mockRoleFoxhole)
+        .mockReturnValueOnce(mockRoleAlbion)
+        .mockReturnValueOnce(mockRoleAlbionUSRegistered)
+        .mockReturnValueOnce(null);
+
+      expect(() => service.preflightChecks(mockMessage as any)).toThrow(`Could not find Albion Online registered role(s)! Pinging Bot Dev <@${devUserId}>!`);
+    });
+  });
+
   describe('getPurgableMembers', () => {
+    it('should handle preflightChecks errors', async () => {
+      service.preflightChecks = jest.fn().mockImplementation(() => {
+        throw new Error('Test error');
+      });
+
+      expect(await service.getPurgableMembers(mockMessage as any, true)).toBe(undefined);
+
+      expect(mockMessage.channel.send).toHaveBeenCalledWith('Preflight checks failed! Err: Test error');
+    });
+    it('should handle errors when fetching members list from Discord', async () => {
+      service.resolveActiveMembers = jest.fn().mockResolvedValue(new Collection(activeMembers));
+      mockMessage.guild.members.fetch = jest.fn().mockRejectedValue(new Error('Test error'));
+      expect(await service.getPurgableMembers(mockMessage as any, true)).toBe(undefined);
+
+      expect(mockMessage.channel.send).toHaveBeenCalledWith('Error fetching Discord server members. Err: Test error');
+    });
+    // I tried, we're in promise land here and it's mental.
+    // it('should properly handle when a member fetch fails', async () => {
+    //   // Mock the role finding
+    //   mockMessage.guild.roles.cache.find = jest.fn().mockReturnValue({
+    //     id: '123',
+    //   });
+    //
+    //   // Mock the resolveActiveMembers method
+    //   service.resolveActiveMembers = jest.fn().mockResolvedValue(new Collection(activeMembers));
+    //
+    //   // Mock the members with fetch method rejecting
+    //   const mockedGeneratedMembers = generatedMembers.map(member => {
+    //     return {
+    //       ...member,
+    //       fetch: jest.fn().mockRejectedValue(new Error('Discord went boom!')),
+    //     };
+    //   });
+    //
+    //   // Mock the sortMembers method
+    //   service.sortMembers = jest.fn().mockReturnValue({
+    //     values: () => mockedGeneratedMembers,
+    //     filter: jest.fn(),
+    //   });
+    //
+    //   // Mock the message.channel.send method
+    //   mockMessage.channel.send = jest.fn();
+    //
+    //   // Mock the fetch method on the guild members
+    //   mockMessage.guild.members.fetch = jest.fn().mockImplementation(() => {
+    //     return {
+    //       size: generatedMembers.size,
+    //       sort: () => new Collection(mockedGeneratedMembers.map(member => [member.user.id, member])),
+    //       filter: (callback: (value: GuildMember, key: string, collection: Collection<string, GuildMember>) => key is string) =>
+    //         new Collection(generatedMembers.filter(callback).map(member => [member.user.id, member])),
+    //       values: () => mockedGeneratedMembers,
+    //     };
+    //   });
+    //
+    //   // Run the method and expect the catch block to execute
+    //   const result = await service.getPurgableMembers(mockMessage as any, true);
+    //
+    //   // Check that the result is undefined as expected
+    //   expect(result).toBe(undefined);
+    //
+    //   // Check that the error message was sent to the channel
+    //   expect(mockMessage.channel.send).toHaveBeenCalledWith('Error refreshing member cache. Err: Discord went boom!');
+    // });
+
     it('should properly calculate purgable members and all other metrics', async () => {
       mockMessage.guild.roles.cache.find = jest.fn().mockReturnValue({
         id: '123',
       });
 
-      // Mock fetch implementation
-      mockMessage.guild.members.fetch = jest.fn().mockImplementation(() => {
-        return {
-          size: generatedMembers.size,
-          sort: () => generatedMembers,
-          filter: (callback: (value: GuildMember, key: string, collection: Collection<string, GuildMember>) => key is string) => new Collection(generatedMembers.filter(callback).map(member => [member.user.id, member])),
-          values: () => generatedMembers.map(member => {
-            return {
-              ...member,
-              fetch: jest.fn().mockResolvedValue(member),
-              kick: jest.fn().mockImplementation(() => true),
-            };
-          }),
-        };
-      });
       service.resolveActiveMembers = jest.fn().mockResolvedValue(new Collection(activeMembers));
 
       const result = await service.getPurgableMembers(mockMessage as any, true);
@@ -170,6 +339,44 @@ describe('PurgeService', () => {
       expect(result.totalHumans).toBe(generatedMembers.size - botCount);
       expect(result.inGracePeriod).toBe(inGraceCount);
       expect(result.inactive).toBe(inactiveCount);
+    });
+  });
+
+  describe('resolveActiveMembers', () => {
+    it('should return the expected number of active members', async () => {
+      // Create a placeholder for the new message
+      const newStatusMessage = TestBootstrapper.getMockDiscordMessage();
+
+      // Mock send to return the exact instance of the new message so tests continue to work.
+      mockMessage.channel.send = jest.fn().mockImplementation(async () => {
+        return newStatusMessage;
+      });
+      const mockActives = createMockActiveRecords(10);
+
+      mockActivityRepository.find = jest.fn().mockResolvedValue(mockActives);
+      discordService.getGuildMember = jest.fn().mockResolvedValue({});
+
+      const result = await service.resolveActiveMembers(mockMessage, false);
+
+      expect(result.size).toBe(10);
+      expect(mockMessage.channel.send).toHaveBeenCalledWith('Getting active Discord members [0/10] (0%)...');
+      expect(newStatusMessage.edit).toHaveBeenCalledWith('Getting active Discord members [10/10] (100%)...');
+      expect(mockMessage.channel.send).toHaveBeenCalledWith('Detected **10** active members!');
+      expect(newStatusMessage.delete).toHaveBeenCalled();
+    });
+    it('should handle server leavers', async () => {
+      const mockActives = createMockActiveRecords(4);
+
+      mockActivityRepository.find = jest.fn().mockResolvedValue(mockActives);
+      discordService.getGuildMember = jest.fn()
+        .mockResolvedValueOnce({})
+        .mockResolvedValueOnce(null)
+        .mockResolvedValueOnce(null)
+        .mockResolvedValueOnce({});
+
+      const result = await service.resolveActiveMembers(mockMessage, false);
+
+      expect(result.size).toBe(2);
     });
   });
 
@@ -248,142 +455,126 @@ describe('PurgeService', () => {
     });
   });
 
-  // describe('kickPurgableMembers', () => {
-  //   it('should call the kick function for each purgable member', async () => {
-  //     const purgables = createMockMember({
-  //       isBot: false,
-  //       roles: { onboarded: false },
-  //       withinGrace: false,
-  //       active: true,
-  //     }, 1);
-  //
-  //     await service.kickPurgableMembers(
-  //       mockMessage as any,
-  //       new Collection(purgables.map(member => [member.user.id, member])),
-  //       false,
-  //     );
-  //
-  //     expect(discordService.kickMember).toHaveBeenCalledTimes(purgables.length);
-  //     expect(discordService.deleteMessage).toHaveBeenCalledTimes(1);
-  //     expect(mockMessage.channel.send).toHaveBeenCalledWith(`Kicking ${purgables.length} purgable members...`);
-  //     expect(mockMessage.channel.send).toHaveBeenCalledWith('Kicking started...');
-  //     expect(mockMessage.channel.send).toHaveBeenCalledWith(`- 🥾 Kicked ${purgables[0].nickname} (${purgables[0].user.id})\n`);
-  //     expect(mockMessage.channel.send).toHaveBeenCalledWith('🫰 Kicking progress: [1/1] (100%)');
-  //     expect(mockMessage.channel.send).toHaveBeenCalledWith(`**${purgables.length}** members purged.`);
-  //     expect(mockMessage.channel.send).toHaveBeenCalledTimes(5);
-  //   });
-  //
-  // //     it('should call the kick function for each purgable member more than batch limit', async () => {
-  // //       const purgables = createMockMember({
-  // //         isBot: false,
-  // //         roles: { onboarded: false },
-  // //         withinGrace: false,
-  // //         active: true,
-  // //
-  // //       }, 6);
-  // //
-  // //       await service.kickPurgableMembers(
-  // //         mockMessage as any,
-  // //         new Collection(purgables.map(member => [member.user.id, member])),
-  // //         false,
-  // //       );
-  // //
-  // //       expect(discordService.kickMember).toHaveBeenCalledTimes(purgables.length);
-  // //       expect(mockMessage.channel.send).toHaveBeenCalledWith(`Kicking ${purgables.length} purgable members...`);
-  // //       expect(mockMessage.channel.send).toHaveBeenCalledWith('Kicking started...');
-  // //       expect(mockMessage.channel.send).toHaveBeenCalledWith(`- 🥾 Kicked 1-0-nick (1-0)
-  // // - 🥾 Kicked 1-1-nick (1-1)
-  // // - 🥾 Kicked 1-2-nick (1-2)
-  // // - 🥾 Kicked 1-3-nick (1-3)
-  // // - 🥾 Kicked 1-4-nick (1-4)
-  // // `);
-  // //       expect(mockMessage.channel.send).toHaveBeenCalledWith('🫰 Kicking progress: [5/6] (83%)');
-  // //       expect(mockMessage.channel.send).toHaveBeenCalledWith('- 🥾 Kicked 1-5-nick (1-5)\n');
-  // //       expect(mockMessage.channel.send).toHaveBeenCalledWith('🫰 Kicking progress: [6/6] (100%)');
-  // //       expect(mockMessage.channel.send).toHaveBeenCalledWith(`**${purgables.length}** members purged.`);
-  // //     });
-  // //
-  // //     it('should NOT call the kick function for each purgable member for a DRY RUN', async () => {
-  // //       const purgables = createMockMember({
-  // //         isBot: false,
-  // //         roles: { onboarded: false },
-  // //         withinGrace: false,
-  // //         active: true,
-  // //       }, 1);
-  // //
-  // //       await service.kickPurgableMembers(
-  // //         mockMessage as any,
-  // //         new Collection(purgables.map(member => [member.user.id, member])),
-  // //         true,
-  // //       );
-  // //
-  // //       expect(discordService.kickMember).toHaveBeenCalledTimes(0);
-  // //       expect(mockMessage.channel.send).toHaveBeenCalledWith(`Kicking ${purgables.length} purgable members...`);
-  // //       expect(mockMessage.channel.send).toHaveBeenCalledWith('Kicking started...');
-  // //       expect(mockMessage.channel.send).toHaveBeenCalledWith(`- [DRY RUN] 🥾 Kicked ${purgables[0].nickname} (${purgables[0].user.id})\n`);
-  // //       expect(mockMessage.channel.send).toHaveBeenCalledWith('[DRY RUN] 🫰 Kicking progress: [1/1] (100%)');
-  // //       expect(mockMessage.channel.send).toHaveBeenCalledWith(`[DRY RUN] **${purgables.length}** members kicked.`);
-  // //     });
-  // });
+  describe('kickPurgableMembers', () => {
+    it('should call the kick function for one purgable member', async () => {
+      const purgables = createMockMember({
+        isBot: false,
+        roles: { onboarded: false },
+        withinGrace: false,
+        active: true,
+      }, 1);
 
-  // it('should NOT call the kick function for each purgable member for a DRY RUN', async () => {
-  //   // Mock forEach implementation
-  //   const purgables = createMockMember({
-  //     isBot: false,
-  //     roles: { onboarded: false },
-  //     withinGrace: false,
-  //     active: true,
-  //   }, 1);
-  //
-  //   await service.kickPurgableMembers(
-  //     mockMessage as any,
-  //     new Collection(purgables.map(member => [member.user.id, member])),
-  //     true,
-  //   );
-  //
-  //   expect(discordService.kickMember).toHaveBeenCalledTimes(0);
-  //   expect(mockMessage.channel.send).toHaveBeenCalledWith(`Kicking ${purgables.length} purgable members...`);
-  //   expect(mockMessage.channel.send).toHaveBeenCalledWith('Kicking started...');
-  //   expect(mockMessage.channel.send).toHaveBeenCalledWith(`- [DRY RUN] 🥾 Kicked ${purgables[0].nickname} (${purgables[0].user.id})\n`);
-  //   expect(mockMessage.channel.send).toHaveBeenCalledWith('[DRY RUN] 🫰 Kicking progress: [1/1] (100%)');
-  //   expect(mockMessage.channel.send).toHaveBeenCalledWith(`[DRY RUN] **${purgables.length}** members purged.`);
-  // });
+      const purgableMembers = new Collection(purgables.members.map(member => [member.user.id, member]));
 
-  describe('resolveActiveMembers', () => {
-    it('should return the expected number of active members', async () => {
-      // Create a placeholder for the new message
-      const newStatusMessage = TestBootstrapper.getMockDiscordMessage();
+      await service.kickPurgableMembers(
+        mockMessage as any,
+        purgableMembers,
+        false,
+      );
 
-      // Mock send to return the exact instance of the new message so tests continue to work.
-      mockMessage.channel.send = jest.fn().mockImplementation(async () => {
-        return newStatusMessage;
-      });
-      const mockActives = createMockActiveRecords(10);
+      const count = purgableMembers.size;
+      const date = new Date().toLocaleString();
 
-      mockActivityRepository.find = jest.fn().mockResolvedValue(mockActives);
-      discordService.getGuildMember = jest.fn().mockResolvedValue({});
-
-      const result = await service.resolveActiveMembers(mockMessage, false);
-
-      expect(result.size).toBe(10);
-      expect(mockMessage.channel.send).toHaveBeenCalledWith('Getting active Discord members [0/10] (0%)...');
-      expect(newStatusMessage.edit).toHaveBeenCalledWith('Getting active Discord members [10/10] (100%)...');
-      expect(mockMessage.channel.send).toHaveBeenCalledWith('Detected **10** active members!');
-      expect(newStatusMessage.delete).toHaveBeenCalled();
+      expect(discordService.kickMember).toHaveBeenCalledWith(purgables.members[0], mockMessage, `Automatic purge: ${date}`);
+      expect(discordService.deleteMessage).toHaveBeenCalledTimes(1);
+      expect(mockMessage.channel.send).toHaveBeenCalledWith(`Kicking ${count} purgable members...`);
+      expect(mockMessage.channel.send).toHaveBeenCalledWith('Kicking started...');
+      expect(mockMessage.channel.send).toHaveBeenCalledWith(`- 🥾 Kicked ${purgables.members[0].nickname} (${purgables.members[0].user.id})\n`);
+      expect(mockMessage.channel.send).toHaveBeenCalledWith('🫰 Kicking progress: [1/1] (100%)');
+      expect(mockMessage.channel.send).toHaveBeenCalledWith(`**${count}** members purged.`);
+      expect(mockMessage.channel.send).toHaveBeenCalledTimes(5);
     });
-    it('should handle server leavers', async () => {
-      const mockActives = createMockActiveRecords(4);
 
-      mockActivityRepository.find = jest.fn().mockResolvedValue(mockActives);
-      discordService.getGuildMember = jest.fn()
-        .mockResolvedValueOnce({})
-        .mockResolvedValueOnce(null)
-        .mockResolvedValueOnce(null)
-        .mockResolvedValueOnce({});
+    it('should call the kick function for multiple purgable members', async () => {
+      const purgables = createMockMember({
+        isBot: false,
+        roles: { onboarded: false },
+        withinGrace: false,
+        active: true,
+      }, 5);
 
-      const result = await service.resolveActiveMembers(mockMessage, false);
+      const purgableMembers = new Collection(purgables.members.map(member => [member.user.id, member]));
 
-      expect(result.size).toBe(2);
+      await service.kickPurgableMembers(
+        mockMessage as any,
+        purgableMembers,
+        false,
+      );
+
+      const count = purgableMembers.size;
+
+      expect(discordService.kickMember).toHaveBeenCalledTimes(count);
+      expect(discordService.deleteMessage).toHaveBeenCalledTimes(1);
+      expect(mockMessage.channel.send).toHaveBeenCalledWith(`Kicking ${count} purgable members...`);
+      expect(mockMessage.channel.send).toHaveBeenCalledWith('Kicking started...');
+      expect(mockMessage.channel.send).toHaveBeenCalledWith(`- 🥾 Kicked 1-0Nick (1-0)
+- 🥾 Kicked 1-1Nick (1-1)
+- 🥾 Kicked 1-2Nick (1-2)
+- 🥾 Kicked 1-3Nick (1-3)
+- 🥾 Kicked 1-4Nick (1-4)
+`);
+      expect(mockMessage.channel.send).toHaveBeenCalledWith('🫰 Kicking progress: [5/5] (100%)');
+      expect(mockMessage.channel.send).toHaveBeenCalledWith(`**${count}** members purged.`);
+      expect(mockMessage.channel.send).toHaveBeenCalledTimes(5);
+    });
+
+    it('should call the kick function for each purgable member more than batch limit', async () => {
+      const purgables = createMockMember({
+        isBot: false,
+        roles: { onboarded: false },
+        withinGrace: false,
+        active: true,
+      }, 6);
+
+      const purgableMembers = new Collection(purgables.members.map(member => [member.user.id, member]));
+
+      await service.kickPurgableMembers(
+        mockMessage as any,
+        purgableMembers,
+        false,
+      );
+
+      const count = purgableMembers.size;
+
+      expect(discordService.kickMember).toHaveBeenCalledTimes(count);
+      expect(mockMessage.channel.send).toHaveBeenCalledWith(`Kicking ${count} purgable members...`);
+      expect(mockMessage.channel.send).toHaveBeenCalledWith('Kicking started...');
+      expect(mockMessage.channel.send).toHaveBeenCalledWith(`- 🥾 Kicked 1-0Nick (1-0)
+- 🥾 Kicked 1-1Nick (1-1)
+- 🥾 Kicked 1-2Nick (1-2)
+- 🥾 Kicked 1-3Nick (1-3)
+- 🥾 Kicked 1-4Nick (1-4)
+`);
+      expect(mockMessage.channel.send).toHaveBeenCalledWith('🫰 Kicking progress: [5/6] (83%)');
+      expect(mockMessage.channel.send).toHaveBeenCalledWith('- 🥾 Kicked 1-5Nick (1-5)\n');
+      expect(mockMessage.channel.send).toHaveBeenCalledWith('🫰 Kicking progress: [6/6] (100%)');
+      expect(mockMessage.channel.send).toHaveBeenCalledWith(`**${count}** members purged.`);
+    });
+
+    it('should NOT call the kick function for each purgable member for a DRY RUN', async () => {
+      const purgables = createMockMember({
+        isBot: false,
+        roles: { onboarded: false },
+        withinGrace: false,
+        active: true,
+      }, 1);
+
+      const purgableMembers = new Collection(purgables.members.map(member => [member.user.id, member]));
+
+      await service.kickPurgableMembers(
+        mockMessage as any,
+        purgableMembers,
+        true,
+      );
+
+      const count = purgableMembers.size;
+
+      expect(discordService.kickMember).toHaveBeenCalledTimes(0);
+      expect(mockMessage.channel.send).toHaveBeenCalledWith(`Kicking ${count} purgable members...`);
+      expect(mockMessage.channel.send).toHaveBeenCalledWith('Kicking started...');
+      expect(mockMessage.channel.send).toHaveBeenCalledWith(`- [DRY RUN] 🥾 Kicked ${purgables.members[0].nickname} (${purgables.members[0].user.id})\n`);
+      expect(mockMessage.channel.send).toHaveBeenCalledWith('[DRY RUN] 🫰 Kicking progress: [1/1] (100%)');
+      expect(mockMessage.channel.send).toHaveBeenCalledWith(`[DRY RUN] **${count}** members purged.`);
     });
   });
 });
