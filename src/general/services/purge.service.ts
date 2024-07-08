@@ -4,6 +4,7 @@ import { DiscordService } from '../../discord/discord.service';
 import { ActivityEntity } from '../../database/entities/activity.entity';
 import { EntityRepository } from '@mikro-orm/core';
 import { InjectRepository } from '@mikro-orm/nestjs';
+import { ActivityService } from './activity.service';
 
 export interface PurgableMemberList {
   purgableMembers: Collection<string, GuildMember>;
@@ -19,6 +20,7 @@ export interface PurgableMemberList {
   totalBots: number;
   totalHumans: number;
   inGracePeriod: number;
+  inactive: number;
 }
 
 @Injectable()
@@ -27,10 +29,11 @@ export class PurgeService {
 
   constructor(
     private readonly discordService: DiscordService,
+    private readonly activityService: ActivityService,
     @InjectRepository(ActivityEntity) private readonly activityRepository: EntityRepository<ActivityEntity>,
   ) {}
 
-  async getPurgableMembers(message: Message): Promise<PurgableMemberList> {
+  async getPurgableMembers(message: Message, dryRun = true): Promise<PurgableMemberList> {
     const onboardedRole = message.guild.roles.cache.find(role => role.name === 'Onboarded');
     const ps2Role = message.guild.roles.cache.find(role => role.name === 'Planetside2');
     const ps2VerifiedRole = message.guild.roles.cache.find(role => role.name === 'PS2/Verified');
@@ -50,16 +53,13 @@ export class PurgeService {
       return;
     }
 
-    // 2. Get a list of members who have been inactive for more than 3 months, and exclude them from the below cache bust cos we're gonna boot them anyway
-    // Removes the need to do useless queries to Discord which are time intensive.
+    // 2. Get a list of active members and hydrate their cache.
+    const statusMessage = await message.channel.send('Collating Active Discord Members...');
+    // Check the active members, and while we're at it remove any that are no longer on the server.
+    const activeMembers = await this.resolveActiveMembers(message, dryRun);
 
-    const statusMessage = await message.channel.send('Collating inactive members...');
-    const activeMembers = await this.getActiveMembers(message);
-
-    this.logger.log(`Found ${activeMembers.size} active members`);
-    await message.channel.send(`Detected **${activeMembers.size}** active members!`);
-
-    this.logger.log('Fetching Discord server members...');
+    // 3. Get all members from the cache.
+    this.logger.log('Fetching All Discord server members...');
     let members: Collection<string, GuildMember>;
     try {
       members = await message.guild.members.fetch();
@@ -71,20 +71,8 @@ export class PurgeService {
     this.logger.log(`${members.size} members found`);
     await statusMessage.edit(`${members.size} members found. Sorting members...`);
 
-    // Filter the members that are in
-
-    // Sort the members
-    members.sort((a, b) => {
-      const aName = a.displayName || a.nickname || a.user.username;
-      const bName = b.displayName || b.nickname || b.user.username;
-      if (aName < bName) {
-        return -1;
-      }
-      if (aName > bName) {
-        return 1;
-      }
-      return 0;
-    });
+    // Sort the members alphabetically so we don't lose our minds in the output
+    members = this.sortMembers(members);
 
     await statusMessage.edit(`Refreshing member cache [0/${members.size}] (0%)...`);
 
@@ -114,14 +102,14 @@ export class PurgeService {
 
     // Filter out bots and people who are onboarded already
     const results = {
-      purgableMembers: members.filter(async member => await this.isPurgable(member, activeMembers, onboardedRole)),
+      purgableMembers: members.filter(member => this.isPurgable(member, activeMembers, onboardedRole)),
       purgableByGame: {
-        ps2: members.filter(async member => await this.isPurgable(member, activeMembers, onboardedRole) && member.roles.cache.has(ps2Role.id)),
-        ps2Verified: members.filter(async member => await this.isPurgable(member, activeMembers, onboardedRole) && member.roles.cache.has(ps2VerifiedRole.id)),
-        foxhole: members.filter(async member => await this.isPurgable(member, activeMembers, onboardedRole) && member.roles.cache.has(foxholeRole.id)),
-        albion: members.filter(async member => await this.isPurgable(member, activeMembers, onboardedRole) && member.roles.cache.has(albionRole.id)),
-        albionUSRegistered: members.filter(async member => await this.isPurgable(member, activeMembers, onboardedRole) && member.roles.cache.has(albionUSRegistered.id)),
-        albionEURegistered: members.filter(async member => await this.isPurgable(member, activeMembers, onboardedRole) && member.roles.cache.has(albionEURegistered.id)),
+        ps2: members.filter(member => this.isPurgable(member, activeMembers, onboardedRole) && member.roles.cache.has(ps2Role.id)),
+        ps2Verified: members.filter(member => this.isPurgable(member, activeMembers, onboardedRole) && member.roles.cache.has(ps2VerifiedRole.id)),
+        foxhole: members.filter(member => this.isPurgable(member, activeMembers, onboardedRole) && member.roles.cache.has(foxholeRole.id)),
+        albion: members.filter(member => this.isPurgable(member, activeMembers, onboardedRole) && member.roles.cache.has(albionRole.id)),
+        albionUSRegistered: members.filter(member => this.isPurgable(member, activeMembers, onboardedRole) && member.roles.cache.has(albionUSRegistered.id)),
+        albionEURegistered: members.filter(member => this.isPurgable(member, activeMembers, onboardedRole) && member.roles.cache.has(albionEURegistered.id)),
       },
       totalMembers: members.size,
       totalBots: members.filter(member => member.user.bot).size,
@@ -132,6 +120,11 @@ export class PurgeService {
           return true;
         }
       }).size,
+      inactive: members.filter(member => {
+        if (!activeMembers.has(member.user.id)) {
+          return true;
+        }
+      }).size,
     };
 
     await statusMessage.delete();
@@ -139,32 +132,57 @@ export class PurgeService {
     return results;
   }
 
-  // Builds a map of active members and hydrates their GuildMember objects, for later comparison in isPurgable.
-  async getActiveMembers(message: Message) : Promise<Collection<string, GuildMember>> {
+  // Builds a map of active members and hydrates their GuildMember objects, for later negative comparison in isPurgable.
+  async resolveActiveMembers(message: Message, dryRun: boolean) : Promise<Collection<string, GuildMember>> {
     this.logger.log('Getting active Discord members...');
+    let count = 0;
 
+    const activeMembers: Collection<string, GuildMember> = new Collection();
     const thresholdDate = new Date();
     thresholdDate.setDate(thresholdDate.getDate() - 90);
 
-    const actives = await this.activityRepository.find({
+    const activeRecords = await this.activityRepository.find({
       lastActivity: { $gt: thresholdDate },
     });
 
-    const activeMembers: Collection<string, GuildMember> = new Collection();
-    for (const member of actives) {
+    const statusMessage = await message.channel.send(`Getting active Discord members [0/${activeRecords.length}] (0%)...`);
+
+    for (const activeMember of activeRecords) {
+      count++;
+
+      if (count % 10 === 0 || count === activeRecords.length) {
+        const percent = (Math.floor((count / activeRecords.length) * 100)).toFixed(0);
+        const string = `Getting active Discord members [${count}/${activeRecords.length}] (${percent}%)...`;
+        await statusMessage.edit(string);
+        this.logger.debug(string);
+      }
+      const guildMember = await this.discordService.getGuildMember(
+        message.guild.id,
+        activeMember.discordId
+      );
+
+      // If the member is not found, remove their activity record as they're no longer on the server as it's pointless to keep it.
+      if (!guildMember) {
+        await this.activityService.removeActivityRecord(activeMember, dryRun);
+        this.logger.warn(`Member ${activeMember.discordId} was not found on the server, removing from activity records.`);
+        continue;
+      }
       activeMembers.set(
-        member.discordId,
-        await this.discordService.getGuildMember(
-          message.guild.id,
-          member.discordId
-        )
+        activeMember.discordId,
+        guildMember
       );
     }
+
+    const string = `Detected **${activeMembers.size}** active members!`;
+    this.logger.log(string);
+    await message.channel.send(string);
+    await statusMessage.delete();
 
     return activeMembers;
   }
 
-  async isPurgable(member: GuildMember, activeMembers: Collection<string, GuildMember>, onboardedRole: Role): Promise<boolean> {
+  // Determines if a member is purgable or not. Returns true if they are.
+  isPurgable(member: GuildMember, activeMembers: Collection<string, GuildMember>, onboardedRole: Role): boolean {
     // Ignore bots.
     if (member.user.bot) {
       return false;
@@ -177,12 +195,17 @@ export class PurgeService {
     }
 
     // If not in the active members map, and are outside their grace period, boot them.
+    // @See resolveActiveMembers
     if (!activeMembers.has(member.user.id)) {
       return true;
     }
 
     // If all else does not match, if they don't have the onboarded role, boot them.
-    return !member.roles.cache.has(onboardedRole.id);
+    if (!member.roles.cache.has(onboardedRole.id)) {
+      return true;
+    }
+
+    return false;
   }
 
   async kickPurgableMembers(
@@ -207,6 +230,7 @@ export class PurgeService {
 
       if (!dryRun) {
         await this.discordService.kickMember(member, message, `Automatic purge on ${date}`);
+        // Removal of activity records is handled by the guildRemoveMember event listener.
       }
       this.logger.log(`Kicked ${name} (${member.user.id})`);
       lastKickedString += `- ${prefix}🥾 Kicked ${name} (${member.user.id})\n`;
@@ -227,5 +251,19 @@ export class PurgeService {
 
     this.logger.log(`${purgableMembers.size} members purged.`);
     await message.channel.send(`${prefix}**${purgableMembers.size}** members purged.`);
+  }
+
+  sortMembers(members: Collection<string, GuildMember>): Collection<string, GuildMember> {
+    return members.sort((a, b) => {
+      const aName = a.displayName || a.nickname || a.user.username;
+      const bName = b.displayName || b.nickname || b.user.username;
+      if (aName < bName) {
+        return -1;
+      }
+      if (aName > bName) {
+        return 1;
+      }
+      return 0;
+    });
   }
 }
