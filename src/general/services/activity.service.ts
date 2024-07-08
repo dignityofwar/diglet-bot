@@ -49,7 +49,7 @@ export class ActivityService {
       try {
         const member = await this.discordService.getGuildMember(originMessage.guildId, activityMember.discordId);
         if (!member) {
-          await this.removeActivityRecord(activityMember, originMessage, dryRun);
+          await this.removeActivityRecord(activityMember, dryRun);
           batchMessages.push(`- Removed leaver ${activityMember.discordNickname} (${activityMember.discordId}) from activity records.\n`);
         }
         this.logger.debug(`Member ${activityMember.discordNickname} (${activityMember.discordId}) is still active`);
@@ -66,7 +66,6 @@ export class ActivityService {
 
   async removeActivityRecord(
     activityRecord: ActivityEntity,
-    originMessage: Message,
     dryRun: boolean
   ): Promise<void> {
     try {

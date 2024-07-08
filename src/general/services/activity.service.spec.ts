@@ -160,7 +160,7 @@ describe('ActivityService', () => {
 
       await activityService.scanForLeavers(mockActivityMembers, mockStatusMessage, false);
 
-      expect(activityService.removeActivityRecord).toHaveBeenCalledWith(mockActivityMembers[1], mockStatusMessage, false);
+      expect(activityService.removeActivityRecord).toHaveBeenCalledWith(mockActivityMembers[1], false);
     });
     it('should properly handle errors when removing activity records', async () => {
       const mockActivityMembers = createMockActivityMembers(2);
@@ -174,7 +174,7 @@ describe('ActivityService', () => {
       expect(mockStatusMessage.channel.send).toHaveBeenCalledWith('Error removing activity record for test1 (1). Error: Test Activity Error');
       expect(mockStatusMessage.channel.send).toHaveBeenCalledWith('Error removing activity record for test2 (2). Error: Test Activity Error');
 
-      expect(activityService.removeActivityRecord).toHaveBeenCalledWith(mockActivityMembers[0], mockStatusMessage, false);
+      expect(activityService.removeActivityRecord).toHaveBeenCalledWith(mockActivityMembers[0], false);
     });
     it('should properly handle errors when removing activity records after a successful one', async () => {
       const mockActivityMembers = createMockActivityMembers(2);
@@ -188,24 +188,24 @@ describe('ActivityService', () => {
       await activityService.scanForLeavers(mockActivityMembers, mockStatusMessage, false);
       expect(mockStatusMessage.channel.send).toHaveBeenCalledWith('Error removing activity record for test2 (2). Error: Test Error');
 
-      expect(activityService.removeActivityRecord).toHaveBeenCalledWith(mockActivityMembers[0], mockStatusMessage, false);
+      expect(activityService.removeActivityRecord).toHaveBeenCalledWith(mockActivityMembers[0], false);
     });
   });
 
   describe('removeActivityRecord', () => {
     it('should remove the activity record', async () => {
-      await activityService.removeActivityRecord(mockActivityEntity, mockStatusMessage, false);
+      await activityService.removeActivityRecord(mockActivityEntity, false);
       expect(mockActivityRepository.removeAndFlush).toHaveBeenCalledWith(mockActivityEntity);
     });
 
     it('should not remove the activity record on a dry run', async () => {
-      await activityService.removeActivityRecord(mockActivityEntity, mockStatusMessage, true);
+      await activityService.removeActivityRecord(mockActivityEntity, true);
       expect(mockActivityRepository.removeAndFlush).toBeCalledTimes(0);
     });
 
     it('should properly handle database errors and throw an custom error', async () => {
       mockActivityRepository.removeAndFlush = jest.fn().mockImplementation(() => {throw new Error('Database went boom!');});
-      await expect(activityService.removeActivityRecord(mockActivityEntity, mockStatusMessage, false))
+      await expect(activityService.removeActivityRecord(mockActivityEntity, false))
         .rejects
         .toThrow('Error removing activity record for leaver testuser (123456). Error: Database went boom!');
       expect(mockActivityRepository.removeAndFlush).toBeCalledTimes(1);
