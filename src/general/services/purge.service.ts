@@ -201,11 +201,7 @@ export class PurgeService {
     }
 
     // If all else does not match, if they don't have the onboarded role, boot them.
-    if (!member.roles.cache.has(onboardedRole.id)) {
-      return true;
-    }
-
-    return false;
+    return !member.roles.cache.has(onboardedRole.id);
   }
 
   async kickPurgableMembers(
