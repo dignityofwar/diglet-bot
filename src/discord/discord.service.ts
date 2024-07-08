@@ -37,6 +37,7 @@ export class DiscordService {
     }
   }
 
+  // Gets a guild member from the Discord server cache
   async getGuildMember(guildId: string, memberId: string): Promise<GuildMember> {
     const server = await this.getGuild(guildId);
 
