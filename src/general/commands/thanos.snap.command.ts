@@ -33,7 +33,7 @@ export class ThanosSnapCommand {
 
     const message = await channel.send('Snapping fingers...');
 
-    const purgableMembers = await this.purgeService.getPurgableMembers(message);
+    const purgableMembers = await this.purgeService.getPurgableMembers(message, dto.dryRun);
 
     if (purgableMembers.purgableMembers.size === 0) {
       this.logger.log('✅ All members are onboarded and active! Nothing to do! They have been saved from Thanos, this time.');
