@@ -378,6 +378,8 @@ describe('PurgeService', () => {
 
       expect(result.size).toBe(2);
       expect(activityService.removeActivityRecord).toHaveBeenCalledWith(mockActives[1], false);
+      expect(activityService.removeActivityRecord).toHaveBeenCalledWith(mockActives[2], false);
+      expect(activityService.removeActivityRecord).not.toHaveBeenCalledWith(mockActives[0], false);
       expect(activityService.removeActivityRecord).toHaveBeenCalledTimes(2);
     });
   });
