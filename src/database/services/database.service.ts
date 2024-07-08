@@ -39,8 +39,4 @@ export class DatabaseService {
       this.logger.error(`Error updating activity for ${member.id}: ${err.message}`);
     }
   }
-
-  async getActives() {
-
-  }
 }
