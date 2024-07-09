@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { Test } from '@nestjs/testing';
 import { ConfigService } from '@nestjs/config';
-import { PurgeService } from './purge.service';
+import { PurgableMemberList, PurgeService } from './purge.service';
 import { TestBootstrapper } from '../../test.bootstrapper';
 import { Collection, GuildMember } from 'discord.js';
 import { DiscordService } from '../../discord/discord.service';
@@ -68,6 +68,7 @@ describe('PurgeService', () => {
             getGuildMember: jest.fn(),
             kickMember: jest.fn(),
             deleteMessage: jest.fn().mockReturnValue(() => true),
+            batchSend: jest.fn(),
           },
         },
         {
@@ -761,6 +762,81 @@ describe('PurgeService', () => {
       const sortedMembers = service.sortMembers(members);
 
       expect(sortedMembers.size).toBe(0);
+    });
+  });
+
+  describe('generateReport', () => {
+    it('should generate a report for purgable members by game and no game role', async () => {
+      const totalMembers = 10;
+      const totalBots = 2;
+      const totalHumans = 8;
+      const inGracePeriod = 0;
+      const inactive = 1;
+      // const totalMembers = 100;
+      // const totalBots = 10;
+      // const totalHumans = 90;
+      // const inGracePeriod = 5;
+      // const inactive = 10;
+      const purgableMembers: PurgableMemberList = {
+        purgableMembers: new Collection<string, GuildMember>(),
+        purgableByGame: {
+          ps2: new Collection<string, GuildMember>(),
+          ps2Verified: new Collection<string, GuildMember>(),
+          foxhole: new Collection<string, GuildMember>(),
+          albion: new Collection<string, GuildMember>(),
+          albionUSRegistered: new Collection<string, GuildMember>(),
+          albionEURegistered: new Collection<string, GuildMember>(),
+        },
+        totalMembers,
+        totalBots,
+        totalHumans,
+        inGracePeriod,
+        inactive,
+      };
+
+      const mockGuildMember = (id: string, displayName: string) => ({
+        user: { id },
+        displayName,
+        joinedTimestamp: Date.now() - 1000000,
+      } as GuildMember);
+
+      purgableMembers.purgableByGame.ps2.set('1', mockGuildMember('1', 'User1'));
+      purgableMembers.purgableByGame.foxhole.set('2', mockGuildMember('2', 'User2'));
+      purgableMembers.purgableMembers.set('3', mockGuildMember('3', 'User3'));
+      purgableMembers.purgableMembers.set('1', mockGuildMember('1', 'User1'));
+      purgableMembers.purgableMembers.set('2', mockGuildMember('2', 'User2'));
+
+      await service.generateReport(purgableMembers, mockMessage);
+
+      expect(mockMessage.channel.send).toHaveBeenCalledWith('### PS2');
+      expect(mockMessage.channel.send).toHaveBeenCalledWith('### FOXHOLE');
+      expect(mockMessage.channel.send).toHaveBeenCalledWith('### No game role');
+
+      expect(discordService.batchSend).toHaveBeenCalledTimes(3);
+      const percent = Math.floor((purgableMembers.purgableMembers.size / purgableMembers.totalHumans) * 100).toFixed(1);
+      const inactivePercent = Math.floor((purgableMembers.inactive / purgableMembers.purgableMembers.size) * 100).toFixed(1);
+      const nonOnboarders = purgableMembers.purgableMembers.size - purgableMembers.inactive;
+      const nonOnboardersPercent = Math.floor((nonOnboarders / purgableMembers.purgableMembers.size) * 100).toFixed(1);
+
+      const expectedPurgeReport = `## 📜 Purge Report
+- Total members at start of purge: **${totalMembers}**
+- Total members at end of purge: **${totalMembers - purgableMembers.purgableMembers.size}**
+- Total humans at start of purge: **${totalHumans}**
+- Total humans at end of purge: **${totalHumans - purgableMembers.purgableMembers.size}**
+- ⏳ Members in 1 week grace period: **${inGracePeriod}**
+- 👞 Humans purged: **${purgableMembers.purgableMembers.size}** (${percent}% of total members)
+- 😴 Humans inactive: **${purgableMembers.inactive}** (${inactivePercent}% of purged)
+- 🫨 Humans who failed to onboard: **${nonOnboarders}** (${nonOnboardersPercent}% of purged)`;
+      const expectedGameReport = `## Game stats
+Note, these numbers will not add up to total numbers, as a member can be in multiple games.
+- Total PS2 purged: **${purgableMembers.purgableByGame.ps2.size}**
+- Total PS2 verified purged: **${purgableMembers.purgableByGame.ps2Verified.size}**
+- Total Foxhole purged: **${purgableMembers.purgableByGame.foxhole.size}**
+- Total Albion purged: **${purgableMembers.purgableByGame.albion.size}**
+- Total Albion Registered purged: **${purgableMembers.purgableByGame.albionEURegistered.size}**`;
+
+      expect(mockMessage.channel.send).toHaveBeenCalledWith(expectedPurgeReport);
+      expect(mockMessage.channel.send).toHaveBeenCalledWith(expectedGameReport);
     });
   });
 });

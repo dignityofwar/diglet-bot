@@ -132,7 +132,8 @@ export class PurgeService {
     // Thanos is pleased
     await originMessage.channel.send('https://media1.tenor.com/m/g0oFjHy6W1cAAAAC/thanos-smile.gif');
 
-    await originMessage.channel.send(`## ✅ Purge complete.\n**${purgableMembers.purgableMembers.size}** members have been purged from the server. It is now recommended to run the Scanners found in #albion-scans and #ps2-scans.`);
+    await originMessage.channel.send('## ✅ Purge complete.');
+    await this.generateReport(purgableMembers, originMessage);
 
     if (interactionMember) {
       await originMessage.channel.send(`Thanos thanks you for your service, <@${interactionMember.user.id}>.`);
@@ -377,4 +378,79 @@ export class PurgeService {
       return 0;
     });
   }
+
+  async generateReport(purgableMembers: PurgableMemberList, originMessage: Message): Promise<void> {
+    // Hold a list of member IDs that will be sent by the below
+    const gameMemberIds: string[] = [];
+
+    // Loop through purgable members by game, batch sending the members in each game
+    for (const game in purgableMembers.purgableByGame) {
+      if (!purgableMembers.purgableByGame[game] || purgableMembers.purgableByGame[game].size === 0) {
+        continue;
+      }
+
+      const batch: string[] = [];
+      purgableMembers.purgableByGame[game].each((member: GuildMember) => {
+        const name = member.displayName || member.nickname || member.user.username;
+        batch.push(`- [${game.toUpperCase()}] <@${member.user.id}> / ${name}, joined <t:${Math.floor(member.joinedTimestamp / 1000)}:R>\n`);
+        gameMemberIds.push(member.user.id);
+      });
+      await originMessage.channel.send(`### ${game.toUpperCase()}`);
+
+      await this.discordService.batchSend(batch, originMessage);
+    }
+
+    // Now loop through the purgable members in its entirety, reference to the gameMemberIds array to see if the member has already been sent.
+    // If not, they don't belong to a particular community game, thus will be marked as NONE.
+    const batch: string[] = [];
+    purgableMembers.purgableMembers.each((member: GuildMember) => {
+      if (!gameMemberIds.includes(member.user.id)) {
+        const name = member.displayName || member.nickname || member.user.username;
+        batch.push(`- [NO-GAME] <@${member.user.id}> / ${name}, joined <t:${Math.floor(member.joinedTimestamp / 1000)}:R>\n`);
+      }
+    });
+
+    await originMessage.channel.send('### No game role');
+
+    // Go through the batches by groups of 20 and spit out the members
+    await this.discordService.batchSend(batch, originMessage);
+
+    const percent = Math.floor((purgableMembers.purgableMembers.size / purgableMembers.totalHumans) * 100).toFixed(1);
+    const inactivePercent = Math.floor((purgableMembers.inactive / purgableMembers.purgableMembers.size) * 100).toFixed(1);
+    const nonOnboarders = purgableMembers.purgableMembers.size - purgableMembers.inactive;
+    const nonOnboardersPercent = Math.floor((nonOnboarders / purgableMembers.purgableMembers.size) * 100).toFixed(1);
+
+    this.logger.log(`Purge complete. ${purgableMembers.purgableMembers.size} members purged. ${percent}% of total humans purged.`);
+
+    const purgeReport = `## 📜 Purge Report
+- Total members at start of purge: **${purgableMembers.totalMembers}**
+- Total members at end of purge: **${purgableMembers.totalMembers - purgableMembers.purgableMembers.size}**
+- Total humans at start of purge: **${purgableMembers.totalHumans}**
+- Total humans at end of purge: **${purgableMembers.totalHumans - purgableMembers.purgableMembers.size}**
+- ⏳ Members in 1 week grace period: **${purgableMembers.inGracePeriod}**
+- 👞 Humans purged: **${purgableMembers.purgableMembers.size}** (${percent}% of total members)
+- 😴 Humans inactive: **${purgableMembers.inactive}** (${inactivePercent}% of purged)
+- 🫨 Humans who failed to onboard: **${nonOnboarders}** (${nonOnboardersPercent}% of purged)`;
+
+    const gameStatsReport = `## Game stats
+Note, these numbers will not add up to total numbers, as a member can be in multiple games.
+- Total PS2 purged: **${purgableMembers.purgableByGame.ps2.size}**
+- Total PS2 verified purged: **${purgableMembers.purgableByGame.ps2Verified.size}**
+- Total Foxhole purged: **${purgableMembers.purgableByGame.foxhole.size}**
+- Total Albion purged: **${purgableMembers.purgableByGame.albion.size}**
+- Total Albion Registered purged: **${purgableMembers.purgableByGame.albionEURegistered.size}**`;
+
+    await originMessage.channel.send(purgeReport);
+    await originMessage.channel.send(gameStatsReport);
+  }
 }
+
+// ## 📜 Purge Report
+// - Total members at start of purge: **10**
+// - Total members at end of purge: **7**
+// - Total humans at start of purge: **8**
+// - Total humans at end of purge: **5**
+// - ⏳ Members in 1 week grace period: **0**
+// - 👞 Humans purged: **3** (37.0%)
+// - 😴 Humans inactive: **1** (33.0% of purged)
+// - 🫨 Humans who failed to onboard: **2** (66.0% of purged)
