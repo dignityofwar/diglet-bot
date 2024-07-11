@@ -691,6 +691,7 @@ DIG Community Staff`;
 
       const count = purgableMembers.size;
 
+      expect(discordService.sendDM).toHaveBeenCalledTimes(count);
       expect(discordService.kickMember).toHaveBeenCalledTimes(count);
       expect(mockMessage.channel.send).toHaveBeenCalledWith(`Kicking ${count} purgable members...`);
       expect(mockMessage.channel.send).toHaveBeenCalledWith('Kicking started...');
@@ -724,6 +725,7 @@ DIG Community Staff`;
 
       const count = purgableMembers.size;
 
+      expect(discordService.sendDM).toHaveBeenCalledTimes(0);
       expect(discordService.kickMember).toHaveBeenCalledTimes(0);
       expect(mockMessage.channel.send).toHaveBeenCalledWith(`Kicking ${count} purgable members...`);
       expect(mockMessage.channel.send).toHaveBeenCalledWith('Kicking started...');
