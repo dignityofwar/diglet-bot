@@ -87,8 +87,6 @@ export class PurgeService {
     dryRun = true,
     interactionMember: GuildMember | null = null
   ): Promise<void> {
-    await originMessage.channel.send('https://media.giphy.com/media/ie76dJeem4xBDcf83e/giphy.gif');
-
     const statusMessage = await originMessage.channel.send('Snapping fingers...');
 
     let purgables: PurgableMemberList;
