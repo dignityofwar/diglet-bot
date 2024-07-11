@@ -39,7 +39,7 @@ export class PurgeService {
     const onboardedRole = message.guild.roles.cache.find(role => role.name === 'Onboarded');
     const ps2Role = message.guild.roles.cache.find(role => role.name === 'Planetside2');
     const ps2VerifiedRole = message.guild.roles.cache.find(role => role.name === 'PS2/Verified');
-    const foxholeRole = message.guild.roles.cache.find(role => role.name === 'Foxhole');
+    const foxholeRole = message.guild.roles.cache.find(role => role.name === 'Rec/Foxhole');
     const albionRole = message.guild.roles.cache.find(role => role.name === 'Albion Online');
     const albionUSRegistered = message.guild.roles.cache.find(role => role.name === 'ALB/US/Registered');
     const albionEURegistered = message.guild.roles.cache.find(role => role.name === 'ALB/EU/Registered');
