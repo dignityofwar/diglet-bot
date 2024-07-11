@@ -790,11 +790,6 @@ DIG Community Staff`;
       const totalHumans = 8;
       const inGracePeriod = 0;
       const inactive = 1;
-      // const totalMembers = 100;
-      // const totalBots = 10;
-      // const totalHumans = 90;
-      // const inGracePeriod = 5;
-      // const inactive = 10;
       const purgables: PurgableMemberList = {
         purgableMembers: new Collection<string, GuildMember>(),
         purgableByGame: {
@@ -820,6 +815,7 @@ DIG Community Staff`;
 
       purgables.purgableByGame.ps2.set('1', mockGuildMember('1', 'User1'));
       purgables.purgableByGame.foxhole.set('2', mockGuildMember('2', 'User2'));
+      purgables.purgableByGame.albion.set('2', mockGuildMember('3', 'User3'));
       purgables.purgableMembers.set('1', mockGuildMember('1', 'User1'));
       purgables.purgableMembers.set('2', mockGuildMember('2', 'User2'));
       purgables.purgableMembers.set('3', mockGuildMember('3', 'User3'));
@@ -828,9 +824,10 @@ DIG Community Staff`;
 
       expect(mockMessage.channel.send).toHaveBeenCalledWith('### PS2');
       expect(mockMessage.channel.send).toHaveBeenCalledWith('### FOXHOLE');
+      expect(mockMessage.channel.send).toHaveBeenCalledWith('### ALBION');
       expect(mockMessage.channel.send).toHaveBeenCalledWith('### No game role');
+      expect(discordService.batchSend).toHaveBeenCalledTimes(4);
 
-      expect(discordService.batchSend).toHaveBeenCalledTimes(3);
       const percent = Math.floor((purgables.purgableMembers.size / purgables.totalHumans) * 100).toFixed(1);
       const inactivePercent = Math.floor((purgables.inactive / purgables.purgableMembers.size) * 100).toFixed(1);
       const nonOnboarders = purgables.purgableMembers.size - purgables.inactive;
@@ -842,7 +839,7 @@ DIG Community Staff`;
 - Total humans at start of purge: **${totalHumans}**
 - Total humans at end of purge: **${totalHumans - purgables.purgableMembers.size}**
 - ⏳ Members in 1 week grace period: **${inGracePeriod}**
-- 👞 Humans purged: **${purgables.purgableMembers.size}** (${percent}% of total members)
+- 👞 Humans purged: **${purgables.purgableMembers.size}** (${percent}% of total humans on server)
 - 😴 Humans inactive: **${purgables.inactive}** (${inactivePercent}% of purged)
 - 🫨 Humans who failed to onboard: **${nonOnboarders}** (${nonOnboardersPercent}% of purged)`;
       const expectedGameReport = `## Game stats

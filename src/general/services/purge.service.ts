@@ -440,7 +440,7 @@ DIG Community Staff`;
 - Total humans at start of purge: **${purgables.totalHumans}**
 - Total humans at end of purge: **${purgables.totalHumans - purgables.purgableMembers.size}**
 - ⏳ Members in 1 week grace period: **${purgables.inGracePeriod}**
-- 👞 Humans purged: **${purgables.purgableMembers.size}** (${percent}% of total server members)
+- 👞 Humans purged: **${purgables.purgableMembers.size}** (${percent}% of total humans on server)
 - 😴 Humans inactive: **${purgables.inactive}** (${inactivePercent}% of purged)
 - 🫨 Humans who failed to onboard: **${nonOnboarders}** (${nonOnboardersPercent}% of purged)`;
 
