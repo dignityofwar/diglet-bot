@@ -24,6 +24,11 @@ describe('DiscordService', () => {
     TestBootstrapper.setupConfig(moduleRef);
 
     service = moduleRef.get<DiscordService>(DiscordService);
+
+    jest.spyOn(service['logger'], 'error');
+    jest.spyOn(service['logger'], 'warn');
+    jest.spyOn(service['logger'], 'log');
+    jest.spyOn(service['logger'], 'debug');
   });
 
   afterEach(() => {
@@ -97,7 +102,7 @@ describe('DiscordService', () => {
       expect(mockGuild.members.fetch).toHaveBeenCalledWith(memberId);
     });
 
-    it('should throw an error when the member fetch attempt fails', async () => {
+    it('should throw with a warning log when the member is blank', async () => {
       const guildId = '123456';
       const memberId = '64321';
       const mockGuild = TestBootstrapper.getMockGuild(guildId);
@@ -105,7 +110,26 @@ describe('DiscordService', () => {
 
       service.getGuild = jest.fn().mockResolvedValue(mockGuild);
 
-      await expect(service.getGuildMember(guildId, memberId)).rejects.toThrow(`Could not find member with ID ${memberId}`);
+      const errorMsg = `Could not find member with ID ${memberId}`;
+      await expect(service.getGuildMember(guildId, memberId)).rejects.toThrow(errorMsg);
+      expect(service['logger'].warn).toHaveBeenCalledWith(errorMsg);
+      expect(service.getGuild).toHaveBeenCalledWith(guildId);
+      expect(mockGuild.members.fetch).toHaveBeenCalledWith(memberId);
+    });
+
+    it('should throw an error when Discord call errors', async () => {
+      const guildId = '123456';
+      const memberId = '64321';
+      const mockGuild = TestBootstrapper.getMockGuild(guildId);
+      mockGuild.members.fetch = jest.fn().mockImplementation(() => null);
+
+      service.getGuild = jest.fn().mockResolvedValue(mockGuild);
+
+      mockGuild.members.fetch = jest.fn().mockImplementation(() => {throw new Error('Discord went boom');});
+
+      const errorMsg = `Failed to fetch member with ID ${memberId}. Err: Discord went boom`;
+      await expect(service.getGuildMember(guildId, memberId)).rejects.toThrow(errorMsg);
+      expect(service['logger'].error).toHaveBeenCalledWith(errorMsg, expect.any(Error));
       expect(service.getGuild).toHaveBeenCalledWith(guildId);
       expect(mockGuild.members.fetch).toHaveBeenCalledWith(memberId);
     });
@@ -205,6 +229,56 @@ describe('DiscordService', () => {
       message.delete = jest.fn().mockRejectedValueOnce(deleteError);
 
       await service.deleteMessage(message);
+    });
+  });
+
+  describe('batchSend', () => {
+    it('should send messages in batches of 10', async () => {
+      const originMessage = TestBootstrapper.getMockDiscordMessage();
+      const messages = Array.from({ length: 25 }, (_, i) => `Message ${i + 1}`);
+      originMessage.channel.send = jest.fn().mockResolvedValue(true);
+
+      await service.batchSend(messages, originMessage);
+
+      expect(originMessage.channel.send).toHaveBeenCalledTimes(3);
+      expect(originMessage.channel.send).toHaveBeenCalledWith(expect.stringContaining('Message 10'));
+      expect(originMessage.channel.send).toHaveBeenCalledWith(expect.stringContaining('Message 20'));
+      expect(originMessage.channel.send).toHaveBeenCalledWith(expect.stringContaining('Message 25'));
+    });
+
+    it('should send all messages if less than 10', async () => {
+      const originMessage = TestBootstrapper.getMockDiscordMessage();
+      const messages = Array.from({ length: 5 }, (_, i) => `Message ${i + 1}`);
+      originMessage.channel.send = jest.fn().mockResolvedValue(true);
+
+      await service.batchSend(messages, originMessage);
+
+      expect(originMessage.channel.send).toHaveBeenCalledTimes(1);
+      expect(originMessage.channel.send).toHaveBeenCalledWith(expect.stringContaining('Message 5'));
+    });
+  });
+
+  describe('sendDM', () => {
+    it('should send a DM to a member successfully', async () => {
+      const member = TestBootstrapper.getMockDiscordUser();
+      const message = 'Hello, member!';
+      member.send = jest.fn().mockResolvedValue(true);
+
+      await service.sendDM(member, message);
+
+      expect(member.send).toHaveBeenCalledWith(message);
+    });
+
+    it('should log an error if sending DM fails', async () => {
+      const member = TestBootstrapper.getMockDiscordUser();
+      const message = 'Hello, member!';
+      const error = new Error('Failed to send DM');
+      member.send = jest.fn().mockRejectedValue(error);
+
+      await service.sendDM(member, message);
+
+      expect(member.send).toHaveBeenCalledWith(message);
+      expect(service['logger'].error).toHaveBeenCalledWith(`Failed to send DM to member ${member.id}`, error);
     });
   });
 });

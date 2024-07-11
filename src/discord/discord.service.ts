@@ -47,12 +47,15 @@ export class DiscordService {
       member = await server.members.fetch(memberId);
     }
     catch (err) {
-      this.logger.error(`Failed to fetch member with ID ${memberId}`, err);
-      throw new Error(`Failed to fetch member with ID ${memberId}. Err: ${err.message}`);
+      const error = `Failed to fetch member with ID ${memberId}. Err: ${err.message}`;
+      this.logger.error(error, err);
+      throw new Error(error);
     }
 
     if (!member) {
-      throw new Error(`Could not find member with ID ${memberId}`);
+      const error = `Could not find member with ID ${memberId}`;
+      this.logger.warn(error);
+      throw new Error(error);
     }
     return member;
   }
