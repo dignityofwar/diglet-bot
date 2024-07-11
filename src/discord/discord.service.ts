@@ -37,6 +37,7 @@ export class DiscordService {
     }
   }
 
+  // Gets a guild member from the Discord server cache
   async getGuildMember(guildId: string, memberId: string): Promise<GuildMember> {
     const server = await this.getGuild(guildId);
 
@@ -46,12 +47,15 @@ export class DiscordService {
       member = await server.members.fetch(memberId);
     }
     catch (err) {
-      this.logger.error(`Failed to fetch member with ID ${memberId}`, err);
-      throw new Error(`Failed to fetch member with ID ${memberId}. Err: ${err.message}`);
+      const error = `Failed to fetch member with ID ${memberId}. Err: ${err.message}`;
+      this.logger.error(error, err);
+      throw new Error(error);
     }
 
     if (!member) {
-      throw new Error(`Could not find member with ID ${memberId}`);
+      const error = `Could not find member with ID ${memberId}`;
+      this.logger.warn(error);
+      throw new Error(error);
     }
     return member;
   }
@@ -92,6 +96,32 @@ export class DiscordService {
     }
     catch (err) {
       this.logger.error('Failed to delete message', err);
+    }
+  }
+
+  async batchSend(messages: string[], originMessage: Message): Promise<void> {
+    let count = 0;
+
+    // Loop each of the messages and carve them up into batches of 10
+    const batchMessages = [];
+    for (const message of messages) {
+      count++;
+      if (count % 10 === 0 || count === messages.length) {
+        batchMessages.push(message);
+      }
+    }
+
+    for (const batch of batchMessages) {
+      await originMessage.channel.send(batch);
+    }
+  }
+
+  async sendDM(member: GuildMember, message: string): Promise<void> {
+    try {
+      await member.send(message);
+    }
+    catch (err) {
+      this.logger.error(`Failed to send DM to member ${member.id}`, err);
     }
   }
 }

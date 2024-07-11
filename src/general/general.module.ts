@@ -3,7 +3,6 @@ import { Module } from '@nestjs/common';
 
 import { PingCommand } from './commands/ping.command';
 import { ConfigModule } from '../config/config.module';
-import { PurgeCandidatesCommand } from './commands/purge.candidates.command';
 import { PurgeService } from './services/purge.service';
 import { ThanosSnapCommand } from './commands/thanos.snap.command';
 import { DiscordService } from '../discord/discord.service';
@@ -13,7 +12,8 @@ import { DatabaseService } from '../database/services/database.service';
 import { VoiceStateEvents } from './events/voice.state.events';
 import { ActivityScanCommand } from './commands/activity.scan.command';
 import { ActivityService } from './services/activity.service';
-import { ActivityCronService } from './services/activity.cron.service';
+// import { ActivityCronService } from './services/activity.cron.service';
+// import { PurgeCronService } from './services/purge.cron.service';
 
 @Module({
   imports: [DiscordModule.forFeature(), ConfigModule, DatabaseModule],
@@ -27,7 +27,6 @@ import { ActivityCronService } from './services/activity.cron.service';
     // Commands
     ActivityScanCommand,
     PingCommand,
-    PurgeCandidatesCommand,
     ThanosSnapCommand,
 
     // Events
@@ -35,7 +34,8 @@ import { ActivityCronService } from './services/activity.cron.service';
     VoiceStateEvents,
 
     // Cron Services
-    ActivityCronService,
+    // ActivityCronService,
+    // PurgeCronService
   ],
 })
 export class GeneralModule {}

@@ -1,7 +1,9 @@
-import { Command, Handler } from '@discord-nestjs/core';
+import { Command, EventParams, Handler, InteractionEvent } from '@discord-nestjs/core';
 import { ApplicationCommandType, ChatInputCommandInteraction } from 'discord.js';
 import { Logger } from '@nestjs/common';
 import { ActivityService } from '../services/activity.service';
+import { SlashCommandPipe } from '@discord-nestjs/common';
+import { DryRunDto } from '../dto/dry.run.dto';
 
 @Command({
   name: 'activity-scan',
@@ -14,15 +16,22 @@ export class ActivityScanCommand {
     private readonly activityService: ActivityService,
   ) {}
   @Handler()
-  async onCommand(interaction: ChatInputCommandInteraction): Promise<void> {
-
+  async onCommand(
+    @InteractionEvent(SlashCommandPipe) dto: DryRunDto,
+    @EventParams() interaction: ChatInputCommandInteraction[]
+  ): Promise<void> {
+    const channel = interaction[0].channel;
     const content = 'Initiated activity scan.';
 
-    await interaction.reply({
+    await interaction[0].reply({
       content,
     });
 
-    this.activityService.scanAndRemoveLeavers(interaction.channel);
+    if (dto.dryRun) {
+      await channel.send('## This is a dry run! No members will be kicked!');
+    }
+
+    this.activityService.startScan(channel, dto.dryRun);
 
     this.logger.log('Activity scan command executed!');
   }

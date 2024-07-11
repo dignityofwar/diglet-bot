@@ -1,187 +1,221 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { Test, TestingModule } from '@nestjs/testing';
 import { ActivityService } from './activity.service';
 import { DiscordService } from '../../discord/discord.service';
-import { EntityRepository } from '@mikro-orm/core';
 import { ActivityEntity } from '../../database/entities/activity.entity';
 import { Logger } from '@nestjs/common';
-import { GuildTextBasedChannel, Message, Guild, GuildMember } from 'discord.js';
+import { GuildMember } from 'discord.js';
+import { TestBootstrapper } from '../../test.bootstrapper';
+import { getRepositoryToken } from '@mikro-orm/nestjs';
 
 describe('ActivityService', () => {
   let activityService: ActivityService;
-  let activityRepository: EntityRepository<ActivityEntity>;
+  let mockDiscordService: DiscordService;
+
+  let mockChannel: any;
+  let mockStatusMessage: any;
+  const mockActivityEntity = {
+    discordId: '123456',
+    discordNickname: 'testuser',
+  } as ActivityEntity;
+  let mockActivityRepository: any;
 
   beforeEach(async () => {
+    mockActivityRepository = TestBootstrapper.getMockRepositoryInjected(mockActivityEntity);
+
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         ActivityService,
         {
           provide: DiscordService,
-          useValue: { /* mock DiscordService methods if any */ },
+          useValue: {
+            kickMember: jest.fn(),
+            batchSend: jest.fn(),
+            getGuildMember:  jest.fn(),
+          },
         },
         {
-          provide: 'ActivityEntityRepository',
-          useValue: {
-            findAll: jest.fn(),
-            removeAndFlush: jest.fn(),
-          },
+          provide: getRepositoryToken(ActivityEntity),
+          useValue: mockActivityRepository,
         },
         Logger,
       ],
     }).compile();
 
     activityService = module.get<ActivityService>(ActivityService);
-    activityRepository = module.get<EntityRepository<ActivityEntity>>('ActivityEntityRepository');
+    mockActivityRepository = module.get(getRepositoryToken(ActivityEntity));
+    mockDiscordService = module.get<DiscordService>(DiscordService);
+
+    mockStatusMessage = TestBootstrapper.getMockDiscordMessage();
+
+    mockChannel = TestBootstrapper.getMockDiscordTextChannel();
+    mockChannel.send = jest.fn().mockResolvedValue(mockStatusMessage);
+
   });
 
-  describe('scanAndRemoveLeavers', () => {
-    let mockChannel: GuildTextBasedChannel;
-    let mockStatusMessage: Message;
-    let mockGuild: Guild;
-    let mockGuildMembers: Map<string, GuildMember>;
+  it('should be defined', () => {
+    expect(activityService).toBeDefined();
+  });
 
+  describe('startScan', () => {
     beforeEach(() => {
-      mockGuildMembers = new Map();
-
-      mockGuild = {
-        members: {
-          cache: {
-            get: jest.fn((id) => mockGuildMembers.get(id)),
-          },
-        },
-      } as unknown as Guild;
-
-      mockChannel = {
-        send: jest.fn(),
-        guild: mockGuild,
-      } as unknown as GuildTextBasedChannel;
-
-      mockStatusMessage = {
-        edit: jest.fn(),
-        delete: jest.fn(),
-        channel: {
-          send: jest.fn(),
-        },
-      } as unknown as Message;
-
-      (mockChannel.send as jest.Mock).mockResolvedValue(mockStatusMessage);
+      mockActivityRepository.findAll = jest.fn().mockResolvedValue([]);
+      activityService.scanForLeavers = jest.fn().mockResolvedValue([]);
     });
+    it('should properly indicate progress and the appropriate functions called', async () => {
+      await activityService.startScan(mockChannel, false);
+      expect(mockChannel.send).toHaveBeenCalledWith('# Starting Activity Leaver Scan');
 
-    it('should scan and remove leavers', async () => {
-      const mockActivityMembers: ActivityEntity[] = [
-        { discordId: '1', discordNickname: 'User1' } as ActivityEntity,
-        { discordId: '2', discordNickname: 'User2' } as ActivityEntity,
-      ];
+      expect(mockStatusMessage.edit).toHaveBeenCalledWith('## 1: Getting active member list...');
+      expect(mockActivityRepository.findAll).toHaveBeenCalled();
 
-      (activityRepository.findAll as jest.Mock).mockResolvedValue(mockActivityMembers);
+      expect(mockStatusMessage.edit).toHaveBeenCalledWith('## 2: Scanning active member records for leavers...');
+      expect(activityService.scanForLeavers).toHaveBeenCalled();
 
-      await activityService.scanAndRemoveLeavers(mockChannel);
-
-      expect(mockChannel.send).toHaveBeenCalledWith('Fetching activity records...');
-      expect(mockStatusMessage.edit).toHaveBeenCalledWith('Scanning activity records... 0 of 2');
-      expect(mockStatusMessage.edit).toHaveBeenCalledWith('Scanning activity records... 2 of 2');
-      expect(activityRepository.removeAndFlush).toHaveBeenCalledTimes(2);
       expect(mockStatusMessage.delete).toHaveBeenCalled();
-      expect(mockChannel.send).toHaveBeenCalledWith('Activity scan complete. Removed **2** leavers out of activity records. **0** records remaining.');
     });
+  });
 
-    it('should scan and remove partial leavers', async () => {
-      const mockActivityMembers: ActivityEntity[] = [
-        { discordId: '1', discordNickname: 'User1' } as ActivityEntity,
-        { discordId: '2', discordNickname: 'User2' } as ActivityEntity,
-      ];
+  describe('scanForLeavers', () => {
+    beforeEach(() => {
+      activityService.removeActivityRecord = jest.fn();
+    });
+    it('should properly indicate progress and the appropriate functions called', async () => {
+      // Create a placeholder for the new message
+      const newStatusMessage = TestBootstrapper.getMockDiscordMessage();
 
-      (activityRepository.findAll as jest.Mock).mockResolvedValue(mockActivityMembers);
-
-      (mockGuild.members.cache.get as jest.Mock).mockImplementation((id) => {
-        if (id === '2') {
-          return {
-            user: {
-              bot: false,
-              id: 12345689,
-            },
-          };
-        }
-        return null;
+      // Mock send to return the exact instance of the new message so tests continue to work.
+      mockStatusMessage.channel.send = jest.fn().mockImplementation(async () => {
+        return newStatusMessage;
       });
+      const mockActivityMembers = createMockActivityMembers(3);
+      mockDiscordService.getGuildMember = jest.fn()
+        .mockReturnValueOnce({} as GuildMember)
+        .mockReturnValueOnce(null);
 
-      await activityService.scanAndRemoveLeavers(mockChannel);
-
-      expect(activityRepository.removeAndFlush).toHaveBeenCalledTimes(1);
-      expect(mockChannel.send).toHaveBeenCalledWith('- Removed User1 (1)\n');
-      expect(mockChannel.send).toHaveBeenCalledWith('Activity scan complete. Removed **1** leavers out of activity records. **1** records remaining.');
+      await activityService.scanForLeavers(mockActivityMembers, mockStatusMessage, false);
+      expect(mockStatusMessage.channel.send).toHaveBeenCalledWith('Scanning member list for leavers... 0 of 3 (0%)');
+      expect(newStatusMessage.edit).toHaveBeenCalledWith('Scanning member list for leavers... 3 of 3 (100%)');
     });
 
-    it('should handle errors during member scanning', async () => {
-      const mockActivityMembers: ActivityEntity[] = [
-        { discordId: '1', discordNickname: 'User1' } as ActivityEntity,
-        { discordId: '2', discordNickname: 'User2' } as ActivityEntity,
-      ];
+    it('should properly batch message leavers', async () => {
+      // Create a placeholder for the new message
+      const newStatusMessage = TestBootstrapper.getMockDiscordMessage();
 
-      (activityRepository.findAll as jest.Mock).mockResolvedValue(mockActivityMembers);
-      (activityRepository.removeAndFlush as jest.Mock).mockRejectedValue(new Error('Remove error'));
-
-      await activityService.scanAndRemoveLeavers(mockChannel);
-
-      expect(mockChannel.send).toHaveBeenCalledWith('Fetching activity records...');
-      expect(mockStatusMessage.edit).toHaveBeenCalledWith('Scanning activity records... 0 of 2');
-      expect(mockStatusMessage.edit).toHaveBeenCalledWith('Scanning activity records... 2 of 2');
-      expect(activityRepository.removeAndFlush).toHaveBeenCalledTimes(2);
-      expect(mockStatusMessage.delete).toHaveBeenCalled();
-      expect(mockChannel.send).toHaveBeenCalledWith('Activity scan complete. Removed **0** leavers out of activity records. **2** records remaining.');
-    });
-
-    it('should log and send an error message if database record removal fails', async () => {
-      const mockActivityMembers: ActivityEntity[] = [
-        { discordId: '1', discordNickname: 'User1' } as ActivityEntity,
-        { discordId: '2', discordNickname: 'User2' } as ActivityEntity,
-      ];
-
-      (activityRepository.findAll as jest.Mock).mockResolvedValue(mockActivityMembers);
-      (mockGuild.members.cache.get as jest.Mock).mockImplementation((id) => {
-        if (id === '2') {
-          return null;
-        }
-        return {
-          user: {
-            bot: false,
-            id: 12345689,
-          },
-        };
+      // Mock send to return the exact instance of the new message so tests continue to work.
+      mockStatusMessage.channel.send = jest.fn().mockImplementation(async () => {
+        return newStatusMessage;
       });
-      (activityRepository.removeAndFlush as jest.Mock).mockRejectedValue(new Error('Remove error'));
+      const mockActivityMembers = createMockActivityMembers(3);
+      mockDiscordService.getGuildMember = jest.fn()
+        .mockReturnValueOnce(null)
+        .mockReturnValueOnce({} as GuildMember)
+        .mockReturnValueOnce(null);
 
-      await activityService.scanAndRemoveLeavers(mockChannel);
+      activityService.removeActivityRecord = jest.fn()
+        .mockReturnValue(null);
 
-      expect(mockChannel.send).toHaveBeenCalledWith('Fetching activity records...');
-      expect(mockStatusMessage.edit).toHaveBeenCalledWith('Scanning activity records... 0 of 2');
-      expect(mockStatusMessage.edit).toHaveBeenCalledWith('Scanning activity records... 2 of 2');
-      expect(mockStatusMessage.delete).toHaveBeenCalled();
-      expect(mockChannel.send).toHaveBeenCalledWith('Activity scan complete. Removed **0** leavers out of activity records. **2** records remaining.');
-      expect(mockChannel.send).toHaveBeenCalledWith('Error removing activity record for User2 (2). Error: Remove error');
+      await activityService.scanForLeavers(mockActivityMembers, mockStatusMessage, false);
+      expect(mockStatusMessage.channel.send).toHaveBeenCalledWith('Scanning member list for leavers... 0 of 3 (0%)');
+      expect(newStatusMessage.edit).toHaveBeenCalledWith('Scanning member list for leavers... 3 of 3 (100%)');
+      expect(mockDiscordService.batchSend).toHaveBeenCalledWith([
+        '- Removed leaver test1 (1) from activity records.\n',
+        '- Removed leaver test3 (3) from activity records.\n',
+      ], mockStatusMessage);
     });
 
-    it('should log and send an error message if discord error occurs', async () => {
-      const mockActivityMembers: ActivityEntity[] = [
-        { discordId: '1', discordNickname: 'User1' } as ActivityEntity,
-        { discordId: '2', discordNickname: 'User2' } as ActivityEntity,
-      ];
+    it('should properly indicate progress when there is more than 10 records', async () => {
+      // Create a placeholder for the new message
+      const newStatusMessage = TestBootstrapper.getMockDiscordMessage();
 
-      (activityRepository.findAll as jest.Mock).mockResolvedValue(mockActivityMembers);
-      (mockChannel.guild.members.cache.get as jest.Mock).mockImplementation((id) => {
-        if (id === '2') {
-          throw new Error('Discord error happened');
-        }
-        return { id: 12345689 };
+      // Mock send to return the exact instance of the new message so tests continue to work.
+      mockStatusMessage.channel.send = jest.fn().mockImplementation(async () => {
+        return newStatusMessage;
       });
-      await activityService.scanAndRemoveLeavers(mockChannel);
+      const mockActivityMembers = createMockActivityMembers(20);
+      mockDiscordService.getGuildMember = jest.fn()
+        .mockReturnValueOnce({} as GuildMember)
+        .mockReturnValueOnce(null);
 
-      expect(mockChannel.send).toHaveBeenCalledWith('Fetching activity records...');
-      expect(mockStatusMessage.edit).toHaveBeenCalledWith('Scanning activity records... 0 of 2');
-      expect(mockStatusMessage.edit).toHaveBeenCalledWith('Scanning activity records... 2 of 2');
-      expect(activityRepository.removeAndFlush).toHaveBeenCalledTimes(0);
-      expect(mockStatusMessage.delete).toHaveBeenCalled();
-      expect(mockChannel.send).toHaveBeenCalledWith('Activity scan complete. Removed **0** leavers out of activity records. **2** records remaining.');
-      expect(mockChannel.send).toHaveBeenCalledWith('Error removing activity record for User2 (2). Error: Discord error happened');
+      await activityService.scanForLeavers(mockActivityMembers, mockStatusMessage, false);
+      expect(mockStatusMessage.channel.send).toHaveBeenCalledWith('Scanning member list for leavers... 0 of 20 (0%)');
+      expect(newStatusMessage.edit).toHaveBeenCalledWith('Scanning member list for leavers... 10 of 20 (50%)');
+      expect(newStatusMessage.edit).toHaveBeenCalledWith('Scanning member list for leavers... 20 of 20 (100%)');
+    });
+
+    it('should not call removeActivityRecord if there are no leavers', async () => {
+      const mockActivityMembers = createMockActivityMembers(2);
+      mockDiscordService.getGuildMember = jest.fn().mockReturnValue({} as GuildMember);
+
+      await activityService.scanForLeavers(mockActivityMembers, mockStatusMessage, false);
+
+      expect(activityService.removeActivityRecord).toBeCalledTimes(0);
+    });
+
+    it('should call the removeActivityRecord function should a leaver be detected', async () => {
+      const mockActivityMembers = createMockActivityMembers(2);
+      mockDiscordService.getGuildMember = jest.fn()
+        .mockReturnValueOnce({} as GuildMember)
+        .mockReturnValueOnce(null);
+
+      await activityService.scanForLeavers(mockActivityMembers, mockStatusMessage, false);
+
+      expect(activityService.removeActivityRecord).toHaveBeenCalledWith(mockActivityMembers[1], false);
+    });
+    it('should properly handle errors when removing activity records', async () => {
+      const mockActivityMembers = createMockActivityMembers(2);
+      mockDiscordService.getGuildMember = jest.fn()
+        .mockReturnValue(null);
+
+      activityService.removeActivityRecord = jest.fn()
+        .mockImplementation(() => {throw new Error('Test Activity Error');});
+
+      await activityService.scanForLeavers(mockActivityMembers, mockStatusMessage, false);
+      expect(mockStatusMessage.channel.send).toHaveBeenCalledWith('Error removing activity record for test1 (1). Error: Test Activity Error');
+      expect(mockStatusMessage.channel.send).toHaveBeenCalledWith('Error removing activity record for test2 (2). Error: Test Activity Error');
+
+      expect(activityService.removeActivityRecord).toHaveBeenCalledWith(mockActivityMembers[0], false);
+    });
+    it('should properly handle errors when removing activity records after a successful one', async () => {
+      const mockActivityMembers = createMockActivityMembers(2);
+      mockDiscordService.getGuildMember = jest.fn()
+        .mockReturnValue(null);
+
+      activityService.removeActivityRecord = jest.fn()
+        .mockReturnValueOnce(null)
+        .mockImplementationOnce(() => {throw new Error('Test Error');});
+
+      await activityService.scanForLeavers(mockActivityMembers, mockStatusMessage, false);
+      expect(mockStatusMessage.channel.send).toHaveBeenCalledWith('Error removing activity record for test2 (2). Error: Test Error');
+
+      expect(activityService.removeActivityRecord).toHaveBeenCalledWith(mockActivityMembers[0], false);
+    });
+  });
+
+  describe('removeActivityRecord', () => {
+    it('should remove the activity record', async () => {
+      await activityService.removeActivityRecord(mockActivityEntity, false);
+      expect(mockActivityRepository.removeAndFlush).toHaveBeenCalledWith(mockActivityEntity);
+    });
+
+    it('should not remove the activity record on a dry run', async () => {
+      await activityService.removeActivityRecord(mockActivityEntity, true);
+      expect(mockActivityRepository.removeAndFlush).toBeCalledTimes(0);
+    });
+
+    it('should properly handle database errors and throw an custom error', async () => {
+      mockActivityRepository.removeAndFlush = jest.fn().mockImplementation(() => {throw new Error('Database went boom!');});
+      await expect(activityService.removeActivityRecord(mockActivityEntity, false))
+        .rejects
+        .toThrow('Error removing activity record for leaver testuser (123456). Error: Database went boom!');
+      expect(mockActivityRepository.removeAndFlush).toBeCalledTimes(1);
     });
   });
 });
+
+function createMockActivityMembers(count: number): ActivityEntity[] {
+  return Array.from({ length: count }, (_, index) => ({
+    discordId: (index + 1).toString(),
+    discordNickname: `test${index + 1}`,
+  })) as ActivityEntity[];
+}

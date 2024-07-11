@@ -112,6 +112,7 @@ export class TestBootstrapper {
       edit: jest.fn(),
       delete: jest.fn(),
       channel: {
+        // This isn't getMockDiscordMessage again as it'll call an infinite loop
         send: jest.fn().mockImplementation(() => {
           return {
             edit: jest.fn(),

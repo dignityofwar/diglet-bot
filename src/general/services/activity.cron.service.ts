@@ -35,17 +35,17 @@ export class ActivityCronService implements OnApplicationBootstrap {
 
   // Run activity data scans to keep activity data refreshed
   @Cron('0 */3 * * *')
-  async runActivityDataScans(): Promise<void> {
-    this.logger.log('Running Activity Data scans Cron');
+  async runActivityLeaverScans(): Promise<void> {
+    this.logger.log('Running Activity Leaver scans Cron');
 
-    await this.channel.send('Starting activity scan cron');
+    await this.channel.send('Starting activity leaver scan cron...');
 
     const checkInId = Sentry.captureCheckIn({
       monitorSlug: 'digletbot-scans',
       status: 'in_progress',
     });
 
-    await this.activityService.scanAndRemoveLeavers(this.channel);
+    await this.activityService.startScan(this.channel, false);
 
     Sentry.captureCheckIn({
       checkInId,
