@@ -180,7 +180,6 @@ export class AlbionRegistrationService implements OnApplicationBootstrap {
       this.throwError(`Sorry <@${data.discordMember.id}>, character **${data.character.Name}** has already been registered for the ${data.serverEmoji} ${data.guildName} Guild, but the user who registered it has left the server.\n\n${contactMessage}`);
     }
     this.throwError(`Sorry <@${data.discordMember.id}>, character **${data.character.Name}** has already been registered for the ${data.serverEmoji} ${data.guildName} Guild by Discord user \`@${originalDiscordMember.displayName}\`.\n\n${contactMessage}`);
-    return;
   }
 
   private async checkIfInGuild(data: RegistrationData) {
