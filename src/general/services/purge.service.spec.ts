@@ -299,7 +299,6 @@ DIG Community Staff`;
         mockDiscordUser,
       )).toBe(undefined);
 
-      expect(mockMessage.channel.send).toHaveBeenCalledWith('https://media.giphy.com/media/ie76dJeem4xBDcf83e/giphy.gif');
       expect(mockMessage.channel.send).toHaveBeenCalledWith('Snapping fingers...');
       expect(newStatusMessage.edit).toHaveBeenCalledWith(`Found ${purgablesMock.purgableMembers.size} members who have disobeyed Thanos...\nI don't feel too good Mr Stark...`);
       expect(mockMessage.channel.send).toHaveBeenCalledWith('https://media2.giphy.com/media/XzkGfRsUweB9ouLEsE/giphy.gif');
