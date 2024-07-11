@@ -342,6 +342,19 @@ export class PurgeService {
       const date = new Date().toLocaleString();
 
       if (!dryRun) {
+        const dmMessage = `Hello from DIG!\n
+We have removed you from the DIG Discord server due to either:
+- Failing to complete the onboarding process to our server within 1 week of joining.
+- Being inactive for 90 days. 
+  - We choose to keep our server member counts as accurate as possible so we don't impose the impression we are larger than we actually are, and to keep our game role statistics accurate. We use these heavily to determine how active each of our games are.
+
+Should you believe this to be in error, or you simply wish to rejoin, please click here: https://discord.gg/joinDIG
+
+Otherwise, thank you for having joined us, and we wish you all the best. Please note messages to this bot are not monitored.
+
+DIG Community Staff`;
+        await this.discordService.sendDM(member, dmMessage);
+
         await this.discordService.kickMember(member, message, `Automatic purge: ${date}`);
         // Removal of activity records is handled by the guildRemoveMember event listener.
       }

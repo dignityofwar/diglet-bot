@@ -57,6 +57,18 @@ describe('PurgeService', () => {
   const mockRoleAlbionEURegistered = TestBootstrapper.getMockDiscordRole('678901234');
   const devUserId = TestBootstrapper.mockConfig.discord.devUserId;
 
+  const goodbyeMessage = `Hello from DIG!\n
+We have removed you from the DIG Discord server due to either:
+- Failing to complete the onboarding process to our server within 1 week of joining.
+- Being inactive for 90 days. 
+  - We choose to keep our server member counts as accurate as possible so we don't impose the impression we are larger than we actually are, and to keep our game role statistics accurate. We use these heavily to determine how active each of our games are.
+
+Should you believe this to be in error, or you simply wish to rejoin, please click here: https://discord.gg/joinDIG
+
+Otherwise, thank you for having joined us, and we wish you all the best. Please note messages to this bot are not monitored.
+
+DIG Community Staff`;
+
   beforeEach(async () => {
     const moduleRef = await Test.createTestingModule({
       providers: [
@@ -69,6 +81,7 @@ describe('PurgeService', () => {
             kickMember: jest.fn(),
             deleteMessage: jest.fn().mockReturnValue(() => true),
             batchSend: jest.fn(),
+            sendDM: jest.fn(),
           },
         },
         {
@@ -615,6 +628,7 @@ describe('PurgeService', () => {
       const count = purgableMembers.size;
       const date = new Date().toLocaleString();
 
+      expect(discordService.sendDM).toHaveBeenCalledWith(purgables.members[0], goodbyeMessage);
       expect(discordService.kickMember).toHaveBeenCalledWith(purgables.members[0], mockMessage, `Automatic purge: ${date}`);
       expect(discordService.deleteMessage).toHaveBeenCalledTimes(1);
       expect(mockMessage.channel.send).toHaveBeenCalledWith(`Kicking ${count} purgable members...`);
@@ -643,6 +657,7 @@ describe('PurgeService', () => {
 
       const count = purgableMembers.size;
 
+      expect(discordService.sendDM).toHaveBeenCalledTimes(count);
       expect(discordService.kickMember).toHaveBeenCalledTimes(count);
       expect(discordService.deleteMessage).toHaveBeenCalledTimes(1);
       expect(mockMessage.channel.send).toHaveBeenCalledWith(`Kicking ${count} purgable members...`);

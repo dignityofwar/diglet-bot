@@ -112,4 +112,13 @@ export class DiscordService {
       await originMessage.channel.send(batch);
     }
   }
+
+  async sendDM(member: GuildMember, message: string): Promise<void> {
+    try {
+      await member.send(message);
+    }
+    catch (err) {
+      this.logger.error(`Failed to send DM to member ${member.id}`, err);
+    }
+  }
 }
