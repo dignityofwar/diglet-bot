@@ -91,10 +91,10 @@ export class PurgeService {
 
     const statusMessage = await originMessage.channel.send('Snapping fingers...');
 
-    let purgableMembers: PurgableMemberList;
+    let purgables: PurgableMemberList;
 
     try {
-      purgableMembers = await this.getPurgableMembers(originMessage, dryRun);
+      purgables = await this.getPurgableMembers(originMessage, dryRun);
     }
     catch (err) {
       const string = `## ❌ Error commencing the purge!\n${err.message}`;
@@ -103,14 +103,14 @@ export class PurgeService {
       return;
     }
 
-    if (purgableMembers.purgableMembers.size === 0) {
+    if (purgables.purgableMembers.size === 0) {
       const string = '## ✅ All members are active and onboarded.\nThey have been saved from Thanos, this time...';
       this.logger.log(string);
       await originMessage.channel.send(string);
       return;
     }
 
-    await statusMessage.edit(`Found ${purgableMembers.purgableMembers.size} members who have disobeyed Thanos...\nI don't feel too good Mr Stark...`);
+    await statusMessage.edit(`Found ${purgables.purgableMembers.size} members who have disobeyed Thanos...\nI don't feel too good Mr Stark...`);
 
     // I don't feel too good Mr Stark...
     await originMessage.channel.send('https://media2.giphy.com/media/XzkGfRsUweB9ouLEsE/giphy.gif');
@@ -119,7 +119,7 @@ export class PurgeService {
     try {
       await this.kickPurgableMembers(
         originMessage,
-        purgableMembers.purgableMembers,
+        purgables.purgableMembers,
         dryRun
       );
     }
@@ -127,13 +127,14 @@ export class PurgeService {
       const string = `## ❌ Error purging members!\n${err.message}`;
       this.logger.error(string);
       await statusMessage.edit(string);
+      return;
     }
 
     // Thanos is pleased
     await originMessage.channel.send('https://media1.tenor.com/m/g0oFjHy6W1cAAAAC/thanos-smile.gif');
 
     await originMessage.channel.send('## ✅ Purge complete.');
-    await this.generateReport(purgableMembers, originMessage);
+    await this.generateReport(purgables, originMessage);
 
     if (interactionMember) {
       await originMessage.channel.send(`Thanos thanks you for your service, <@${interactionMember.user.id}>.`);
@@ -379,18 +380,18 @@ export class PurgeService {
     });
   }
 
-  async generateReport(purgableMembers: PurgableMemberList, originMessage: Message): Promise<void> {
+  async generateReport(purgables: PurgableMemberList, originMessage: Message): Promise<void> {
     // Hold a list of member IDs that will be sent by the below
     const gameMemberIds: string[] = [];
 
     // Loop through purgable members by game, batch sending the members in each game
-    for (const game in purgableMembers.purgableByGame) {
-      if (!purgableMembers.purgableByGame[game] || purgableMembers.purgableByGame[game].size === 0) {
+    for (const game in purgables.purgableByGame) {
+      if (!purgables.purgableByGame[game] || purgables.purgableByGame[game].size === 0) {
         continue;
       }
 
       const batch: string[] = [];
-      purgableMembers.purgableByGame[game].each((member: GuildMember) => {
+      purgables.purgableByGame[game].each((member: GuildMember) => {
         const name = member.displayName || member.nickname || member.user.username;
         batch.push(`- [${game.toUpperCase()}] <@${member.user.id}> / ${name}, joined <t:${Math.floor(member.joinedTimestamp / 1000)}:R>\n`);
         gameMemberIds.push(member.user.id);
@@ -403,7 +404,7 @@ export class PurgeService {
     // Now loop through the purgable members in its entirety, reference to the gameMemberIds array to see if the member has already been sent.
     // If not, they don't belong to a particular community game, thus will be marked as NONE.
     const batch: string[] = [];
-    purgableMembers.purgableMembers.each((member: GuildMember) => {
+    purgables.purgableMembers.each((member: GuildMember) => {
       if (!gameMemberIds.includes(member.user.id)) {
         const name = member.displayName || member.nickname || member.user.username;
         batch.push(`- [NO-GAME] <@${member.user.id}> / ${name}, joined <t:${Math.floor(member.joinedTimestamp / 1000)}:R>\n`);
@@ -415,30 +416,30 @@ export class PurgeService {
     // Go through the batches by groups of 20 and spit out the members
     await this.discordService.batchSend(batch, originMessage);
 
-    const percent = Math.floor((purgableMembers.purgableMembers.size / purgableMembers.totalHumans) * 100).toFixed(1);
-    const inactivePercent = Math.floor((purgableMembers.inactive / purgableMembers.purgableMembers.size) * 100).toFixed(1);
-    const nonOnboarders = purgableMembers.purgableMembers.size - purgableMembers.inactive;
-    const nonOnboardersPercent = Math.floor((nonOnboarders / purgableMembers.purgableMembers.size) * 100).toFixed(1);
+    const percent = Math.floor((purgables.purgableMembers.size / purgables.totalHumans) * 100).toFixed(1);
+    const inactivePercent = Math.floor((purgables.inactive / purgables.purgableMembers.size) * 100).toFixed(1);
+    const nonOnboarders = purgables.purgableMembers.size - purgables.inactive;
+    const nonOnboardersPercent = Math.floor((nonOnboarders / purgables.purgableMembers.size) * 100).toFixed(1);
 
-    this.logger.log(`Purge complete. ${purgableMembers.purgableMembers.size} members purged. ${percent}% of total humans purged.`);
+    this.logger.log(`Purge complete. ${purgables.purgableMembers.size} members purged. ${percent}% of total humans purged.`);
 
     const purgeReport = `## 📜 Purge Report
-- Total members at start of purge: **${purgableMembers.totalMembers}**
-- Total members at end of purge: **${purgableMembers.totalMembers - purgableMembers.purgableMembers.size}**
-- Total humans at start of purge: **${purgableMembers.totalHumans}**
-- Total humans at end of purge: **${purgableMembers.totalHumans - purgableMembers.purgableMembers.size}**
-- ⏳ Members in 1 week grace period: **${purgableMembers.inGracePeriod}**
-- 👞 Humans purged: **${purgableMembers.purgableMembers.size}** (${percent}% of total members)
-- 😴 Humans inactive: **${purgableMembers.inactive}** (${inactivePercent}% of purged)
+- Total members at start of purge: **${purgables.totalMembers}**
+- Total members at end of purge: **${purgables.totalMembers - purgables.purgableMembers.size}**
+- Total humans at start of purge: **${purgables.totalHumans}**
+- Total humans at end of purge: **${purgables.totalHumans - purgables.purgableMembers.size}**
+- ⏳ Members in 1 week grace period: **${purgables.inGracePeriod}**
+- 👞 Humans purged: **${purgables.purgableMembers.size}** (${percent}% of total members)
+- 😴 Humans inactive: **${purgables.inactive}** (${inactivePercent}% of purged)
 - 🫨 Humans who failed to onboard: **${nonOnboarders}** (${nonOnboardersPercent}% of purged)`;
 
     const gameStatsReport = `## Game stats
 Note, these numbers will not add up to total numbers, as a member can be in multiple games.
-- Total PS2 purged: **${purgableMembers.purgableByGame.ps2.size}**
-- Total PS2 verified purged: **${purgableMembers.purgableByGame.ps2Verified.size}**
-- Total Foxhole purged: **${purgableMembers.purgableByGame.foxhole.size}**
-- Total Albion purged: **${purgableMembers.purgableByGame.albion.size}**
-- Total Albion Registered purged: **${purgableMembers.purgableByGame.albionEURegistered.size}**`;
+- Total PS2 purged: **${purgables.purgableByGame.ps2.size}**
+- Total PS2 verified purged: **${purgables.purgableByGame.ps2Verified.size}**
+- Total Foxhole purged: **${purgables.purgableByGame.foxhole.size}**
+- Total Albion purged: **${purgables.purgableByGame.albion.size}**
+- Total Albion Registered purged: **${purgables.purgableByGame.albionEURegistered.size}**`;
 
     await originMessage.channel.send(purgeReport);
     await originMessage.channel.send(gameStatsReport);

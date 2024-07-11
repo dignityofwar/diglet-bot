@@ -257,7 +257,7 @@ describe('PurgeService', () => {
       expect(newStatusMessage.edit).toHaveBeenCalledWith('## ❌ Error purging members!\nSomething went boom when kicking!');
     });
 
-    it('should respond commence the purge when purgables exist, and communicate progress', async () => {
+    it('should commence the purge when purgables exist, and communicate progress', async () => {
       service.kickPurgableMembers = jest.fn();
 
       // Create a placeholder for the new message
@@ -267,7 +267,7 @@ describe('PurgeService', () => {
       mockMessage.channel.send = jest.fn().mockImplementation(async () => {
         return newStatusMessage;
       });
-      const returnedData = {
+      const purgablesMock = {
         purgableMembers: generatedMembers,
         totalMembers: 50,
         totalBots: 4,
@@ -275,7 +275,8 @@ describe('PurgeService', () => {
         inGracePeriod: 5,
         inactive: 6,
       };
-      service.getPurgableMembers = jest.fn().mockResolvedValue(returnedData);
+      service.getPurgableMembers = jest.fn().mockResolvedValue(purgablesMock);
+      service.generateReport = jest.fn().mockResolvedValue(undefined);
 
       const mockDiscordUser = TestBootstrapper.getMockDiscordUser();
 
@@ -287,11 +288,12 @@ describe('PurgeService', () => {
 
       expect(mockMessage.channel.send).toHaveBeenCalledWith('https://media.giphy.com/media/ie76dJeem4xBDcf83e/giphy.gif');
       expect(mockMessage.channel.send).toHaveBeenCalledWith('Snapping fingers...');
-      expect(newStatusMessage.edit).toHaveBeenCalledWith(`Found ${returnedData.purgableMembers.size} members who have disobeyed Thanos...\nI don't feel too good Mr Stark...`);
+      expect(newStatusMessage.edit).toHaveBeenCalledWith(`Found ${purgablesMock.purgableMembers.size} members who have disobeyed Thanos...\nI don't feel too good Mr Stark...`);
       expect(mockMessage.channel.send).toHaveBeenCalledWith('https://media2.giphy.com/media/XzkGfRsUweB9ouLEsE/giphy.gif');
-      expect(service.kickPurgableMembers).toHaveBeenCalledWith(mockMessage, returnedData.purgableMembers, false);
+      expect(service.kickPurgableMembers).toHaveBeenCalledWith(mockMessage, purgablesMock.purgableMembers, false);
       expect(mockMessage.channel.send).toHaveBeenCalledWith('https://media1.tenor.com/m/g0oFjHy6W1cAAAAC/thanos-smile.gif');
-      expect(mockMessage.channel.send).toHaveBeenCalledWith(`## ✅ Purge complete.\n**${returnedData.purgableMembers.size}** members have been purged from the server. It is now recommended to run the Scanners found in #albion-scans and #ps2-scans.`);
+      expect(mockMessage.channel.send).toHaveBeenCalledWith('## ✅ Purge complete.');
+      expect(service.generateReport).toHaveBeenCalledWith(purgablesMock, mockMessage);
       expect(mockMessage.channel.send).toHaveBeenCalledWith(`Thanos thanks you for your service, <@${mockDiscordUser.id}>.`);
     });
   });
@@ -777,7 +779,7 @@ describe('PurgeService', () => {
       // const totalHumans = 90;
       // const inGracePeriod = 5;
       // const inactive = 10;
-      const purgableMembers: PurgableMemberList = {
+      const purgables: PurgableMemberList = {
         purgableMembers: new Collection<string, GuildMember>(),
         purgableByGame: {
           ps2: new Collection<string, GuildMember>(),
@@ -800,40 +802,40 @@ describe('PurgeService', () => {
         joinedTimestamp: Date.now() - 1000000,
       } as GuildMember);
 
-      purgableMembers.purgableByGame.ps2.set('1', mockGuildMember('1', 'User1'));
-      purgableMembers.purgableByGame.foxhole.set('2', mockGuildMember('2', 'User2'));
-      purgableMembers.purgableMembers.set('3', mockGuildMember('3', 'User3'));
-      purgableMembers.purgableMembers.set('1', mockGuildMember('1', 'User1'));
-      purgableMembers.purgableMembers.set('2', mockGuildMember('2', 'User2'));
+      purgables.purgableByGame.ps2.set('1', mockGuildMember('1', 'User1'));
+      purgables.purgableByGame.foxhole.set('2', mockGuildMember('2', 'User2'));
+      purgables.purgableMembers.set('1', mockGuildMember('1', 'User1'));
+      purgables.purgableMembers.set('2', mockGuildMember('2', 'User2'));
+      purgables.purgableMembers.set('3', mockGuildMember('3', 'User3'));
 
-      await service.generateReport(purgableMembers, mockMessage);
+      await service.generateReport(purgables, mockMessage);
 
       expect(mockMessage.channel.send).toHaveBeenCalledWith('### PS2');
       expect(mockMessage.channel.send).toHaveBeenCalledWith('### FOXHOLE');
       expect(mockMessage.channel.send).toHaveBeenCalledWith('### No game role');
 
       expect(discordService.batchSend).toHaveBeenCalledTimes(3);
-      const percent = Math.floor((purgableMembers.purgableMembers.size / purgableMembers.totalHumans) * 100).toFixed(1);
-      const inactivePercent = Math.floor((purgableMembers.inactive / purgableMembers.purgableMembers.size) * 100).toFixed(1);
-      const nonOnboarders = purgableMembers.purgableMembers.size - purgableMembers.inactive;
-      const nonOnboardersPercent = Math.floor((nonOnboarders / purgableMembers.purgableMembers.size) * 100).toFixed(1);
+      const percent = Math.floor((purgables.purgableMembers.size / purgables.totalHumans) * 100).toFixed(1);
+      const inactivePercent = Math.floor((purgables.inactive / purgables.purgableMembers.size) * 100).toFixed(1);
+      const nonOnboarders = purgables.purgableMembers.size - purgables.inactive;
+      const nonOnboardersPercent = Math.floor((nonOnboarders / purgables.purgableMembers.size) * 100).toFixed(1);
 
       const expectedPurgeReport = `## 📜 Purge Report
 - Total members at start of purge: **${totalMembers}**
-- Total members at end of purge: **${totalMembers - purgableMembers.purgableMembers.size}**
+- Total members at end of purge: **${totalMembers - purgables.purgableMembers.size}**
 - Total humans at start of purge: **${totalHumans}**
-- Total humans at end of purge: **${totalHumans - purgableMembers.purgableMembers.size}**
+- Total humans at end of purge: **${totalHumans - purgables.purgableMembers.size}**
 - ⏳ Members in 1 week grace period: **${inGracePeriod}**
-- 👞 Humans purged: **${purgableMembers.purgableMembers.size}** (${percent}% of total members)
-- 😴 Humans inactive: **${purgableMembers.inactive}** (${inactivePercent}% of purged)
+- 👞 Humans purged: **${purgables.purgableMembers.size}** (${percent}% of total members)
+- 😴 Humans inactive: **${purgables.inactive}** (${inactivePercent}% of purged)
 - 🫨 Humans who failed to onboard: **${nonOnboarders}** (${nonOnboardersPercent}% of purged)`;
       const expectedGameReport = `## Game stats
 Note, these numbers will not add up to total numbers, as a member can be in multiple games.
-- Total PS2 purged: **${purgableMembers.purgableByGame.ps2.size}**
-- Total PS2 verified purged: **${purgableMembers.purgableByGame.ps2Verified.size}**
-- Total Foxhole purged: **${purgableMembers.purgableByGame.foxhole.size}**
-- Total Albion purged: **${purgableMembers.purgableByGame.albion.size}**
-- Total Albion Registered purged: **${purgableMembers.purgableByGame.albionEURegistered.size}**`;
+- Total PS2 purged: **${purgables.purgableByGame.ps2.size}**
+- Total PS2 verified purged: **${purgables.purgableByGame.ps2Verified.size}**
+- Total Foxhole purged: **${purgables.purgableByGame.foxhole.size}**
+- Total Albion purged: **${purgables.purgableByGame.albion.size}**
+- Total Albion Registered purged: **${purgables.purgableByGame.albionEURegistered.size}**`;
 
       expect(mockMessage.channel.send).toHaveBeenCalledWith(expectedPurgeReport);
       expect(mockMessage.channel.send).toHaveBeenCalledWith(expectedGameReport);
