@@ -60,7 +60,7 @@ export class PurgeService {
     }
 
     if (!foxholeRole) {
-      throw new Error(`Could not find Foxhole role! Pinging Bot Dev <@${devUserId}>!`);
+      throw new Error(`Could not find Rec/Foxhole role! Pinging Bot Dev <@${devUserId}>!`);
     }
 
     if (!albionRole) {
@@ -440,7 +440,7 @@ DIG Community Staff`;
 - Total humans at start of purge: **${purgables.totalHumans}**
 - Total humans at end of purge: **${purgables.totalHumans - purgables.purgableMembers.size}**
 - ⏳ Members in 1 week grace period: **${purgables.inGracePeriod}**
-- 👞 Humans purged: **${purgables.purgableMembers.size}** (${percent}% of total members)
+- 👞 Humans purged: **${purgables.purgableMembers.size}** (${percent}% of total server members)
 - 😴 Humans inactive: **${purgables.inactive}** (${inactivePercent}% of purged)
 - 🫨 Humans who failed to onboard: **${nonOnboarders}** (${nonOnboardersPercent}% of purged)`;
 
@@ -456,13 +456,3 @@ Note, these numbers will not add up to total numbers, as a member can be in mult
     await originMessage.channel.send(gameStatsReport);
   }
 }
-
-// ## 📜 Purge Report
-// - Total members at start of purge: **10**
-// - Total members at end of purge: **7**
-// - Total humans at start of purge: **8**
-// - Total humans at end of purge: **5**
-// - ⏳ Members in 1 week grace period: **0**
-// - 👞 Humans purged: **3** (37.0%)
-// - 😴 Humans inactive: **1** (33.0% of purged)
-// - 🫨 Humans who failed to onboard: **2** (66.0% of purged)

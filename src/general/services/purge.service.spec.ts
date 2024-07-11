@@ -355,14 +355,14 @@ DIG Community Staff`;
 
       expect(() => service.preflightChecks(mockMessage as any)).toThrow(`Could not find PS2/Verified role! Pinging Bot Dev <@${devUserId}>!`);
     });
-    it('should throw an error if the Foxhole role does not exist', async () => {
+    it('should throw an error if the Rec/Foxhole role does not exist', async () => {
       mockMessage.guild.roles.cache.find = jest.fn()
         .mockReturnValueOnce(mockRoleOnboarded)
         .mockReturnValueOnce(mockRolePS2)
         .mockReturnValueOnce(mockRolePS2Verified)
         .mockReturnValueOnce(null);
 
-      expect(() => service.preflightChecks(mockMessage as any)).toThrow(`Could not find Foxhole role! Pinging Bot Dev <@${devUserId}>!`);
+      expect(() => service.preflightChecks(mockMessage as any)).toThrow(`Could not find Rec/Foxhole role! Pinging Bot Dev <@${devUserId}>!`);
     });
     it('should throw an error if the Albion Online role does not exist', async () => {
       mockMessage.guild.roles.cache.find = jest.fn()
