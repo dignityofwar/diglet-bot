@@ -17,7 +17,7 @@ describe('AlbionRegisterCommand', () => {
   let mockDiscordInteraction: any;
   let mockDiscordUser: any;
   let mockDiscordMessage: any;
-  const dto: AlbionRegisterDto = { character: 'Maelstrome26', server: AlbionServer.AMERICAS };
+  const dto: AlbionRegisterDto = { character: 'Maelstrome26' };
 
   beforeEach(async () => {
     TestBootstrapper.mockORM();
@@ -67,7 +67,7 @@ describe('AlbionRegisterCommand', () => {
       expect(result).toBe('Registration request sent!');
       expect(command.registrationCommandProxy).toHaveBeenCalledWith(
         dto.character,
-        dto.server,
+        AlbionServer.EUROPE,
         mockDiscordUser.id,
         mockDiscordUser.guild.id,
         mockDiscordInteraction[0].channelId,
@@ -80,7 +80,7 @@ describe('AlbionRegisterCommand', () => {
     it('should call the registration service', async () => {
       await command.registrationCommandProxy(
         dto.character,
-        dto.server,
+        AlbionServer.EUROPE,
         mockDiscordUser.id,
         mockDiscordUser.guild.id,
         mockDiscordInteraction[0].channelId,
@@ -89,7 +89,7 @@ describe('AlbionRegisterCommand', () => {
 
       expect(albionRegistrationService.handleRegistration).toHaveBeenCalledWith(
         dto.character,
-        dto.server,
+        AlbionServer.EUROPE,
         mockDiscordUser.id,
         mockDiscordUser.guild.id,
         mockDiscordInteraction[0].channelId
@@ -102,7 +102,7 @@ describe('AlbionRegisterCommand', () => {
 
       await command.registrationCommandProxy(
         dto.character,
-        dto.server,
+        AlbionServer.EUROPE,
         mockDiscordUser.id,
         mockDiscordUser.guild.id,
         mockDiscordInteraction[0].channelId,
@@ -111,7 +111,7 @@ describe('AlbionRegisterCommand', () => {
 
       expect(albionRegistrationService.handleRegistration).toHaveBeenCalledWith(
         dto.character,
-        dto.server,
+        AlbionServer.EUROPE,
         mockDiscordUser.id,
         mockDiscordUser.guild.id,
         mockDiscordInteraction[0].channelId

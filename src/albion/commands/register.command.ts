@@ -41,7 +41,7 @@ export class AlbionRegisterCommand {
 
     this.registrationCommandProxy(
       dto.character,
-      dto.server,
+      AlbionServer.EUROPE,
       member.id,
       member.guild.id,
       interaction[0].channelId,
