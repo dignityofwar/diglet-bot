@@ -33,16 +33,6 @@ export class AlbionCronService implements OnApplicationBootstrap {
     }
   }
 
-  @Cron('0 0 22,6 * * *')
-  async runAlbionScansUS(): Promise<void> {
-    this.logger.log('Running Albion Scans US Cron');
-
-    const message = await this.channel.send('Starting US Scans');
-
-    await this.albionScanningService.startScan(message, false, AlbionServer.AMERICAS);
-
-  }
-
   @Cron('0 0 12,20 * * *')
   async runAlbionScansEU(): Promise<void> {
     this.logger.log('Running Albion Scans EU Cron');
