@@ -3,6 +3,7 @@ import { TextChannel } from 'discord.js';
 import { ConfigService } from '@nestjs/config';
 import { DiscordService } from '../../discord/discord.service';
 import { PurgeService } from './purge.service';
+import { Cron, CronExpression } from '@nestjs/schedule';
 
 @Injectable()
 export class PurgeCronService implements OnApplicationBootstrap {
@@ -18,7 +19,7 @@ export class PurgeCronService implements OnApplicationBootstrap {
   async onApplicationBootstrap(): Promise<void> {
     this.logger.log('Initializing Purge Cron Service');
 
-    const channelId = this.config.get('discord.channels.botJobs');
+    const channelId = this.config.get('discord.channels.thanosSnaps');
 
     // Check if the channel exists
     this.channel = await this.discordService.getChannel(channelId) as TextChannel;
@@ -31,10 +32,10 @@ export class PurgeCronService implements OnApplicationBootstrap {
     }
   }
 
-  // @Cron('0 0 6,18 * * *')
+  @Cron(CronExpression.EVERY_DAY_AT_7PM)
   async runPurge(): Promise<void> {
     this.logger.log('Running Purge Cron');
-    const message = await this.channel.send('Starting weekly purge scan...');
+    const message = await this.channel.send('Starting daily purge scan...');
     await this.purgeService.startPurge(message, true);
   }
 }
