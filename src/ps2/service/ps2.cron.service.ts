@@ -32,7 +32,7 @@ export class PS2CronService implements OnApplicationBootstrap {
     }
   }
 
-  @Cron(CronExpression.EVERY_DAY_AT_6PM)
+  @Cron('30 19 * * *')
   async runPS2Scans(): Promise<void> {
     this.logger.log('Running PS2 Scans Cron');
 
