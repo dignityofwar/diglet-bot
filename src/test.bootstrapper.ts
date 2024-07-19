@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import _ from 'lodash';
 import { ConfigService } from '@nestjs/config';
 import { TestingModule } from '@nestjs/testing';
@@ -18,6 +18,7 @@ export class TestBootstrapper {
     return {
       find: jest.fn(),
       findOne: jest.fn(),
+      findAll: jest.fn(),
       create: jest.fn(),
       upsert: jest.fn(),
     } as any;
@@ -74,6 +75,7 @@ export class TestBootstrapper {
         id: '90078072660852736',
         username: 'mockuser',
         bot: isBot,
+        displayName: 'MockUserName',
       },
     } as any;
   }
@@ -312,5 +314,15 @@ export class TestBootstrapper {
 
       return result;
     });
+  }
+
+  static setupLoggerSpies(service: any, name: string) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (service as any).logger = new Logger(name);
+
+    jest.spyOn(service['logger'], 'error');
+    jest.spyOn(service['logger'], 'warn');
+    jest.spyOn(service['logger'], 'log');
+    jest.spyOn(service['logger'], 'debug');
   }
 }

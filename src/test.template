@@ -3,19 +3,35 @@ import { Test } from '@nestjs/testing';
 import { ConfigService } from '@nestjs/config';
 import { TestBootstrapper } from '../test.bootstrapper';
 
+// Describe Discord mocks here using TestBootstrapper
+
+
+
 describe('SomeTestingClass', () => {
-  let service: SomeTestingClass;
+  let service: TESTING_CLASS;
+  let mockDiscordService: DiscordService;
 
   beforeEach(async () => {
     const moduleRef = await Test.createTestingModule({
       providers: [
-        SomeTestingClass,
+      {
+          provide: TESTING_CLASS,
+          useValue: {
+            mockFunction: jest.fn(),
+            mockFunction2: jest.fn(),
+          },
+        },
+        ReflectMetadataProvider,
         ConfigService
       ],
     }).compile();
     TestBootstrapper.setupConfig(moduleRef);
 
-    service = moduleRef.get<SomeTestingClass>(SomeTestingClass);
+    service = moduleRef.get<TESTING_CLASS>(TESTING_CLASS);
+    // mockDiscordService = moduleRef.get<DiscordService>(DiscordService);
+
+    TestBootstrapper.setupLoggerSpies(service, TESTING_CLASS.name);
+    // Call with: expect(service['logger'].warn).toHaveBeenCalledWith('Foo!');
   });
 
   afterEach(() => {
