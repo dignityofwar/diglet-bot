@@ -278,8 +278,18 @@ export class PurgeService {
 
       // If the member is not found, remove their activity record as they're no longer on the server as it's pointless to keep it.
       if (!guildMember) {
-        await this.activityService.removeActivityRecord(activeMember, dryRun);
-        this.logger.warn(`Member ${activeMember.discordId} was not found on the server, removing from activity records.`);
+        this.logger.warn(`Member ${activeMember.discordNickname} was not found on the server, removing from activity records.`);
+
+        try {
+          await this.activityService.removeActivityRecord(activeMember, dryRun);
+        }
+
+        catch (err) {
+          const devUserId = this.config.get('discord.devUserId');
+          const error = `Error removing activity record for leaver ${activeMember.discordNickname} (${activeMember.discordId}). Error: ${err.message}`;
+          this.logger.error(error);
+          await message.channel.send(`<@${devUserId}> ${error}`);
+        }
         continue;
       }
       activeMembers.set(

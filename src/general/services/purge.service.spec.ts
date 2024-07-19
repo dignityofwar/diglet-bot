@@ -25,9 +25,9 @@ interface MockMemberOptions {
 
 describe('PurgeService', () => {
   let service: PurgeService;
-  let activityService: ActivityService;
+  let mockActivityService: ActivityService;
   let mockMessage: any;
-  let discordService: DiscordService;
+  let mockDiscordService: DiscordService;
   const mockActivityEntity = {
     discordId: '123456',
     discordNickname: 'testuser',
@@ -99,8 +99,8 @@ DIG Community Staff`;
     TestBootstrapper.setupConfig(moduleRef);
 
     service = moduleRef.get<PurgeService>(PurgeService);
-    discordService = moduleRef.get<DiscordService>(DiscordService);
-    activityService = moduleRef.get<ActivityService>(ActivityService);
+    mockDiscordService = moduleRef.get<DiscordService>(DiscordService);
+    mockActivityService = moduleRef.get<ActivityService>(ActivityService);
 
     mockMessage = TestBootstrapper.getMockDiscordMessage();
 
@@ -502,7 +502,7 @@ DIG Community Staff`;
       const mockActives = createMockActiveRecords(10);
 
       mockActivityRepository.find = jest.fn().mockResolvedValue(mockActives);
-      discordService.getGuildMember = jest.fn().mockResolvedValue({});
+      mockDiscordService.getGuildMember = jest.fn().mockResolvedValue({});
 
       const result = await service.resolveActiveMembers(mockMessage, false);
 
@@ -516,7 +516,7 @@ DIG Community Staff`;
       const mockActives = createMockActiveRecords(4);
 
       mockActivityRepository.find = jest.fn().mockResolvedValue(mockActives);
-      discordService.getGuildMember = jest.fn()
+      mockDiscordService.getGuildMember = jest.fn()
         .mockResolvedValueOnce({})
         .mockResolvedValueOnce(null)
         .mockResolvedValueOnce(null)
@@ -525,10 +525,26 @@ DIG Community Staff`;
       const result = await service.resolveActiveMembers(mockMessage, false);
 
       expect(result.size).toBe(2);
-      expect(activityService.removeActivityRecord).toHaveBeenCalledWith(mockActives[1], false);
-      expect(activityService.removeActivityRecord).toHaveBeenCalledWith(mockActives[2], false);
-      expect(activityService.removeActivityRecord).not.toHaveBeenCalledWith(mockActives[0], false);
-      expect(activityService.removeActivityRecord).toHaveBeenCalledTimes(2);
+      expect(mockActivityService.removeActivityRecord).toHaveBeenCalledWith(mockActives[1], false);
+      expect(mockActivityService.removeActivityRecord).toHaveBeenCalledWith(mockActives[2], false);
+      expect(mockActivityService.removeActivityRecord).not.toHaveBeenCalledWith(mockActives[0], false);
+      expect(mockActivityService.removeActivityRecord).toHaveBeenCalledTimes(2);
+    });
+    it('should handle database errors for removing activity records', async () => {
+      const mockActives = createMockActiveRecords(1);
+
+      mockActivityRepository.find = jest.fn().mockResolvedValue(mockActives);
+      mockDiscordService.getGuildMember = jest.fn()
+        .mockResolvedValueOnce(null);
+
+      mockActivityService.removeActivityRecord = jest.fn().mockImplementation(() => {
+        throw new Error('Activity database went wonky');
+      });
+
+      await service.resolveActiveMembers(mockMessage, false);
+
+      const errorMsg = `<@${devUserId}> Error removing activity record for leaver ${mockActives[0].discordNickname} (${mockActives[0].discordId}). Error: Activity database went wonky`;
+      expect(mockMessage.channel.send).toHaveBeenCalledWith(errorMsg);
     });
   });
 
@@ -627,9 +643,9 @@ DIG Community Staff`;
       const count = purgableMembers.size;
       const date = new Date().toLocaleString();
 
-      expect(discordService.sendDM).toHaveBeenCalledWith(purgables.members[0], goodbyeMessage);
-      expect(discordService.kickMember).toHaveBeenCalledWith(purgables.members[0], mockMessage, `Automatic purge: ${date}`);
-      expect(discordService.deleteMessage).toHaveBeenCalledTimes(1);
+      expect(mockDiscordService.sendDM).toHaveBeenCalledWith(purgables.members[0], goodbyeMessage);
+      expect(mockDiscordService.kickMember).toHaveBeenCalledWith(purgables.members[0], mockMessage, `Automatic purge: ${date}`);
+      expect(mockDiscordService.deleteMessage).toHaveBeenCalledTimes(1);
       expect(mockMessage.channel.send).toHaveBeenCalledWith(`Kicking ${count} purgable members...`);
       expect(mockMessage.channel.send).toHaveBeenCalledWith('Kicking started...');
       expect(mockMessage.channel.send).toHaveBeenCalledWith(`- 🥾 Kicked ${purgables.members[0].nickname} (${purgables.members[0].user.id})\n`);
@@ -656,9 +672,9 @@ DIG Community Staff`;
 
       const count = purgableMembers.size;
 
-      expect(discordService.sendDM).toHaveBeenCalledTimes(count);
-      expect(discordService.kickMember).toHaveBeenCalledTimes(count);
-      expect(discordService.deleteMessage).toHaveBeenCalledTimes(1);
+      expect(mockDiscordService.sendDM).toHaveBeenCalledTimes(count);
+      expect(mockDiscordService.kickMember).toHaveBeenCalledTimes(count);
+      expect(mockDiscordService.deleteMessage).toHaveBeenCalledTimes(1);
       expect(mockMessage.channel.send).toHaveBeenCalledWith(`Kicking ${count} purgable members...`);
       expect(mockMessage.channel.send).toHaveBeenCalledWith('Kicking started...');
       expect(mockMessage.channel.send).toHaveBeenCalledWith(`- 🥾 Kicked 1-0Nick (1-0)
@@ -690,8 +706,8 @@ DIG Community Staff`;
 
       const count = purgableMembers.size;
 
-      expect(discordService.sendDM).toHaveBeenCalledTimes(count);
-      expect(discordService.kickMember).toHaveBeenCalledTimes(count);
+      expect(mockDiscordService.sendDM).toHaveBeenCalledTimes(count);
+      expect(mockDiscordService.kickMember).toHaveBeenCalledTimes(count);
       expect(mockMessage.channel.send).toHaveBeenCalledWith(`Kicking ${count} purgable members...`);
       expect(mockMessage.channel.send).toHaveBeenCalledWith('Kicking started...');
       expect(mockMessage.channel.send).toHaveBeenCalledWith(`- 🥾 Kicked 1-0Nick (1-0)
@@ -724,8 +740,8 @@ DIG Community Staff`;
 
       const count = purgableMembers.size;
 
-      expect(discordService.sendDM).toHaveBeenCalledTimes(0);
-      expect(discordService.kickMember).toHaveBeenCalledTimes(0);
+      expect(mockDiscordService.sendDM).toHaveBeenCalledTimes(0);
+      expect(mockDiscordService.kickMember).toHaveBeenCalledTimes(0);
       expect(mockMessage.channel.send).toHaveBeenCalledWith(`Kicking ${count} purgable members...`);
       expect(mockMessage.channel.send).toHaveBeenCalledWith('Kicking started...');
       expect(mockMessage.channel.send).toHaveBeenCalledWith(`- [DRY RUN] 🥾 Kicked ${purgables.members[0].nickname} (${purgables.members[0].user.id})\n`);
@@ -826,7 +842,7 @@ DIG Community Staff`;
       expect(mockMessage.channel.send).toHaveBeenCalledWith('### FOXHOLE');
       expect(mockMessage.channel.send).toHaveBeenCalledWith('### ALBION');
       expect(mockMessage.channel.send).toHaveBeenCalledWith('### No game role');
-      expect(discordService.batchSend).toHaveBeenCalledTimes(4);
+      expect(mockDiscordService.batchSend).toHaveBeenCalledTimes(4);
 
       const percent = Math.floor((purgables.purgableMembers.size / purgables.totalHumans) * 100).toFixed(1);
       const inactivePercent = Math.floor((purgables.inactive / purgables.purgableMembers.size) * 100).toFixed(1);
