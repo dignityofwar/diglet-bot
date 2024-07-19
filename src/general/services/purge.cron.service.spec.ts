@@ -56,7 +56,7 @@ describe('PurgeCronService', () => {
 
       await purgeCronService.onApplicationBootstrap();
 
-      expect(configService.get).toHaveBeenCalledWith('discord.channels.botJobs');
+      expect(configService.get).toHaveBeenCalledWith('discord.channels.thanosSnaps');
       expect(discordService.getChannel).toHaveBeenCalledWith('test-channel-id');
       expect(mockChannel.isTextBased).toHaveBeenCalled();
       expect(purgeCronService['channel']).toBe(mockChannel);
@@ -96,7 +96,7 @@ describe('PurgeCronService', () => {
 
       await purgeCronService.runPurge();
 
-      expect(mockChannel.send).toHaveBeenCalledWith('Starting weekly purge scan...');
+      expect(mockChannel.send).toHaveBeenCalledWith('Starting daily purge scan...');
       expect(purgeService.startPurge).toHaveBeenCalledWith(mockMessage, true);
     });
   });
