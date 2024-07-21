@@ -3,7 +3,7 @@ on:
   pull_request:
 
 jobs:
-  build-test-pr:
+  build-test-app:
     runs-on: ubuntu-latest
     outputs:
       store-path: ${{ steps.pnpm-cache.outputs.STORE_PATH }}
