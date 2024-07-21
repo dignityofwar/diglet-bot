@@ -1,26 +1,25 @@
 import { Injectable, Logger, OnApplicationBootstrap } from '@nestjs/common';
-import { Cron } from '@nestjs/schedule';
 import { TextChannel } from 'discord.js';
 import { ConfigService } from '@nestjs/config';
 import { DiscordService } from '../../discord/discord.service';
-import { AlbionScanningService } from './albion.scanning.service';
-import { AlbionServer } from '../interfaces/albion.api.interfaces';
+import { PurgeService } from './purge.service';
+import { Cron } from '@nestjs/schedule';
 
 @Injectable()
-export class AlbionCronService implements OnApplicationBootstrap {
-  private readonly logger = new Logger(AlbionCronService.name);
+export class PurgeCronService implements OnApplicationBootstrap {
+  private readonly logger = new Logger(PurgeCronService.name);
   private channel: TextChannel;
 
   constructor(
     private readonly discordService: DiscordService,
     private readonly config: ConfigService,
-    private readonly albionScanningService: AlbionScanningService
+    private readonly purgeService: PurgeService
   ) {}
 
   async onApplicationBootstrap(): Promise<void> {
-    this.logger.log('Initializing Albion Cron Service');
+    this.logger.log('Initializing Purge Cron Service');
 
-    const channelId = this.config.get('discord.channels.albionScans');
+    const channelId = this.config.get('discord.channels.thanosSnaps');
 
     // Check if the channel exists
     this.channel = await this.discordService.getChannel(channelId) as TextChannel;
@@ -33,12 +32,10 @@ export class AlbionCronService implements OnApplicationBootstrap {
     }
   }
 
-  @Cron('0 19 * * *')
-  async runAlbionScansEU(): Promise<void> {
-    this.logger.log('Running Albion Scans EU Cron');
-
-    const message = await this.channel.send('Starting EU Scans');
-
-    await this.albionScanningService.startScan(message, false, AlbionServer.EUROPE);
+  @Cron('0 18 * * *')
+  async runPurge(): Promise<void> {
+    this.logger.log('Running Purge Cron');
+    const message = await this.channel.send('Starting daily purge scan...');
+    await this.purgeService.startPurge(message, false);
   }
 }

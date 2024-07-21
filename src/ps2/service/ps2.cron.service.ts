@@ -1,5 +1,5 @@
 import { Injectable, Logger, OnApplicationBootstrap } from '@nestjs/common';
-import { Cron, CronExpression } from '@nestjs/schedule';
+import { Cron } from '@nestjs/schedule';
 import { PS2GameScanningService } from './ps2.game.scanning.service';
 import { TextChannel } from 'discord.js';
 import { ConfigService } from '@nestjs/config';
@@ -32,7 +32,7 @@ export class PS2CronService implements OnApplicationBootstrap {
     }
   }
 
-  @Cron(CronExpression.EVERY_DAY_AT_6PM)
+  @Cron('30 19 * * *')
   async runPS2Scans(): Promise<void> {
     this.logger.log('Running PS2 Scans Cron');
 

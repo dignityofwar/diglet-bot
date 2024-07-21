@@ -20,7 +20,7 @@ This project is now considered **stable**, and is now versioned appropriately vi
 - Install brew (on linux), or your own package manager, I'm not your mum!
 - Install node version manager `nvm`: `brew install nvm`
 - Install `pnpm`: `brew install pnpm`
-- Run `nvm install 20.13.1` which will set up your node version correctly.
+- Run `nvm install 20.15.1` which will set up your node version correctly.
 - Ensure you have at least `pnpm` version `9.1.2` installed.
 
 The engines are enforced via `package.json`, you'll know if it's wrong as no commands will work.
@@ -43,6 +43,6 @@ While this project is designed for a Mac ecosystem, it can be run on WSL, but yo
 # Troubleshooting
 ## Running migration:up fails
 ```
-Error: MikroORM config file not found in ['./src/mikro-orm.config.js', './mikro-orm.config.js']
+Error: MikroORM config file not found in ['./src/mikro-orm.config.ts', './mikro-orm.config.ts']
 ```
 This is due to ts-node not properly transpiling typescript into javascript which the package understands. To get round this, you can run `pnpm build` to in effect create the files for the migration to be able to run. Don't ask me why it works, it just does.
