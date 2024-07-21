@@ -4,8 +4,6 @@ ARG VERSION
 ENV VERSION=${VERSION}
 
 RUN npm install --ignore-scripts -g pnpm@9.1.2
-RUN mkdir /app && chown node:node /app
-USER node
 
 # Many things are ignored, check .dockerignore
 COPY . /app
@@ -13,5 +11,9 @@ COPY . /app
 WORKDIR /app
 
 RUN pnpm build
+
+# Lock the execution down to node non privledged user
+RUN chown node:node /app
+USER node
 
 ENTRYPOINT /app/entrypoint.sh
