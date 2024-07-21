@@ -225,7 +225,7 @@ export class AlbionScanningService {
 
       // Delete their registration record
       try {
-        await this.albionRegistrationsRepository.removeAndFlush(member);
+        await this.albionRegistrationsRepository.getEntityManager().removeAndFlush(member);
       }
       catch (err) {
         await message.channel.send(`ERROR: Unable to remove Albion Character "${character.Name}" (${character.Id}) from registration database! Pinging <@${this.config.get('discord.devUserId')}>!`);
