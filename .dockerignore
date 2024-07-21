@@ -1,2 +1,17 @@
-.idea
 .git*
+.es*
+.npmrc
+.env
+docker-compose.yaml
+README.md
+renovate.json
+sonar-project.properties
+{start,stop}.sh
+**.spec.ts
+
+# dirs
+.idea
+badges
+coverage
+provisioning
+scripts

@@ -1,5 +1,5 @@
 services:
-  diglet-bot-db:
+  digletbot-db:
     container_name: digletbot-db
     image: mariadb:11.4.2
     restart: unless-stopped
