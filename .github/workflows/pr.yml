@@ -48,4 +48,37 @@ jobs:
         uses: SonarSource/sonarcloud-github-action@master
         env:
           SONAR_TOKEN: ${{ secrets.SONARCLOUD_TOKEN }}
+  build-docker:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+          submodules: true
 
+      - uses: actions/cache@v4
+        name: Pull pnpm cache
+        with:
+          path: node_modules
+          key: "${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}"
+          restore-keys: |
+            ${{ runner.os }}-pnpm-store-
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+        with:
+          version: latest
+
+      - name: Check if app builds properly via docker
+        uses: docker/build-push-action@v5
+        with:
+          file: Dockerfile
+          platforms: linux/amd64
+          context: .
+          push: false
+          build-args: |
+            VERSION=${{ inputs.version }}
