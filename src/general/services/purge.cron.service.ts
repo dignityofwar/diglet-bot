@@ -36,6 +36,6 @@ export class PurgeCronService implements OnApplicationBootstrap {
   async runPurge(): Promise<void> {
     this.logger.log('Running Purge Cron');
     const message = await this.channel.send('Starting daily purge scan...');
-    await this.purgeService.startPurge(message, true);
+    await this.purgeService.startPurge(message, false);
   }
 }

@@ -97,7 +97,7 @@ describe('PurgeCronService', () => {
       await purgeCronService.runPurge();
 
       expect(mockChannel.send).toHaveBeenCalledWith('Starting daily purge scan...');
-      expect(purgeService.startPurge).toHaveBeenCalledWith(mockMessage, true);
+      expect(purgeService.startPurge).toHaveBeenCalledWith(mockMessage, false);
     });
   });
 });
