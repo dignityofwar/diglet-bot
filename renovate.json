@@ -10,7 +10,12 @@
   },
   "packageRules": [
     {
-      "matchDatasources": ["npm"],
+      "matchDatasources": [
+        "dockerfile",
+        "github-actions",
+        "npm",
+        "nvm"
+      ],
       "minimumReleaseAge": "7 days"
     },
     {
