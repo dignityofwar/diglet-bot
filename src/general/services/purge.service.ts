@@ -265,7 +265,7 @@ export class PurgeService {
     for (const activeMember of activeRecords) {
       count++;
 
-      if (count % 10 === 0 || count === activeRecords.length) {
+      if (count % 50 === 0 || count === activeRecords.length) {
         const percent = (Math.floor((count / activeRecords.length) * 100)).toFixed(0);
         const string = `Getting active Discord members [${count}/${activeRecords.length}] (${percent}%)...`;
         await statusMessage.edit(string);
