@@ -1,6 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { InjectDiscordClient } from '@discord-nestjs/core';
-import { Channel, Client, Guild, GuildMember, Message, Role } from 'discord.js';
+import { Channel, Client, Guild, GuildMember, GuildTextBasedChannel, Message, Role } from 'discord.js';
 
 @Injectable()
 export class DiscordService {
@@ -99,7 +99,7 @@ export class DiscordService {
     }
   }
 
-  async batchSend(messages: string[], originMessage: Message): Promise<void> {
+  async batchSend(messages: string[], origin: Message | GuildTextBasedChannel): Promise<void> {
     let count = 0;
 
     // Loop each of the messages and carve them up into batches of 10
@@ -111,8 +111,16 @@ export class DiscordService {
       }
     }
 
+    const channel = origin instanceof Message ? origin.channel : origin;
+
     for (const batch of batchMessages) {
-      await originMessage.channel.send(batch);
+      try {
+        await channel.send(batch);
+      }
+      catch (err) {
+        const error = `Failed to send batch message. Err: ${err.message}`;
+        this.logger.error(error);
+      }
     }
   }
 
