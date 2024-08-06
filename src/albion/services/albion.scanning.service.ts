@@ -41,7 +41,7 @@ export class AlbionScanningService {
     server: AlbionServer = AlbionServer.AMERICAS
   ) {
     const emoji = this.serverEmoji(server);
-    const guildId = server === AlbionServer.AMERICAS ? this.config.get('albion.guildIdUS') : this.config.get('albion.guildIdEU');
+    const guildId = server === AlbionServer.AMERICAS ? this.config.get('albion.guildIdUS') : this.config.get('albion.guildId');
 
     await message.edit(`# ${emoji} Starting scan...`);
 
@@ -93,7 +93,7 @@ export class AlbionScanningService {
     await message.channel.send(`## ${emoji} Scan complete!`);
     // If any of the tasks flagged for action, tell them now.
     if (actionRequired && !dryRun) {
-      const configKey = server === AlbionServer.AMERICAS ? 'albion.pingLeaderRolesUS' : 'albion.pingLeaderRolesEU';
+      const configKey = server === AlbionServer.AMERICAS ? 'albion.pingLeaderRolesUS' : 'albion.pingLeaderRoles';
       const scanPingRoles = this.config.get(configKey);
       const text = `🔔 <@&${scanPingRoles.join('>, <@&')}> Please review the above actions marked with (‼️) and make any necessary changes manually. To scan again without pinging, run the \`/albion-scan\` command with the \`dry-run\` flag set to \`true\`.`;
       await message.channel.send(text);
@@ -143,7 +143,7 @@ export class AlbionScanningService {
     server: AlbionServer = AlbionServer.AMERICAS
   ): Promise<boolean> {
     const emoji = this.serverEmoji(server);
-    const guildId = server === AlbionServer.AMERICAS ? this.config.get('albion.guildIdUS') : this.config.get('albion.guildIdEU');
+    const guildId = server === AlbionServer.AMERICAS ? this.config.get('albion.guildIdUS') : this.config.get('albion.guildId');
     // Save all the characters to a map we can easily pick out later via character ID
     const charactersMap = new Map<string, AlbionPlayerInterface>();
     const leavers: string[] = [];
@@ -285,7 +285,7 @@ export class AlbionScanningService {
     dryRun = false,
     server: AlbionServer = AlbionServer.AMERICAS
   ) {
-    const guildId = server === AlbionServer.AMERICAS ? this.config.get('albion.guildIdUS') : this.config.get('albion.guildIdEU');
+    const guildId = server === AlbionServer.AMERICAS ? this.config.get('albion.guildIdUS') : this.config.get('albion.guildId');
     const emoji = this.serverEmoji(server);
 
     // Get the list of roles via the Role Map
@@ -409,7 +409,7 @@ export class AlbionScanningService {
   ): Promise<boolean> {
     const suggestions: string[] = [];
     const emoji = this.serverEmoji(server);
-    const guildId = server === AlbionServer.AMERICAS ? this.config.get('albion.guildIdUS') : this.config.get('albion.guildIdEU');
+    const guildId = server === AlbionServer.AMERICAS ? this.config.get('albion.guildIdUS') : this.config.get('albion.guildId');
     let actionRequired = false;
 
     // Refresh GuildMembers as some may have been booted / left
@@ -491,11 +491,8 @@ export class AlbionScanningService {
     if (!highestPriorityRole) {
       let entryRole: AlbionRoleMapInterface;
       let registeredRole: AlbionRoleMapInterface;
-      if (server === AlbionServer.AMERICAS) {
-        entryRole = roleMap.filter((role) => role.name === '@ALB/US/Initiate')[0];
-        registeredRole = roleMap.filter((role) => role.name === '@ALB/US/Registered')[0];
-      }
-      else if (server === AlbionServer.EUROPE) {
+
+      if (server === AlbionServer.EUROPE) {
         entryRole = roleMap.filter((role) => role.name === '@ALB/Disciple')[0];
         registeredRole = roleMap.filter((role) => role.name === '@ALB/Registered')[0];
       }

@@ -57,7 +57,7 @@ export class AlbionApiService {
     }
 
     if (foundPlayer.length > 1) {
-      const guildId = server === AlbionServer.AMERICAS ? this.config.get('albion.guildIdUS') : this.config.get('albion.guildIdEU');
+      const guildId = server === AlbionServer.AMERICAS ? this.config.get('albion.guildIdUS') : this.config.get('albion.guildId');
       // If there are multiple players found, we need to loop them to check if any of them are in the guild, and return that character
       const foundPlayerInGuild = foundPlayer.filter((player) => {
         return player.GuildId === guildId;
