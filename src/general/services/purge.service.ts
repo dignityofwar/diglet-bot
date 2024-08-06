@@ -14,8 +14,7 @@ export interface PurgableMemberList {
     ps2Verified: Collection<string, GuildMember>;
     foxhole: Collection<string, GuildMember>;
     albion: Collection<string, GuildMember>;
-    albionUSRegistered: Collection<string, GuildMember>;
-    albionEURegistered: Collection<string, GuildMember>;
+    albionRegistered: Collection<string, GuildMember>;
   }
   totalMembers: number;
   totalBots: number;
@@ -41,7 +40,6 @@ export class PurgeService {
     const ps2VerifiedRole = message.guild.roles.cache.find(role => role.name === 'PS2/Verified');
     const foxholeRole = message.guild.roles.cache.find(role => role.name === 'Rec/Foxhole');
     const albionRole = message.guild.roles.cache.find(role => role.name === 'Albion Online');
-    const albionUSRegistered = message.guild.roles.cache.find(role => role.name === 'ALB/US/Registered');
     const albionEURegistered = message.guild.roles.cache.find(role => role.name === 'ALB/Registered');
 
     const devUserId = this.config.get('discord.devUserId');
@@ -67,7 +65,7 @@ export class PurgeService {
       throw new Error(`Could not find Albion Online role! Pinging Bot Dev <@${devUserId}>!`);
     }
 
-    if (!albionUSRegistered || !albionEURegistered) {
+    if (!albionEURegistered) {
       throw new Error(`Could not find Albion Online registered role(s)! Pinging Bot Dev <@${devUserId}>!`);
     }
 
@@ -77,7 +75,6 @@ export class PurgeService {
       ps2VerifiedRole,
       foxholeRole,
       albionRole,
-      albionUSRegistered,
       albionEURegistered,
     };
   }
@@ -148,7 +145,6 @@ export class PurgeService {
     let ps2VerifiedRole: Role;
     let foxholeRole: Role;
     let albionRole: Role;
-    let albionUSRegistered: Role;
     let albionEURegistered: Role;
 
     try {
@@ -158,7 +154,6 @@ export class PurgeService {
       ps2VerifiedRole = roles.ps2VerifiedRole;
       foxholeRole = roles.foxholeRole;
       albionRole = roles.albionRole;
-      albionUSRegistered = roles.albionUSRegistered;
       albionEURegistered = roles.albionEURegistered;
     }
     catch (err) {
@@ -223,8 +218,7 @@ export class PurgeService {
         ps2Verified: members.filter(member => this.isPurgable(member, activeMembers, onboardedRole) && member.roles.cache.has(ps2VerifiedRole.id)),
         foxhole: members.filter(member => this.isPurgable(member, activeMembers, onboardedRole) && member.roles.cache.has(foxholeRole.id)),
         albion: members.filter(member => this.isPurgable(member, activeMembers, onboardedRole) && member.roles.cache.has(albionRole.id)),
-        albionUSRegistered: members.filter(member => this.isPurgable(member, activeMembers, onboardedRole) && member.roles.cache.has(albionUSRegistered.id)),
-        albionEURegistered: members.filter(member => this.isPurgable(member, activeMembers, onboardedRole) && member.roles.cache.has(albionEURegistered.id)),
+        albionRegistered: members.filter(member => this.isPurgable(member, activeMembers, onboardedRole) && member.roles.cache.has(albionEURegistered.id)),
       },
       totalMembers: members.size,
       totalBots: members.filter(member => member.user.bot).size,
@@ -460,7 +454,7 @@ Note, these numbers will not add up to total numbers, as a member can be in mult
 - Total PS2 verified purged: **${purgables.purgableByGame.ps2Verified.size}**
 - Total Foxhole purged: **${purgables.purgableByGame.foxhole.size}**
 - Total Albion purged: **${purgables.purgableByGame.albion.size}**
-- Total Albion Registered purged: **${purgables.purgableByGame.albionEURegistered.size}**`;
+- Total Albion Registered purged: **${purgables.purgableByGame.albionRegistered.size}**`;
 
     await originMessage.channel.send(purgeReport);
     await originMessage.channel.send(gameStatsReport);

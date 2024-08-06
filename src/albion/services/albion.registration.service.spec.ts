@@ -366,13 +366,13 @@ describe('AlbionRegistrationService', () => {
       service.validate = jest.fn().mockResolvedValue(undefined);
       mockRegistrationData.discordMember.roles.add = jest.fn().mockReturnValue(true);
 
-      expect(await service.handleRegistration(
+      await service.handleRegistration(
         mockRegistrationData.character.Name,
         mockRegistrationData.server,
         mockRegistrationData.discordMember.id,
         'foo1234',
         TestBootstrapper.getMockDiscordTextChannel().id,
-      ));
+      );
 
       expect(discordService.getMemberRole).toHaveBeenCalledWith(mockRegistrationData.discordMember, TestBootstrapper.mockConfig.discord.roles.albionUSMember);
       expect(discordService.getMemberRole).toHaveBeenCalledWith(mockRegistrationData.discordMember, TestBootstrapper.mockConfig.discord.roles.albionUSRegistered);
@@ -384,13 +384,13 @@ describe('AlbionRegistrationService', () => {
       service.validate = jest.fn().mockResolvedValue(undefined);
       mockRegistrationDataEU.discordMember.roles.add = jest.fn().mockReturnValue(true);
 
-      expect(await service.handleRegistration(
+      await service.handleRegistration(
         mockRegistrationDataEU.character.Name,
         mockRegistrationDataEU.server,
         mockRegistrationDataEU.discordMember.id,
         'foo1234',
         TestBootstrapper.getMockDiscordTextChannel().id,
-      ));
+      );
 
       expect(discordService.getMemberRole).toHaveBeenCalledWith(mockRegistrationDataEU.discordMember, TestBootstrapper.mockConfig.discord.roles.albionEUMember);
       expect(discordService.getMemberRole).toHaveBeenCalledWith(mockRegistrationDataEU.discordMember, TestBootstrapper.mockConfig.discord.roles.albionEURegistered);

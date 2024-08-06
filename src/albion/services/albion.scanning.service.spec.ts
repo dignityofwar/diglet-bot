@@ -1361,16 +1361,16 @@ describe('AlbionScanningService', () => {
         ],
         server: AlbionServer.EUROPE,
       },
-      {
-        title: 'US Registered members should have at least ALB/US/Registered and Initiate',
-        roles: [],
-        highestPriorityRole: { id: mockInitiateRoleId, name: mockInitiateName },
-        expected: [
-          { id: mockInitiateRoleId, name: mockInitiateName, action: 'added', message: '' },
-          { id: mockRegisteredRoleIdUS, name: mockRegisteredNameUS, action: 'added', message: '' },
-        ],
-        server: AlbionServer.AMERICAS,
-      },
+      // {
+      //   title: 'US Registered members should have at least ALB/US/Registered and Initiate',
+      //   roles: [],
+      //   highestPriorityRole: { id: mockInitiateRoleId, name: mockInitiateName },
+      //   expected: [
+      //     { id: mockInitiateRoleId, name: mockInitiateName, action: 'added', message: '' },
+      //     { id: mockRegisteredRoleIdUS, name: mockRegisteredNameUS, action: 'added', message: '' },
+      //   ],
+      //   server: AlbionServer.AMERICAS,
+      // },
       {
         title: 'EU Registered members should have at least ALB/Registered and Disciple',
         roles: [],
@@ -1479,11 +1479,11 @@ describe('AlbionScanningService', () => {
       setupRoleTestMocks([mockGuildLeaderRoleIdUS, mockSquireRoleId, mockInitiateRoleId, mockRegisteredRoleIdUS]); // Should require they remove initiate rank
       expect((await service.checkRoleInconsistencies(mockDiscordUser)).length).toEqual(1);
     });
-    it('roleInconsistencies should properly indicate progress when multiple users are involved', async () => {
-      mockAlbionRegistrationsRepository.find = jest.fn().mockResolvedValueOnce([mockRegisteredMemberUS, mockRegisteredMemberUS, mockRegisteredMemberUS, mockRegisteredMemberUS, mockRegisteredMemberUS]);
-      await service.roleInconsistencies(mockDiscordMessage);
-      expect(mockDiscordMessage.channel.send).toBeCalledWith('## 🇺🇸 Scanning 5 members for role inconsistencies... [0/5]');
-    });
+    // it('roleInconsistencies should properly indicate progress when multiple users are involved for US', async () => {
+    //   mockAlbionRegistrationsRepository.find = jest.fn().mockResolvedValueOnce([mockRegisteredMemberUS, mockRegisteredMemberUS, mockRegisteredMemberUS, mockRegisteredMemberUS, mockRegisteredMemberUS]);
+    //   await service.roleInconsistencies(mockDiscordMessage);
+    //   expect(mockDiscordMessage.channel.send).toBeCalledWith('## 🇺🇸 Scanning 5 members for role inconsistencies... [0/5]');
+    // });
     it('roleInconsistencies should properly indicate progress when multiple users are involved for EU', async () => {
       mockAlbionRegistrationsRepository.find = jest.fn().mockResolvedValueOnce([mockRegisteredMemberUS, mockRegisteredMemberUS, mockRegisteredMemberUS, mockRegisteredMemberUS, mockRegisteredMemberUS]);
       await service.roleInconsistencies(mockDiscordMessage, true, AlbionServer.EUROPE);

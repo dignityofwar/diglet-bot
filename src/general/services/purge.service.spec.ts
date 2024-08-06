@@ -52,8 +52,6 @@ describe('PurgeService', () => {
   mockRoleFoxhole.name = 'Foxhole';
   const mockRoleAlbion = TestBootstrapper.getMockDiscordRole('456789012');
   mockRoleAlbion.name = 'Albion';
-  const mockRoleAlbionUSRegistered = TestBootstrapper.getMockDiscordRole('567890123');
-  mockRoleAlbionUSRegistered.name = 'AlbionUSRegistered';
   const mockRoleAlbionEURegistered = TestBootstrapper.getMockDiscordRole('678901234');
   const devUserId = TestBootstrapper.mockConfig.discord.devUserId;
 
@@ -320,7 +318,6 @@ DIG Community Staff`;
         .mockReturnValueOnce(mockRolePS2Verified)
         .mockReturnValueOnce(mockRoleFoxhole)
         .mockReturnValueOnce(mockRoleAlbion)
-        .mockReturnValueOnce(mockRoleAlbionUSRegistered)
         .mockReturnValueOnce(mockRoleAlbionEURegistered);
 
       const result = service.preflightChecks(mockMessage as any);
@@ -330,7 +327,6 @@ DIG Community Staff`;
       expect(result.ps2VerifiedRole).toBe(mockRolePS2Verified);
       expect(result.foxholeRole).toBe(mockRoleFoxhole);
       expect(result.albionRole).toBe(mockRoleAlbion);
-      expect(result.albionUSRegistered).toBe(mockRoleAlbionUSRegistered);
       expect(result.albionEURegistered).toBe(mockRoleAlbionEURegistered);
     });
 
@@ -393,7 +389,6 @@ DIG Community Staff`;
         .mockReturnValueOnce(mockRolePS2Verified)
         .mockReturnValueOnce(mockRoleFoxhole)
         .mockReturnValueOnce(mockRoleAlbion)
-        .mockReturnValueOnce(mockRoleAlbionUSRegistered)
         .mockReturnValueOnce(null);
 
       expect(() => service.preflightChecks(mockMessage as any)).toThrow(`Could not find Albion Online registered role(s)! Pinging Bot Dev <@${devUserId}>!`);
@@ -813,8 +808,7 @@ DIG Community Staff`;
           ps2Verified: new Collection<string, GuildMember>(),
           foxhole: new Collection<string, GuildMember>(),
           albion: new Collection<string, GuildMember>(),
-          albionUSRegistered: new Collection<string, GuildMember>(),
-          albionEURegistered: new Collection<string, GuildMember>(),
+          albionRegistered: new Collection<string, GuildMember>(),
         },
         totalMembers,
         totalBots,
@@ -864,7 +858,7 @@ Note, these numbers will not add up to total numbers, as a member can be in mult
 - Total PS2 verified purged: **${purgables.purgableByGame.ps2Verified.size}**
 - Total Foxhole purged: **${purgables.purgableByGame.foxhole.size}**
 - Total Albion purged: **${purgables.purgableByGame.albion.size}**
-- Total Albion Registered purged: **${purgables.purgableByGame.albionEURegistered.size}**`;
+- Total Albion Registered purged: **${purgables.purgableByGame.albionRegistered.size}**`;
 
       expect(mockMessage.channel.send).toHaveBeenCalledWith(expectedPurgeReport);
       expect(mockMessage.channel.send).toHaveBeenCalledWith(expectedGameReport);

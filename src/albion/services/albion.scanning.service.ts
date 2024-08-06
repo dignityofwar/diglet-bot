@@ -491,11 +491,8 @@ export class AlbionScanningService {
     if (!highestPriorityRole) {
       let entryRole: AlbionRoleMapInterface;
       let registeredRole: AlbionRoleMapInterface;
-      if (server === AlbionServer.AMERICAS) {
-        entryRole = roleMap.filter((role) => role.name === '@ALB/US/Initiate')[0];
-        registeredRole = roleMap.filter((role) => role.name === '@ALB/US/Registered')[0];
-      }
-      else if (server === AlbionServer.EUROPE) {
+
+      if (server === AlbionServer.EUROPE) {
         entryRole = roleMap.filter((role) => role.name === '@ALB/Disciple')[0];
         registeredRole = roleMap.filter((role) => role.name === '@ALB/Registered')[0];
       }
