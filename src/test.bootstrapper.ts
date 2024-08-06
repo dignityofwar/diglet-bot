@@ -7,9 +7,9 @@ import { MikroORM } from '@mikro-orm/core';
 import { AlbionServer } from './albion/interfaces/albion.api.interfaces';
 
 const guildLeaderRoleUS = '44546543371337';
-const guildLeaderRoleEU = '64354579789809089';
+const guildLeaderRole = '64354579789809089';
 const guildOfficerRoleUS = '465544343342364';
-const guildOfficerRoleEU = '66343435879886';
+const guildOfficerRole = '66343435879886';
 
 // This file helps set up mocks for various tests, which have been copied and pasted across the suite, causing a lot of duplication.
 @Injectable()
@@ -233,7 +233,7 @@ export class TestBootstrapper {
     return {
       Id: 'clhoV9OdRm-5BuYQYZBT_Q',
       Name: `Maelstrome26${server === AlbionServer.AMERICAS ? 'US' : 'EU'}`,
-      GuildId: guildId ?? server === AlbionServer.AMERICAS ? this.mockConfig.albion.guildIdUS : this.mockConfig.albion.guildIdEU,
+      GuildId: guildId ?? server === AlbionServer.AMERICAS ? this.mockConfig.albion.guildIdUS : this.mockConfig.albion.guildId,
     } as any;
   }
 
@@ -258,22 +258,22 @@ export class TestBootstrapper {
   static readonly mockConfig = {
     albion: {
       guildIdUS: '44545423435',
-      guildIdEU: '6567576868',
+      guildId: '6567576868',
       guildLeaderRoleUS: { discordRoleId: guildLeaderRoleUS },
-      guildLeaderRoleEU: { discordRoleId: guildLeaderRoleEU },
+      guildLeaderRole: { discordRoleId: guildLeaderRole },
       guildOfficerRoleUS: { discordRoleId: guildOfficerRoleUS },
-      guildOfficerRoleEU: { discordRoleId: guildOfficerRoleEU },
+      guildOfficerRole: { discordRoleId: guildOfficerRole },
       pingLeaderRolesUS: [guildLeaderRoleUS, guildOfficerRoleUS],
-      pingLeaderRolesEU: [guildLeaderRoleEU, guildOfficerRoleEU],
+      pingLeaderRoles: [guildLeaderRole, guildOfficerRole],
     },
     discord: {
       devUserId: '474839309484',
       channels: {
         albionRegistration: '396474759683473',
         albionUSRoles: '487573839485',
-        albionEURoles: '657687978899',
+        albionRoles: '657687978899',
         albionUSAnnouncements: '4845759049437495',
-        albionEUAnnouncements: '6655756786797',
+        albionAnnouncements: '6655756786797',
         albionScans: '4858696849494',
         ps2Verify: '558787980890809',
         ps2Private: '9705950678045896095',
@@ -282,13 +282,13 @@ export class TestBootstrapper {
       },
       roles: {
         albionUSMember: '454647566868675',
-        albionEUMember: '623445457656789',
+        albionMember: '623445457656789',
         albionUSRegistered: '4657676767676',
-        albionEURegistered: '67845345346565',
+        albionRegistered: '67845345346565',
         albionUSAnnouncements: '4566987855434',
-        albionEUAnnouncements: '6879876745643543',
+        albionAnnouncements: '6879876745643543',
         pingLeaderRolesUS: [guildLeaderRoleUS, guildOfficerRoleUS],
-        pingLeaderRolesEU: [guildLeaderRoleEU, guildOfficerRoleEU],
+        pingLeaderRoles: [guildLeaderRole, guildOfficerRole],
         ps2Verified: '059769706045',
       },
     },

@@ -327,7 +327,7 @@ DIG Community Staff`;
       expect(result.ps2VerifiedRole).toBe(mockRolePS2Verified);
       expect(result.foxholeRole).toBe(mockRoleFoxhole);
       expect(result.albionRole).toBe(mockRoleAlbion);
-      expect(result.albionEURegistered).toBe(mockRoleAlbionEURegistered);
+      expect(result.albionRegistered).toBe(mockRoleAlbionEURegistered);
     });
 
     it('should throw an error if the Onboarded role does not exist', async () => {

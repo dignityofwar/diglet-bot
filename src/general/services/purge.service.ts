@@ -40,7 +40,7 @@ export class PurgeService {
     const ps2VerifiedRole = message.guild.roles.cache.find(role => role.name === 'PS2/Verified');
     const foxholeRole = message.guild.roles.cache.find(role => role.name === 'Rec/Foxhole');
     const albionRole = message.guild.roles.cache.find(role => role.name === 'Albion Online');
-    const albionEURegistered = message.guild.roles.cache.find(role => role.name === 'ALB/Registered');
+    const albionRegistered = message.guild.roles.cache.find(role => role.name === 'ALB/Registered');
 
     const devUserId = this.config.get('discord.devUserId');
 
@@ -65,7 +65,7 @@ export class PurgeService {
       throw new Error(`Could not find Albion Online role! Pinging Bot Dev <@${devUserId}>!`);
     }
 
-    if (!albionEURegistered) {
+    if (!albionRegistered) {
       throw new Error(`Could not find Albion Online registered role(s)! Pinging Bot Dev <@${devUserId}>!`);
     }
 
@@ -75,7 +75,7 @@ export class PurgeService {
       ps2VerifiedRole,
       foxholeRole,
       albionRole,
-      albionEURegistered,
+      albionRegistered,
     };
   }
 
@@ -145,7 +145,7 @@ export class PurgeService {
     let ps2VerifiedRole: Role;
     let foxholeRole: Role;
     let albionRole: Role;
-    let albionEURegistered: Role;
+    let albionRegistered: Role;
 
     try {
       const roles = this.preflightChecks(message);
@@ -154,7 +154,7 @@ export class PurgeService {
       ps2VerifiedRole = roles.ps2VerifiedRole;
       foxholeRole = roles.foxholeRole;
       albionRole = roles.albionRole;
-      albionEURegistered = roles.albionEURegistered;
+      albionRegistered = roles.albionRegistered;
     }
     catch (err) {
       const string = `Preflight checks failed! Err: ${err.message}`;
@@ -218,7 +218,7 @@ export class PurgeService {
         ps2Verified: members.filter(member => this.isPurgable(member, activeMembers, onboardedRole) && member.roles.cache.has(ps2VerifiedRole.id)),
         foxhole: members.filter(member => this.isPurgable(member, activeMembers, onboardedRole) && member.roles.cache.has(foxholeRole.id)),
         albion: members.filter(member => this.isPurgable(member, activeMembers, onboardedRole) && member.roles.cache.has(albionRole.id)),
-        albionRegistered: members.filter(member => this.isPurgable(member, activeMembers, onboardedRole) && member.roles.cache.has(albionEURegistered.id)),
+        albionRegistered: members.filter(member => this.isPurgable(member, activeMembers, onboardedRole) && member.roles.cache.has(albionRegistered.id)),
       },
       totalMembers: members.size,
       totalBots: members.filter(member => member.user.bot).size,
