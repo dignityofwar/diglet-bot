@@ -42,7 +42,7 @@ export class PurgeService {
     const foxholeRole = message.guild.roles.cache.find(role => role.name === 'Rec/Foxhole');
     const albionRole = message.guild.roles.cache.find(role => role.name === 'Albion Online');
     const albionUSRegistered = message.guild.roles.cache.find(role => role.name === 'ALB/US/Registered');
-    const albionEURegistered = message.guild.roles.cache.find(role => role.name === 'ALB/EU/Registered');
+    const albionEURegistered = message.guild.roles.cache.find(role => role.name === 'ALB/Registered');
 
     const devUserId = this.config.get('discord.devUserId');
 

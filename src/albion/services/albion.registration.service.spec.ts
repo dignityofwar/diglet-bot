@@ -51,7 +51,7 @@ describe('AlbionRegistrationService', () => {
       serverEmoji: '🇪🇺',
       guildId: TestBootstrapper.mockConfig.albion.guildIdEU,
       guildName: 'Dignity Of War',
-      guildPingable: '@ALB/EU/Archmage',
+      guildPingable: '@ALB/Archmage',
     };
     const moduleRef = await Test.createTestingModule({
       providers: [
@@ -166,7 +166,7 @@ describe('AlbionRegistrationService', () => {
       expect(result.serverEmoji).toBe('🇪🇺');
       expect(result.guildId).toBe(TestBootstrapper.mockConfig.albion.guildIdEU);
       expect(result.guildName).toBe('Dignity Of War');
-      expect(result.guildPingable).toBe('@ALB/EU/Archmage');
+      expect(result.guildPingable).toBe('@ALB/Archmage');
     });
   });
 
@@ -294,7 +294,7 @@ describe('AlbionRegistrationService', () => {
         //         await expect(service.validate(mockRegistrationDataEU)).rejects.toThrowError(`Sorry <@${mockDiscordUser.id}>, the character **${mockCharacter.Name}** has not been detected in the 🇪🇺 **Dignity Of War** Guild.
         // \n- ➡️ **Please ensure you have spelt your character __exactly__ correct as it appears in-game**. If you have mis-spelt it, please run the command again with the correct spelling.
         // - ⏳ We will automatically retry your registration attempt at the top of the hour over the next 24 hours. Sometimes our data source lags, so please be patient. **If you are not a member of DIG, this WILL fail regardless!!!**
-        // \nIf _after_ 24 hours this has not worked, please contact \`@ALB/EU/Archmage\` in <#1039269706605002912> for assistance.
+        // \nIf _after_ 24 hours this has not worked, please contact \`@ALB/Archmage\` in <#1039269706605002912> for assistance.
         // \n||Data source: [Gameinfo link](${endpoint}) \nCharacter info: \`${JSON.stringify(mockCharacterInfo)}\`||`);
 
         await expect(service.validate(mockRegistrationDataEU)).rejects.toThrowError(`Sorry <@${mockDiscordUser.id}>, the character **${mockCharacter.Name}** has not been detected in the 🇪🇺 **Dignity Of War** Guild.
