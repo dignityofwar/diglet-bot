@@ -39,7 +39,7 @@
     "@nestjs/common": "9.4.3",
     "@nestjs/config": "3.2.3",
     "@nestjs/core": "9.4.3",
-    "@nestjs/schedule": "^3.0.4",
+    "@nestjs/schedule": "^4.0.0",
     "@sentry/node": "^8.4.0",
     "@sentry/profiling-node": "^8.4.0",
     "axios": "^1.7.2",
