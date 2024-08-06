@@ -66,7 +66,7 @@ export class AlbionRegistrationService implements OnApplicationBootstrap {
       serverEmoji: server === AlbionServer.AMERICAS ? '🇺🇸' : '🇪🇺',
       guildId: server === AlbionServer.AMERICAS ? this.config.get('albion.guildIdUS') : this.config.get('albion.guildIdEU'),
       guildName: server === AlbionServer.AMERICAS ? 'DIG - Dignity of War' : 'Dignity Of War',
-      guildPingable: server === AlbionServer.AMERICAS ? '@ALB/US/Guildmaster' : '@ALB/EU/Archmage',
+      guildPingable: server === AlbionServer.AMERICAS ? '@ALB/US/Guildmaster' : '@ALB/Archmage',
     };
   }
 

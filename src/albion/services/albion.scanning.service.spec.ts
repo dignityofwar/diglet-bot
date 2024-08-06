@@ -21,29 +21,29 @@ const mockScanUserId = '1337';
 const mockGuildLeaderRoleIdUS = '1158467537550454895';
 const mockGuildLeaderRoleIdEU = '45656565697643';
 const mockGuildLeaderRoleNameUS = '@ALB/US/Guildmaster';
-const mockGuildLeaderRoleNameEU = '@ALB/EU/Archmage';
+const mockGuildLeaderRoleNameEU = '@ALB/Archmage';
 const mockGuildOfficerRoleIdUS = '1158467574678429696';
 const mockGuildOfficerRoleIdEU = '44564564385676';
 const mockOfficerRoleNameUS = '@ALB/US/Master';
-const mockOfficerRoleNameEU = '@ALB/EU/Magister';
+const mockOfficerRoleNameEU = '@ALB/Magister';
 const mockGeneralRoleId = '1158467600687300699';
 const mockGeneralName = '@ALB/US/General';
 const mockCaptainRoleId = '1158467651165761626';
 const mockCaptainName = '@ALB/US/Captain';
 const mockAdeptRoleId = '457687980955645345';
-const mockAdeptRoleName = '@ALB/EU/Adept';
+const mockAdeptRoleName = '@ALB/Adept';
 const mockSquireRoleId = '1158467840496635914';
 const mockSquireName = '@ALB/US/Squire';
 const mockGraduateRoleId = '4566879809099';
-const mockGraduateName = '@ALB/EU/Graduate';
+const mockGraduateName = '@ALB/Graduate';
 const mockInitiateRoleId = '1139909152701947944';
 const mockInitiateName = '@ALB/US/Initiate';
 const mockDiscipleRoleId = '4465686797898665';
-const mockDiscipleName = '@ALB/EU/Disciple';
+const mockDiscipleName = '@ALB/Disciple';
 const mockRegisteredRoleIdUS = '1155987100928323594';
 const mockRegisteredNameUS = '@ALB/US/Registered';
 const mockRegisteredRoleIdEU = '446576897089876656';
-const mockRegisteredNameEU = '@ALB/EU/Registered';
+const mockRegisteredNameEU = '@ALB/Registered';
 
 describe('AlbionScanningService', () => {
   let service: AlbionScanningService;
@@ -258,13 +258,13 @@ describe('AlbionScanningService', () => {
     { id: '1158467840496635914', name: '@ALB/US/Squire' },
     { id: '1139909152701947944', name: '@ALB/US/Initiate' },
     { id: '1155987100928323594', name: '@ALB/US/Registered' },
-    { id: '1232802066414571631', name: '@ALB/EU/Archmage' },
-    { id: '1232802105564205126', name: '@ALB/EU/Magister' },
-    { id: '1232802165861384305', name: '@ALB/EU/Warcaster' },
-    { id: '1232802244219637893', name: '@ALB/EU/Adept' },
-    { id: '1232802285734727772', name: '@ALB/EU/Graduate' },
-    { id: '1232802355733336196', name: '@ALB/EU/Disciple' },
-    { id: '1232778554320879811', name: '@ALB/EU/Registered' },
+    { id: '1232802066414571631', name: '@ALB/Archmage' },
+    { id: '1232802105564205126', name: '@ALB/Magister' },
+    { id: '1232802165861384305', name: '@ALB/Warcaster' },
+    { id: '1232802244219637893', name: '@ALB/Adept' },
+    { id: '1232802285734727772', name: '@ALB/Graduate' },
+    { id: '1232802355733336196', name: '@ALB/Disciple' },
+    { id: '1232778554320879811', name: '@ALB/Registered' },
   ];
 
   describe('Scanning workflow', () => {
@@ -878,7 +878,7 @@ describe('AlbionScanningService', () => {
 
       // Add role they shouldn't have
       mockDiscordUser.roles.cache = new Map([
-        [mockRegisteredRoleIdEU, TestBootstrapper.getMockDiscordRole('ALB/EU/Registered')],
+        [mockRegisteredRoleIdEU, TestBootstrapper.getMockDiscordRole('ALB/Registered')],
       ]);
 
       // Mock the Discord API to return the mocked Discord user
@@ -922,9 +922,9 @@ describe('AlbionScanningService', () => {
       // Add a blend of US and EU roles to the user
       mockDiscordUser.roles.cache = new Map([
         [mockRegisteredRoleIdUS, TestBootstrapper.getMockDiscordRole('ALB/US/Registered')],
-        [mockRegisteredRoleIdEU, TestBootstrapper.getMockDiscordRole('ALB/EU/Registered')],
+        [mockRegisteredRoleIdEU, TestBootstrapper.getMockDiscordRole('ALB/Registered')],
         [mockSquireRoleId, TestBootstrapper.getMockDiscordRole('ALB/US/Squire')],
-        [mockDiscipleRoleId, TestBootstrapper.getMockDiscordRole('ALB/EU/Disciple')],
+        [mockDiscipleRoleId, TestBootstrapper.getMockDiscordRole('ALB/Disciple')],
       ]);
 
       // Mock the Discord API to return the mocked Discord user
@@ -968,9 +968,9 @@ describe('AlbionScanningService', () => {
       // Add a blend of US and EU roles to the user
       mockDiscordUser.roles.cache = new Map([
         [mockRegisteredRoleIdUS, TestBootstrapper.getMockDiscordRole('ALB/US/Registered')],
-        [mockRegisteredRoleIdEU, TestBootstrapper.getMockDiscordRole('ALB/EU/Registered')],
+        [mockRegisteredRoleIdEU, TestBootstrapper.getMockDiscordRole('ALB/Registered')],
         [mockGeneralRoleId, TestBootstrapper.getMockDiscordRole('ALB/US/General')],
-        [mockDiscipleRoleId, TestBootstrapper.getMockDiscordRole('ALB/EU/Disciple')],
+        [mockDiscipleRoleId, TestBootstrapper.getMockDiscordRole('ALB/Disciple')],
       ]);
 
       // Mock the Discord API to return the mocked Discord user
@@ -1010,7 +1010,7 @@ describe('AlbionScanningService', () => {
 
       // Add role they shouldn't have
       mockDiscordUser.roles.cache = new Map([
-        [mockDiscipleRoleId, TestBootstrapper.getMockDiscordRole('ALB/EU/Disciple')],
+        [mockDiscipleRoleId, TestBootstrapper.getMockDiscordRole('ALB/Disciple')],
       ]);
 
       // Mock the Discord API to return the mocked Discord user
@@ -1050,9 +1050,9 @@ describe('AlbionScanningService', () => {
 
       // Add role they shouldn't have
       mockDiscordUser.roles.cache = new Map([
-        [mockDiscipleRoleId, TestBootstrapper.getMockDiscordRole('ALB/EU/Disciple')],
-        [mockGraduateRoleId, TestBootstrapper.getMockDiscordRole('ALB/EU/Graduate')],
-        [mockRegisteredRoleIdEU, TestBootstrapper.getMockDiscordRole('ALB/EU/Registered')],
+        [mockDiscipleRoleId, TestBootstrapper.getMockDiscordRole('ALB/Disciple')],
+        [mockGraduateRoleId, TestBootstrapper.getMockDiscordRole('ALB/Graduate')],
+        [mockRegisteredRoleIdEU, TestBootstrapper.getMockDiscordRole('ALB/Registered')],
         [mockRegisteredRoleIdUS, TestBootstrapper.getMockDiscordRole('ALB/US/Registered')],
       ]);
 
@@ -1093,7 +1093,7 @@ describe('AlbionScanningService', () => {
 
       // Add role they shouldn't have
       mockDiscordUser.roles.cache = new Map([
-        [mockDiscipleRoleId, TestBootstrapper.getMockDiscordRole('ALB/EU/Disciple')],
+        [mockDiscipleRoleId, TestBootstrapper.getMockDiscordRole('ALB/Disciple')],
       ]);
 
       // Mock the Discord API to return the mocked Discord user
@@ -1344,7 +1344,7 @@ describe('AlbionScanningService', () => {
         server: AlbionServer.AMERICAS,
       },
       {
-        title: 'Disciples should always have ALB/EU/Registered role',
+        title: 'Disciples should always have ALB/Registered role',
         roles: [mockDiscipleRoleId],
         highestPriorityRole: { id: mockDiscipleRoleId, name: mockDiscipleName },
         expected: [
@@ -1372,7 +1372,7 @@ describe('AlbionScanningService', () => {
         server: AlbionServer.AMERICAS,
       },
       {
-        title: 'EU Registered members should have at least ALB/EU/Registered and Disciple',
+        title: 'EU Registered members should have at least ALB/Registered and Disciple',
         roles: [],
         highestPriorityRole: { id: mockDiscipleRoleId, name: mockDiscipleName },
         expected: [

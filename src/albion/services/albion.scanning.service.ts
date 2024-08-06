@@ -496,8 +496,8 @@ export class AlbionScanningService {
         registeredRole = roleMap.filter((role) => role.name === '@ALB/US/Registered')[0];
       }
       else if (server === AlbionServer.EUROPE) {
-        entryRole = roleMap.filter((role) => role.name === '@ALB/EU/Disciple')[0];
-        registeredRole = roleMap.filter((role) => role.name === '@ALB/EU/Registered')[0];
+        entryRole = roleMap.filter((role) => role.name === '@ALB/Disciple')[0];
+        registeredRole = roleMap.filter((role) => role.name === '@ALB/Registered')[0];
       }
       else {
         throw new Error('Invalid server!');
