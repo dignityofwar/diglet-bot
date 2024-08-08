@@ -341,7 +341,7 @@ export class PS2GameVerificationService implements OnApplicationBootstrap {
   private async applyDiscordChanges(character: CensusCharacterWithOutfitInterface, guildMember: GuildMember, remove = false) {
     // Add the PS2/verified role to the Discord user
     const verifiedRoleId = this.config.get('discord.roles.ps2Verified');
-    const verifyRole = await this.discordService.getMemberRole(guildMember, verifiedRoleId);
+    const verifyRole = await this.discordService.getRoleViaMember(guildMember, verifiedRoleId);
 
     if (!verifyRole) {
       throw new Error(`Could not find role with ID ${verifiedRoleId}`);

@@ -121,15 +121,14 @@ export class AlbionRegistrationService implements OnApplicationBootstrap {
 
   private async checkRolesExist(data: RegistrationData) {
     const rolesToCheck = [
-      this.config.get('discord.roles.albionUSMember'),
-      this.config.get('discord.roles.albionUSRegistered'),
+      this.config.get('discord.roles.albionMember'),
       this.config.get('discord.roles.albionRegistered'),
-      this.config.get('discord.roles.albionUSAnnouncements'),
+      this.config.get('discord.roles.albionAnnouncements'),
     ];
 
     try {
       for (const roleId of rolesToCheck) {
-        await this.discordService.getMemberRole(data.discordMember, roleId);
+        await this.discordService.getRoleViaMember(data.discordMember, roleId);
       }
     }
     catch (err) {
@@ -219,15 +218,15 @@ export class AlbionRegistrationService implements OnApplicationBootstrap {
     const announcementRole = data.server === AlbionServer.AMERICAS ? this.config.get('discord.roles.albionUSAnnouncements') : this.config.get('discord.roles.albionAnnouncements');
 
     try {
-      await data.discordMember.roles.add(await this.discordService.getMemberRole(
+      await data.discordMember.roles.add(await this.discordService.getRoleViaMember(
         data.discordMember,
         memberRole
       ));
-      await data.discordMember.roles.add(await this.discordService.getMemberRole(
+      await data.discordMember.roles.add(await this.discordService.getRoleViaMember(
         data.discordMember,
         registeredRole
       ));
-      await data.discordMember.roles.add(await this.discordService.getMemberRole(
+      await data.discordMember.roles.add(await this.discordService.getRoleViaMember(
         data.discordMember,
         announcementRole
       ));
