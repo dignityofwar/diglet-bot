@@ -1,1 +1,6 @@
-export declare class CensusServerError extends Error {}
+export class CensusServerError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = 'CensusServerError';
+  }
+}

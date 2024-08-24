@@ -256,6 +256,16 @@ export class TestBootstrapper {
     } as any;
   }
 
+  static getMockPS2Outfit(outfitId = '123456') {
+    return {
+      outfit_id: outfitId,
+      name: 'Test Outfit',
+      name_lower: 'test outfit',
+      alias: 'TO',
+      alias_lower: 'to',
+    };
+  }
+
   static getMockPS2MemberEntity(
     characterId = '123456',
     characterName = 'MrBojangles',
