@@ -246,7 +246,7 @@ describe('PS2GameScanningService', () => {
     });
   });
 
-  describe('validateMembership', () => {
+  describe('verifyMembership', () => {
     beforeEach(() => {
       service.removeDiscordLeaver = jest.fn();
       service.removeOutfitLeaver = jest.fn();
@@ -325,7 +325,7 @@ describe('PS2GameScanningService', () => {
 
     it('should call the removeOutfitLeaver function if the member no longer has an outfit', async () => {
       mockPS2Character = TestBootstrapper.getMockPS2Character(mockCharacterId, '3445576868678');
-      mockPS2Character.outfit_info = undefined;
+      delete mockPS2Character.outfit_info;
       const mockDiscordMember = TestBootstrapper.getMockDiscordUser();
 
       mockDiscordMessage.guild.members.fetch = jest.fn().mockResolvedValue(mockDiscordMember);

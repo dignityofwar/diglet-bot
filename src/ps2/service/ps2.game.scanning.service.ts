@@ -66,7 +66,14 @@ export class PS2GameScanningService {
 
     // Filter out any null characters, as they errored during the process.
     // validateMembership will handle these cases.
-    return characters.filter((character) => character !== null);
+    characters.filter((character) => character !== null);
+
+    // "Cache" the characters to a map for easier access later
+    characters.forEach((character) => {
+      this.charactersMap.set(character.character_id, character);
+    });
+
+    return characters;
   }
 
   // Main execution
@@ -176,7 +183,9 @@ export class PS2GameScanningService {
       }
 
       // Remove them if they have no outfit at all or have left our outfit.
-      if (!character.outfit_info || character.outfit_info?.outfit_id !== this.config.get('ps2.outfitId')) {
+      if (
+        !character.outfit_info || character.outfit_info?.outfit_id !== this.config.get('ps2.outfitId')
+      ) {
         this.logger.log(`${dryRun ? '[DRY RUN] ' : ''}User ${member.characterId} has left the outfit, but remains on the server!`);
         await this.removeOutfitLeaver(member, character, discordMember, message, dryRun);
       }
@@ -249,7 +258,10 @@ export class PS2GameScanningService {
     });
   }
 
-  async checkForSuggestions(outfitMembers: PS2MembersEntity[], message: Message) {
+  async checkForSuggestions(
+    outfitMembers: PS2MembersEntity[],
+    message: Message
+  ) {
     // Check if there are any characters in the outfit that have invalid discord permissions
 
     const rankMap: PS2RankMapInterface = this.config.get('ps2.rankMap');
@@ -258,12 +270,19 @@ export class PS2GameScanningService {
     const outfit = await this.censusService.getOutfit(this.config.get('ps2.outfitId'));
 
     for (const member of outfitMembers) {
+      this.logger.log(`Checking suggestions on ${member.characterName}...`);
       // If already in the change set, they have been removed so don't bother checking
       if (this.changesMap.has(member.characterId)) {
         continue;
       }
 
       const character = this.charactersMap.get(member.characterId);
+
+      if (!character) {
+        this.logger.error(`Character data for **${member.characterName}** (${member.characterId}) did not exist when attempting to check for suggestions. Skipping.`);
+        continue;
+      }
+
       const discordMember = await message.guild.members.fetch({ user: member.discordId, force: true });
 
       // First get their rank
