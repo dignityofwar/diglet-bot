@@ -480,6 +480,10 @@ describe('PS2GameScanningService', () => {
     });
   });
 
+  describe('checkForSuggestions', () => {
+    // Yeahhhh no that is madness to test
+  });
+
   describe('reset', () => {
     beforeEach(() => {
       jest.spyOn(service['charactersMap'], 'clear');
