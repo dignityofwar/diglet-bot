@@ -66,14 +66,14 @@ export class PS2GameScanningService {
 
     // Filter out any null characters, as they errored during the process.
     // validateMembership will handle these cases.
-    characters.filter((character) => character !== null);
+    const validChars = characters.filter((character) => character !== null);
 
     // "Cache" the characters to a map for easier access later
-    characters.forEach((character) => {
+    validChars.forEach((character) => {
       this.charactersMap.set(character.character_id, character);
     });
 
-    return characters;
+    return validChars;
   }
 
   // Main execution
