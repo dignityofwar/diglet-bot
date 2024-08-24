@@ -195,7 +195,6 @@ export class PS2GameScanningService {
       discordMember: null,
       change: `- 🫥️ Discord member for Character **${character.name.first}** has left the DIG Discord server.`,
     });
-    return;
   }
 
   async removeOutfitLeaver(
