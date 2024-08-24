@@ -155,7 +155,7 @@ export class PS2GameScanningService {
       // Dev needs to be notified though in case of repeated failures which may need manual rectification.
       // @ref #208
       if (!character) {
-        const error = `Character data for ID **${member.characterId}** did not exist when attempting to verify their membership. Skipping.`;
+        const error = `Character data for **${member.characterName}** (${member.characterId}) did not exist when attempting to verify their membership. Skipping.`;
         this.logger.error(error);
         await message.channel.send(`❌ ${error} Pinging <@${this.config.get('discord.devUserId')}>!`);
         continue;
@@ -166,14 +166,14 @@ export class PS2GameScanningService {
         discordMember = await message.guild.members.fetch({ user: member.discordId, force: true });
       }
       catch (err) {
-        this.logger.log(`User ${character.name.first} has left the server!`);
+        this.logger.log(`${dryRun ? '[DRY RUN] ' : ''}User ${character.name.first} has left the server!`);
         await this.removeDiscordLeaver(member, character, dryRun);
         continue;
       }
 
-      // Now check if the character's outfit ID still matches.
-      if (character.outfit_info?.outfit_id !== this.config.get('ps2.outfitId')) {
-        this.logger.log(`User ${member.characterId} has left the outfit, but remains on the server!`);
+      // Remove them if they have no outfit at all or have left our outfit.
+      if (!character.outfit_info || character.outfit_info?.outfit_id !== this.config.get('ps2.outfitId')) {
+        this.logger.log(`${dryRun ? '[DRY RUN] ' : ''}User ${member.characterId} has left the outfit, but remains on the server!`);
         await this.removeOutfitLeaver(member, character, discordMember, message, dryRun);
       }
     }

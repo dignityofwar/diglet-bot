@@ -66,7 +66,7 @@ export class PS2VerifyManualCommand {
     const outfitId = this.config.get('ps2.outfitId');
 
     // Check if the character is in the PS2 Outfit
-    if (!character?.outfit_info || character?.outfit_info.outfit_id !== outfitId) {
+    if (!character.outfit_info || character.outfit_info?.outfit_id !== outfitId) {
       return `The character **${character.name.first}** has not been detected in the [DIG]. Please try again.`;
     }
 

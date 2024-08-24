@@ -257,7 +257,7 @@ describe('PS2GameScanningService', () => {
         false
       );
 
-      expect(mockDiscordMessage.channel.send).toHaveBeenCalledWith(`❌ Character data for ID **${mockPS2MemberEntity.characterId}** did not exist when attempting to verify their membership. Skipping. Pinging <@474839309484>!`);
+      expect(mockDiscordMessage.channel.send).toHaveBeenCalledWith(`❌ Character data for **${mockPS2MemberEntity.characterName}** (${mockPS2MemberEntity.characterId}) did not exist when attempting to verify their membership. Skipping. Pinging <@474839309484>!`);
       expect(service.removeDiscordLeaver).not.toHaveBeenCalled();
       expect(service.removeOutfitLeaver).not.toHaveBeenCalled();
     });
@@ -287,7 +287,7 @@ describe('PS2GameScanningService', () => {
         false
       );
 
-      expect(mockDiscordMessage.channel.send).toHaveBeenCalledWith(`❌ Character data for ID **${mockPS2MemberEntity.characterId}** did not exist when attempting to verify their membership. Skipping. Pinging <@${mockDevUserId}>!`);
+      expect(mockDiscordMessage.channel.send).toHaveBeenCalledWith(`❌ Character data for **${mockPS2MemberEntity.characterName}** (${mockPS2MemberEntity.characterId}) did not exist when attempting to verify their membership. Skipping. Pinging <@${mockDevUserId}>!`);
       expect(service.removeDiscordLeaver).not.toHaveBeenCalled();
       expect(service.removeOutfitLeaver).toHaveBeenCalledWith(
         mockPS2MemberEntity2,
@@ -300,6 +300,30 @@ describe('PS2GameScanningService', () => {
 
     it('should call the removeOutfitLeaver function if the member has left the outfit', async () => {
       mockPS2Character = TestBootstrapper.getMockPS2Character(mockCharacterId, '3445576868678');
+      const mockDiscordMember = TestBootstrapper.getMockDiscordUser();
+
+      mockDiscordMessage.guild.members.fetch = jest.fn().mockResolvedValue(mockDiscordMember);
+
+      await service.verifyMembership(
+        [mockPS2Character],
+        [mockPS2MemberEntity],
+        mockDiscordMessage,
+        false
+      );
+
+      expect(service.removeDiscordLeaver).not.toHaveBeenCalled();
+      expect(service.removeOutfitLeaver).toHaveBeenCalledWith(
+        mockPS2MemberEntity,
+        mockPS2Character,
+        mockDiscordMember,
+        mockDiscordMessage,
+        false
+      );
+    });
+
+    it('should call the removeOutfitLeaver function if the member no longer has an outfit', async () => {
+      mockPS2Character = TestBootstrapper.getMockPS2Character(mockCharacterId, '3445576868678');
+      mockPS2Character.outfit_info = undefined;
       const mockDiscordMember = TestBootstrapper.getMockDiscordUser();
 
       mockDiscordMessage.guild.members.fetch = jest.fn().mockResolvedValue(mockDiscordMember);
