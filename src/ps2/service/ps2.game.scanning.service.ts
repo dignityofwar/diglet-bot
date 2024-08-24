@@ -77,8 +77,8 @@ export class PS2GameScanningService {
     // If they're not, remove the verified role from them and any other PS2 Roles
     // Also send a message to the #ps2-scans channel to denote this has happened
 
-    const outfitMembers = await this.ps2MembersRepository.findAll();
-    const length = outfitMembers.length;
+    let outfitMembers = await this.ps2MembersRepository.findAll();
+    let length = outfitMembers.length;
 
     const characters: Array<CensusCharacterWithOutfitInterface | null> = await this.gatherCharacters(outfitMembers, message);
 
@@ -90,6 +90,10 @@ export class PS2GameScanningService {
     try {
       await message.edit(`Checking ${length} characters for membership status...`);
       await this.verifyMembership(characters, outfitMembers, message, dryRun);
+
+      // Re-grab outfit members, as some may have been removed by verifyMembership
+      outfitMembers = await this.ps2MembersRepository.findAll();
+      length = outfitMembers.length;
 
       await message.edit(`Checking ${length} characters for role inconsistencies...`);
       await this.checkForSuggestions(outfitMembers, message);

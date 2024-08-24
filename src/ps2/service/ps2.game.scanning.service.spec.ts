@@ -158,8 +158,10 @@ describe('PS2GameScanningService', () => {
       service.verifyMembership = jest.fn().mockResolvedValue(null);
       service.checkForSuggestions = jest.fn().mockResolvedValue(null);
     });
-    it('should run through a scan successfully assuming all data is valiud', async () => {
+    it('should run through a scan successfully assuming all data is valid', async () => {
       await service.startScan(mockDiscordMessage);
+
+      expect(mockPS2MembersRepository.findAll).toHaveBeenCalledTimes(2);
 
       expect(mockDiscordMessage.edit).toHaveBeenCalledWith('Starting scan...');
 
