@@ -7,7 +7,7 @@ import { PS2MembersEntity } from '../../database/entities/ps2.members.entity';
 import { EntityManager } from '@mikro-orm/core';
 import { getRepositoryToken } from '@mikro-orm/nestjs';
 import { TestBootstrapper } from '../../test.bootstrapper';
-import { PS2GameScanningService } from './ps2.game.scanning.service';
+import { ChangesInterface, PS2GameScanningService } from './ps2.game.scanning.service';
 import { CensusApiService } from './census.api.service';
 import { CensusNotFoundResponse } from '../interfaces/CensusNotFoundResponse';
 import { CensusServerError } from '../interfaces/CensusServerError';
@@ -22,17 +22,15 @@ describe('PS2GameScanningService', () => {
   let mockDiscordMessage: any;
 
   let mockEntityManager: jest.Mocked<EntityManager>;
-  let mockPS2MembersRepository: jest.Mocked<EntityManager>;
-  let mockPS2MemberEntity: PS2MembersEntity;
   let mockPS2Character: any;
+  const mockPS2MemberEntity = TestBootstrapper.getMockPS2MemberEntity(
+    mockCharacterId
+  );
+  const mockPS2MembersRepository = TestBootstrapper.getMockRepositoryInjected(mockPS2MemberEntity);
 
   beforeEach(async () => {
     TestBootstrapper.mockORM();
 
-    mockPS2MembersRepository = TestBootstrapper.getMockRepositoryInjected({});
-    mockPS2MemberEntity = TestBootstrapper.getMockPS2MemberEntity(
-      mockCharacterId
-    );
     mockPS2Character = TestBootstrapper.getMockPS2Character(mockCharacterId, mockOutfitId);
 
     const moduleRef: TestingModule = await Test.createTestingModule({
@@ -149,6 +147,99 @@ describe('PS2GameScanningService', () => {
 
       expect(mockDiscordMessage.channel.send).toBeCalledWith(`❌ ${error}`);
       expect(result).toEqual([mockCharacter]);
+    });
+  });
+
+  describe('startScan', () => {
+    beforeEach(() => {
+      service.reset = jest.fn();
+      service.gatherCharacters = jest.fn().mockResolvedValue([mockPS2Character]);
+      service.verifyMembership = jest.fn().mockResolvedValue(null);
+      service.checkForSuggestions = jest.fn().mockResolvedValue(null);
+    });
+    it('should run through a scan successfully assuming all data is valiud', async () => {
+      await service.startScan(mockDiscordMessage);
+
+      expect(mockDiscordMessage.edit).toHaveBeenCalledWith('Starting scan...');
+
+      expect(service.gatherCharacters).toHaveBeenCalledWith([mockPS2MemberEntity], mockDiscordMessage);
+      expect(mockDiscordMessage.edit).toHaveBeenCalledWith('Checking 1 characters for membership status...');
+      expect(mockDiscordMessage.edit).toHaveBeenCalledWith('Checking 1 characters for role inconsistencies...');
+
+      expect(mockDiscordMessage.channel.send).toHaveBeenCalledWith('✅ No automatic changes were performed.');
+      expect(mockDiscordMessage.channel.send).toHaveBeenCalledWith('✅ There are currently no inconsistencies between ranks and roles.');
+      expect(mockDiscordMessage.edit).toHaveBeenCalledWith('ℹ️ There are currently 1 members on record.');
+      expect(service.reset).toHaveBeenCalled();
+    });
+
+    it('should successfully stop and reset when gatherCharacters returns no characters', async () => {
+      service.gatherCharacters = jest.fn().mockReturnValue([]);
+
+      await service.startScan(mockDiscordMessage);
+
+      expect(mockDiscordMessage.edit).toHaveBeenCalledWith('Starting scan...');
+      expect(mockDiscordMessage.edit).toHaveBeenCalledWith('## ❌ No characters were gathered from Census!');
+      expect(service.reset).toHaveBeenCalled();
+    });
+
+    it('should successfully catch errors from verifyMembership', async () => {
+      service.verifyMembership = jest.fn().mockRejectedValue(new Error('Something went wrong!'));
+
+      await service.startScan(mockDiscordMessage);
+
+      expect(mockDiscordMessage.edit).toHaveBeenCalledWith('Checking 1 characters for membership status...');
+      expect(mockDiscordMessage.edit).toHaveBeenCalledWith('## ❌ An error occurred while scanning!');
+      expect(mockDiscordMessage.channel.send).toHaveBeenCalledWith('Error: Something went wrong!');
+      expect(service.reset).toHaveBeenCalled();
+    });
+    it('should successfully catch errors from checkForSuggestions', async () => {
+      service.checkForSuggestions = jest.fn().mockRejectedValue(new Error('Something went wrong!'));
+
+      await service.startScan(mockDiscordMessage);
+
+      expect(mockDiscordMessage.edit).toHaveBeenCalledWith('Checking 1 characters for role inconsistencies...');
+      expect(mockDiscordMessage.edit).toHaveBeenCalledWith('## ❌ An error occurred while scanning!');
+      expect(mockDiscordMessage.channel.send).toHaveBeenCalledWith('Error: Something went wrong!');
+      expect(service.reset).toHaveBeenCalled();
+    });
+
+    it('should report changes when they are made', async () => {
+      const change: ChangesInterface = {
+        character: mockPS2Character,
+        discordMember: TestBootstrapper.getMockDiscordUser(),
+        change: 'Changed role to Officer',
+      };
+      service['changesMap'] = new Map();
+      service['changesMap'].set(
+        mockPS2Character.character_id, change
+      );
+      await service.startScan(mockDiscordMessage);
+
+      expect(mockDiscordMessage.channel.send).toHaveBeenCalledWith('## 📝 1 change(s) made');
+      expect(mockDiscordMessage.channel.send).toHaveBeenCalledWith('dummy');
+
+      // No idea how to get the fakeMessage edits, so whatever.
+      expect(service.reset).toHaveBeenCalled();
+    });
+
+    it('should report suggestions when they are discovered', async () => {
+      const suggestion: ChangesInterface = {
+        character: mockPS2Character,
+        discordMember: TestBootstrapper.getMockDiscordUser(),
+        change: 'Changed role to Officer',
+      };
+      service['suggestionsMap'] = new Map();
+      service['suggestionsMap'].set(
+        mockPS2Character.character_id, [suggestion, suggestion]
+      );
+      service['suggestionsCount'] = 2;
+      await service.startScan(mockDiscordMessage);
+
+      expect(mockDiscordMessage.channel.send).toHaveBeenCalledWith('## 👀 2 manual correction(s) to make');
+      expect(mockDiscordMessage.channel.send).toHaveBeenCalledWith('dummy');
+      expect(mockDiscordMessage.channel.send).toHaveBeenCalledWith('🔔 <@&1234567890>, <@&9876543210> Please review the above suggestions and make any necessary changes manually. To check again without pinging Leaders and Officers, run the `/ps2-scan` command with the `dry-run` flag set to `true`.');
+      // No idea how to get the fakeMessage edits, so whatever.
+      expect(service.reset).toHaveBeenCalled();
     });
   });
 

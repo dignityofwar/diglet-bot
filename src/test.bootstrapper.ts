@@ -325,6 +325,7 @@ export class TestBootstrapper {
       censusServiceId: 'dignityofwar',
       censusTimeout: 30000,
       outfitId: '866685885885885',
+      pingRoles: ['1234567890', '9876543210'],
     },
   };
 

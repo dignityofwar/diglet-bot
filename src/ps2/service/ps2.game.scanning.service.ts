@@ -8,7 +8,7 @@ import { CensusCharacterWithOutfitInterface } from '../interfaces/CensusCharacte
 import { ConfigService } from '@nestjs/config';
 import { PS2RankMapInterface } from '../../config/ps2.app.config';
 
-interface ChangesInterface {
+export interface ChangesInterface {
   character: CensusCharacterWithOutfitInterface,
   discordMember: GuildMember | null,
   change: string
@@ -37,7 +37,10 @@ export class PS2GameScanningService {
     this.suggestionsCount = 0;
   }
 
-  async gatherCharacters(outfitMembers: PS2MembersEntity[], statusMessage: Message) {
+  async gatherCharacters(
+    outfitMembers: PS2MembersEntity[],
+    statusMessage: Message
+  ): Promise<CensusCharacterWithOutfitInterface[]> {
     const characterPromises = [];
     const length = outfitMembers.length;
 
@@ -67,8 +70,8 @@ export class PS2GameScanningService {
   }
 
   // Main execution
-  async startScan(originalMessage: Message, dryRun = false) {
-    const message = await originalMessage.edit('Starting scan...');
+  async startScan(message: Message, dryRun = false) {
+    await message.edit('Starting scan...');
 
     // Pull the list of verified members from the database and check if they're still in the outfit
     // If they're not, remove the verified role from them and any other PS2 Roles
@@ -77,16 +80,9 @@ export class PS2GameScanningService {
     const outfitMembers = await this.ps2MembersRepository.findAll();
     const length = outfitMembers.length;
 
-    let characters: Array<CensusCharacterWithOutfitInterface | null>;
+    const characters: Array<CensusCharacterWithOutfitInterface | null> = await this.gatherCharacters(outfitMembers, message);
 
-    try {
-      characters = await this.gatherCharacters(outfitMembers, message);
-    }
-    catch (err) {
-      return this.reset();
-    }
-
-    if (!characters) {
+    if (characters.length === 0) {
       await message.edit('## ❌ No characters were gathered from Census!');
       return this.reset();
     }
