@@ -6,7 +6,7 @@ import { GeneralModule } from './general/general.module';
 import { AlbionModule } from './albion/albion.module';
 import { ConfigModule } from './config/config.module';
 import { DatabaseModule } from './database/database.module';
-// import { Ps2Module } from './ps2/ps2.module';
+import { Ps2Module } from './ps2/ps2.module';
 import { ScheduleModule } from '@nestjs/schedule';
 
 @Module({
@@ -39,7 +39,7 @@ import { ScheduleModule } from '@nestjs/schedule';
     }),
     GeneralModule,
     AlbionModule,
-    // Ps2Module,
+    Ps2Module,
     ScheduleModule.forRoot(),
     DiscordModule,
   ],

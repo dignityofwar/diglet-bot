@@ -5,11 +5,40 @@ import { ConfigService } from '@nestjs/config';
 import { TestingModule } from '@nestjs/testing';
 import { MikroORM } from '@mikro-orm/core';
 import { AlbionServer } from './albion/interfaces/albion.api.interfaces';
+import { PS2MembersEntity } from './database/entities/ps2.members.entity';
+import { PS2RankMapInterface } from './config/ps2.app.config';
 
 const guildLeaderRoleUS = '44546543371337';
 const guildLeaderRole = '64354579789809089';
 const guildOfficerRoleUS = '465544343342364';
 const guildOfficerRole = '66343435879886';
+
+const ps2RankMap: PS2RankMapInterface = {
+  '@PS2/Verified': {
+    ranks: null,
+    discordRoleId: '1139909190664601611',
+  },
+  '@PS2/Zealot': {
+    ranks: ['6'],
+    discordRoleId: '1139909319886905496',
+  },
+  '@PS2/SL': {
+    ranks: ['4', '5'],
+    discordRoleId: '1142546129112805517',
+  },
+  '@PS2/PL': {
+    ranks: ['3'],
+    discordRoleId: '1142546081922682900',
+  },
+  '@PS2/Officer': {
+    ranks: ['2'],
+    discordRoleId: '1142546051606257755',
+  },
+  '@PS2/Leader': {
+    ranks: ['1'],
+    discordRoleId: '1142546013685559337',
+  },
+};
 
 // This file helps set up mocks for various tests, which have been copied and pasted across the suite, causing a lot of duplication.
 @Injectable()
@@ -39,7 +68,7 @@ export class TestBootstrapper {
   }
 
   static getMockRepositoryInjected(entity) {
-    return {
+    const repoActions = {
       find: jest.fn().mockResolvedValueOnce([entity]),
       findOne: jest.fn().mockResolvedValueOnce([entity]),
       findAll: jest.fn().mockResolvedValue([entity]),
@@ -47,6 +76,10 @@ export class TestBootstrapper {
       upsert: jest.fn(),
       persistAndFlush: jest.fn().mockResolvedValue([entity]),
       removeAndFlush: jest.fn(),
+    };
+    return {
+      ...repoActions,
+      getEntityManager: jest.fn().mockReturnValue(repoActions),
     } as any;
   }
 
@@ -133,7 +166,7 @@ export class TestBootstrapper {
     } as any;
   }
 
-  static getMockDiscordRole(roleId: string) {
+  static getMockDiscordRole(roleId = '4969797969594') {
     return {
       id: roleId,
       name: 'mockrole',
@@ -237,7 +270,7 @@ export class TestBootstrapper {
     } as any;
   }
 
-  static getMockPS2Character(characterId: string, outfitId: string) {
+  static getMockPS2Character(characterId = '123456', outfitId = '123456') {
     return {
       character_id: characterId,
       name: {
@@ -253,6 +286,34 @@ export class TestBootstrapper {
         rank_ordinal: '3',
       },
     } as any;
+  }
+
+  static getMockPS2Outfit(outfitId = '123456') {
+    return {
+      outfit_id: outfitId,
+      name: 'Test Outfit',
+      name_lower: 'test outfit',
+      alias: 'TO',
+      alias_lower: 'to',
+    };
+  }
+
+  static getMockPS2MemberEntity(
+    characterId = '123456',
+    characterName = 'MrBojangles',
+    discordMemberId = '123456'
+  ): PS2MembersEntity {
+    return {
+      id: 1,
+      createdAt: new Date,
+      updatedAt: new Date,
+      discordId: discordMemberId,
+      characterId: characterId,
+      characterName: characterName,
+      manual: false,
+      manualCreatedByDiscordId: null,
+      manualCreatedByDiscordName: null,
+    };
   }
 
   static readonly mockConfig = {
@@ -296,6 +357,8 @@ export class TestBootstrapper {
       censusServiceId: 'dignityofwar',
       censusTimeout: 30000,
       outfitId: '866685885885885',
+      pingRoles: ['1234567890', '9876543210'],
+      rankMap: ps2RankMap,
     },
   };
 
