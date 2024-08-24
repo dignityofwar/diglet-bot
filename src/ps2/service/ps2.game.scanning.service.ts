@@ -7,7 +7,6 @@ import { GuildMember, Message } from 'discord.js';
 import { CensusCharacterWithOutfitInterface } from '../interfaces/CensusCharacterResponseInterface';
 import { ConfigService } from '@nestjs/config';
 import { PS2RankMapInterface } from '../../config/ps2.app.config';
-import { CensusServerError } from '../interfaces/CensusServerError';
 
 interface ChangesInterface {
   character: CensusCharacterWithOutfitInterface,
@@ -47,14 +46,9 @@ export class PS2GameScanningService {
     for (const member of outfitMembers) {
       characterPromises.push(async () => {
         try {
-          await this.censusService.getCharacterById(member.characterId);
+          return await this.censusService.getCharacterById(member.characterId);
         }
         catch (err) {
-          // If a CensusServerError is thrown, stop the process as Census is unstable.
-          if (err instanceof CensusServerError) {
-            throw err;
-          }
-
           // If an error was thrown, return null for the character. Report the error though to the channel.
           // The null is then filtered out at the promise.all stage.
           // Later, the validateMembership function will check if the character data is absent and skip it if it doesn't exist.
@@ -165,8 +159,9 @@ export class PS2GameScanningService {
       // Dev needs to be notified though in case of repeated failures which may need manual rectification.
       // @ref #208
       if (!character) {
-        this.logger.error(`Character data for ID **${member.characterId}** did not exist when attempting to verify their membership. Skipping.`);
-        await message.channel.send(`❌ Character data **${member.characterId}** did not exist when attempting to verify their membership. Skipping. Pinging <@${this.config.get('discord.devUserId')}>!`);
+        const error = `Character data for ID **${member.characterId}** did not exist when attempting to verify their membership. Skipping.`;
+        this.logger.error(error);
+        await message.channel.send(`❌ ${error} Pinging <@${this.config.get('discord.devUserId')}>!`);
         continue;
       }
 
