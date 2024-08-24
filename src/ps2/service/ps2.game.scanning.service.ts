@@ -219,10 +219,10 @@ export class PS2GameScanningService {
     const rankMaps: PS2RankMapInterface = this.config.get('ps2.rankMap');
 
     // Remove all private roles from the user
-    for (const rankMap of Object.values(rankMaps)) {
-      const role = message.guild.roles.cache.get(rankMap.discordRoleId);
+    for (const rank of Object.values(rankMaps)) {
+      const role = message.guild.roles.cache.get(rank.discordRoleId);
       // Check if the user has the role to remove in the first place
-      const hasRole = discordMember.roles.cache.has(rankMap.discordRoleId);
+      const hasRole = discordMember.roles.cache.has(rank.discordRoleId);
 
       // If they don't have the role, skip
       if (!hasRole) {
@@ -230,7 +230,7 @@ export class PS2GameScanningService {
       }
 
       try {
-        await discordMember.roles.remove(rankMap.discordRoleId);
+        await discordMember.roles.remove(rank.discordRoleId);
       }
       catch (err) {
         await message.channel.send(`ERROR: Unable to remove role "${role.name}" from ${character.name.first} (${character.character_id}). Pinging <@${this.config.get('discord.devUserId')}>!`);

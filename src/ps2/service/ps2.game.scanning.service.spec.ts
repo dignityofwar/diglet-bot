@@ -26,12 +26,13 @@ describe('PS2GameScanningService', () => {
   const mockPS2MemberEntity = TestBootstrapper.getMockPS2MemberEntity(
     mockCharacterId
   );
-  const mockPS2MembersRepository = TestBootstrapper.getMockRepositoryInjected(mockPS2MemberEntity);
+  let mockPS2MembersRepository: jest.Mocked<any>;
 
   beforeEach(async () => {
     TestBootstrapper.mockORM();
 
     mockPS2Character = TestBootstrapper.getMockPS2Character(mockCharacterId, mockOutfitId);
+    mockPS2MembersRepository = TestBootstrapper.getMockRepositoryInjected(mockPS2MemberEntity);
 
     const moduleRef: TestingModule = await Test.createTestingModule({
       providers: [
@@ -336,6 +337,161 @@ describe('PS2GameScanningService', () => {
         false
       );
       expect(service.removeOutfitLeaver).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('removeDiscordLeaver', () => {
+    it('should remove a Discord leaver from the database', async () => {
+      jest.spyOn(service['changesMap'], 'set');
+
+      await service.removeDiscordLeaver(
+        mockPS2MemberEntity,
+        mockPS2Character,
+        false
+      );
+
+      expect(mockPS2MembersRepository.getEntityManager().removeAndFlush).toHaveBeenCalledWith(mockPS2MemberEntity);
+      expect(service['changesMap'].set).toHaveBeenCalledWith(
+        mockPS2Character.character_id,
+        {
+          character: mockPS2Character,
+          discordMember: null,
+          change: `- 🫥️ Discord member for Character **${mockPS2Character.name.first}** has left the DIG Discord server.`,
+        }
+      );
+    });
+    it('should not remove the discord leaver when in dry run', async () => {
+      jest.spyOn(service['changesMap'], 'set');
+
+      await service.removeDiscordLeaver(
+        mockPS2MemberEntity,
+        mockPS2Character,
+        true
+      );
+
+      expect(mockPS2MembersRepository.getEntityManager().removeAndFlush).toHaveBeenCalledTimes(0);
+      expect(service['changesMap'].set).toHaveBeenCalledWith(
+        mockPS2Character.character_id,
+        {
+          character: mockPS2Character,
+          discordMember: null,
+          change: `- 🫥️ Discord member for Character **${mockPS2Character.name.first}** has left the DIG Discord server.`,
+        }
+      );
+    });
+  });
+
+  describe('removeOutfitLeaver', () => {
+    it('should not remove an Outfit leaver from the database when in dryrun', async () => {
+      jest.spyOn(service['changesMap'], 'set');
+
+      const mockDiscordMember = TestBootstrapper.getMockDiscordUser();
+
+      await service.removeOutfitLeaver(
+        mockPS2MemberEntity,
+        mockPS2Character,
+        mockDiscordMember,
+        mockDiscordMessage,
+        true
+      );
+
+      expect(mockPS2MembersRepository.getEntityManager().removeAndFlush).toHaveBeenCalledTimes(0);
+      expect(service['changesMap'].set).toHaveBeenCalledWith(
+        mockPS2MemberEntity.characterId,
+        {
+          character: mockPS2Character,
+          discordMember: mockDiscordMember,
+          change: `- 👋 <@${mockDiscordMember.id}>'s character **${mockPS2Character.name.first}** has left the outfit. Their roles and verification status have been stripped.`,
+        }
+      );
+    });
+
+    it('should remove an Outfit leaver from the database and strip ranks', async () => {
+      jest.spyOn(service['changesMap'], 'set');
+
+      const rankMap = TestBootstrapper.mockConfig.ps2.rankMap;
+      const mockDiscordMember = TestBootstrapper.getMockDiscordUser();
+      const mockVerifiedRankRole = TestBootstrapper.getMockDiscordRole(rankMap['@PS2/Verified'].discordRoleId);
+      mockVerifiedRankRole.name = '@PS2/Verified';
+      const mockOfficerRankRole = TestBootstrapper.getMockDiscordRole(rankMap['@PS2/Officer'].discordRoleId);
+      mockVerifiedRankRole.name = '@PS2/Officer';
+
+      // Simulate the user having two of the ranks
+      mockDiscordMessage.guild.roles.cache.get = jest.fn().mockImplementation((roleId) => {
+        return roleId === mockVerifiedRankRole.id || roleId === mockOfficerRankRole.id;
+      });
+      mockDiscordMember.roles.cache.has = jest.fn().mockImplementation((roleId) => {
+        return roleId === mockVerifiedRankRole.id || roleId === mockOfficerRankRole.id;
+      });
+
+      await service.removeOutfitLeaver(
+        mockPS2MemberEntity,
+        mockPS2Character,
+        mockDiscordMember,
+        mockDiscordMessage,
+        false
+      );
+
+      // Asset ranks were stripped
+      expect(mockDiscordMember.roles.remove).toHaveBeenCalledWith(mockVerifiedRankRole.id);
+      expect(mockDiscordMember.roles.remove).toHaveBeenCalledWith(mockOfficerRankRole.id);
+      expect(mockDiscordMember.roles.remove).toHaveBeenCalledTimes(2);
+
+      // Asset the member was removed from the outfit database
+      expect(mockPS2MembersRepository.getEntityManager().removeAndFlush).toHaveBeenCalledTimes(1);
+
+      // Asset the change was logged
+      expect(service['changesMap'].set).toHaveBeenCalledWith(
+        mockPS2MemberEntity.characterId,
+        {
+          character: mockPS2Character,
+          discordMember: mockDiscordMember,
+          change: `- 👋 <@${mockDiscordMember.id}>'s character **${mockPS2Character.name.first}** has left the outfit. Their roles and verification status have been stripped.`,
+        }
+      );
+    });
+
+    it('should handle discord role removal errors', async () => {
+      const mockDiscordMember = TestBootstrapper.getMockDiscordUser();
+      const mockDiscordRole = TestBootstrapper.getMockDiscordRole();
+      const rankMap = TestBootstrapper.mockConfig.ps2.rankMap;
+      const mockVerifiedRank = rankMap['@PS2/Verified'];
+
+      // Simulate the user having two of the ranks
+      mockDiscordMessage.guild.roles.cache.get = jest.fn().mockReturnValue(mockDiscordRole);
+      mockDiscordMember.roles.cache.has = jest.fn().mockReturnValue(true);
+
+      mockDiscordMember.roles.remove = jest.fn().mockImplementation(() => {
+        throw new Error('Discord says no');
+      });
+
+      await service.removeOutfitLeaver(
+        mockPS2MemberEntity,
+        mockPS2Character,
+        mockDiscordMember,
+        mockDiscordMessage,
+        false
+      );
+
+      expect(mockDiscordMember.roles.remove).toHaveBeenCalledWith(mockVerifiedRank.discordRoleId);
+      expect(mockDiscordMessage.channel.send).toHaveBeenCalledWith(
+        `ERROR: Unable to remove role "${mockDiscordRole.name}" from ${mockPS2Character.name.first} (${mockPS2Character.character_id}). Pinging <@${TestBootstrapper.mockConfig.discord.devUserId}>!`
+      );
+    });
+  });
+
+  describe('reset', () => {
+    beforeEach(() => {
+      jest.spyOn(service['charactersMap'], 'clear');
+      jest.spyOn(service['changesMap'], 'clear');
+      jest.spyOn(service['suggestionsMap'], 'clear');
+    });
+    it('should reset the service', () => {
+      service.reset();
+
+      expect(service['charactersMap'].clear).toHaveBeenCalled();
+      expect(service['changesMap'].clear).toHaveBeenCalled();
+      expect(service['suggestionsMap'].clear).toHaveBeenCalled();
     });
   });
 });
