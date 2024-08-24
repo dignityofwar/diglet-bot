@@ -88,9 +88,20 @@ describe('CensusApiService', () => {
       expect(mockClient.get).toHaveBeenCalledWith(mockUrl);
     });
 
-    it('should retry upon a Census error but successfully return', async () => {
+    it('should retry upon a Census service error message', async () => {
       const mockResponse = { data: 'mock data' };
       mockClient.get = jest.fn().mockResolvedValueOnce({ data: { error: 'Service Unavailable' } }).mockResolvedValue(mockResponse);
+
+      const response = await service.sendRequest(mockUrl);
+
+      expect(response).toBe('mock data');
+      expect(mockClient.get).toHaveBeenCalledWith(mockUrl);
+      expect(mockClient.get).toHaveBeenCalledTimes(2);
+    });
+
+    it('should retry upon a Census "errorMessage"', async () => {
+      const mockResponse = { data: 'mock data' };
+      mockClient.get = jest.fn().mockResolvedValueOnce({ data: { errorMessage: 'Some Census Error' } }).mockResolvedValue(mockResponse);
 
       const response = await service.sendRequest(mockUrl);
 
@@ -102,6 +113,16 @@ describe('CensusApiService', () => {
     it('should retry upon a Census error, and throw an error when retries are exceeded', async () => {
       const lastError = 'Service Unavailable';
       mockClient.get = jest.fn().mockResolvedValue({ data: { error: lastError } });
+
+      await expect(service.sendRequest(mockUrl)).rejects.toThrow(`Failed to perform request to Census after 3 retries. Final error: "Census responded with an error: "${lastError}""`);
+
+      expect(mockClient.get).toHaveBeenCalledWith(mockUrl);
+      expect(mockClient.get).toHaveBeenCalledTimes(3);
+    });
+
+    it('should retry upon a Census errorMessage, and throw an error when retries are exceeded', async () => {
+      const lastError = 'Some error from Census';
+      mockClient.get = jest.fn().mockResolvedValue({ data: { errorMessage: lastError } });
 
       await expect(service.sendRequest(mockUrl)).rejects.toThrow(`Failed to perform request to Census after 3 retries. Final error: "Census responded with an error: "${lastError}""`);
 
