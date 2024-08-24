@@ -7,6 +7,7 @@ import { GuildMember, Message } from 'discord.js';
 import { CensusCharacterWithOutfitInterface } from '../interfaces/CensusCharacterResponseInterface';
 import { ConfigService } from '@nestjs/config';
 import { PS2RankMapInterface } from '../../config/ps2.app.config';
+import { CensusServerError } from '../interfaces/CensusServerError';
 
 interface ChangesInterface {
   character: CensusCharacterWithOutfitInterface,
@@ -37,37 +38,38 @@ export class PS2GameScanningService {
     this.suggestionsCount = 0;
   }
 
-  async gatherCharacters(outfitMembers: PS2MembersEntity[], statusMessage: Message, tries = 0, waitTime = 10000) {
+  async gatherCharacters(outfitMembers: PS2MembersEntity[], statusMessage: Message) {
     const characterPromises = [];
-    tries++;
     const length = outfitMembers.length;
 
-    await statusMessage.edit(`Gathering ${length} characters from Census... (attempt #${tries})`);
+    await statusMessage.edit(`Gathering ${length} characters from Census...`);
 
     for (const member of outfitMembers) {
-      characterPromises.push(() => this.censusService.getCharacterById(member.characterId));
+      characterPromises.push(async () => {
+        try {
+          await this.censusService.getCharacterById(member.characterId);
+        }
+        catch (err) {
+          // If a CensusServerError is thrown, stop the process as Census is unstable.
+          if (err instanceof CensusServerError) {
+            throw err;
+          }
+
+          // If an error was thrown, return null for the character. Report the error though to the channel.
+          // The null is then filtered out at the promise.all stage.
+          // Later, the validateMembership function will check if the character data is absent and skip it if it doesn't exist.
+          await statusMessage.channel.send(`❌ ${err.message}`);
+          return null;
+        }
+      });
     }
 
-    try {
-      return await Promise.all(characterPromises.map(promiseFunc => promiseFunc()));
-    }
-    catch (err) {
-      // If error message says does not exist, return null
-      if (err.message.includes('does not exist')) {
-        await statusMessage.channel.send(`❌ An error occurred while gathering characters from Census! The character does not exist. Error: ${err.message}`);
-        return null;
-      }
+    // Get all the characters at the same time.
+    const characters = await Promise.all(characterPromises.map(promiseFunc => promiseFunc()));
 
-      if (tries === 3) {
-        await statusMessage.edit(`## ❌ An error occurred while gathering ${length} characters! Giving up after 3 tries.`);
-        await statusMessage.channel.send(`Error: ${err.message}`);
-        return null;
-      }
-
-      await statusMessage.edit(`## ⚠️ Couldn't gather ${length} characters from Census, likely due to Census timeout issues. Retrying in 10s (attempt #${tries})...`);
-      await new Promise(resolve => setTimeout(resolve, waitTime));
-      return this.gatherCharacters(outfitMembers, statusMessage, tries, waitTime);
-    }
+    // Filter out any null characters, as they errored during the process.
+    // validateMembership will handle these cases.
+    return characters.filter((character) => character !== null);
   }
 
   // Main execution
@@ -97,7 +99,7 @@ export class PS2GameScanningService {
 
     try {
       await message.edit(`Checking ${length} characters for membership status...`);
-      await this.removeLeavers(characters, outfitMembers, message, dryRun);
+      await this.verifyMembership(characters, outfitMembers, message, dryRun);
 
       await message.edit(`Checking ${length} characters for role inconsistencies...`);
       await this.checkForSuggestions(outfitMembers, message);
@@ -148,57 +150,81 @@ export class PS2GameScanningService {
     return this.reset();
   }
 
-  async removeLeavers(characters: CensusCharacterWithOutfitInterface[], outfitMembers: PS2MembersEntity[], message: Message, dryRun = false) {
-    // Save all the characters to a map we can easily pick out later
-    for (const character of characters) {
-      this.charactersMap.set(character.character_id, character);
-    }
-
-    // Get the info required to do the check
-    for (const member of outfitMembers) {
-      const character = this.charactersMap.get(member.characterId);
-
+  async verifyMembership(
+    characters: CensusCharacterWithOutfitInterface[],
+    ps2Members: PS2MembersEntity[],
+    message: Message,
+    dryRun = false
+  ) {
+    for (const member of ps2Members) {
+      const character = characters.find((char) => char.character_id === member.characterId);
       let discordMember: GuildMember | null = null;
 
+      // The character for some reason doesn't exist. This may be because of Census Server Errors, therefore we need to skip them this time.
+      // This is to prevent a rather nasty bug / scenario where we remove literally everyone because Census is on its arse.
+      // Dev needs to be notified though in case of repeated failures which may need manual rectification.
+      // @ref #208
+      if (!character) {
+        this.logger.error(`Character data for ID **${member.characterId}** did not exist when attempting to verify their membership. Skipping.`);
+        await message.channel.send(`❌ Character data **${member.characterId}** did not exist when attempting to verify their membership. Skipping. Pinging <@${this.config.get('discord.devUserId')}>!`);
+        continue;
+      }
+
+      // If they've left the Discord, don't even bother checking their outfit status, we need to de-register them.
       try {
         discordMember = await message.guild.members.fetch({ user: member.discordId, force: true });
       }
       catch (err) {
-        // No discord member means they've left the server
-        this.logger.log(`User ${character.name.first} has left the server`);
+        this.logger.log(`User ${character.name.first} has left the server!`);
+        await this.removeDiscordLeaver(member, character, dryRun);
+        continue;
       }
 
-      await this.processLeaverRemoval(member, character, discordMember, message, dryRun);
+      // Now check if the character's outfit ID still matches.
+      if (character.outfit_info?.outfit_id !== this.config.get('ps2.outfitId')) {
+        this.logger.log(`User ${member.characterId} has left the outfit, but remains on the server!`);
+        await this.removeOutfitLeaver(member, character, discordMember, message, dryRun);
+      }
     }
+
+    // They remain in the outfit and Discord, so they are still valid.
   }
 
-  async processLeaverRemoval(
+  async removeDiscordLeaver(
     member: PS2MembersEntity,
     character: CensusCharacterWithOutfitInterface,
-    discordMember: GuildMember | null,
-    message: Message,
     dryRun = false
   ): Promise<void> {
     if (!dryRun) {
       await this.ps2MembersRepository.getEntityManager().removeAndFlush(member);
     }
 
-    if (!discordMember) {
+    this.changesMap.set(member.characterId, {
+      character,
+      discordMember: null,
+      change: `- 🫥️ Discord member for Character **${character.name.first}** has left the DIG Discord server.`,
+    });
+    return;
+  }
+
+  async removeOutfitLeaver(
+    member: PS2MembersEntity,
+    character: CensusCharacterWithOutfitInterface,
+    discordMember: GuildMember,
+    message: Message,
+    dryRun = false
+  ): Promise<void> {
+    // If a dry run, there is nothing else to do beyond reporting the "change".
+    if (dryRun) {
       this.changesMap.set(member.characterId, {
         character,
-        discordMember: null,
-        change: `- 🫥️ Discord member for Character **${character.name.first}** has left the DIG server. Their verification status has been removed.`,
+        discordMember,
+        change: `- 👋 <@${discordMember.id}>'s character **${character.name.first}** has left the outfit. Their roles and verification status have been stripped.`,
       });
-    }
-
-    // If still in outfit, nothing to do
-    if (character?.outfit_info && character?.outfit_info.outfit_id === this.config.get('ps2.outfitId')) {
       return;
     }
 
-    // If not in the outfit, strip 'em
-    this.logger.log(`User ${character.name.first} has left the outfit`);
-
+    // They remain on the Discord, so now they need their roles stripping.
     const rankMaps: PS2RankMapInterface = this.config.get('ps2.rankMap');
 
     // Remove all private roles from the user
@@ -212,11 +238,6 @@ export class PS2GameScanningService {
         continue;
       }
 
-      // If dry run, don't actually remove the role
-      if (dryRun) {
-        continue;
-      }
-
       try {
         await discordMember.roles.remove(rankMap.discordRoleId);
       }
@@ -225,10 +246,7 @@ export class PS2GameScanningService {
       }
     }
 
-    // If not dry run, delete their record
-    if (!dryRun) {
-      await this.ps2MembersRepository.getEntityManager().removeAndFlush(member);
-    }
+    await this.ps2MembersRepository.getEntityManager().removeAndFlush(member);
 
     this.changesMap.set(member.characterId, {
       character,

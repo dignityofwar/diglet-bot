@@ -5,6 +5,7 @@ import { ConfigService } from '@nestjs/config';
 import { TestingModule } from '@nestjs/testing';
 import { MikroORM } from '@mikro-orm/core';
 import { AlbionServer } from './albion/interfaces/albion.api.interfaces';
+import { PS2MembersEntity } from './database/entities/ps2.members.entity';
 
 const guildLeaderRoleUS = '44546543371337';
 const guildLeaderRole = '64354579789809089';
@@ -237,7 +238,7 @@ export class TestBootstrapper {
     } as any;
   }
 
-  static getMockPS2Character(characterId: string, outfitId: string) {
+  static getMockPS2Character(characterId = '123456', outfitId = '123456') {
     return {
       character_id: characterId,
       name: {
@@ -253,6 +254,24 @@ export class TestBootstrapper {
         rank_ordinal: '3',
       },
     } as any;
+  }
+
+  static getMockPS2MemberEntity(
+    characterId = '123456',
+    characterName = 'MrBojangles',
+    discordMemberId = '123456'
+  ): PS2MembersEntity {
+    return {
+      id: 1,
+      createdAt: new Date,
+      updatedAt: new Date,
+      discordId: discordMemberId,
+      characterId: characterId,
+      characterName: characterName,
+      manual: false,
+      manualCreatedByDiscordId: null,
+      manualCreatedByDiscordName: null,
+    };
   }
 
   static readonly mockConfig = {
