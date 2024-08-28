@@ -1,8 +1,9 @@
 import { BaseEntity } from './base.entity';
 import { Entity, Property } from '@mikro-orm/core';
 
-interface ActivityStatsBucket {
+export interface ActivityStatsBucket {
   total: number;
+  onboarded: number;
   ps2Verified: number;
   albionRegistered: number;
 }
