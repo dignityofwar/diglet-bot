@@ -36,8 +36,8 @@ export class PurgeService {
 
   preflightChecks(message: Message) {
     const onboardedRole = message.guild.roles.cache.find(role => role.name === 'Onboarded');
-    const ps2Role = message.guild.roles.cache.find(role => role.name === 'Planetside2');
-    const ps2VerifiedRole = message.guild.roles.cache.find(role => role.name === 'PS2/Verified');
+    const ps2Role = message.guild.roles.cache.find(role => role.name === 'Rec/Planetside2');
+    const ps2VerifiedRole = message.guild.roles.cache.find(role => role.name === 'Rec/PS2/Verified');
     const foxholeRole = message.guild.roles.cache.find(role => role.name === 'Rec/Foxhole');
     const albionRole = message.guild.roles.cache.find(role => role.name === 'Albion Online');
     const albionRegistered = message.guild.roles.cache.find(role => role.name === 'ALB/Registered');
@@ -50,11 +50,11 @@ export class PurgeService {
     }
 
     if (!ps2Role) {
-      throw new Error(`Could not find Planetside2 role! Pinging Bot Dev <@${devUserId}>!`);
+      throw new Error(`Could not find Rec/Planetside2 role! Pinging Bot Dev <@${devUserId}>!`);
     }
 
     if (!ps2VerifiedRole) {
-      throw new Error(`Could not find PS2/Verified role! Pinging Bot Dev <@${devUserId}>!`);
+      throw new Error(`Could not find Rec/PS2/Verified role! Pinging Bot Dev <@${devUserId}>!`);
     }
 
     if (!foxholeRole) {
@@ -94,7 +94,7 @@ export class PurgeService {
     catch (err) {
       const string = `## ❌ Error commencing the purge!\n${err.message}`;
       this.logger.error(string);
-      await statusMessage.edit(string);
+      await statusMessage.channel.send(string);
       return;
     }
 

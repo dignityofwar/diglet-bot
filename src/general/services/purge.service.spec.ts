@@ -45,9 +45,9 @@ describe('PurgeService', () => {
   const mockRoleOnboarded = TestBootstrapper.getMockDiscordRole('353464645454');
   mockRoleOnboarded.name = 'Onboarded';
   const mockRolePS2 = TestBootstrapper.getMockDiscordRole('123456789');
-  mockRolePS2.name = 'Planetside2';
+  mockRolePS2.name = 'Rec/Planetside2';
   const mockRolePS2Verified = TestBootstrapper.getMockDiscordRole('234567890');
-  mockRolePS2Verified.name = 'PS2Verified';
+  mockRolePS2Verified.name = 'Rec/PS2Verified';
   const mockRoleFoxhole = TestBootstrapper.getMockDiscordRole('345678901');
   mockRoleFoxhole.name = 'Foxhole';
   const mockRoleAlbion = TestBootstrapper.getMockDiscordRole('456789012');
@@ -197,7 +197,7 @@ DIG Community Staff`;
 
       expect(await service.startPurge(mockMessage as any, false)).toBe(undefined);
 
-      expect(newStatusMessage.edit).toHaveBeenCalledWith('## ❌ Error commencing the purge!\n' +
+      expect(newStatusMessage.channel.send).toHaveBeenCalledWith('## ❌ Error commencing the purge!\n' +
         'Preflight checks failed! Err: Test error');
     });
 
@@ -215,7 +215,7 @@ DIG Community Staff`;
 
       expect(await service.startPurge(mockMessage as any, false)).toBe(undefined);
 
-      expect(newStatusMessage.edit).toHaveBeenCalledWith('## ❌ Error commencing the purge!\n' +
+      expect(newStatusMessage.channel.send).toHaveBeenCalledWith('## ❌ Error commencing the purge!\n' +
         'Something went boom');
     });
 
@@ -336,12 +336,12 @@ DIG Community Staff`;
 
       expect(() => service.preflightChecks(mockMessage as any)).toThrow(`Could not find Onboarded role! Pinging Bot Dev <@${devUserId}>!`);
     });
-    it('should throw an error if the Planetside2 role does not exist', async () => {
+    it('should throw an error if the Rec/Planetside2 role does not exist', async () => {
       mockMessage.guild.roles.cache.find = jest.fn()
         .mockReturnValueOnce(mockRoleOnboarded)
         .mockReturnValueOnce(null);
 
-      expect(() => service.preflightChecks(mockMessage as any)).toThrow(`Could not find Planetside2 role! Pinging Bot Dev <@${devUserId}>!`);
+      expect(() => service.preflightChecks(mockMessage as any)).toThrow(`Could not find Rec/Planetside2 role! Pinging Bot Dev <@${devUserId}>!`);
     });
     it('should throw an error if the PS2/Verified role does not exist', async () => {
       mockMessage.guild.roles.cache.find = jest.fn()
@@ -349,7 +349,7 @@ DIG Community Staff`;
         .mockReturnValueOnce(mockRolePS2)
         .mockReturnValueOnce(null);
 
-      expect(() => service.preflightChecks(mockMessage as any)).toThrow(`Could not find PS2/Verified role! Pinging Bot Dev <@${devUserId}>!`);
+      expect(() => service.preflightChecks(mockMessage as any)).toThrow(`Could not find Rec/PS2/Verified role! Pinging Bot Dev <@${devUserId}>!`);
     });
     it('should throw an error if the Rec/Foxhole role does not exist', async () => {
       mockMessage.guild.roles.cache.find = jest.fn()
@@ -410,7 +410,7 @@ DIG Community Staff`;
 
       expect(await service.startPurge(mockMessage as any, false)).toBe(undefined);
 
-      expect(newStatusMessage.edit).toHaveBeenCalledWith('## ❌ Error commencing the purge!\nPreflight checks failed! Err: Test error');
+      expect(newStatusMessage.channel.send).toHaveBeenCalledWith('## ❌ Error commencing the purge!\nPreflight checks failed! Err: Test error');
     });
     it('should handle errors when fetching members list from Discord', async () => {
       service.resolveActiveMembers = jest.fn().mockResolvedValue(new Collection(activeMembers));
