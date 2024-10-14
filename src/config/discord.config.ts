@@ -23,5 +23,6 @@ export default () => ({
     albionAnnouncements: process.env.ROLE_ALBION_EU_ANNOUNCEMENTS,
     ps2Verified: process.env.ROLE_PS2_VERIFIED,
     ps2Zealot: process.env.ROLE_PS2_ZEALOT,
+    onboarded: process.env.ROLE_ONBOARDED,
   },
 });
