@@ -307,6 +307,11 @@ export class PurgeService {
       return false;
     }
 
+    // Ignore the DIG Admin account
+    if (member.user.id === '808064520265924689') {
+      return false;
+    }
+
     const weekInMs = 604800000;
     // Don't boot people brand new to the server, give them 1 weeks grace period.
     if (member.joinedTimestamp > Date.now() - weekInMs) {
