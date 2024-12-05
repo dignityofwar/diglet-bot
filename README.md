@@ -20,8 +20,9 @@ This project is now considered **stable**, and is now versioned appropriately vi
 - Install brew (on Mac / Linux), or your own package manager, I'm not your mum!
 - Install node version manager `nvm`: `brew install nvm`
 - Install `pnpm`: `brew install pnpm`
-- Run `nvm install 20.15.1` which will set up your node version correctly.
-- Ensure you have at least `pnpm` version `9.1.2` installed.
+- Run `nvm install 20.17` which will set up your node version correctly.
+- To have nvm ensure you always use the correct version, run `nvm alias default 20.17`. This will ensure when you start a new terminal it'll use the right version.
+- Ensure you have at least `pnpm` version `9.3.x` installed (`pnpm -v`), this should be installed by nvm itself.
 
 The engines are enforced via `package.json`, you'll know if it's wrong as no commands will work.
 

@@ -1,6 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { InjectDiscordClient } from '@discord-nestjs/core';
-import { Channel, Client, Guild, GuildMember, Message, Role } from 'discord.js';
+import { Channel, Client, Collection, Guild, GuildMember, Message, Role } from 'discord.js';
 
 @Injectable()
 export class DiscordService {
@@ -26,6 +26,28 @@ export class DiscordService {
       throw new Error(`Could not find guild with ID ${guildId}`);
     }
     return guild;
+  }
+
+  async getGuildMembers(guildId: string): Promise<Collection<string, GuildMember>> {
+    const server = await this.getGuild(guildId);
+
+    let members: Collection<string, GuildMember>;
+
+    try {
+      members = await server.members.fetch();
+    }
+    catch (err) {
+      const error = `Failed to fetch members for guild with ID ${guildId}. Err: ${err.message}`;
+      this.logger.error(error, err);
+      throw new Error(error);
+    }
+
+    if (!members) {
+      const error = `Could not find members for guild with ID ${guildId}`;
+      this.logger.warn(error);
+      throw new Error(error);
+    }
+    return members;
   }
 
   async getChannel(channelId: string): Promise<Channel> {
