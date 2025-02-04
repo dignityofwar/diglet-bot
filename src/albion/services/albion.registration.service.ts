@@ -187,28 +187,15 @@ export class AlbionRegistrationService implements OnApplicationBootstrap {
       return;
     }
 
-    const subdomain = data.server === AlbionServer.AMERICAS ? 'gameinfo' : 'gameinfo-ams';
-    const endpoint = `https://${subdomain}.albiononline.com/api/gameinfo/players/${data.character.Id}`;
-    const characterInfo = {
-      Id: data.character.Id,
-      Name: data.character.Name,
-      GuildId: data.character.GuildId ?? 'N/A',
-      GuildName: data.character.GuildName ?? 'N/A',
-      AllianceName: data.character.AllianceName ?? 'N/A',
-      AllianceId: data.character.AllianceId ?? 'N/A',
-    };
-
     // Pending mechanism
     //     this.throwError(`Sorry <@${data.discordMember.id}>, the character **${data.character.Name}** has not been detected in the ${data.serverEmoji} **${data.guildName}** Guild.
     // \n- ➡️ **Please ensure you have spelt your character __exactly__ correct as it appears in-game**. If you have mis-spelt it, please run the command again with the correct spelling.
     // - ⏳ We will automatically retry your registration attempt at the top of the hour over the next 24 hours. Sometimes our data source lags, so please be patient. **If you are not a member of DIG, this WILL fail regardless!!!**
     // \nIf _after_ 24 hours this has not worked, please contact \`${data.guildPingable}\` in <#1039269706605002912> for assistance.
-    // \n||Data source: [Gameinfo link](${endpoint}) \nCharacter JSON: \`${JSON.stringify(characterInfo)}\`||`);
 
     this.throwError(`Sorry <@${data.discordMember.id}>, the character **${data.character.Name}** has not been detected in the ${data.serverEmoji} **${data.guildName}** Guild.
-\n- ➡️ **Please ensure you have spelt your character __exactly__ correct as it appears in-game**. If you have mis-spelt it, please run the command again with the correct spelling.
-- ⏳ Please wait an hour or so before trying again. Our data source can lag behind reality. It can take up to 24 hours to update.
-\n||Data source: [Gameinfo link](${endpoint}) \nCharacter info: \`${JSON.stringify(characterInfo)}\`||`);
+\n- ➡️ **Please ensure you have spelt your character __exactly__ correct as it appears in-game**. It is case sensitive.
+- ⏳ **Please wait __~30 minutes__ and try again**.`);
   }
 
   private async registerCharacter(data: RegistrationData, channel: TextChannel) {

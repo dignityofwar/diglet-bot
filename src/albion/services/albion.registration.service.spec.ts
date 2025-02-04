@@ -249,46 +249,8 @@ describe('AlbionRegistrationService', () => {
     });
 
     describe('checkIfInGuild', () => {
-      it('should throw if character is not in US guild', async () => {
-        mockCharacter.GuildId = 'utter nonsense';
-
-        const mockCharacterInfo = {
-          Id: mockCharacter.Id,
-          Name: mockCharacter.Name,
-          GuildId: 'utter nonsense',
-          GuildName: 'N/A',
-          AllianceName: 'N/A',
-          AllianceId: 'N/A',
-        };
-
-        const endpoint = `https://gameinfo.albiononline.com/api/gameinfo/players/${mockCharacter.Id}`;
-
-        // Pending retry mechanism. Don't forget to move all the lines to the left!
-        //      await expect(service.validate(mockRegistrationData)).rejects.toThrowError(`Sorry <@${mockDiscordUser.id}>, the character **${mockCharacter.Name}** has not been detected in the 🇺🇸 **DIG - Dignity of War** Guild.
-        // \n- ➡️ **Please ensure you have spelt your character __exactly__ correct as it appears in-game**. If you have mis-spelt it, please run the command again with the correct spelling.
-        // - ⏳ We will automatically retry your registration attempt at the top of the hour over the next 24 hours. Sometimes our data source lags, so please be patient. **If you are not a member of DIG, this WILL fail regardless!!!**
-        // \nIf _after_ 24 hours this has not worked, please contact \`@ALB/US/Guildmaster\` in <#1039269706605002912> for assistance.
-        // \n||Data source: [Gameinfo link](${endpoint}) \nCharacter info: \`${JSON.stringify(mockCharacterInfo)}\`||`);
-
-        await expect(service.validate(mockRegistrationData)).rejects.toThrowError(`Sorry <@${mockDiscordUser.id}>, the character **${mockCharacter.Name}** has not been detected in the 🇺🇸 **DIG - Dignity of War** Guild.
-\n- ➡️ **Please ensure you have spelt your character __exactly__ correct as it appears in-game**. If you have mis-spelt it, please run the command again with the correct spelling.
-- ⏳ Please wait an hour or so before trying again. Our data source can lag behind reality. It can take up to 24 hours to update.
-\n||Data source: [Gameinfo link](${endpoint}) \nCharacter info: \`${JSON.stringify(mockCharacterInfo)}\`||`);
-      });
-
       it('should throw if character is not in EU guild', async () => {
         mockCharacter.GuildId = 'utter nonsense';
-
-        const mockCharacterInfo = {
-          Id: mockCharacter.Id,
-          Name: mockCharacter.Name,
-          GuildId: 'utter nonsense',
-          GuildName: 'N/A',
-          AllianceName: 'N/A',
-          AllianceId: 'N/A',
-        };
-
-        const endpoint = `https://gameinfo-ams.albiononline.com/api/gameinfo/players/${mockCharacter.Id}`;
 
         // Pending retry mechanism. Don't forget to move all the lines to the left!
         //         await expect(service.validate(mockRegistrationDataEU)).rejects.toThrowError(`Sorry <@${mockDiscordUser.id}>, the character **${mockCharacter.Name}** has not been detected in the 🇪🇺 **Dignity Of War** Guild.
@@ -298,9 +260,8 @@ describe('AlbionRegistrationService', () => {
         // \n||Data source: [Gameinfo link](${endpoint}) \nCharacter info: \`${JSON.stringify(mockCharacterInfo)}\`||`);
 
         await expect(service.validate(mockRegistrationDataEU)).rejects.toThrowError(`Sorry <@${mockDiscordUser.id}>, the character **${mockCharacter.Name}** has not been detected in the 🇪🇺 **Dignity Of War** Guild.
-\n- ➡️ **Please ensure you have spelt your character __exactly__ correct as it appears in-game**. If you have mis-spelt it, please run the command again with the correct spelling.
-- ⏳ Please wait an hour or so before trying again. Our data source can lag behind reality. It can take up to 24 hours to update.
-\n||Data source: [Gameinfo link](${endpoint}) \nCharacter info: \`${JSON.stringify(mockCharacterInfo)}\`||`);
+\n- ➡️ **Please ensure you have spelt your character __exactly__ correct as it appears in-game**. It is case sensitive.
+- ⏳ **Please wait __~30 minutes__ and try again**.`);
       });
     });
 
