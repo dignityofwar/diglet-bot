@@ -3,7 +3,6 @@ import { TextChannel } from 'discord.js';
 import { ConfigService } from '@nestjs/config';
 import { DiscordService } from '../../discord/discord.service';
 import { PurgeService } from './purge.service';
-import { Cron } from '@nestjs/schedule';
 
 @Injectable()
 export class PurgeCronService implements OnApplicationBootstrap {
@@ -32,11 +31,10 @@ export class PurgeCronService implements OnApplicationBootstrap {
     }
   }
 
-  // Remember to re-enable tests!
   // @Cron('0 18 * * *')
-  // async runPurge(): Promise<void> {
-  //   this.logger.log('Running Purge Cron');
-  //   const message = await this.channel.send('Starting daily purge scan...');
-  //   await this.purgeService.startPurge(message, false);
-  // }
+  async runPurge(): Promise<void> {
+    this.logger.log('Running Purge Cron');
+    const message = await this.channel.send('Starting daily purge scan...');
+    await this.purgeService.startPurge(message, false);
+  }
 }
