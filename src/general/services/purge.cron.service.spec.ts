@@ -81,23 +81,23 @@ describe('PurgeCronService', () => {
     });
   });
 
-  describe('runPurge', () => {
-    it('should run the purge command', async () => {
-      const mockMessage = TestBootstrapper.getMockDiscordMessage();
-
-      const mockChannel = {
-        send: jest.fn().mockImplementation(async () => {
-          return mockMessage;
-        }),
-      } as unknown as TextChannel;
-
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (purgeCronService as any).channel = mockChannel;
-
-      await purgeCronService.runPurge();
-
-      expect(mockChannel.send).toHaveBeenCalledWith('Starting daily purge scan...');
-      expect(purgeService.startPurge).toHaveBeenCalledWith(mockMessage, false);
-    });
-  });
+  // describe('runPurge', () => {
+  //   it('should run the purge command', async () => {
+  //     const mockMessage = TestBootstrapper.getMockDiscordMessage();
+  //
+  //     const mockChannel = {
+  //       send: jest.fn().mockImplementation(async () => {
+  //         return mockMessage;
+  //       }),
+  //     } as unknown as TextChannel;
+  //
+  //     // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  //     (purgeCronService as any).channel = mockChannel;
+  //
+  //     await purgeCronService.runPurge();
+  //
+  //     expect(mockChannel.send).toHaveBeenCalledWith('Starting daily purge scan...');
+  //     expect(purgeService.startPurge).toHaveBeenCalledWith(mockMessage, false);
+  //   });
+  // });
 });
