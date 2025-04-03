@@ -1,7 +1,7 @@
-import { BaseEntity } from './base.entity';
+import { BaseEntity, BaseEntityOptions } from './base.entity';
 import { Entity, Property } from '@mikro-orm/core';
 
-interface ActivityStatisticsEntityOptions {
+interface ActivityStatisticsEntityOptions extends BaseEntityOptions {
   totalUsers: number;
   inactiveUsers: number;
   activeUsers90d: number;

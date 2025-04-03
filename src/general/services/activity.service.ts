@@ -111,8 +111,21 @@ export class ActivityService {
 
       const activeUsers90d = await this.getActiveUserCounts(90, activityRecords);
 
+      // Create a date and set it to be midnight of the day it was run
+      const date = new Date();
+      date.setHours(0, 0, 0, 0);
+
+      // Check if there is already a report on the same date, if so, delete it
+      const existingReport = await this.activityStatisticsRepository.findOne({ createdAt: date });
+      if (existingReport) {
+        await this.activityStatisticsRepository.removeAndFlush(existingReport);
+        this.logger.warn(`Removed existing report for date ${date}`);
+      }
+
       // Create the activity statistics entity
       const activityStatistics = new ActivityStatisticsEntity({
+        createdAt: date,
+        updatedAt: date,
         totalUsers: activeUsers90d.inactive + activeUsers90d.active,
         inactiveUsers: activeUsers90d.inactive,
         activeUsers90d: activeUsers90d.active,

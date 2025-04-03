@@ -161,10 +161,14 @@ describe('ActivityService', () => {
     });
 
     it('should collate activity records and create statistics', async () => {
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
       await activityService.enumerateActivity();
 
       const mockStatistics = new ActivityStatisticsEntity(
         {
+          createdAt: today,
+          updatedAt: today,
           totalUsers: 6,
           inactiveUsers: 1,
           activeUsers90d: 5,
