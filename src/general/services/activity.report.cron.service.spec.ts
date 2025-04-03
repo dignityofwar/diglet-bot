@@ -3,7 +3,6 @@ import { DiscordService } from '../../discord/discord.service';
 import { ConfigService } from '@nestjs/config';
 import { Logger } from '@nestjs/common';
 import { TextChannel } from 'discord.js';
-import { PurgeService } from './purge.service';
 import { TestBootstrapper } from '../../test.bootstrapper';
 import { ActivityReportCronService } from './activity.report.cron.service';
 import { ActivityService } from './activity.service';
