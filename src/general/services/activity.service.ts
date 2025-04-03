@@ -53,9 +53,8 @@ export class ActivityService {
         );
 
         if (result.length === 0) {
-          this.logger.error('No activity statistics found');
-          await message.channel.send('No activity statistics found');
-          return;
+          // noinspection ExceptionCaughtLocallyJS
+          throw new Error('No activity statistics found!');
         }
 
         stats = result[0];

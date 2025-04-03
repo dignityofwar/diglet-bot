@@ -8,8 +8,8 @@ import { ActivityService } from '../services/activity.service';
   type: ApplicationCommandType.ChatInput,
   description: 'Run the Activity Report.',
 })
-export class ActivityEnumerateCommand {
-  private readonly logger = new Logger(ActivityEnumerateCommand.name);
+export class ActivityReportCommand {
+  private readonly logger = new Logger(ActivityReportCommand.name);
 
   constructor(
     private readonly activityService: ActivityService,

@@ -14,7 +14,7 @@ import { ActivityService } from './services/activity.service';
 import { GuildMemberEvents } from './events/guild.member.events';
 import { PurgeCronService } from './services/purge.cron.service';
 import { ActivityEnumerationCronService } from './services/activity.enumeration.cron.service';
-import { ActivityEnumerateCommand } from './commands/activity.enumerate.command';
+import { ActivityReportCommand } from './commands/activity.report.command';
 
 @Module({
   imports: [
@@ -30,7 +30,7 @@ import { ActivityEnumerateCommand } from './commands/activity.enumerate.command'
     PurgeService,
 
     // Commands
-    ActivityEnumerateCommand,
+    ActivityReportCommand,
     PingCommand,
     ThanosSnapCommand,
 

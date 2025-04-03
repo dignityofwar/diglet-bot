@@ -214,6 +214,14 @@ describe('ActivityService', () => {
         expect(mockStatusMessage.channel.send).toHaveBeenCalledWith('Error enumerating activity records. Error: Enumeration error');
       });
 
+      it('should handle empty database', async () => {
+        mockActivityStatisticsRepository.find = jest.fn().mockResolvedValue([]);
+
+        await activityService.startEnumeration(mockStatusMessage);
+
+        expect(mockStatusMessage.channel.send).toHaveBeenCalledWith('Error enumerating activity records. Error: No activity statistics found!');
+      });
+
       it('should properly generate the report', async () => {
         await activityService.startEnumeration(mockStatusMessage);
 
