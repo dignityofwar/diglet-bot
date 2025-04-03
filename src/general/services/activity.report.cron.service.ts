@@ -6,8 +6,8 @@ import { Cron } from '@nestjs/schedule';
 import { ActivityService } from './activity.service';
 
 @Injectable()
-export class ActivityEnumerationCronService implements OnApplicationBootstrap {
-  private readonly logger = new Logger(ActivityEnumerationCronService.name);
+export class ActivityReportCronService implements OnApplicationBootstrap {
+  private readonly logger = new Logger(ActivityReportCronService.name);
   private channel: TextChannel;
 
   constructor(
@@ -33,7 +33,7 @@ export class ActivityEnumerationCronService implements OnApplicationBootstrap {
   }
 
   @Cron('1 0 * * *')
-  async runJob(): Promise<void> {
+  async runReport(): Promise<void> {
     this.logger.log('Running Activity Enumeration Job');
     const message = await this.channel.send('Starting daily activity enumeration...');
     await this.activityService.startEnumeration(message);

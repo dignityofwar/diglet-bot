@@ -13,7 +13,7 @@ import { VoiceStateEvents } from './events/voice.state.events';
 import { ActivityService } from './services/activity.service';
 import { GuildMemberEvents } from './events/guild.member.events';
 import { PurgeCronService } from './services/purge.cron.service';
-import { ActivityEnumerationCronService } from './services/activity.enumeration.cron.service';
+import { ActivityReportCronService } from './services/activity.report.cron.service';
 import { ActivityReportCommand } from './commands/activity.report.command';
 
 @Module({
@@ -41,7 +41,7 @@ import { ActivityReportCommand } from './commands/activity.report.command';
 
     // Cron Services
     PurgeCronService,
-    ActivityEnumerationCronService,
+    ActivityReportCronService,
   ],
 })
 export class GeneralModule {}
