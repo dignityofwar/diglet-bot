@@ -88,7 +88,7 @@ export class ActivityService {
     catch (err) {
       const error = `Error starting activity enumeration. Error: ${err.message}`;
       this.logger.error(error);
-      throw new Error(error);
+      await message.channel.send(error);
     }
   }
 
@@ -149,19 +149,12 @@ export class ActivityService {
   }
 
   async getActiveUserCounts(days: number, activityRecords: ActivityEntity[]): Promise<ActiveUserCounts> {
-    try {
-      const now = new Date();
-      const daysAgo = new Date(now.getTime() - days * 24 * 60 * 60 * 1000);
-      const active = activityRecords.filter(record => record.lastActivity >= daysAgo).length;
-      const inactive = activityRecords.length - active;
+    const now = new Date();
+    const daysAgo = new Date(now.getTime() - days * 24 * 60 * 60 * 1000);
+    const active = activityRecords.filter(record => record.lastActivity >= daysAgo).length;
+    const inactive = activityRecords.length - active;
 
-      return { active, inactive };
-    }
-    catch (err) {
-      const error = `Error updating activity records. Error: ${err.message}`;
-      this.logger.error(error);
-      throw new Error(error);
-    }
+    return { active, inactive };
   }
 }
 

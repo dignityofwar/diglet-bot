@@ -185,7 +185,26 @@ describe('ActivityService', () => {
       expect(mockActivityStatisticsRepository.persistAndFlush).toHaveBeenCalledWith(mockStatistics);
     });
 
+    it('should handle database errors', async () => {
+      mockActivityStatisticsRepository.persistAndFlush = jest.fn().mockRejectedValue(new Error('Database error'));
+
+      await expect(activityService.enumerateActivity()).rejects.toThrow('Error enumerating activity records. Error: Database error');
+    });
+
     describe('startEnumeration', () => {
+      const nowSecs = Math.floor(Date.now() / 1000);
+      const mockReport = `# Activity Report <t:${nowSecs}:D>
+- Total Users: **6**
+- Inactive Users (>90d): **1**
+- Active Users (<90d): **5**
+- Active Users (<60d): **4**
+- Active Users (<30d): **3**
+- Active Users (<14d): **3**
+- Active Users (<7d): **3**
+- Active Users (<3d): **3**
+- Active Users (<2d): **2**
+- Active Users (<1d): **1**`;
+
       beforeEach(() => {
         activityService.enumerateActivity = jest.fn();
 
@@ -218,6 +237,18 @@ describe('ActivityService', () => {
         expect(mockStatusMessage.channel.send).toHaveBeenCalledWith('Error enumerating activity records. Error: Enumeration error');
       });
 
+      it('should handle errors after enumeration', async () => {
+        mockStatusMessage.channel.send = jest.fn()
+          .mockResolvedValueOnce(true)
+          .mockRejectedValueOnce(new Error('Send error!'));
+
+        await activityService.startEnumeration(mockStatusMessage);
+
+        expect(mockStatusMessage.channel.send).toHaveBeenCalledWith('Starting daily activity enumeration...');
+        expect(mockStatusMessage.channel.send).toHaveBeenCalledWith(mockReport);
+        expect(mockStatusMessage.channel.send).toHaveBeenCalledWith('Error starting activity enumeration. Error: Send error!');
+      });
+
       it('should handle empty database', async () => {
         mockActivityStatisticsRepository.find = jest.fn().mockResolvedValue([]);
 
@@ -231,19 +262,6 @@ describe('ActivityService', () => {
 
         expect(mockStatusMessage.channel.send).toHaveBeenCalledWith('Starting daily activity enumeration...');
 
-        const nowSecs = Math.floor(Date.now() / 1000);
-
-        const mockReport = `# Activity Report <t:${nowSecs}:D>
-- Total Users: **6**
-- Inactive Users (>90d): **1**
-- Active Users (<90d): **5**
-- Active Users (<60d): **4**
-- Active Users (<30d): **3**
-- Active Users (<14d): **3**
-- Active Users (<7d): **3**
-- Active Users (<3d): **3**
-- Active Users (<2d): **2**
-- Active Users (<1d): **1**`;
         expect(mockStatusMessage.channel.send).toHaveBeenCalledWith(mockReport);
       });
     });
