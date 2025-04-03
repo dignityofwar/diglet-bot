@@ -3,6 +3,7 @@ import { InjectRepository } from '@mikro-orm/nestjs';
 import { EntityRepository } from '@mikro-orm/core';
 import { ActivityEntity } from '../../database/entities/activity.entity';
 import { ActivityStatisticsEntity } from '../../database/entities/activity.statistics.entity';
+import { Message } from 'discord.js';
 
 @Injectable()
 export class ActivityService {
@@ -25,6 +26,57 @@ export class ActivityService {
     }
     catch (err) {
       const error = `Error removing activity record for leaver ${activityRecord.discordNickname} (${activityRecord.discordId}). Error: ${err.message}`;
+      this.logger.error(error);
+      throw new Error(error);
+    }
+  }
+
+  async startEnumeration(message: Message): Promise<void> {
+    try {
+
+      this.logger.log('Starting activity enumeration');
+      await message.channel.send('Starting daily activity enumeration...');
+
+      try {
+        await this.enumerateActivity();
+      }
+      catch (err) {
+        const error = `Error enumerating activity records. Error: ${err.message}`;
+        this.logger.error(error);
+        await message.channel.send(error);
+        return;
+      }
+
+      this.logger.log('Activity enumeration completed');
+
+      // Get the latest record
+      const stats = await this.activityStatisticsRepository.findOne({}, { orderBy: { createdAt: 'desc' } });
+
+      if (!stats) {
+        this.logger.error('No activity statistics found');
+        await message.channel.send('No activity statistics found');
+        return;
+      }
+
+      // Create the report
+      const report = `# Activity Report:
+- Total Users: **${stats.totalUsers}**
+- Inactive Users: **${stats.inactiveUsers}**
+- Active Users (90d): **${stats.activeUsers90d}**
+- Active Users (60d): **${stats.activeUsers60d}**
+- Active Users (30d): **${stats.activeUsers30d}**
+- Active Users (14d): **${stats.activeUsers14d}**
+- Active Users (7d): **${stats.activeUsers7d}**
+- Active Users (3d): **${stats.activeUsers3d}**
+- Active Users (2d): **${stats.activeUsers2d}**
+- Active Users (1d): **${stats.activeUsers1d}**`;
+      this.logger.log(report);
+      await message.channel.send(report);
+
+      this.logger.log('Activity enumeration completed');
+    }
+    catch (err) {
+      const error = `Error starting activity enumeration. Error: ${err.message}`;
       this.logger.error(error);
       throw new Error(error);
     }

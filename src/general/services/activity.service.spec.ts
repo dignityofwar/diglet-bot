@@ -179,6 +179,59 @@ describe('ActivityService', () => {
 
       expect(mockActivityStatisticsRepository.persistAndFlush).toHaveBeenCalledWith(mockStatistics);
     });
+
+    describe('startEnumeration', () => {
+      beforeEach(() => {
+        activityService.enumerateActivity = jest.fn();
+
+        mockActivityStatisticsRepository.findOne = jest.fn().mockResolvedValue({
+          totalUsers: 6,
+          inactiveUsers: 1,
+          activeUsers90d: 5,
+          activeUsers60d: 4,
+          activeUsers30d: 3,
+          activeUsers14d: 3,
+          activeUsers7d: 3,
+          activeUsers3d: 3,
+          activeUsers2d: 2,
+          activeUsers1d: 1,
+        });
+      });
+
+      it('should send a message and start enumeration', async () => {
+        await activityService.startEnumeration(mockStatusMessage);
+
+        expect(mockStatusMessage.channel.send).toHaveBeenCalledWith('Starting daily activity enumeration...');
+        expect(activityService.enumerateActivity).toHaveBeenCalled();
+      });
+
+      it('should handle errors during enumeration', async () => {
+        activityService.enumerateActivity = jest.fn().mockRejectedValue(new Error('Enumeration error'));
+
+        await activityService.startEnumeration(mockStatusMessage);
+
+        expect(mockStatusMessage.channel.send).toHaveBeenCalledWith('Error enumerating activity records. Error: Enumeration error');
+      });
+
+      it('should properly generate the report', async () => {
+        await activityService.startEnumeration(mockStatusMessage);
+
+        expect(mockStatusMessage.channel.send).toHaveBeenCalledWith('Starting daily activity enumeration...');
+
+        const mockReport = `# Activity Report:
+- Total Users: **6**
+- Inactive Users: **1**
+- Active Users (90d): **5**
+- Active Users (60d): **4**
+- Active Users (30d): **3**
+- Active Users (14d): **3**
+- Active Users (7d): **3**
+- Active Users (3d): **3**
+- Active Users (2d): **2**
+- Active Users (1d): **1**`;
+        expect(mockStatusMessage.channel.send).toHaveBeenCalledWith(mockReport);
+      });
+    });
   });
 });
 

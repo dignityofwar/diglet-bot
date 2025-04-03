@@ -13,6 +13,7 @@ import { VoiceStateEvents } from './events/voice.state.events';
 import { ActivityService } from './services/activity.service';
 import { GuildMemberEvents } from './events/guild.member.events';
 import { PurgeCronService } from './services/purge.cron.service';
+import { ActivityEnumerationCronService } from './services/activity.enumeration.cron.service';
 
 @Module({
   imports: [DiscordModule.forFeature(), ConfigModule, DatabaseModule],
@@ -34,6 +35,7 @@ import { PurgeCronService } from './services/purge.cron.service';
 
     // Cron Services
     PurgeCronService,
+    ActivityEnumerationCronService,
   ],
 })
 export class GeneralModule {}
