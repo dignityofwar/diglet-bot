@@ -10,7 +10,7 @@ COPY . /app
 
 WORKDIR /app
 
-RUN pnpm install --ignore-scripts && pnpm build
+RUN pnpm build
 
 # Lock the execution down to node non privledged user
 RUN chown node:node /app
