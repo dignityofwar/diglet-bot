@@ -1,5 +1,11 @@
 import { Entity, PrimaryKey, Property } from '@mikro-orm/core';
 
+export interface BaseEntityOptions {
+  id?: number;
+  createdAt?: Date;
+  updatedAt?: Date;
+}
+
 @Entity({ abstract: true })
 export abstract class BaseEntity {
   @PrimaryKey()
@@ -10,4 +16,8 @@ export abstract class BaseEntity {
 
   @Property({ onUpdate: () => new Date() })
     updatedAt: Date = new Date();
+
+  protected constructor(options?: BaseEntityOptions) {
+    Object.assign(this, options);
+  }
 }
