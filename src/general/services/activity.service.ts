@@ -37,8 +37,28 @@ export class ActivityService {
       this.logger.log('Starting activity enumeration');
       await message.channel.send('Starting daily activity enumeration...');
 
+      let stats: ActivityStatisticsEntity;
+
       try {
         await this.enumerateActivity();
+        this.logger.log('Activity enumeration completed');
+
+        // Get the latest record
+        const result = await this.activityStatisticsRepository.find(
+          {},
+          {
+            orderBy: { createdAt: 'desc' },
+            limit: 1,
+          }
+        );
+
+        if (!result) {
+          this.logger.error('No activity statistics found');
+          await message.channel.send('No activity statistics found');
+          return;
+        }
+
+        stats = result[0];
       }
       catch (err) {
         const error = `Error enumerating activity records. Error: ${err.message}`;
@@ -47,29 +67,20 @@ export class ActivityService {
         return;
       }
 
-      this.logger.log('Activity enumeration completed');
-
-      // Get the latest record
-      const stats = await this.activityStatisticsRepository.findOne({}, { orderBy: { createdAt: 'desc' } });
-
-      if (!stats) {
-        this.logger.error('No activity statistics found');
-        await message.channel.send('No activity statistics found');
-        return;
-      }
+      const nowSecs = Math.floor(Date.now() / 1000);
 
       // Create the report
-      const report = `# Activity Report:
+      const report = `# Activity Report <t:${nowSecs}:D>
 - Total Users: **${stats.totalUsers}**
-- Inactive Users: **${stats.inactiveUsers}**
-- Active Users (90d): **${stats.activeUsers90d}**
-- Active Users (60d): **${stats.activeUsers60d}**
-- Active Users (30d): **${stats.activeUsers30d}**
-- Active Users (14d): **${stats.activeUsers14d}**
-- Active Users (7d): **${stats.activeUsers7d}**
-- Active Users (3d): **${stats.activeUsers3d}**
-- Active Users (2d): **${stats.activeUsers2d}**
-- Active Users (1d): **${stats.activeUsers1d}**`;
+- Inactive Users (>90d): **${stats.inactiveUsers}**
+- Active Users (<90d): **${stats.activeUsers90d}**
+- Active Users (<60d): **${stats.activeUsers60d}**
+- Active Users (<30d): **${stats.activeUsers30d}**
+- Active Users (<14d): **${stats.activeUsers14d}**
+- Active Users (<7d): **${stats.activeUsers7d}**
+- Active Users (<3d): **${stats.activeUsers3d}**
+- Active Users (<2d): **${stats.activeUsers2d}**
+- Active Users (<1d): **${stats.activeUsers1d}**`;
       this.logger.log(report);
       await message.channel.send(report);
 

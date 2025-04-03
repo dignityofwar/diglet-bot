@@ -6,6 +6,7 @@ import { AlbionRegistrationsEntity } from './entities/albion.registrations.entit
 import { AlbionGuildMembersEntity } from './entities/albion.guildmembers.entity';
 import { DatabaseService } from './services/database.service';
 import { ActivityEntity } from './entities/activity.entity';
+import { ActivityStatisticsEntity } from './entities/activity.statistics.entity';
 
 @Module({
   imports: [
@@ -13,6 +14,7 @@ import { ActivityEntity } from './entities/activity.entity';
     MikroOrmModule.forFeature({
       entities: [
         ActivityEntity,
+        ActivityStatisticsEntity,
         AlbionGuildMembersEntity,
         AlbionRegistrationsEntity,
         PS2MembersEntity,

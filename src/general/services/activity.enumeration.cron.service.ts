@@ -32,7 +32,7 @@ export class ActivityEnumerationCronService implements OnApplicationBootstrap {
     }
   }
 
-  @Cron('0 18 * * *')
+  @Cron('1 0 * * *')
   async runJob(): Promise<void> {
     this.logger.log('Running Activity Enumeration Job');
     const message = await this.channel.send('Starting daily activity enumeration...');

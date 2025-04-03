@@ -14,9 +14,14 @@ import { ActivityService } from './services/activity.service';
 import { GuildMemberEvents } from './events/guild.member.events';
 import { PurgeCronService } from './services/purge.cron.service';
 import { ActivityEnumerationCronService } from './services/activity.enumeration.cron.service';
+import { ActivityEnumerateCommand } from './commands/activity.enumerate.command';
 
 @Module({
-  imports: [DiscordModule.forFeature(), ConfigModule, DatabaseModule],
+  imports: [
+    DiscordModule.forFeature(),
+    ConfigModule,
+    DatabaseModule,
+  ],
   providers: [
     // Services
     ActivityService,
@@ -25,6 +30,7 @@ import { ActivityEnumerationCronService } from './services/activity.enumeration.
     PurgeService,
 
     // Commands
+    ActivityEnumerateCommand,
     PingCommand,
     ThanosSnapCommand,
 

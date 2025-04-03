@@ -184,7 +184,7 @@ describe('ActivityService', () => {
       beforeEach(() => {
         activityService.enumerateActivity = jest.fn();
 
-        mockActivityStatisticsRepository.findOne = jest.fn().mockResolvedValue({
+        mockActivityStatisticsRepository.find = jest.fn().mockResolvedValue([{
           totalUsers: 6,
           inactiveUsers: 1,
           activeUsers90d: 5,
@@ -195,7 +195,7 @@ describe('ActivityService', () => {
           activeUsers3d: 3,
           activeUsers2d: 2,
           activeUsers1d: 1,
-        });
+        }]);
       });
 
       it('should send a message and start enumeration', async () => {
@@ -218,17 +218,19 @@ describe('ActivityService', () => {
 
         expect(mockStatusMessage.channel.send).toHaveBeenCalledWith('Starting daily activity enumeration...');
 
-        const mockReport = `# Activity Report:
+        const nowSecs = Math.floor(Date.now() / 1000);
+
+        const mockReport = `# Activity Report <t:${nowSecs}:D>
 - Total Users: **6**
-- Inactive Users: **1**
-- Active Users (90d): **5**
-- Active Users (60d): **4**
-- Active Users (30d): **3**
-- Active Users (14d): **3**
-- Active Users (7d): **3**
-- Active Users (3d): **3**
-- Active Users (2d): **2**
-- Active Users (1d): **1**`;
+- Inactive Users (>90d): **1**
+- Active Users (<90d): **5**
+- Active Users (<60d): **4**
+- Active Users (<30d): **3**
+- Active Users (<14d): **3**
+- Active Users (<7d): **3**
+- Active Users (<3d): **3**
+- Active Users (<2d): **2**
+- Active Users (<1d): **1**`;
         expect(mockStatusMessage.channel.send).toHaveBeenCalledWith(mockReport);
       });
     });
