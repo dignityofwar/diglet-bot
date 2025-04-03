@@ -52,7 +52,7 @@ export class ActivityService {
           }
         );
 
-        if (!result) {
+        if (result.length === 0) {
           this.logger.error('No activity statistics found');
           await message.channel.send('No activity statistics found');
           return;
