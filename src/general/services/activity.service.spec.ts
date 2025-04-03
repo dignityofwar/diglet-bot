@@ -162,6 +162,7 @@ describe('ActivityService', () => {
 
     it('should collate activity records and create statistics', async () => {
       await activityService.enumerateActivity();
+
       const mockStatistics = new ActivityStatisticsEntity(
         {
           totalUsers: 6,
