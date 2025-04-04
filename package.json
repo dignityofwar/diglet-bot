@@ -44,6 +44,7 @@
     "@sentry/profiling-node": "^9.0.0",
     "axios": "^1.7.2",
     "discord.js": "^14.18.0",
+    "dotenv": "^16.4.7",
     "lodash": "^4.17.21",
     "ps2census": "^4.6.0"
   },
