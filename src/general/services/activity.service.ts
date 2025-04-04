@@ -4,6 +4,7 @@ import { EntityRepository } from '@mikro-orm/core';
 import { ActivityEntity } from '../../database/entities/activity.entity';
 import { ActivityStatisticsEntity } from '../../database/entities/activity.statistics.entity';
 import { Message } from 'discord.js';
+import { getChannel } from '../../discord/discord.hacks';
 
 @Injectable()
 export class ActivityService {
@@ -33,9 +34,8 @@ export class ActivityService {
 
   async startEnumeration(message: Message): Promise<void> {
     try {
-
       this.logger.log('Starting activity enumeration');
-      await message.channel.send('Starting daily activity enumeration...');
+      await getChannel(message).send('Starting daily activity enumeration...');
 
       let stats: ActivityStatisticsEntity;
 
@@ -62,7 +62,7 @@ export class ActivityService {
       catch (err) {
         const error = `Error enumerating activity records. Error: ${err.message}`;
         this.logger.error(error);
-        await message.channel.send(error);
+        await getChannel(message).send(error);
         return;
       }
 
@@ -81,14 +81,14 @@ export class ActivityService {
 - Active Users (<2d): **${stats.activeUsers2d}**
 - Active Users (<1d): **${stats.activeUsers1d}**`;
       this.logger.log(report);
-      await message.channel.send(report);
+      await getChannel(message).send(report);
 
       this.logger.log('Activity enumeration completed');
     }
     catch (err) {
       const error = `Error starting activity enumeration. Error: ${err.message}`;
       this.logger.error(error);
-      await message.channel.send(error);
+      await getChannel(message).send(error);
     }
   }
 
