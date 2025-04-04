@@ -73,7 +73,7 @@ export class ActivityService {
       };
 
       // Create the report
-      const report = `# Activity Report ${friendlyDate(new Date)}
+      const report = `# Activity Report ${friendlyDate(new Date())}
 - 👥 Total Users: **${stats.totalUsers}**
 - 🫥 Inactive Users (>90d): **${stats.inactiveUsers}** ${per(stats.inactiveUsers)}
 - 👀 Active Users:
