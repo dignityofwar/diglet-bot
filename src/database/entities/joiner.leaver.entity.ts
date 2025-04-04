@@ -6,7 +6,6 @@ interface JoinerLeaverEntityOptions {
   discordNickname?: string;
   joinDate?: Date
   leaveDate?: Date;
-  rejoined?: boolean;
   rejoinCount?: number;
 }
 
@@ -25,9 +24,6 @@ export class JoinerLeaverEntity extends BaseEntity {
 
   @Property()
     leaveDate: Date | null = null;
-
-  @Property()
-    rejoined: boolean = false;
 
   @Property()
     rejoinCount: number = 0;

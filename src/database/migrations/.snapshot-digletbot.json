@@ -610,17 +610,6 @@
           "length": null,
           "mappedType": "datetime"
         },
-        "rejoined": {
-          "name": "rejoined",
-          "type": "tinyint(1)",
-          "unsigned": false,
-          "autoincrement": false,
-          "primary": false,
-          "nullable": false,
-          "length": 1,
-          "default": "false",
-          "mappedType": "boolean"
-        },
         "rejoin_count": {
           "name": "rejoin_count",
           "type": "int",

@@ -15,6 +15,7 @@ import { GuildMemberEvents } from './events/guild.member.events';
 import { PurgeCronService } from './services/purge.cron.service';
 import { ActivityReportCronService } from './services/activity.report.cron.service';
 import { ActivityReportCommand } from './commands/activity.report.command';
+import { JoinerLeaverService } from './services/joinerleaver.service';
 
 @Module({
   imports: [
@@ -27,6 +28,7 @@ import { ActivityReportCommand } from './commands/activity.report.command';
     ActivityService,
     DatabaseService,
     DiscordService,
+    JoinerLeaverService,
     PurgeService,
 
     // Commands

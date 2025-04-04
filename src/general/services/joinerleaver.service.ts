@@ -1,8 +1,9 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@mikro-orm/nestjs';
 import { EntityRepository } from '@mikro-orm/core';
-import { GuildMember } from 'discord.js';
+import { Events, GuildMember } from 'discord.js';
 import { JoinerLeaverEntity } from '../../database/entities/joiner.leaver.entity';
+import { On } from '@discord-nestjs/core';
 
 @Injectable()
 export class JoinerLeaverService {
@@ -12,7 +13,12 @@ export class JoinerLeaverService {
     @InjectRepository(JoinerLeaverEntity) private readonly joinerLeaverRepository: EntityRepository<JoinerLeaverEntity>,
   ) {}
 
+  @On(Events.GuildMemberAdd)
   async recordJoiner(guildMember: GuildMember) {
+    if (guildMember.user.bot) {
+      return;
+    }
+
     let record = new JoinerLeaverEntity({
       discordId: guildMember.id,
       discordNickname: guildMember.displayName,
@@ -25,7 +31,6 @@ export class JoinerLeaverService {
     if (existingRecord) {
       record = existingRecord;
       this.logger.log(`User ${guildMember.user.tag} is already in the database, marking as rejoiner.`);
-      record.rejoined = true;
       record.rejoinCount += 1;
       record.leaveDate = null;
     }
@@ -38,7 +43,12 @@ export class JoinerLeaverService {
     this.logger.log(`Recorded joiner ${guildMember.user.tag} (${guildMember.id})`);
   }
 
+  @On(Events.GuildMemberRemove)
   async recordLeaver(guildMember: GuildMember) {
+    if (guildMember.user.bot) {
+      return;
+    }
+
     const record = await this.joinerLeaverRepository.findOne({ discordId: guildMember.id });
 
     if (record) {
