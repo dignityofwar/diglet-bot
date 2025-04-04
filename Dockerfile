@@ -3,7 +3,7 @@ FROM node:22.14.0
 ARG VERSION
 ENV VERSION=${VERSION}
 
-RUN npm install --ignore-scripts -g pnpm@9.1.2
+RUN npm install --ignore-scripts -g pnpm@9.14.4
 
 # Many things are ignored, check .dockerignore
 COPY . /app
