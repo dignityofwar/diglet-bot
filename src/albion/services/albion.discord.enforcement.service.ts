@@ -48,7 +48,7 @@ export class AlbionDiscordEnforcementService {
 
       // If not, add them to the guild members table
       if (!foundGuildMember && !dryRun) {
-        await this.albionGuildMembersRepository.persistAndFlush(new AlbionGuildMembersEntity({
+        await this.albionGuildMembersRepository.getEntityManager().persistAndFlush(new AlbionGuildMembersEntity({
           characterId: guildMember.Id,
           characterName: guildMember.Name,
           registered: !!memberIsRegistered,
@@ -106,7 +106,7 @@ export class AlbionDiscordEnforcementService {
         // Mark them as warned
         if (!dryRun) {
           fiveDayWarningMember.warned = true;
-          await this.albionGuildMembersRepository.persistAndFlush(fiveDayWarningMember);
+          await this.albionGuildMembersRepository.getEntityManager().persistAndFlush(fiveDayWarningMember);
           this.logger.debug(`Marked ${fiveDayWarningMember.characterName} as warned!`);
         }
       }

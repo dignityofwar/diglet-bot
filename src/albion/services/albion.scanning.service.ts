@@ -147,6 +147,7 @@ export class AlbionScanningService {
     // Save all the characters to a map we can easily pick out later via character ID
     const charactersMap = new Map<string, AlbionPlayerInterface>();
     const leavers: string[] = [];
+
     for (const character of characters) {
       charactersMap.set(character.Id, character);
     }
@@ -225,7 +226,7 @@ export class AlbionScanningService {
 
       // Delete their registration record
       try {
-        await this.albionRegistrationsRepository.removeAndFlush(member);
+        await this.albionRegistrationsRepository.getEntityManager().removeAndFlush(member);
       }
       catch (err) {
         await message.channel.send(`ERROR: Unable to remove Albion Character "${character.Name}" (${character.Id}) from registration database! Pinging <@${this.config.get('discord.devUserId')}>!`);

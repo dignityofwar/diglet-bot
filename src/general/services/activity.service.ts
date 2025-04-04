@@ -20,7 +20,7 @@ export class ActivityService {
   ): Promise<void> {
     try {
       if (!dryRun) {
-        await this.activityRepository.removeAndFlush(activityRecord);
+        await this.activityRepository.getEntityManager().removeAndFlush(activityRecord);
       }
       this.logger.log(`Removed activity record for leaver ${activityRecord.discordNickname} (${activityRecord.discordId})`);
     }
@@ -118,7 +118,7 @@ export class ActivityService {
       // Check if there is already a report on the same date, if so, delete it
       const existingReport = await this.activityStatisticsRepository.findOne({ createdAt: date });
       if (existingReport) {
-        await this.activityStatisticsRepository.removeAndFlush(existingReport);
+        await this.activityStatisticsRepository.getEntityManager().removeAndFlush(existingReport);
         this.logger.warn(`Removed existing report for date ${date}`);
       }
 
@@ -139,7 +139,7 @@ export class ActivityService {
       });
 
       // Commit
-      await this.activityStatisticsRepository.persistAndFlush(activityStatistics);
+      await this.activityStatisticsRepository.getEntityManager().persistAndFlush(activityStatistics);
     }
     catch (err) {
       const error = `Error enumerating activity records. Error: ${err.message}`;

@@ -455,8 +455,9 @@ describe('AlbionScanningService', () => {
       expect(mockDiscordMessage.channel.send).toBeCalledWith('## 🇺🇸 🚪 1 leavers detected!');
       expect(mockDiscordMessage.channel.send).toBeCalledWith(`- 🇺🇸 👋 <@${mockDiscordUser.id}>'s character **${mockCharacterUS.Name}** has left the Guild but remains on the Discord server. Their roles and registration status have been stripped.`);
       expect(mockDiscordUser.roles.remove).toBeCalled();
-      expect(mockAlbionRegistrationsRepository.removeAndFlush).toBeCalled();
+      expect(mockAlbionRegistrationsRepository.getEntityManager().removeAndFlush).toBeCalled();
     });
+
     it('should properly handle guild only leavers who have joined a new guild, EU', async () => {
       // Mock the Albion API response to denote the character has left the guild
       mockCharacterEU.GuildId = 'foobar';
@@ -473,8 +474,9 @@ describe('AlbionScanningService', () => {
       expect(mockDiscordMessage.channel.send).toBeCalledWith('## 🇪🇺 🚪 1 leavers detected!');
       expect(mockDiscordMessage.channel.send).toBeCalledWith(`- 🇪🇺 👋 <@${mockDiscordUser.id}>'s character **${mockCharacterEU.Name}** has left the Guild but remains on the Discord server. Their roles and registration status have been stripped.`);
       expect(mockDiscordUser.roles.remove).toBeCalled();
-      expect(mockAlbionRegistrationsRepository.removeAndFlush).toBeCalled();
+      expect(mockAlbionRegistrationsRepository.getEntityManager().removeAndFlush).toBeCalled();
     });
+
     it('should NOT take action when guild only leavers have joined a new guild with a dry run', async () => {
       // Mock the Albion API response to denote the character has left the guild
       mockCharacterUS.GuildId = 'foobar';
@@ -486,9 +488,9 @@ describe('AlbionScanningService', () => {
       expect(mockDiscordMessage.channel.send).toBeCalledWith('## 🇺🇸 🚪 1 leavers detected!');
       expect(mockDiscordMessage.channel.send).toBeCalledWith(`- 🇺🇸 👋 <@${mockDiscordUser.id}>'s character **${mockCharacterUS.Name}** has left the Guild but remains on the Discord server. Their roles and registration status have been stripped.`);
       expect(mockDiscordUser.roles.remove).toBeCalledTimes(0);
-      expect(mockAlbionRegistrationsRepository.removeAndFlush).toBeCalledTimes(0);
-
+      expect(mockAlbionRegistrationsRepository.getEntityManager().removeAndFlush).toBeCalledTimes(0);
     });
+
     it('should properly handle guild only leavers when they have no guild', async () => {
       // Mock the Albion API response to denote the character has left the guild
       mockCharacterUS.GuildId = null;
@@ -500,8 +502,10 @@ describe('AlbionScanningService', () => {
       expect(mockDiscordMessage.channel.send).toBeCalledWith('## 🇺🇸 🚪 1 leavers detected!');
       expect(mockDiscordMessage.channel.send).toBeCalledWith(`- 🇺🇸 👋 <@${mockDiscordUser.id}>'s character **${mockCharacterUS.Name}** has left the Guild but remains on the Discord server. Their roles and registration status have been stripped.`);
       expect(mockDiscordUser.roles.remove).toBeCalled();
-      expect(mockAlbionRegistrationsRepository.removeAndFlush).toBeCalled();
+      expect(
+        mockAlbionRegistrationsRepository.getEntityManager().removeAndFlush).toBeCalled();
     });
+
     it('should properly handle server only leavers, US', async () => {
       mockCharacterUS.GuildId = TestBootstrapper.mockConfig.albion.guildIdUS;
       mockDiscordMessage.guild.members.fetch = jest.fn().mockRejectedValueOnce(new Error('Unknown Member'));
@@ -517,8 +521,9 @@ describe('AlbionScanningService', () => {
       expect(mockDiscordMessage.channel.send).toBeCalledWith('## 🇺🇸 🚪 1 leavers detected!');
       expect(mockDiscordMessage.channel.send).toBeCalledWith(`- 🇺🇸 ‼️🫥️ Discord member for Character **${mockCharacterUS.Name}** has left the DIG Discord server. Their registration status has been removed. **They require booting from the Guild!**`);
       expect(mockDiscordUser.roles.remove).toBeCalledTimes(0);
-      expect(mockAlbionRegistrationsRepository.removeAndFlush).toBeCalled();
+      expect(mockAlbionRegistrationsRepository.getEntityManager().removeAndFlush).toBeCalled();
     });
+
     it('should properly handle server only leavers, EU', async () => {
       mockCharacterEU.GuildId = TestBootstrapper.mockConfig.albion.guildId;
       mockDiscordMessage.guild.members.fetch = jest.fn().mockRejectedValueOnce(new Error('Unknown Member'));
@@ -534,8 +539,9 @@ describe('AlbionScanningService', () => {
       expect(mockDiscordMessage.channel.send).toBeCalledWith('## 🇪🇺 🚪 1 leavers detected!');
       expect(mockDiscordMessage.channel.send).toBeCalledWith(`- 🇪🇺 ‼️🫥️ Discord member for Character **${mockCharacterEU.Name}** has left the DIG Discord server. Their registration status has been removed. **They require booting from the Guild!**`);
       expect(mockDiscordUser.roles.remove).toBeCalledTimes(0);
-      expect(mockAlbionRegistrationsRepository.removeAndFlush).toBeCalled();
+      expect(mockAlbionRegistrationsRepository.getEntityManager().removeAndFlush).toBeCalled();
     });
+
     it('should NOT take action with server only leavers with a dry run', async () => {
       mockDiscordMessage.guild.members.fetch = jest.fn().mockRejectedValueOnce(new Error('Unknown Member'));
 
@@ -545,8 +551,9 @@ describe('AlbionScanningService', () => {
       expect(mockDiscordMessage.channel.send).toBeCalledWith('## 🇺🇸 🚪 1 leavers detected!');
       expect(mockDiscordMessage.channel.send).toBeCalledWith(`- 🇺🇸 ‼️🫥️ Discord member for Character **${mockCharacterUS.Name}** has left the DIG Discord server. Their registration status has been removed. **They require booting from the Guild!**`);
       expect(mockDiscordUser.roles.remove).toBeCalledTimes(0);
-      expect(mockAlbionRegistrationsRepository.removeAndFlush).toBeCalledTimes(0);
+      expect(mockAlbionRegistrationsRepository.getEntityManager().removeAndFlush).toBeCalledTimes(0);
     });
+
     it('should properly handle leavers for both server and guild, US', async () => {
       // Mock the Albion API response to denote the character has left the guild
       mockCharacterUS.GuildId = 'foobar';
@@ -563,8 +570,9 @@ describe('AlbionScanningService', () => {
       expect(mockDiscordMessage.channel.send).toBeCalledWith('## 🇺🇸 🚪 1 leavers detected!');
       expect(mockDiscordMessage.channel.send).toBeCalledWith(`- 🇺🇸 💁 Character / Player ${mockCharacterUS.Name} has left **both** the DIG server and the Guild. They are dead to us now 💅`);
       expect(mockDiscordUser.roles.remove).toBeCalledTimes(0);
-      expect(mockAlbionRegistrationsRepository.removeAndFlush).toBeCalled();
+      expect(mockAlbionRegistrationsRepository.getEntityManager().removeAndFlush).toBeCalled();
     });
+
     it('should properly handle leavers for both server and guild, EU', async () => {
       // Mock the Albion API response to denote the character has left the guild
       mockCharacterEU.GuildId = 'foobar';
@@ -581,8 +589,9 @@ describe('AlbionScanningService', () => {
       expect(mockDiscordMessage.channel.send).toBeCalledWith('## 🇪🇺 🚪 1 leavers detected!');
       expect(mockDiscordMessage.channel.send).toBeCalledWith(`- 🇪🇺 💁 Character / Player ${mockCharacterEU.Name} has left **both** the DIG server and the Guild. They are dead to us now 💅`);
       expect(mockDiscordUser.roles.remove).toBeCalledTimes(0);
-      expect(mockAlbionRegistrationsRepository.removeAndFlush).toBeCalled();
+      expect(mockAlbionRegistrationsRepository.getEntityManager().removeAndFlush).toBeCalled();
     });
+
     it('should NOT take action for leavers for both server and guild with a dry run', async () => {
       // Mock the Albion API response to denote the character has left the guild
       mockCharacterUS.GuildId = 'foobar';
@@ -599,8 +608,9 @@ describe('AlbionScanningService', () => {
       expect(mockDiscordMessage.channel.send).toBeCalledWith('## 🇺🇸 🚪 1 leavers detected!');
       expect(mockDiscordMessage.channel.send).toBeCalledWith(`- 🇺🇸 💁 Character / Player ${mockCharacterUS.Name} has left **both** the DIG server and the Guild. They are dead to us now 💅`);
       expect(mockDiscordUser.roles.remove).toBeCalledTimes(0);
-      expect(mockAlbionRegistrationsRepository.removeAndFlush).toBeCalledTimes(0);
+      expect(mockAlbionRegistrationsRepository.getEntityManager().removeAndFlush).toBeCalledTimes(0);
     });
+
     it('should properly handle guild only leavers and handle role errors, US', async () => {
       const mockedRole = TestBootstrapper.getMockDiscordRole('lol');
       // Mock the Albion API response to denote the character has left the guild
@@ -659,7 +669,7 @@ describe('AlbionScanningService', () => {
       // Mock the Albion API response to denote the character has left the guild
       mockCharacterUS.GuildId = 'foobar';
 
-      mockAlbionRegistrationsRepository.removeAndFlush = jest.fn().mockRejectedValueOnce(new Error('Operation went boom'));
+      mockAlbionRegistrationsRepository.getEntityManager().removeAndFlush = jest.fn().mockRejectedValueOnce(new Error('Operation went boom'));
 
       await service.removeLeavers(
         [mockCharacterUS],
@@ -667,7 +677,7 @@ describe('AlbionScanningService', () => {
         false,
         AlbionServer.AMERICAS
       );
-      expect(mockAlbionRegistrationsRepository.removeAndFlush).toBeCalled();
+      expect(mockAlbionRegistrationsRepository.getEntityManager().removeAndFlush).toBeCalled();
       expect(mockDiscordUser.roles.remove).toBeCalledTimes(7);
 
       expect(mockDiscordMessage.channel.send).toHaveBeenCalledWith(`ERROR: Unable to remove Albion Character "${mockCharacterUS.Name}" (${mockCharacterUS.Id}) from registration database! Pinging <@${mockDevUserId}>!`);
@@ -678,7 +688,7 @@ describe('AlbionScanningService', () => {
 
       mockAlbionRegistrationsRepository.find = jest.fn().mockResolvedValueOnce([mockRegisteredMemberEU]);
 
-      mockAlbionRegistrationsRepository.removeAndFlush = jest.fn().mockRejectedValueOnce(new Error('Operation went boom'));
+      mockAlbionRegistrationsRepository.getEntityManager().removeAndFlush = jest.fn().mockRejectedValueOnce(new Error('Operation went boom'));
 
       await service.removeLeavers(
         [mockCharacterEU],
@@ -686,7 +696,7 @@ describe('AlbionScanningService', () => {
         false,
         AlbionServer.EUROPE
       );
-      expect(mockAlbionRegistrationsRepository.removeAndFlush).toBeCalled();
+      expect(mockAlbionRegistrationsRepository.getEntityManager().removeAndFlush).toBeCalled();
       expect(mockDiscordUser.roles.remove).toBeCalledTimes(6);
 
       expect(mockDiscordMessage.channel.send).toHaveBeenCalledWith(`ERROR: Unable to remove Albion Character "${mockCharacterEU.Name}" (${mockCharacterEU.Id}) from registration database! Pinging <@${mockDevUserId}>!`);
@@ -703,8 +713,8 @@ describe('AlbionScanningService', () => {
         false,
         AlbionServer.EUROPE
       );
-      expect(mockAlbionRegistrationsRepository.removeAndFlush).toBeCalledWith(mockRegisteredMemberEU);
-      expect(mockAlbionRegistrationsRepository.removeAndFlush).toBeCalledTimes(1);
+      expect(mockAlbionRegistrationsRepository.getEntityManager().removeAndFlush).toBeCalledWith(mockRegisteredMemberEU);
+      expect(mockAlbionRegistrationsRepository.getEntityManager().removeAndFlush).toBeCalledTimes(1);
       expect(mockDiscordUser.roles.remove).toBeCalledTimes(6);
     });
     it('should properly handle zero guild or server leavers, US', async () => {
@@ -718,7 +728,7 @@ describe('AlbionScanningService', () => {
       expect(mockDiscordMessage.channel.send).toBeCalledTimes(2);
       expect(mockDiscordMessage.channel.send).toBeCalledWith('### 🇺🇸 Scanned 0/1 registered members...');
       expect(mockDiscordMessage.channel.send).toBeCalledWith('🇺🇸 ✅ No leavers were detected.');
-      expect(mockAlbionRegistrationsRepository.removeAndFlush).toBeCalledTimes(0);
+      expect(mockAlbionRegistrationsRepository.getEntityManager().removeAndFlush).toBeCalledTimes(0);
       expect(mockDiscordUser.roles.remove).toBeCalledTimes(0);
     });
     it('should properly handle zero guild or server leavers, EU', async () => {
@@ -732,7 +742,7 @@ describe('AlbionScanningService', () => {
       expect(mockDiscordMessage.channel.send).toBeCalledTimes(2);
       expect(mockDiscordMessage.channel.send).toBeCalledWith('### 🇪🇺 Scanned 0/1 registered members...');
       expect(mockDiscordMessage.channel.send).toBeCalledWith('🇪🇺 ✅ No leavers were detected.');
-      expect(mockAlbionRegistrationsRepository.removeAndFlush).toBeCalledTimes(0);
+      expect(mockAlbionRegistrationsRepository.getEntityManager().removeAndFlush).toBeCalledTimes(0);
       expect(mockDiscordUser.roles.remove).toBeCalledTimes(0);
     });
     it('should properly correctly update the message every 5 members', async () => {

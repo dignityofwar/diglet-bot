@@ -29,7 +29,6 @@ describe('AlbionRegistrationService', () => {
   let contactMessage: string;
 
   beforeEach(async () => {
-    TestBootstrapper.mockORM();
     mockAlbionRegistrationsRepository = TestBootstrapper.getMockEntityRepo();
     mockCharacter = TestBootstrapper.getMockAlbionCharacter(TestBootstrapper.mockConfig.albion.guildIdUS) as any;
     mockDiscordUser = TestBootstrapper.getMockDiscordUser();

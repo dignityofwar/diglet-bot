@@ -40,6 +40,12 @@ const ps2RankMap: PS2RankMapInterface = {
   },
 };
 
+// Define a type for your EntityManager mock if you like:
+interface EntityManagerMock {
+  persistAndFlush: jest.Mock;
+  removeAndFlush: jest.Mock;
+}
+
 // This file helps set up mocks for various tests, which have been copied and pasted across the suite, causing a lot of duplication.
 @Injectable()
 export class TestBootstrapper {
@@ -59,6 +65,12 @@ export class TestBootstrapper {
       getRepository: jest.fn().mockReturnValue({
         find: jest.fn(),
       }),
+      getEntityManager: jest.fn().mockResolvedValue({
+        findOne: jest.fn(),
+        find: jest.fn(),
+        persistAndFlush: jest.fn(),
+        removeAndFlush: jest.fn(),
+      }),
     } as any;
 
     const mockInit = jest.spyOn(MikroORM, 'init');
@@ -67,19 +79,25 @@ export class TestBootstrapper {
     } as any));
   }
 
-  static getMockRepositoryInjected(entity) {
-    const repoActions = {
+  static getMockRepositoryInjected(
+    entity: any,
+    entityManagerOverrides?: Partial<EntityManagerMock>
+  ) {
+    const defaultEntityManagerMock: EntityManagerMock = {
+      persistAndFlush: jest.fn().mockResolvedValue(true),
+      removeAndFlush: jest.fn().mockResolvedValue(true),
+    };
+
+    // Merge in any overrides, for instance to have removeAndFlush reject
+    const entityManagerMock = { ...defaultEntityManagerMock, ...entityManagerOverrides };
+    return {
       find: jest.fn().mockResolvedValueOnce([entity]),
       findOne: jest.fn().mockResolvedValueOnce([entity]),
       findAll: jest.fn().mockResolvedValue([entity]),
       create: jest.fn(),
       upsert: jest.fn(),
-      persistAndFlush: jest.fn().mockResolvedValue([entity]),
-      removeAndFlush: jest.fn(),
-    };
-    return {
-      ...repoActions,
-      getEntityManager: jest.fn().mockReturnValue(repoActions),
+      // Always return the same instance so that overrides remain in effect
+      getEntityManager: jest.fn().mockReturnValue(entityManagerMock),
     } as any;
   }
 

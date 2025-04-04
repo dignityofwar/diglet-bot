@@ -22,7 +22,7 @@ export class GuildMemberEvents {
     // If they have an activity record (they won't if they immediately left the server), delete it.
     if (activityRecord) {
       this.logger.debug(`Member "${member.displayName}" has left the server.`);
-      await this.activityRepository.removeAndFlush(activityRecord);
+      await this.activityRepository.getEntityManager().removeAndFlush(activityRecord);
       this.logger.log(`Removed activity record for leaver ${activityRecord.discordNickname} (${activityRecord.discordId})`);
     }
     else {
