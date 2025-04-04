@@ -5,6 +5,7 @@ import { ActivityEntity } from '../../database/entities/activity.entity';
 import { ActivityStatisticsEntity } from '../../database/entities/activity.statistics.entity';
 import { Message } from 'discord.js';
 import { getChannel } from '../../discord/discord.hacks';
+import { friendlyDate } from '../../helpers';
 
 @Injectable()
 export class ActivityService {
@@ -66,15 +67,13 @@ export class ActivityService {
         return;
       }
 
-      const nowSecs = Math.floor(Date.now() / 1000);
-
       const per = (n: number): string => {
         const percent = ((n / stats.totalUsers) * 100).toFixed(1);
         return `(${percent}%)`;
       };
 
       // Create the report
-      const report = `# Activity Report <t:${nowSecs}:D>
+      const report = `# Activity Report ${friendlyDate(new Date)}
 - 👥 Total Users: **${stats.totalUsers}**
 - 🫥 Inactive Users (>90d): **${stats.inactiveUsers}** ${per(stats.inactiveUsers)}
 - 👀 Active Users:
