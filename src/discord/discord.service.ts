@@ -1,6 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { InjectDiscordClient } from '@discord-nestjs/core';
 import { Channel, Client, Guild, GuildMember, Message, Role } from 'discord.js';
+import { getChannel } from './discord.hacks';
 
 @Injectable()
 export class DiscordService {
@@ -84,7 +85,7 @@ export class DiscordService {
       return await guildMember.kick(reason);
     }
     catch (err) {
-      await message.channel.send(`⚠️ Failed to kick member <@${guildMember.id}>! Err: ${err.message}`);
+      await getChannel(message).send(`⚠️ Failed to kick member <@${guildMember.id}>! Err: ${err.message}`);
       this.logger.error('Failed to kick member', err);
     }
   }
@@ -112,7 +113,7 @@ export class DiscordService {
     }
 
     for (const batch of batchMessages) {
-      await originMessage.channel.send(batch);
+      await getChannel(originMessage).send(batch);
     }
   }
 

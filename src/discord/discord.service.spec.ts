@@ -3,6 +3,7 @@ import { Test } from '@nestjs/testing';
 import { ConfigService } from '@nestjs/config';
 import { DiscordService } from './discord.service';
 import { TestBootstrapper } from '../test.bootstrapper';
+import { getChannel } from './discord.hacks';
 
 describe('DiscordService', () => {
   let service: DiscordService;
@@ -205,7 +206,7 @@ describe('DiscordService', () => {
 
       await service.kickMember(guildMember, message);
 
-      expect(message.channel.send).toHaveBeenCalledWith(`⚠️ Failed to kick member <@${guildMember.id}>! Err: ${kickError.message}`);
+      expect(getChannel(message).send).toHaveBeenCalledWith(`⚠️ Failed to kick member <@${guildMember.id}>! Err: ${kickError.message}`);
     });
   });
 
@@ -236,25 +237,25 @@ describe('DiscordService', () => {
     it('should send messages in batches of 10', async () => {
       const originMessage = TestBootstrapper.getMockDiscordMessage();
       const messages = Array.from({ length: 25 }, (_, i) => `Message ${i + 1}`);
-      originMessage.channel.send = jest.fn().mockResolvedValue(true);
+      getChannel(originMessage).send = jest.fn().mockResolvedValue(true);
 
       await service.batchSend(messages, originMessage);
 
-      expect(originMessage.channel.send).toHaveBeenCalledTimes(3);
-      expect(originMessage.channel.send).toHaveBeenCalledWith(expect.stringContaining('Message 10'));
-      expect(originMessage.channel.send).toHaveBeenCalledWith(expect.stringContaining('Message 20'));
-      expect(originMessage.channel.send).toHaveBeenCalledWith(expect.stringContaining('Message 25'));
+      expect(getChannel(originMessage).send).toHaveBeenCalledTimes(3);
+      expect(getChannel(originMessage).send).toHaveBeenCalledWith(expect.stringContaining('Message 10'));
+      expect(getChannel(originMessage).send).toHaveBeenCalledWith(expect.stringContaining('Message 20'));
+      expect(getChannel(originMessage).send).toHaveBeenCalledWith(expect.stringContaining('Message 25'));
     });
 
     it('should send all messages if less than 10', async () => {
       const originMessage = TestBootstrapper.getMockDiscordMessage();
       const messages = Array.from({ length: 5 }, (_, i) => `Message ${i + 1}`);
-      originMessage.channel.send = jest.fn().mockResolvedValue(true);
+      getChannel(originMessage).send = jest.fn().mockResolvedValue(true);
 
       await service.batchSend(messages, originMessage);
 
-      expect(originMessage.channel.send).toHaveBeenCalledTimes(1);
-      expect(originMessage.channel.send).toHaveBeenCalledWith(expect.stringContaining('Message 5'));
+      expect(getChannel(originMessage).send).toHaveBeenCalledTimes(1);
+      expect(getChannel(originMessage).send).toHaveBeenCalledWith(expect.stringContaining('Message 5'));
     });
   });
 

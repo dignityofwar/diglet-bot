@@ -7,6 +7,7 @@ import { GuildMember, Message } from 'discord.js';
 import { CensusCharacterWithOutfitInterface } from '../interfaces/CensusCharacterResponseInterface';
 import { ConfigService } from '@nestjs/config';
 import { PS2RankMapInterface } from '../../config/ps2.app.config';
+import { getChannel } from '../../discord/discord.hacks';
 
 export interface ChangesInterface {
   character: CensusCharacterWithOutfitInterface,
@@ -55,7 +56,7 @@ export class PS2GameScanningService {
           // If an error was thrown, return null for the character. Report the error though to the channel.
           // The null is then filtered out at the promise.all stage.
           // Later, the validateMembership function will check if the character data is absent and skip it if it doesn't exist.
-          await statusMessage.channel.send(`❌ ${err.message}`);
+          await getChannel(statusMessage).send(`❌ ${err.message}`);
           return null;
         }
       });
@@ -107,43 +108,43 @@ export class PS2GameScanningService {
     }
     catch (err) {
       await message.edit('## ❌ An error occurred while scanning!');
-      await message.channel.send(`Error: ${err.message}`);
+      await getChannel(message).send(`Error: ${err.message}`);
       return this.reset();
     }
 
     if (this.changesMap.size === 0) {
-      await message.channel.send('✅ No automatic changes were performed.');
+      await getChannel(message).send('✅ No automatic changes were performed.');
       this.logger.log('No changes were made.');
     }
     else {
-      await message.channel.send(`## 📝 ${this.changesMap.size} change(s) made`);
+      await getChannel(message).send(`## 📝 ${this.changesMap.size} change(s) made`);
       this.logger.log(`Sending ${this.changesMap.size} changes to channel...`);
     }
 
     for (const change of this.changesMap.values()) {
-      const fakeMessage = await message.channel.send('dummy'); // Send a fake message first, so it doesn't ping people
+      const fakeMessage = await getChannel(message).send('dummy'); // Send a fake message first, so it doesn't ping people
       await fakeMessage.edit(change.change);
     }
 
     if (this.suggestionsMap.size === 0) {
-      await message.channel.send('✅ There are currently no inconsistencies between ranks and roles.');
+      await getChannel(message).send('✅ There are currently no inconsistencies between ranks and roles.');
       this.logger.log('No suggestions were made.');
     }
     else {
-      await message.channel.send(`## 👀 ${this.suggestionsCount} manual correction(s) to make`);
+      await getChannel(message).send(`## 👀 ${this.suggestionsCount} manual correction(s) to make`);
       this.logger.log(`Sending ${this.suggestionsCount} suggestions to channel...`);
     }
 
     for (const change of this.suggestionsMap.values()) {
       for (const suggestion of change) {
-        const fakeMessage = await message.channel.send('dummy'); // Send a fake message first, so it doesn't ping people
+        const fakeMessage = await getChannel(message).send('dummy'); // Send a fake message first, so it doesn't ping people
         await fakeMessage.edit(suggestion.change);
       }
     }
 
     if (this.suggestionsCount > 0 && !dryRun) {
       const pingRoles = this.config.get('ps2.pingRoles');
-      await message.channel.send(`🔔 <@&${pingRoles.join('>, <@&')}> Please review the above suggestions and make any necessary changes manually. To check again without pinging Leaders and Officers, run the \`/ps2-scan\` command with the \`dry-run\` flag set to \`true\`.`);
+      await getChannel(message).send(`🔔 <@&${pingRoles.join('>, <@&')}> Please review the above suggestions and make any necessary changes manually. To check again without pinging Leaders and Officers, run the \`/ps2-scan\` command with the \`dry-run\` flag set to \`true\`.`);
     }
 
     await message.edit(`ℹ️ There are currently ${outfitMembers.length} members on record.`);
@@ -168,7 +169,7 @@ export class PS2GameScanningService {
       if (!character) {
         const error = `Character data for **${member.characterName}** (${member.characterId}) did not exist when attempting to verify their membership. Skipping.`;
         this.logger.error(error);
-        await message.channel.send(`❌ ${error} Pinging <@${this.config.get('discord.devUserId')}>!`);
+        await getChannel(message).send(`❌ ${error} Pinging <@${this.config.get('discord.devUserId')}>!`);
         continue;
       }
 
@@ -245,7 +246,7 @@ export class PS2GameScanningService {
         await discordMember.roles.remove(rank.discordRoleId);
       }
       catch (err) {
-        await message.channel.send(`ERROR: Unable to remove role "${role.name}" from ${character.name.first} (${character.character_id}). Pinging <@${this.config.get('discord.devUserId')}>!`);
+        await getChannel(message).send(`ERROR: Unable to remove role "${role.name}" from ${character.name.first} (${character.character_id}). Pinging <@${this.config.get('discord.devUserId')}>!`);
       }
     }
 

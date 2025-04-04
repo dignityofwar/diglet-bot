@@ -6,6 +6,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { AlbionRegistrationService } from '../services/albion.registration.service';
 import { AlbionServer } from '../interfaces/albion.api.interfaces';
+import { getChannel } from '../../discord/discord.hacks';
 
 @Command({
   name: 'albion-register',
@@ -71,7 +72,7 @@ export class AlbionRegisterCommand {
       );
     }
     catch (err) {
-      await message.channel.send(`⛔️ **ERROR:** ${err.message}`);
+      await getChannel(message).send(`⛔️ **ERROR:** ${err.message}`);
       this.logger.error(err.message);
     }
 
