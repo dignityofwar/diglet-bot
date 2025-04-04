@@ -8,8 +8,7 @@ import { TestBootstrapper } from '../../test.bootstrapper';
 
 describe('GuildMemberEvents', () => {
   let service: GuildMemberEvents;
-  let activityRepository: EntityRepository<ActivityEntity>;
-  let mockActivityRepository: any;
+  let mockActivityRepository: EntityRepository<ActivityEntity>;
   const mockActivityEntity = {
     discordId: '123456',
     discordNickname: 'testuser',
@@ -29,7 +28,7 @@ describe('GuildMemberEvents', () => {
     }).compile();
 
     service = moduleRef.get<GuildMemberEvents>(GuildMemberEvents);
-    activityRepository = moduleRef.get<EntityRepository<ActivityEntity>>(getRepositoryToken(ActivityEntity));
+    mockActivityRepository = moduleRef.get<EntityRepository<ActivityEntity>>(getRepositoryToken(ActivityEntity));
 
     // Filled spies
     jest.spyOn(service['logger'], 'error');
@@ -73,13 +72,13 @@ describe('GuildMemberEvents', () => {
         discordNickname: 'TestUser',
       } as ActivityEntity;
 
-      activityRepository.findOne = jest.fn().mockResolvedValue(mockActivityRecord);
+      mockActivityRepository.findOne = jest.fn().mockResolvedValue(mockActivityRecord);
 
       await service.onGuildMemberRemove(mockMember);
 
-      expect(activityRepository.findOne).toHaveBeenCalledWith({ discordId: mockMember.id });
+      expect(mockActivityRepository.findOne).toHaveBeenCalledWith({ discordId: mockMember.id });
       expect(service['logger'].debug).toHaveBeenCalledWith(`Member "${mockMember.displayName}" has left the server.`);
-      expect(activityRepository.getEntityManager().removeAndFlush).toHaveBeenCalledWith(mockActivityRecord);
+      expect(mockActivityRepository.getEntityManager().removeAndFlush).toHaveBeenCalledWith(mockActivityRecord);
       expect(service['logger'].log).toHaveBeenCalledWith(`Removed activity record for leaver ${mockActivityRecord.discordNickname} (${mockActivityRecord.discordId})`);
     });
 
@@ -90,12 +89,12 @@ describe('GuildMemberEvents', () => {
         displayName: 'TestUser',
       } as GuildMember;
 
-      activityRepository.findOne = jest.fn().mockResolvedValue(null);
+      mockActivityRepository.findOne = jest.fn().mockResolvedValue(null);
 
       await service.onGuildMemberRemove(mockMember);
 
-      expect(activityRepository.findOne).toHaveBeenCalledWith({ discordId: '123' });
-      expect(activityRepository.getEntityManager().removeAndFlush).not.toHaveBeenCalled();
+      expect(mockActivityRepository.findOne).toHaveBeenCalledWith({ discordId: '123' });
+      expect(mockActivityRepository.getEntityManager().removeAndFlush).not.toHaveBeenCalled();
       expect(service['logger'].debug).not.toHaveBeenCalled();
       expect(service['logger'].log).not.toHaveBeenCalled();
       expect(service['logger'].warn).toHaveBeenCalledWith('No activity record was found for leaver TestUser (123), likely left immediately after joining.');
