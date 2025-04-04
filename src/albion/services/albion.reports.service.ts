@@ -8,6 +8,7 @@ import { AlbionUtilities } from '../utilities/albion.utilities';
 import { Message } from 'discord.js';
 import { AlbionApiService } from './albion.api.service';
 import { AlbionPlayerInterface, AlbionServer } from '../interfaces/albion.api.interfaces';
+import { getChannel } from '../../discord/discord.hacks';
 
 export class AlbionReportsService {
   private readonly logger = new Logger(AlbionReportsService.name);
@@ -105,32 +106,32 @@ export class AlbionReportsService {
     const regPercent = Math.round((metrics.totalRegistered / metrics.totalMembers) * 100);
     const unregPercent = Math.round((metrics.totalUnregistered / metrics.totalMembers) * 100);
 
-    await message.channel.send(`# Metrics \n🧑‍🤝‍🧑 Total Guild members: ${metrics.totalMembers}\n📝 Total registered: ${metrics.totalRegistered} (${regPercent}%)\nℹ️ Total unregistered: ${metrics.totalUnregistered} (${unregPercent}%)`);
+    await getChannel(message).send(`# Metrics \n🧑‍🤝‍🧑 Total Guild members: ${metrics.totalMembers}\n📝 Total registered: ${metrics.totalRegistered} (${regPercent}%)\nℹ️ Total unregistered: ${metrics.totalUnregistered} (${unregPercent}%)`);
 
-    await message.channel.send(`# Initiates (${membersReport.initiates.length})`);
+    await getChannel(message).send(`# Initiates (${membersReport.initiates.length})`);
     if (membersReport.initiates.length > 0) {
       await this.bufferMessages(membersReport.initiates, message);
     }
     else {
-      await message.channel.send('No Initiates found!');
+      await getChannel(message).send('No Initiates found!');
     }
-    await message.channel.send(`# Squires (${membersReport.squires.length})`);
+    await getChannel(message).send(`# Squires (${membersReport.squires.length})`);
     if (membersReport.squires.length > 0) {
       await this.bufferMessages(membersReport.squires, message);
     }
     else {
-      await message.channel.send('No Squires found!');
+      await getChannel(message).send('No Squires found!');
     }
-    await message.channel.send(`# Leadership (${membersReport.leadership.length})`);
+    await getChannel(message).send(`# Leadership (${membersReport.leadership.length})`);
     if (membersReport.leadership.length > 0) {
       await this.bufferMessages(membersReport.leadership, message);
     }
     else {
-      await message.channel.send('No Leadership members found!');
+      await getChannel(message).send('No Leadership members found!');
     }
 
     if (membersReport.errors.length > 0) {
-      await message.channel.send(`# Errors\n${membersReport.errors.join('\n')}`);
+      await getChannel(message).send(`# Errors\n${membersReport.errors.join('\n')}`);
     }
 
     await message.delete();
@@ -177,16 +178,16 @@ export class AlbionReportsService {
       }
     }
 
-    await message.channel.send('# Squire Candidates\nCandidates based on Initiates who have been registered for 14 days or more.');
+    await getChannel(message).send('# Squire Candidates\nCandidates based on Initiates who have been registered for 14 days or more.');
     if (membersReport.candidates.length > 0) {
       await this.bufferMessages(membersReport.candidates, message);
     }
     else {
-      await message.channel.send('No Candidates found!');
+      await getChannel(message).send('No Candidates found!');
     }
 
     if (membersReport.errors.length > 0) {
-      await message.channel.send('# Errors');
+      await getChannel(message).send('# Errors');
       await this.bufferMessages(membersReport.errors, message);
     }
     await message.delete();
@@ -212,7 +213,7 @@ export class AlbionReportsService {
 
     for (const bufferedMessage of messagesInBuffer) {
       this.logger.debug(`Sending buffered message: ${bufferedMessage}`);
-      const sentMessage = await message.channel.send('---');
+      const sentMessage = await getChannel(message).send('---');
       await sentMessage.edit(bufferedMessage);
     }
   }

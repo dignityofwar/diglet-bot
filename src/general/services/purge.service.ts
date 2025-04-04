@@ -6,6 +6,7 @@ import { EntityRepository } from '@mikro-orm/core';
 import { InjectRepository } from '@mikro-orm/nestjs';
 import { ActivityService } from './activity.service';
 import { ConfigService } from '@nestjs/config';
+import { getChannel } from '../../discord/discord.hacks';
 
 export interface PurgableMemberList {
   purgableMembers: Collection<string, GuildMember>;
@@ -84,7 +85,7 @@ export class PurgeService {
     dryRun = true,
     interactionMember: GuildMember | null = null
   ): Promise<void> {
-    const statusMessage = await originMessage.channel.send('Snapping fingers...');
+    const statusMessage = await getChannel(originMessage).send('Snapping fingers...');
 
     let purgables: PurgableMemberList;
 
@@ -101,14 +102,14 @@ export class PurgeService {
     if (purgables.purgableMembers.size === 0) {
       const string = '## ✅ All members are active and onboarded.\nThey have been saved from Thanos, this time...';
       this.logger.log(string);
-      await originMessage.channel.send(string);
+      await getChannel(originMessage).send(string);
       return;
     }
 
     await statusMessage.edit(`Found ${purgables.purgableMembers.size} members who have disobeyed Thanos...\nI don't feel too good Mr Stark...`);
 
     // I don't feel too good Mr Stark...
-    await originMessage.channel.send('https://media2.giphy.com/media/XzkGfRsUweB9ouLEsE/giphy.gif');
+    await getChannel(originMessage).send('https://media2.giphy.com/media/XzkGfRsUweB9ouLEsE/giphy.gif');
 
     // Let the purge commence...
     try {
@@ -126,13 +127,13 @@ export class PurgeService {
     }
 
     // Thanos is pleased
-    await originMessage.channel.send('https://media1.tenor.com/m/g0oFjHy6W1cAAAAC/thanos-smile.gif');
+    await getChannel(originMessage).send('https://media1.tenor.com/m/g0oFjHy6W1cAAAAC/thanos-smile.gif');
 
-    await originMessage.channel.send('## ✅ Purge complete.');
+    await getChannel(originMessage).send('## ✅ Purge complete.');
     await this.generateReport(purgables, originMessage);
 
     if (interactionMember) {
-      await originMessage.channel.send(`Thanos thanks you for your service, <@${interactionMember.user.id}>.`);
+      await getChannel(originMessage).send(`Thanos thanks you for your service, <@${interactionMember.user.id}>.`);
     }
   }
 
@@ -163,7 +164,7 @@ export class PurgeService {
     }
 
     // 2. Get a list of active members and hydrate their cache.
-    const statusMessage = await message.channel.send('Collating Active Discord Members...');
+    const statusMessage = await getChannel(message).send('Collating Active Discord Members...');
     // Check the active members, and while we're at it remove any that are no longer on the server.
     const activeMembers = await this.resolveActiveMembers(message, dryRun);
 
@@ -176,7 +177,7 @@ export class PurgeService {
     catch (err) {
       const string = `Error fetching Discord server members. Err: ${err.message}`;
       this.logger.error(string);
-      await message.channel.send(string);
+      await getChannel(message).send(string);
       return;
     }
     this.logger.log(`${members.size} members found`);
@@ -199,7 +200,7 @@ export class PurgeService {
       }
       catch (err) {
         const string = `Error refreshing member cache. Err: ${err.message}`;
-        await message.channel.send(string);
+        await getChannel(message).send(string);
         this.logger.error(string);
       }
 
@@ -254,7 +255,7 @@ export class PurgeService {
       lastActivity: { $gt: thresholdDate },
     });
 
-    const statusMessage = await message.channel.send(`Getting active Discord members [0/${activeRecords.length}] (0%)...`);
+    const statusMessage = await getChannel(message).send(`Getting active Discord members [0/${activeRecords.length}] (0%)...`);
 
     for (const activeMember of activeRecords) {
       count++;
@@ -282,7 +283,7 @@ export class PurgeService {
           const devUserId = this.config.get('discord.devUserId');
           const error = `Error removing activity record for leaver ${activeMember.discordNickname} (${activeMember.discordId}). Error: ${err.message}`;
           this.logger.error(error);
-          await message.channel.send(`<@${devUserId}> ${error}`);
+          await getChannel(message).send(`<@${devUserId}> ${error}`);
         }
         continue;
       }
@@ -294,7 +295,7 @@ export class PurgeService {
 
     const string = `Detected **${activeMembers.size}** active members!`;
     this.logger.log(string);
-    await message.channel.send(string);
+    await getChannel(message).send(string);
     await statusMessage.delete();
 
     return activeMembers;
@@ -333,8 +334,8 @@ export class PurgeService {
     purgableMembers: Collection<string, GuildMember>,
     dryRun = true
   ): Promise<void> {
-    await message.channel.send(`Kicking ${purgableMembers.size} purgable members...`);
-    let lastKickedMessage = await message.channel.send('Kicking started...');
+    await getChannel(message).send(`Kicking ${purgableMembers.size} purgable members...`);
+    let lastKickedMessage = await getChannel(message).send('Kicking started...');
 
     this.logger.log(`Kicking ${purgableMembers.size} purgable members...`);
     let count = 0;
@@ -372,18 +373,18 @@ DIG Community Staff`;
       if (count % 5 === 0 || count === total) {
         const percent = Math.floor((count / total) * 100);
         const progress = `[${count}/${total}] (${percent}%)`;
-        await message.channel.send(lastKickedString);
+        await getChannel(message).send(lastKickedString);
         lastKickedString = '';
 
         await this.discordService.deleteMessage(lastKickedMessage); // Deletes last message, so we can re-new it and bring progress to the bottom
-        lastKickedMessage = await message.channel.send(`${prefix}🫰 Kicking progress: ${progress}`);
+        lastKickedMessage = await getChannel(message).send(`${prefix}🫰 Kicking progress: ${progress}`);
 
         this.logger.log(`Kicking progress: ${progress}`);
       }
     }
 
     this.logger.log(`${purgableMembers.size} members purged.`);
-    await message.channel.send(`${prefix}**${purgableMembers.size}** members purged.`);
+    await getChannel(message).send(`${prefix}**${purgableMembers.size}** members purged.`);
   }
 
   sortMembers(members: Collection<string, GuildMember>): Collection<string, GuildMember> {
@@ -416,7 +417,7 @@ DIG Community Staff`;
         batch.push(`- [${game.toUpperCase()}] <@${member.user.id}> / ${name}, joined <t:${Math.floor(member.joinedTimestamp / 1000)}:R>\n`);
         gameMemberIds.push(member.user.id);
       });
-      await originMessage.channel.send(`### ${game.toUpperCase()}`);
+      await getChannel(originMessage).send(`### ${game.toUpperCase()}`);
 
       await this.discordService.batchSend(batch, originMessage);
     }
@@ -431,7 +432,7 @@ DIG Community Staff`;
       }
     });
 
-    await originMessage.channel.send('### No game role');
+    await getChannel(originMessage).send('### No game role');
 
     // Go through the batches by groups of 20 and spit out the members
     await this.discordService.batchSend(batch, originMessage);
@@ -461,7 +462,7 @@ Note, these numbers will not add up to total numbers, as a member can be in mult
 - Total Albion purged: **${purgables.purgableByGame.albion.size}**
 - Total Albion Registered purged: **${purgables.purgableByGame.albionRegistered.size}**`;
 
-    await originMessage.channel.send(purgeReport);
-    await originMessage.channel.send(gameStatsReport);
+    await getChannel(originMessage).send(purgeReport);
+    await getChannel(originMessage).send(gameStatsReport);
   }
 }

@@ -294,26 +294,26 @@ describe('AlbionApiService', () => {
     const guildId = 'complicatedGuildId';
     const mockMembers: AlbionPlayerInterface[] = [
       {
-        'Id': Math.random().toString(36).substr(2, 10),
-        'Name': Math.random().toString(36).substr(2, 10),
+        'Id': Math.random().toString(36).substring(2, 10),
+        'Name': Math.random().toString(36).substring(2, 10),
         'GuildId': 'btPZRoLvTUqLC7URnDRgSQ',
         'GuildName': 'DIG - Dignity of War',
       },
       {
-        'Id': Math.random().toString(36).substr(2, 10),
-        'Name': Math.random().toString(36).substr(2, 10),
+        'Id': Math.random().toString(36).substring(2, 10),
+        'Name': Math.random().toString(36).substring(2, 10),
         'GuildId': 'btPZRoLvTUqLC7URnDRgSQ',
         'GuildName': 'DIG - Dignity of War',
       },
       {
-        'Id': Math.random().toString(36).substr(2, 10),
-        'Name': Math.random().toString(36).substr(2, 10),
+        'Id': Math.random().toString(36).substring(2, 10),
+        'Name': Math.random().toString(36).substring(2, 10),
         'GuildId': 'btPZRoLvTUqLC7URnDRgSQ',
         'GuildName': 'DIG - Dignity of War',
       },
       {
-        'Id': Math.random().toString(36).substr(2, 10),
-        'Name': Math.random().toString(36).substr(2, 10),
+        'Id': Math.random().toString(36).substring(2, 10),
+        'Name': Math.random().toString(36).substring(2, 10),
         'GuildId': 'btPZRoLvTUqLC7URnDRgSQ',
         'GuildName': 'DIG - Dignity of War',
       },

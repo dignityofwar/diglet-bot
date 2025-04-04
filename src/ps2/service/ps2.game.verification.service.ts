@@ -3,7 +3,6 @@ import { CensusWebsocketService } from './census.websocket.service';
 import { ConfigService } from '@nestjs/config';
 import { Channel, GuildMember, Message, TextChannel } from 'discord.js';
 import { CensusCharacterWithOutfitInterface } from '../interfaces/CensusCharacterResponseInterface';
-import { EventBusService } from './event.bus.service';
 import { Death } from 'ps2census';
 import { EventConstants } from '../constants/EventConstants';
 import { PS2VerificationAttemptEntity } from '../../database/entities/ps2.verification.attempt.entity';
@@ -11,6 +10,8 @@ import { InjectRepository } from '@mikro-orm/nestjs';
 import { EntityRepository } from '@mikro-orm/core';
 import { PS2MembersEntity } from '../../database/entities/ps2.members.entity';
 import { DiscordService } from '../../discord/discord.service';
+import EventEmitter from 'events';
+import { getChannel } from '../../discord/discord.hacks';
 
 // This service exists to subscribe to the PS2 Census websocket service and listen for particular events concerning characters.
 // A long promise will be created, waiting for the character to do the actions performed.
@@ -32,7 +33,7 @@ export class PS2GameVerificationService implements OnApplicationBootstrap {
     private readonly discordService: DiscordService,
     private readonly config: ConfigService,
     private readonly censusWebsocketService: CensusWebsocketService,
-    private readonly eventBus: EventBusService,
+    private readonly eventBus: EventEmitter,
     @InjectRepository(PS2VerificationAttemptEntity) private readonly ps2VerificationAttemptRepository: EntityRepository<PS2VerificationAttemptEntity>,
     @InjectRepository(PS2MembersEntity) private readonly ps2MembersRepository: EntityRepository<PS2MembersEntity>
   ) {
@@ -260,11 +261,11 @@ export class PS2GameVerificationService implements OnApplicationBootstrap {
       throw new Error('Message vanished, cannot proceed.');
     }
 
-    await message.channel.sendTyping();
+    await getChannel(message).sendTyping();
     await this.editMessage(`## Verification status for \`${character.name.first}\`: ❌ __FAILED__\n\nReason: ${failureReason}`, message);
 
     if (isError) {
-      await message.channel.send(failureReason);
+      await getChannel(message).send(failureReason);
     }
 
     if (unwatch) {
@@ -276,13 +277,13 @@ export class PS2GameVerificationService implements OnApplicationBootstrap {
       }
       catch (err) {
         // Fucked
-        await message.channel.send(`Failed to remove the verification attempt from the database. Pinging <@${this.config.get('discord.devUserId')}>!`);
+        await getChannel(message).send(`Failed to remove the verification attempt from the database. Error: "${err.message}". Pinging <@${this.config.get('discord.devUserId')}>!`);
         return;
       }
     }
 
     if (guildMember) {
-      await message.channel.send(`😔 <@${guildMember.id}> your in game character "${character.name.first}" could not be verified! Please read the reason as to why above. Feel free to contact the PS2 Leaders for assistance.`);
+      await getChannel(message).send(`😔 <@${guildMember.id}> your in game character "${character.name.first}" could not be verified! Please read the reason as to why above. Feel free to contact the PS2 Leaders for assistance.`);
     }
   }
 
@@ -295,7 +296,7 @@ export class PS2GameVerificationService implements OnApplicationBootstrap {
       throw new Error('Message vanished, cannot proceed');
     }
 
-    await message.channel.sendTyping();
+    await getChannel(message).sendTyping();
     const guildMember = this.guildMembersMap.get(character.character_id);
 
     await this.applyDiscordChanges(character, guildMember);
@@ -328,7 +329,7 @@ export class PS2GameVerificationService implements OnApplicationBootstrap {
     await this.editMessage(`## Verification status for \`${character.name.first}\`: ✅ __Successful__!`, message);
 
     await this.unwatch(character);
-    await message.channel.send(`### 🎉 <@${guildMember.id}> your in game character **${character.name.first}** has been successfully verified! Welcome to the [DIG] outfit!
+    await getChannel(message).send(`### 🎉 <@${guildMember.id}> your in game character **${character.name.first}** has been successfully verified! Welcome to the [DIG] outfit!
 🔓 You can now see our private section <#${this.config.get('discord.channels.ps2Private')}>. Should you leave the outfit, you will automatically lose this access.
 ️📝 Please note your Discord server nickname (not your username) has been automatically changed to match your character's name. You are free to change it again, but please ensure it is still a resemblance of your character name.
 ===================`);
@@ -354,7 +355,7 @@ export class PS2GameVerificationService implements OnApplicationBootstrap {
       }
     }
     catch (err) {
-      return await this.handleFailedVerification(character, `Unable to add/remove the PS2/Verified role to user! Pinging <@${this.config.get('discord.devUserId')}>!`, guildMember, true);
+      return await this.handleFailedVerification(character, `Unable to add/remove the PS2/Verified role to user! Error: "${err.message}". Pinging <@${this.config.get('discord.devUserId')}>!`, guildMember, true);
     }
 
     // Edit their nickname to match their in game
@@ -364,7 +365,7 @@ export class PS2GameVerificationService implements OnApplicationBootstrap {
       }
     }
     catch (err) {
-      await this.sendMessage(`Unable to set nickname for user \`${guildMember.nickname || guildMember.displayName}\`. If you're an admin or staff this won't work as the bot has no power over you! Pinging <@${this.config.get('discord.devUserId')}>!`);
+      await this.sendMessage(`Unable to set nickname for user \`${guildMember.nickname || guildMember.displayName}\`. If you're an admin or staff this won't work as the bot has no power over you!\nError:"${err.message}"\nPinging <@${this.config.get('discord.devUserId')}>!`);
     }
   }
 
@@ -401,7 +402,7 @@ export class PS2GameVerificationService implements OnApplicationBootstrap {
       }
       catch (err) {
         this.logger.error(`Failed to edit message! ${err.message}`);
-        await message.channel.send(`Failed to edit message! Content would have been:
+        await getChannel(message).send(`Failed to edit message! Content would have been:
         \n${content}
         \nPinging<@${this.config.get('discord.devUserId')}>`);
       }
@@ -417,7 +418,7 @@ export class PS2GameVerificationService implements OnApplicationBootstrap {
       }
       catch (err) {
         this.logger.error(`Failed to delete message! ${err.message}`);
-        await message.channel.send(`Failed to delete message! Error received: "${err.message}"
+        await getChannel(message).send(`Failed to delete message! Error received: "${err.message}"
         \nMessage details:
         \n ${JSON.stringify(message)}
         \n Pinging <@${this.config.get('discord.devUserId')}>`);

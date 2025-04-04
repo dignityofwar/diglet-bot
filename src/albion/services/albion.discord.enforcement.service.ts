@@ -7,6 +7,7 @@ import { AlbionApiService } from './albion.api.service';
 import { ConfigService } from '@nestjs/config';
 import { InjectRepository } from '@mikro-orm/nestjs';
 import { EntityRepository } from '@mikro-orm/core';
+import { getChannel } from '../../discord/discord.hacks';
 
 @Injectable()
 export class AlbionDiscordEnforcementService {
@@ -22,7 +23,7 @@ export class AlbionDiscordEnforcementService {
   ) {
   }
   async startScan(message: Message, dryRun = false) {
-    const statusMessage = await message.channel.send('## Starting Discord enforcement scan...');
+    const statusMessage = await getChannel(message).send('## Starting Discord enforcement scan...');
 
     // First, get all the DIG guild members and parse them into an array
     const guildMembers = await this.albionApiService.getAllGuildMembers(this.config.get('albion.guildIdUS'), AlbionServer.AMERICAS);
@@ -48,7 +49,7 @@ export class AlbionDiscordEnforcementService {
 
       // If not, add them to the guild members table
       if (!foundGuildMember && !dryRun) {
-        await this.albionGuildMembersRepository.persistAndFlush(new AlbionGuildMembersEntity({
+        await this.albionGuildMembersRepository.getEntityManager().persistAndFlush(new AlbionGuildMembersEntity({
           characterId: guildMember.Id,
           characterName: guildMember.Name,
           registered: !!memberIsRegistered,
@@ -57,7 +58,7 @@ export class AlbionDiscordEnforcementService {
       }
     }
 
-    await message.channel.send(`ℹ️ **${unregisteredMembers.length}** unregistered members out of total ${guildMembersLength} guild members.`);
+    await getChannel(message).send(`ℹ️ **${unregisteredMembers.length}** unregistered members out of total ${guildMembersLength} guild members.`);
 
     // 1. > 10 days boot warning
     // Find all guild members who are not registered and were first seen > 10 days ago
@@ -74,10 +75,10 @@ export class AlbionDiscordEnforcementService {
     }
     else {
       // Loop the bootable members and spit put their names in Discord
-      await message.channel.send(`## 🦵 ${bootableMembers.length} members have reached their ${this.bootDays} day kick limit!`);
+      await getChannel(message).send(`## 🦵 ${bootableMembers.length} members have reached their ${this.bootDays} day kick limit!`);
 
       for (const bootableMember of bootableMembers) {
-        await message.channel.send(`- ‼️ **${bootableMember.characterName}** needs the boot!`);
+        await getChannel(message).send(`- ‼️ **${bootableMember.characterName}** needs the boot!`);
       }
     }
 
@@ -98,15 +99,15 @@ export class AlbionDiscordEnforcementService {
       this.logger.debug('No 5 day warning members found!');
     }
     else {
-      await message.channel.send(`## 📧 ${fiveDayWarningMembers.length} members have reached their ${(this.bootDays - 5)} day warning limit!\nCheck Scriptorium for the template.`);
+      await getChannel(message).send(`## 📧 ${fiveDayWarningMembers.length} members have reached their ${(this.bootDays - 5)} day warning limit!\nCheck Scriptorium for the template.`);
 
       for (const fiveDayWarningMember of fiveDayWarningMembers) {
-        await message.channel.send(`- ‼️ **${fiveDayWarningMember.characterName}** needs a warning!`);
+        await getChannel(message).send(`- ‼️ **${fiveDayWarningMember.characterName}** needs a warning!`);
 
         // Mark them as warned
         if (!dryRun) {
           fiveDayWarningMember.warned = true;
-          await this.albionGuildMembersRepository.persistAndFlush(fiveDayWarningMember);
+          await this.albionGuildMembersRepository.getEntityManager().persistAndFlush(fiveDayWarningMember);
           this.logger.debug(`Marked ${fiveDayWarningMember.characterName} as warned!`);
         }
       }
@@ -114,7 +115,7 @@ export class AlbionDiscordEnforcementService {
 
     // 3. Members who are running out of time...
     if (warnedMembers && warnedMembers.length > 0) {
-      await message.channel.send(`### ⏰ Clock's ticking for ${warnedMembers.length} warned member(s)!`);
+      await getChannel(message).send(`### ⏰ Clock's ticking for ${warnedMembers.length} warned member(s)!`);
 
       for (const warnedMember of warnedMembers) {
         // Get their final kick date by taking their createdAt date and adding 10 days
@@ -124,7 +125,7 @@ export class AlbionDiscordEnforcementService {
         // Get unix for DC time code
         const unix = Math.floor(finalKickDate.getTime() / 1000);
 
-        await message.channel.send(`- **${warnedMember.characterName}** will be booted on: <t:${unix}:D> (<t:${unix}:R>)`);
+        await getChannel(message).send(`- **${warnedMember.characterName}** will be booted on: <t:${unix}:D> (<t:${unix}:R>)`);
       }
     }
 
@@ -133,7 +134,7 @@ export class AlbionDiscordEnforcementService {
       && warnedMembers
       && fiveDayWarningMembers
     ) {
-      await message.channel.send('✅ No members require kicking, warning or are close to being booted.');
+      await getChannel(message).send('✅ No members require kicking, warning or are close to being booted.');
     }
     if (bootableMembers.length > 0 || fiveDayWarningMembers.length > 0) {
       this.actionRequired = true;

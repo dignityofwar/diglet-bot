@@ -7,12 +7,12 @@ import { CensusCharacterWithOutfitInterface } from '../interfaces/CensusCharacte
 import { PS2GameVerificationService } from './ps2.game.verification.service';
 import { DiscordService } from '../../discord/discord.service';
 import { CensusWebsocketService } from './census.websocket.service';
-import { EventBusService } from './event.bus.service';
 import { PS2VerificationAttemptEntity } from '../../database/entities/ps2.verification.attempt.entity';
 import { PS2MembersEntity } from '../../database/entities/ps2.members.entity';
 import { EntityManager, EntityRepository } from '@mikro-orm/core';
 import { getRepositoryToken } from '@mikro-orm/nestjs';
 import { TestBootstrapper } from '../../test.bootstrapper';
+import EventEmitter from 'events';
 
 const verifyChannelId = TestBootstrapper.mockConfig.discord.channels.ps2Verify;
 const mockCharacterId = '5428010618035323201';
@@ -34,8 +34,6 @@ describe('PS2GameVerificationService', () => {
   let editMessageSpy;
 
   beforeEach(async () => {
-    TestBootstrapper.mockORM();
-
     const mockPS2VerificationAttemptRepository = TestBootstrapper.getMockRepositoryInjected({});
     const mockPS2MembersRepository = TestBootstrapper.getMockRepositoryInjected({});
 
@@ -64,11 +62,7 @@ describe('PS2GameVerificationService', () => {
           useValue: {
           },
         },
-        {
-          provide: EventBusService,
-          useValue: {
-          },
-        },
+        EventEmitter,
         {
           provide: getRepositoryToken(PS2VerificationAttemptEntity),
           useValue: mockPS2VerificationAttemptRepository,

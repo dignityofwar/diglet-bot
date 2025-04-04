@@ -29,7 +29,6 @@ describe('AlbionRegistrationService', () => {
   let contactMessage: string;
 
   beforeEach(async () => {
-    TestBootstrapper.mockORM();
     mockAlbionRegistrationsRepository = TestBootstrapper.getMockEntityRepo();
     mockCharacter = TestBootstrapper.getMockAlbionCharacter(TestBootstrapper.mockConfig.albion.guildIdUS) as any;
     mockDiscordUser = TestBootstrapper.getMockDiscordUser();
@@ -415,7 +414,7 @@ describe('AlbionRegistrationService', () => {
         TestBootstrapper.getMockDiscordTextChannel().id,
       )).resolves.toBe(undefined);
 
-      const message = `⚠️ Unable to set your nickname. If you're Staff this won't work as the bot has no power over you! Pinging <@${mockDevUserId}>!`;
+      const message = `⚠️ Unable to set your nickname. If you're Staff this won't work as the bot has no power over you!\nError: "Unable to set nickname".\nPinging <@${mockDevUserId}>!`;
       expect(mockChannel.send).toBeCalledWith(message);
       // Expect it to log to error log
       expect(service['logger'].error).toHaveBeenCalledWith(message);

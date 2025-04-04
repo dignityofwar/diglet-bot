@@ -10,6 +10,7 @@ import { AlbionRoleMapInterface } from '../../config/albion.app.config';
 import { AlbionUtilities } from '../utilities/albion.utilities';
 import { AlbionGuildMembersEntity } from '../../database/entities/albion.guildmembers.entity';
 import { AlbionDiscordEnforcementService } from './albion.discord.enforcement.service';
+import { getChannel } from '../../discord/discord.hacks';
 
 export interface RoleInconsistencyResult {
   id: string,
@@ -48,7 +49,7 @@ export class AlbionScanningService {
     const guildMembers: AlbionRegistrationsEntity[] = await this.albionRegistrationsRepository.find({ guildId });
     const length = guildMembers.length;
 
-    await message.channel.send(`${emoji} ℹ️ There are currently ${guildMembers.length} registered members on record.`);
+    await getChannel(message).send(`${emoji} ℹ️ There are currently ${guildMembers.length} registered members on record.`);
 
     let characters: Array<AlbionPlayerInterface | null>;
 
@@ -60,7 +61,7 @@ export class AlbionScanningService {
     }
     catch (err) {
       await message.edit(`## ${emoji} ❌ An error occurred while gathering data from the API!`);
-      await message.channel.send(`Error: ${err.message}`);
+      await getChannel(message).send(`Error: ${err.message}`);
       return;
     }
 
@@ -81,24 +82,24 @@ export class AlbionScanningService {
       if (await this.roleInconsistencies(message, dryRun, server)) actionRequired = true;
 
       await message.edit(`# ${emoji} Task: [5/5] Discord enforcement scan...`);
-      await message.channel.send(`${emoji} DISCORD ENFORCEMENT SCAN DISABLED!`);
+      await getChannel(message).send(`${emoji} DISCORD ENFORCEMENT SCAN DISABLED!`);
       // if (await this.discordEnforcementScan(message, dryRun, server)) actionRequired = true;
     }
     catch (err) {
       await message.edit('## 🇺🇸 ❌ An error occurred while scanning!');
-      await message.channel.send(`Error: ${err.message}`);
+      await getChannel(message).send(`Error: ${err.message}`);
     }
 
     // All done, clean up
-    await message.channel.send(`## ${emoji} Scan complete!`);
+    await getChannel(message).send(`## ${emoji} Scan complete!`);
     // If any of the tasks flagged for action, tell them now.
     if (actionRequired && !dryRun) {
       const configKey = server === AlbionServer.AMERICAS ? 'albion.pingLeaderRolesUS' : 'albion.pingLeaderRoles';
       const scanPingRoles = this.config.get(configKey);
       const text = `🔔 <@&${scanPingRoles.join('>, <@&')}> Please review the above actions marked with (‼️) and make any necessary changes manually. To scan again without pinging, run the \`/albion-scan\` command with the \`dry-run\` flag set to \`true\`.`;
-      await message.channel.send(text);
+      await getChannel(message).send(text);
     }
-    await message.channel.send('------------------------------------------');
+    await getChannel(message).send('------------------------------------------');
 
     await message.delete();
   }
@@ -114,10 +115,10 @@ export class AlbionScanningService {
     tries++;
     const length = guildMembers.length;
     if (tries > 3) {
-      await message.channel.send(`## ❌ An error occurred while gathering data for ${length} characters! Giving up after 3 tries! Pinging <@${this.config.get('discord.devUserId')}>!`);
+      await getChannel(message).send(`## ❌ An error occurred while gathering data for ${length} characters! Giving up after 3 tries! Pinging <@${this.config.get('discord.devUserId')}>!`);
       return null;
     }
-    const statusMessage = await message.channel.send(`${emoji} Gathering ${length} characters from the ${server} ALB API... (attempt #${tries})`);
+    const statusMessage = await getChannel(message).send(`${emoji} Gathering ${length} characters from the ${server} ALB API... (attempt #${tries})`);
 
     for (const member of guildMembers) {
       characterPromises.push(this.albionApiService.getCharacterById(member.characterId, server));
@@ -129,7 +130,7 @@ export class AlbionScanningService {
     }
     catch (err) {
       await statusMessage.delete();
-      const tempMessage = await message.channel.send(`## ⚠️ Couldn't gather characters from ${server} ALB API. Retrying in 10s...`);
+      const tempMessage = await getChannel(message).send(`## ⚠️ Couldn't gather characters from ${server} ALB API.\nError: "${err.message}".\nRetrying in 10s...`);
       await new Promise(resolve => setTimeout(resolve, 10000));
       await tempMessage.delete();
       return this.gatherCharacters(guildMembers, message, tries, server);
@@ -147,6 +148,7 @@ export class AlbionScanningService {
     // Save all the characters to a map we can easily pick out later via character ID
     const charactersMap = new Map<string, AlbionPlayerInterface>();
     const leavers: string[] = [];
+
     for (const character of characters) {
       charactersMap.set(character.Id, character);
     }
@@ -154,7 +156,7 @@ export class AlbionScanningService {
     // Get the registered members from the database
     const registeredMembers: AlbionRegistrationsEntity[] = await this.albionRegistrationsRepository.find({ guildId });
 
-    const statusMessage = await message.channel.send(`### ${emoji} Scanned 0/${registeredMembers.length} registered members...`);
+    const statusMessage = await getChannel(message).send(`### ${emoji} Scanned 0/${registeredMembers.length} registered members...`);
 
     let count = 0;
     let actionRequired = false;
@@ -195,6 +197,7 @@ export class AlbionScanningService {
       try {
         discordMember = await message.guild.members.fetch({ user: member.discordId, force: true });
       }
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       catch (err) {
         // No discord member means they've left the server. Flag them as removed and proceed with guild check.
         this.logger.log(`User ${character.Name} has left the Discord server`);
@@ -225,10 +228,10 @@ export class AlbionScanningService {
 
       // Delete their registration record
       try {
-        await this.albionRegistrationsRepository.removeAndFlush(member);
+        await this.albionRegistrationsRepository.getEntityManager().removeAndFlush(member);
       }
       catch (err) {
-        await message.channel.send(`ERROR: Unable to remove Albion Character "${character.Name}" (${character.Id}) from registration database! Pinging <@${this.config.get('discord.devUserId')}>!`);
+        await getChannel(message).send(`ERROR: Unable to remove Albion Character "${character.Name}" (${character.Id}) from registration database!\nError: "${err.message}".\nPinging <@${this.config.get('discord.devUserId')}>!`);
       }
 
       // If Discord member does not exist, there are no discord actions to take.
@@ -254,7 +257,7 @@ export class AlbionScanningService {
             await discordMember.roles.remove(roleMap.discordRoleId);
           }
           catch (err) {
-            await message.channel.send(`ERROR: Unable to remove role "${role.name}" from ${character.Name} (${character.Id}). Err: "${err.message}". Pinging <@${this.config.get('discord.devUserId')}>!`);
+            await getChannel(message).send(`ERROR: Unable to remove role "${role.name}" from ${character.Name} (${character.Id}). Err: "${err.message}". Pinging <@${this.config.get('discord.devUserId')}>!`);
           }
         }
       }
@@ -265,16 +268,16 @@ export class AlbionScanningService {
     await statusMessage.delete();
 
     if (leavers.length === 0) {
-      await message.channel.send(`${emoji} ✅ No leavers were detected.`);
+      await getChannel(message).send(`${emoji} ✅ No leavers were detected.`);
       this.logger.log('No leavers were detected.');
       return actionRequired;
     }
 
     this.logger.log(`Sending ${leavers.length} changes to channel...`);
-    await message.channel.send(`## ${emoji} 🚪 ${leavers.length} leavers detected!`);
+    await getChannel(message).send(`## ${emoji} 🚪 ${leavers.length} leavers detected!`);
 
     for (const leaver of leavers) {
-      await message.channel.send(leaver); // Send a fake message first, so it doesn't ping people
+      await getChannel(message).send(leaver); // Send a fake message first, so it doesn't ping people
     }
 
     return actionRequired;
@@ -294,8 +297,8 @@ export class AlbionScanningService {
     const roleMapServer = roleMap.filter((role) => role.server === server);
     const roleMapLength = roleMapServer.length;
 
-    const scanMessage = await message.channel.send(`### ${emoji} Scanning ${roleMapLength} Discord roles for members who are falsely registered...`);
-    const scanCountMessage = await message.channel.send('.');
+    const scanMessage = await getChannel(message).send(`### ${emoji} Scanning ${roleMapLength} Discord roles for members who are falsely registered...`);
+    const scanCountMessage = await getChannel(message).send('.');
 
     // Get the registered members from the database again as they may have changed
     const albGuildMembers: AlbionRegistrationsEntity[] = await this.albionRegistrationsRepository.find({ guildId });
@@ -370,7 +373,7 @@ export class AlbionScanningService {
                 }
                 catch (err) {
                   this.logger.error(`Reverse Role Scan: Error removing role ${role.name} from user ${discordMemberFresh.id}! Err: ${err.message}`);
-                  await message.channel.send(`Error removing role "${role.name}" from user ${discordMemberFresh.displayName}! Err: ${err.message}. Pinging <@${this.config.get('discord.devUserId')}>!`);
+                  await getChannel(message).send(`Error removing role "${role.name}" from user ${discordMemberFresh.displayName}! Err: ${err.message}. Pinging <@${this.config.get('discord.devUserId')}>!`);
                 }
               }
               else {
@@ -390,15 +393,15 @@ export class AlbionScanningService {
 
     // Display list of invalid users
     if (errorsDetected.length > 0) {
-      await message.channel.send(`## ${emoji} 🚨 ${errorsDetected.length} errors detected via Reverse Role Scan!\nAffected users have been **automatically** stripped of their incorrect roles.`);
+      await getChannel(message).send(`## ${emoji} 🚨 ${errorsDetected.length} errors detected via Reverse Role Scan!\nAffected users have been **automatically** stripped of their incorrect roles.`);
 
       for (const invalidUser of errorsDetected) {
-        const lineMessage = await message.channel.send('.');
+        const lineMessage = await getChannel(message).send('.');
         await lineMessage.edit(invalidUser);
       }
     }
     else {
-      await message.channel.send(`${emoji} ✅ No invalid users were detected via Reverse Role Scan.`);
+      await getChannel(message).send(`${emoji} ✅ No invalid users were detected via Reverse Role Scan.`);
     }
   }
 
@@ -415,7 +418,7 @@ export class AlbionScanningService {
     // Refresh GuildMembers as some may have been booted / left
     const guildMembers: AlbionRegistrationsEntity[] = await this.albionRegistrationsRepository.find({ guildId });
 
-    const scanCountMessage = await message.channel.send(`## ${emoji} Scanning ${guildMembers.length} members for role inconsistencies... [0/${guildMembers.length}]`);
+    const scanCountMessage = await getChannel(message).send(`## ${emoji} Scanning ${guildMembers.length} members for role inconsistencies... [0/${guildMembers.length}]`);
     let count = 0;
 
     for (const member of guildMembers) {
@@ -429,6 +432,7 @@ export class AlbionScanningService {
       try {
         discordMember = await message.guild.members.fetch({ user: member.discordId, force: true });
       }
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       catch (err) {
         this.logger.warn(`Unable to fetch Discord member for ${member.characterName}! Assuming they've left the server, skipping suggestions for them.`);
         continue;
@@ -450,18 +454,18 @@ export class AlbionScanningService {
     await scanCountMessage.delete();
 
     if (suggestions.length === 0) {
-      await message.channel.send(`${emoji} ✅ No role inconsistencies were detected.`);
+      await getChannel(message).send(`${emoji} ✅ No role inconsistencies were detected.`);
       return false;
     }
 
-    await message.channel.send(`## ${emoji} 👀 ${suggestions.length} role inconsistencies detected!`);
+    await getChannel(message).send(`## ${emoji} 👀 ${suggestions.length} role inconsistencies detected!`);
 
     for (const suggestion of suggestions) {
       if (!suggestion) {
         this.logger.error('Attempted to send empty suggestion!');
         continue;
       }
-      const fakeMessage = await message.channel.send('---'); // Send a fake message first, so it doesn't ping people
+      const fakeMessage = await getChannel(message).send('---'); // Send a fake message first, so it doesn't ping people
       await fakeMessage.edit(suggestion);
     }
 

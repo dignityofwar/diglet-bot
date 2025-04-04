@@ -1,19 +1,18 @@
-FROM node:20.18.2
+FROM node:22.14.0
 
 ARG VERSION
 ENV VERSION=${VERSION}
 
-RUN npm install --ignore-scripts -g pnpm@9.1.2
+RUN npm install --ignore-scripts -g pnpm@9.14.4
 
 # Many things are ignored, check .dockerignore
 COPY . /app
 
 WORKDIR /app
 
-RUN pnpm build
+# Build and lock the execution down to node non privledged user
+RUN pnpm build && chown node:node /app
 
-# Lock the execution down to node non privledged user
-RUN chown node:node /app
 USER node
 
-ENTRYPOINT /app/entrypoint.sh
+ENTRYPOINT ["/app/entrypoint.sh"]

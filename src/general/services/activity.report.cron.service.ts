@@ -2,23 +2,24 @@ import { Injectable, Logger, OnApplicationBootstrap } from '@nestjs/common';
 import { TextChannel } from 'discord.js';
 import { ConfigService } from '@nestjs/config';
 import { DiscordService } from '../../discord/discord.service';
-import { PurgeService } from './purge.service';
+import { Cron } from '@nestjs/schedule';
+import { ActivityService } from './activity.service';
 
 @Injectable()
-export class PurgeCronService implements OnApplicationBootstrap {
-  private readonly logger = new Logger(PurgeCronService.name);
+export class ActivityReportCronService implements OnApplicationBootstrap {
+  private readonly logger = new Logger(ActivityReportCronService.name);
   private channel: TextChannel;
 
   constructor(
     private readonly discordService: DiscordService,
     private readonly config: ConfigService,
-    private readonly purgeService: PurgeService
+    private readonly activityService: ActivityService
   ) {}
 
   async onApplicationBootstrap(): Promise<void> {
-    this.logger.log('Initializing Purge Cron Service');
+    this.logger.log('Initializing Activity Enumeration Service');
 
-    const channelId = this.config.get('discord.channels.thanosSnaps');
+    const channelId = this.config.get('discord.channels.activityReports');
 
     // Check if the channel exists
     this.channel = await this.discordService.getChannel(channelId) as TextChannel;
@@ -31,10 +32,10 @@ export class PurgeCronService implements OnApplicationBootstrap {
     }
   }
 
-  // @Cron('0 18 * * *')
-  async runPurge(): Promise<void> {
-    this.logger.log('Running Purge Cron');
-    const message = await this.channel.send('Starting daily purge scan...');
-    await this.purgeService.startPurge(message, false);
+  @Cron('1 0 * * *')
+  async runReport(): Promise<void> {
+    this.logger.log('Running Activity Enumeration Job');
+    const message = await this.channel.send('Starting daily activity enumeration...');
+    await this.activityService.startEnumeration(message);
   }
 }

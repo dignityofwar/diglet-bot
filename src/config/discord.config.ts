@@ -13,6 +13,7 @@ export default () => ({
     ps2HowToRankUp: process.env.CHANNEL_PS2_HOW_TO_RANK_UP,
     ps2Scans: process.env.CHANNEL_PS2_SCANS,
     thanosSnaps: process.env.CHANNEL_THANOS_SNAPS,
+    activityReports: process.env.CHANNEL_ACTIVITY_REPORTS,
   },
   roles: {
     albionUSMember: process.env.ROLE_ALBION_US_MEMBER,

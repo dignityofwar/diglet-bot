@@ -1,14 +1,14 @@
 import { SqlHighlighter } from '@mikro-orm/sql-highlighter';
 import { Logger } from '@nestjs/common';
 import { MariaDbOptions } from '@mikro-orm/mariadb/MariaDbMikroORM';
+import { defineConfig } from '@mikro-orm/mariadb';
 
 const logger = new Logger('MikroORM');
 const port = Number(process.env.DB_PORT) || 3306;
 
-const config: MariaDbOptions = {
+const config: MariaDbOptions = defineConfig({
   entities: ['./dist/src/database/entities'],
   entitiesTs: ['./src/database/entities'],
-  type: 'mariadb',
   highlighter: new SqlHighlighter(),
   // clientUrl: dbURL,
   host: process.env.DB_HOST,
@@ -25,6 +25,6 @@ const config: MariaDbOptions = {
   logger: logger.log.bind(logger),
   forceUtcTimezone: true,
   allowGlobalContext: true,
-};
+});
 
 export default config;

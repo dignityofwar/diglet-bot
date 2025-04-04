@@ -3,8 +3,8 @@ import { ConfigService } from '@nestjs/config';
 import { CensusCharacterWithOutfitInterface } from '../interfaces/CensusCharacterResponseInterface';
 import { CensusClient } from 'ps2census';
 import { EventSubscription } from 'ps2census/dist/types/client/types';
-import { EventBusService } from './event.bus.service';
 import { EventConstants } from '../constants/EventConstants';
+import EventEmitter from 'events';
 
 @Injectable()
 export class CensusWebsocketService implements OnModuleInit, OnModuleDestroy {
@@ -20,7 +20,7 @@ export class CensusWebsocketService implements OnModuleInit, OnModuleDestroy {
 
   constructor(
     private readonly config: ConfigService,
-    private readonly eventBus: EventBusService
+    private readonly eventBus: EventEmitter
   ) {}
 
   onModuleInit() {
