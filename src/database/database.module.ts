@@ -7,6 +7,7 @@ import { AlbionGuildMembersEntity } from './entities/albion.guildmembers.entity'
 import { DatabaseService } from './services/database.service';
 import { ActivityEntity } from './entities/activity.entity';
 import { ActivityStatisticsEntity } from './entities/activity.statistics.entity';
+import { JoinerLeaverEntity } from './entities/joiner.leaver.entity';
 
 @Module({
   imports: [
@@ -17,6 +18,7 @@ import { ActivityStatisticsEntity } from './entities/activity.statistics.entity'
         ActivityStatisticsEntity,
         AlbionGuildMembersEntity,
         AlbionRegistrationsEntity,
+        JoinerLeaverEntity,
         PS2MembersEntity,
         PS2VerificationAttemptEntity,
       ],

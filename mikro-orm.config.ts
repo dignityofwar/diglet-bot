@@ -1,3 +1,4 @@
+import 'dotenv/config'; // Needed as of mikro-orm v6
 import { SqlHighlighter } from '@mikro-orm/sql-highlighter';
 import { Logger } from '@nestjs/common';
 import { MariaDbOptions } from '@mikro-orm/mariadb/MariaDbMikroORM';
