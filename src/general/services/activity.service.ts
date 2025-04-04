@@ -118,7 +118,7 @@ export class ActivityService {
       // Check if there is already a report on the same date, if so, delete it
       const existingReport = await this.activityStatisticsRepository.findOne({ createdAt: date });
       if (existingReport) {
-        await this.activityStatisticsRepository.removeAndFlush(existingReport);
+        await this.activityStatisticsRepository.getEntityManager().removeAndFlush(existingReport);
         this.logger.warn(`Removed existing report for date ${date}`);
       }
 
@@ -139,7 +139,7 @@ export class ActivityService {
       });
 
       // Commit
-      await this.activityStatisticsRepository.persistAndFlush(activityStatistics);
+      await this.activityStatisticsRepository.getEntityManager().persistAndFlush(activityStatistics);
     }
     catch (err) {
       const error = `Error enumerating activity records. Error: ${err.message}`;
