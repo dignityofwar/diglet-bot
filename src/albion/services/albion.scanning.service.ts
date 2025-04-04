@@ -153,7 +153,7 @@ export class AlbionScanningService {
     }
 
     // Get the registered members from the database
-    const registeredMembers: AlbionRegistrationsEntity[] = await this.albionRegistrationsRepository.getEntityManager().find({ guildId });
+    const registeredMembers: AlbionRegistrationsEntity[] = await this.albionRegistrationsRepository.find({ guildId });
 
     const statusMessage = await message.channel.send(`### ${emoji} Scanned 0/${registeredMembers.length} registered members...`);
 

@@ -57,20 +57,23 @@ describe('ActivityService', () => {
   describe('removeActivityRecord', () => {
     it('should remove the activity record', async () => {
       await activityService.removeActivityRecord(mockActivityEntity, false);
-      expect(mockActivityRepository.removeAndFlush).toHaveBeenCalledWith(mockActivityEntity);
+
+      expect(mockActivityRepository.getEntityManager().removeAndFlush).toHaveBeenCalledWith(mockActivityEntity);
     });
 
     it('should not remove the activity record on a dry run', async () => {
       await activityService.removeActivityRecord(mockActivityEntity, true);
-      expect(mockActivityRepository.removeAndFlush).toBeCalledTimes(0);
+      expect(mockActivityRepository.getEntityManager().removeAndFlush).toBeCalledTimes(0);
     });
 
     it('should properly handle database errors and throw an custom error', async () => {
-      mockActivityRepository.removeAndFlush = jest.fn().mockImplementation(() => {throw new Error('Database went boom!');});
+      mockActivityRepository.getEntityManager().removeAndFlush = jest.fn().mockImplementation(() => {throw new Error('Database went boom!');});
+
       await expect(activityService.removeActivityRecord(mockActivityEntity, false))
         .rejects
         .toThrow('Error removing activity record for leaver testuser (123456). Error: Database went boom!');
-      expect(mockActivityRepository.removeAndFlush).toBeCalledTimes(1);
+
+      expect(mockActivityRepository.getEntityManager().removeAndFlush).toBeCalledTimes(1);
     });
   });
 });

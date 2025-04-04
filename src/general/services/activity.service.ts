@@ -17,7 +17,7 @@ export class ActivityService {
   ): Promise<void> {
     try {
       if (!dryRun) {
-        await this.activityRepository.removeAndFlush(activityRecord);
+        await this.activityRepository.getEntityManager().removeAndFlush(activityRecord);
       }
       this.logger.log(`Removed activity record for leaver ${activityRecord.discordNickname} (${activityRecord.discordId})`);
     }

@@ -11,6 +11,12 @@ const guildLeaderRoleEU = '64354579789809089';
 const guildOfficerRoleUS = '465544343342364';
 const guildOfficerRoleEU = '66343435879886';
 
+// Define a type for your EntityManager mock if you like:
+interface EntityManagerMock {
+  persistAndFlush: jest.Mock;
+  removeAndFlush: jest.Mock;
+}
+
 // This file helps set up mocks for various tests, which have been copied and pasted across the suite, causing a lot of duplication.
 @Injectable()
 export class TestBootstrapper {
@@ -44,21 +50,25 @@ export class TestBootstrapper {
     } as any));
   }
 
-  static getMockRepositoryInjected(entity) {
+  static getMockRepositoryInjected(
+    entity: any,
+    entityManagerOverrides?: Partial<EntityManagerMock>
+  ) {
+    const defaultEntityManagerMock: EntityManagerMock = {
+      persistAndFlush: jest.fn().mockResolvedValue(true),
+      removeAndFlush: jest.fn().mockResolvedValue(true),
+    };
+
+    // Merge in any overrides, for instance to have removeAndFlush reject
+    const entityManagerMock = { ...defaultEntityManagerMock, ...entityManagerOverrides };
     return {
       find: jest.fn().mockResolvedValueOnce([entity]),
       findOne: jest.fn().mockResolvedValueOnce([entity]),
       findAll: jest.fn().mockResolvedValue([entity]),
       create: jest.fn(),
       upsert: jest.fn(),
-      getEntityManager: jest.fn().mockImplementation(() => {
-        return {
-          findOne: jest.fn().mockResolvedValue([entity]),
-          find: jest.fn().mockResolvedValue([entity]),
-          persistAndFlush: jest.fn().mockResolvedValue([entity]),
-          removeAndFlush: jest.fn().mockResolvedValue([entity]),
-        };
-      }),
+      // Always return the same instance so that overrides remain in effect
+      getEntityManager: jest.fn().mockReturnValue(entityManagerMock),
     } as any;
   }
 
