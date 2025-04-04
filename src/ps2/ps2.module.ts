@@ -8,7 +8,6 @@ import { CensusApiService } from './service/census.api.service';
 import { PS2VerifyCommand } from './commands/verify.command';
 import { PS2GameVerificationService } from './service/ps2.game.verification.service';
 import { CensusWebsocketService } from './service/census.websocket.service';
-import { EventBusService } from './service/event.bus.service';
 import { PS2GameScanningService } from './service/ps2.game.scanning.service';
 import { PS2ScanCommand } from './commands/scan.command';
 import { PS2CronService } from './service/ps2.cron.service';
@@ -29,7 +28,6 @@ import { PS2VerifyManualCommand } from './commands/verify.manual.command';
     PS2CronService,
     PS2GameVerificationService,
     PS2GameScanningService,
-    EventBusService,
     PS2VerifyCommand,
     PS2VerifyManualCommand,
     PS2ScanCommand,
