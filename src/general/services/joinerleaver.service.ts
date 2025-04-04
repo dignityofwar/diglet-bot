@@ -37,4 +37,17 @@ export class JoinerLeaverService {
 
     this.logger.log(`Recorded joiner ${guildMember.user.tag} (${guildMember.id})`);
   }
+
+  async recordLeaver(guildMember: GuildMember) {
+    const record = await this.joinerLeaverRepository.findOne({ discordId: guildMember.id });
+
+    if (record) {
+      record.leaveDate = new Date();
+      await this.joinerLeaverRepository.getEntityManager().persistAndFlush(record);
+      this.logger.log(`Recorded leaver ${guildMember.user.tag} (${guildMember.id})`);
+    }
+    else {
+      this.logger.error(`Attempted to record leaver ${guildMember.user.tag} (${guildMember.id}) but they were not found in the database.`);
+    }
+  }
 }

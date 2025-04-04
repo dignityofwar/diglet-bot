@@ -122,4 +122,34 @@ describe('JoinerLeaverService', () => {
       });
     });
   });
+
+  describe('recordLeaver', () => {
+    beforeEach(() => {
+      mockJoinerLeaverRepository.findOne = jest.fn().mockResolvedValue(mockJoinerLeaverEntity);
+    });
+
+    it('should record a leaver', async () => {
+      await joinerLeaverService.recordLeaver(mockGuildMember);
+
+      expect(mockJoinerLeaverRepository.findOne).toHaveBeenCalledWith({ discordId: mockGuildMember.id });
+
+      expect(mockJoinerLeaverRepository.getEntityManager().persistAndFlush).toHaveBeenCalledWith({
+        ...mockJoinerLeaverEntity,
+        leaveDate: expect.any(Date),
+      });
+
+      expect(joinerLeaverService['logger'].log).toHaveBeenCalledWith(`Recorded leaver ${mockGuildMember.user.tag} (${mockGuildMember.id})`);
+    });
+  });
+
+  it('should error if a leaver is not found', async () => {
+    mockJoinerLeaverRepository.findOne = jest.fn().mockResolvedValue(null);
+
+    await joinerLeaverService.recordLeaver(mockGuildMember);
+
+    expect(mockJoinerLeaverRepository.findOne).toHaveBeenCalledWith({ discordId: mockGuildMember.id });
+
+    expect(joinerLeaverService['logger'].error).toHaveBeenCalledWith(`Attempted to record leaver ${mockGuildMember.user.tag} (${mockGuildMember.id}) but they were not found in the database.`);
+  });
+
 });
