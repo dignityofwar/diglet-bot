@@ -197,16 +197,17 @@ describe('ActivityService', () => {
     describe('startEnumeration', () => {
       const nowSecs = Math.floor(Date.now() / 1000);
       const mockReport = `# Activity Report <t:${nowSecs}:D>
-- Total Users: **6**
-- Inactive Users (>90d): **1**
-- Active Users (<90d): **5**
-- Active Users (<60d): **4**
-- Active Users (<30d): **3**
-- Active Users (<14d): **3**
-- Active Users (<7d): **3**
-- Active Users (<3d): **3**
-- Active Users (<2d): **2**
-- Active Users (<1d): **1**`;
+- 👥 Total Users: **6**
+- 🫥 Inactive Users (>90d): **1** (16.7%)
+- 👀 Active Users:
+  - <90d: **5** (83.3%)
+  - <60d: **4** (66.7%)
+  - <30d: **3** (50.0%)
+  - <14d: **3** (50.0%)
+  - <7d: **3** (50.0%)
+  - <3d: **3** (50.0%)
+  - <2d: **2** (33.3%)
+  - <1d: **1** (16.7%)`;
 
       beforeEach(() => {
         activityService.enumerateActivity = jest.fn();
