@@ -13,6 +13,7 @@ import { PS2ScanCommand } from './commands/scan.command';
 import { PS2CronService } from './service/ps2.cron.service';
 import { DiscordModule } from '../discord/discord.module';
 import { PS2VerifyManualCommand } from './commands/verify.manual.command';
+import EventEmitter from 'events';
 
 @Module({
   imports: [
@@ -31,6 +32,7 @@ import { PS2VerifyManualCommand } from './commands/verify.manual.command';
     PS2VerifyCommand,
     PS2VerifyManualCommand,
     PS2ScanCommand,
+    EventEmitter,
   ],
 })
 export class Ps2Module {}
