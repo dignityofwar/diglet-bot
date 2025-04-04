@@ -68,18 +68,24 @@ export class ActivityService {
 
       const nowSecs = Math.floor(Date.now() / 1000);
 
+      const per = (n: number): string => {
+        const percent = ((n / stats.totalUsers) * 100).toFixed(1);
+        return `(${percent}%)`;
+      };
+
       // Create the report
       const report = `# Activity Report <t:${nowSecs}:D>
-- Total Users: **${stats.totalUsers}**
-- Inactive Users (>90d): **${stats.inactiveUsers}**
-- Active Users (<90d): **${stats.activeUsers90d}**
-- Active Users (<60d): **${stats.activeUsers60d}**
-- Active Users (<30d): **${stats.activeUsers30d}**
-- Active Users (<14d): **${stats.activeUsers14d}**
-- Active Users (<7d): **${stats.activeUsers7d}**
-- Active Users (<3d): **${stats.activeUsers3d}**
-- Active Users (<2d): **${stats.activeUsers2d}**
-- Active Users (<1d): **${stats.activeUsers1d}**`;
+- 👥 Total Users: **${stats.totalUsers}**
+- 🫥 Inactive Users (>90d): **${stats.inactiveUsers}** ${per(stats.inactiveUsers)}
+- 👀 Active Users:
+  - <90d: **${stats.activeUsers90d}** ${per(stats.activeUsers90d)}
+  - <60d: **${stats.activeUsers60d}** ${per(stats.activeUsers60d)}
+  - <30d: **${stats.activeUsers30d}** ${per(stats.activeUsers30d)}
+  - <14d: **${stats.activeUsers14d}** ${per(stats.activeUsers14d)}
+  - <7d: **${stats.activeUsers7d}** ${per(stats.activeUsers7d)}
+  - <3d: **${stats.activeUsers3d}** ${per(stats.activeUsers3d)}
+  - <2d: **${stats.activeUsers2d}** ${per(stats.activeUsers2d)}
+  - <1d: **${stats.activeUsers1d}** ${per(stats.activeUsers1d)}`;
       this.logger.log(report);
       await getChannel(message).send(report);
 
