@@ -17,7 +17,7 @@ This project is now considered **stable**, and is now versioned appropriately vi
 [![Vulnerabilities](https://sonarcloud.io/api/project_badges/measure?project=dignityofwar_diglet-bot&metric=vulnerabilities)](https://sonarcloud.io/summary/new_code?id=dignityofwar_diglet-bot)
 
 ## System Requirements
-- Install brew (on linux), or your own package manager, I'm not your mum!
+- Install brew (on Mac / Linux), or your own package manager, I'm not your mum!
 - Install node version manager `nvm`: `brew install nvm`
 - Install `pnpm`: `brew install pnpm`
 - Run `nvm install 20.15.1` which will set up your node version correctly.

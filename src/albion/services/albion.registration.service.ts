@@ -64,9 +64,9 @@ export class AlbionRegistrationService implements OnApplicationBootstrap {
       server,
       serverName,
       serverEmoji: server === AlbionServer.AMERICAS ? '🇺🇸' : '🇪🇺',
-      guildId: server === AlbionServer.AMERICAS ? this.config.get('albion.guildIdUS') : this.config.get('albion.guildIdEU'),
+      guildId: server === AlbionServer.AMERICAS ? this.config.get('albion.guildIdUS') : this.config.get('albion.guildId'),
       guildName: server === AlbionServer.AMERICAS ? 'DIG - Dignity of War' : 'Dignity Of War',
-      guildPingable: server === AlbionServer.AMERICAS ? '@ALB/US/Guildmaster' : '@ALB/EU/Archmage',
+      guildPingable: server === AlbionServer.AMERICAS ? '@ALB/US/Guildmaster' : '@ALB/Archmage',
     };
   }
 
@@ -121,15 +121,14 @@ export class AlbionRegistrationService implements OnApplicationBootstrap {
 
   private async checkRolesExist(data: RegistrationData) {
     const rolesToCheck = [
-      this.config.get('discord.roles.albionUSMember'),
-      this.config.get('discord.roles.albionUSRegistered'),
-      this.config.get('discord.roles.albionEURegistered'),
-      this.config.get('discord.roles.albionUSAnnouncements'),
+      this.config.get('discord.roles.albionMember'),
+      this.config.get('discord.roles.albionRegistered'),
+      this.config.get('discord.roles.albionAnnouncements'),
     ];
 
     try {
       for (const roleId of rolesToCheck) {
-        await this.discordService.getMemberRole(data.discordMember, roleId);
+        await this.discordService.getRoleViaMember(data.discordMember, roleId);
       }
     }
     catch (err) {
@@ -188,46 +187,33 @@ export class AlbionRegistrationService implements OnApplicationBootstrap {
       return;
     }
 
-    const subdomain = data.server === AlbionServer.AMERICAS ? 'gameinfo' : 'gameinfo-ams';
-    const endpoint = `https://${subdomain}.albiononline.com/api/gameinfo/players/${data.character.Id}`;
-    const characterInfo = {
-      Id: data.character.Id,
-      Name: data.character.Name,
-      GuildId: data.character.GuildId ?? 'N/A',
-      GuildName: data.character.GuildName ?? 'N/A',
-      AllianceName: data.character.AllianceName ?? 'N/A',
-      AllianceId: data.character.AllianceId ?? 'N/A',
-    };
-
     // Pending mechanism
     //     this.throwError(`Sorry <@${data.discordMember.id}>, the character **${data.character.Name}** has not been detected in the ${data.serverEmoji} **${data.guildName}** Guild.
     // \n- ➡️ **Please ensure you have spelt your character __exactly__ correct as it appears in-game**. If you have mis-spelt it, please run the command again with the correct spelling.
     // - ⏳ We will automatically retry your registration attempt at the top of the hour over the next 24 hours. Sometimes our data source lags, so please be patient. **If you are not a member of DIG, this WILL fail regardless!!!**
     // \nIf _after_ 24 hours this has not worked, please contact \`${data.guildPingable}\` in <#1039269706605002912> for assistance.
-    // \n||Data source: [Gameinfo link](${endpoint}) \nCharacter JSON: \`${JSON.stringify(characterInfo)}\`||`);
 
     this.throwError(`Sorry <@${data.discordMember.id}>, the character **${data.character.Name}** has not been detected in the ${data.serverEmoji} **${data.guildName}** Guild.
-\n- ➡️ **Please ensure you have spelt your character __exactly__ correct as it appears in-game**. If you have mis-spelt it, please run the command again with the correct spelling.
-- ⏳ Please wait an hour or so before trying again. Our data source can lag behind reality. It can take up to 24 hours to update.
-\n||Data source: [Gameinfo link](${endpoint}) \nCharacter info: \`${JSON.stringify(characterInfo)}\`||`);
+\n- ➡️ **Please ensure you have spelt your character __exactly__ correct as it appears in-game**. It is case sensitive.
+- ⏳ **Please wait __~30 minutes__ and try again**.`);
   }
 
   private async registerCharacter(data: RegistrationData, channel: TextChannel) {
     // Add roles based on guild membership
-    const memberRole = data.server === AlbionServer.AMERICAS ? this.config.get('discord.roles.albionUSMember') : this.config.get('discord.roles.albionEUMember');
-    const registeredRole = data.server === AlbionServer.AMERICAS ? this.config.get('discord.roles.albionUSRegistered') : this.config.get('discord.roles.albionEURegistered');
-    const announcementRole = data.server === AlbionServer.AMERICAS ? this.config.get('discord.roles.albionUSAnnouncements') : this.config.get('discord.roles.albionEUAnnouncements');
+    const memberRole = data.server === AlbionServer.AMERICAS ? this.config.get('discord.roles.albionUSMember') : this.config.get('discord.roles.albionMember');
+    const registeredRole = data.server === AlbionServer.AMERICAS ? this.config.get('discord.roles.albionUSRegistered') : this.config.get('discord.roles.albionRegistered');
+    const announcementRole = data.server === AlbionServer.AMERICAS ? this.config.get('discord.roles.albionUSAnnouncements') : this.config.get('discord.roles.albionAnnouncements');
 
     try {
-      await data.discordMember.roles.add(await this.discordService.getMemberRole(
+      await data.discordMember.roles.add(await this.discordService.getRoleViaMember(
         data.discordMember,
         memberRole
       ));
-      await data.discordMember.roles.add(await this.discordService.getMemberRole(
+      await data.discordMember.roles.add(await this.discordService.getRoleViaMember(
         data.discordMember,
         registeredRole
       ));
-      await data.discordMember.roles.add(await this.discordService.getMemberRole(
+      await data.discordMember.roles.add(await this.discordService.getRoleViaMember(
         data.discordMember,
         announcementRole
       ));
@@ -262,10 +248,10 @@ export class AlbionRegistrationService implements OnApplicationBootstrap {
 
     this.logger.log(`Registration for ${data.character.Name} was successful, returning success response.`);
 
-    const rolesChannel = data.server === AlbionServer.AMERICAS ? this.config.get('discord.channels.albionUSRoles') : this.config.get('discord.channels.albionEURoles');
-    const announcementChannel = data.server === AlbionServer.AMERICAS ? this.config.get('discord.channels.albionUSAnnouncements') : this.config.get('discord.channels.albionEUAnnouncements');
+    const rolesChannel = data.server === AlbionServer.AMERICAS ? this.config.get('discord.channels.albionUSRoles') : this.config.get('discord.channels.albionRoles');
+    const announcementChannel = data.server === AlbionServer.AMERICAS ? this.config.get('discord.channels.albionUSAnnouncements') : this.config.get('discord.channels.albionAnnouncements');
 
-    const pingRoles = data.server === AlbionServer.AMERICAS ? this.config.get('albion.pingLeaderRolesUS') : this.config.get('albion.pingLeaderRolesEU');
+    const pingRoles = data.server === AlbionServer.AMERICAS ? this.config.get('albion.pingLeaderRolesUS') : this.config.get('albion.pingLeaderRoles');
 
     // Successful!
     const messageContent = `# ✅ Thank you <@${data.discordMember.id}>, your character **${data.character.Name}** has been registered! 🎉

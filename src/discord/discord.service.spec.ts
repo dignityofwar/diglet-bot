@@ -148,7 +148,7 @@ describe('DiscordService', () => {
       // Mock the get method of guilds cache
       mockDiscordClient.guilds.cache.get = jest.fn().mockReturnValue(mockGuild);
 
-      const result = await service.getMemberRole(guildMember, roleId);
+      const result = await service.getRoleViaMember(guildMember, roleId);
 
       expect(result.id).toEqual(mockRole.id);
       expect(mockGuild.roles.fetch).toHaveBeenCalledWith(roleId);
@@ -164,7 +164,7 @@ describe('DiscordService', () => {
       // Mock the get method of guilds cache
       mockDiscordClient.guilds.cache.get = jest.fn().mockReturnValue(mockGuild);
 
-      await expect(service.getMemberRole(guildMember, roleId)).rejects.toThrow(`Failed to fetch role with ID ${roleId}. Err: ${fetchError.message}`);
+      await expect(service.getRoleViaMember(guildMember, roleId)).rejects.toThrow(`Failed to fetch role with ID ${roleId}. Err: ${fetchError.message}`);
       expect(mockGuild.roles.fetch).toHaveBeenCalledWith(roleId);
     });
 
@@ -177,7 +177,7 @@ describe('DiscordService', () => {
       // Mock the get method of guilds cache
       mockDiscordClient.guilds.cache.get = jest.fn().mockReturnValue(mockGuild);
 
-      await expect(service.getMemberRole(guildMember, roleId)).rejects.toThrow(`Could not find role with ID ${roleId}`);
+      await expect(service.getRoleViaMember(guildMember, roleId)).rejects.toThrow(`Could not find role with ID ${roleId}`);
       expect(mockGuild.roles.fetch).toHaveBeenCalledWith(roleId);
     });
   });

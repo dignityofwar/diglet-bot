@@ -13,9 +13,15 @@ import { VoiceStateEvents } from './events/voice.state.events';
 import { ActivityService } from './services/activity.service';
 import { GuildMemberEvents } from './events/guild.member.events';
 import { PurgeCronService } from './services/purge.cron.service';
+import { ActivityReportCronService } from './services/activity.report.cron.service';
+import { ActivityReportCommand } from './commands/activity.report.command';
 
 @Module({
-  imports: [DiscordModule.forFeature(), ConfigModule, DatabaseModule],
+  imports: [
+    DiscordModule.forFeature(),
+    ConfigModule,
+    DatabaseModule,
+  ],
   providers: [
     // Services
     ActivityService,
@@ -24,6 +30,7 @@ import { PurgeCronService } from './services/purge.cron.service';
     PurgeService,
 
     // Commands
+    ActivityReportCommand,
     PingCommand,
     ThanosSnapCommand,
 
@@ -34,6 +41,7 @@ import { PurgeCronService } from './services/purge.cron.service';
 
     // Cron Services
     PurgeCronService,
+    ActivityReportCronService,
   ],
 })
 export class GeneralModule {}

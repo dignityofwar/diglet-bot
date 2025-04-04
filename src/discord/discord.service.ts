@@ -60,7 +60,7 @@ export class DiscordService {
     return member;
   }
 
-  async getMemberRole(guildMember: GuildMember, roleId: string): Promise<Role> {
+  async getRoleViaMember(guildMember: GuildMember, roleId: string): Promise<Role> {
     const serverId = guildMember.guild.id;
 
     let role: Role;

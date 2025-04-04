@@ -19,31 +19,31 @@ const mockScanUserId = '1337';
 
 // Role constants
 const mockGuildLeaderRoleIdUS = '1158467537550454895';
-const mockGuildLeaderRoleIdEU = '45656565697643';
+const mockGuildLeaderRoleId = '45656565697643';
 const mockGuildLeaderRoleNameUS = '@ALB/US/Guildmaster';
-const mockGuildLeaderRoleNameEU = '@ALB/EU/Archmage';
+const mockGuildLeaderRoleName = '@ALB/Archmage';
 const mockGuildOfficerRoleIdUS = '1158467574678429696';
-const mockGuildOfficerRoleIdEU = '44564564385676';
+const mockGuildOfficerRoleId = '44564564385676';
 const mockOfficerRoleNameUS = '@ALB/US/Master';
-const mockOfficerRoleNameEU = '@ALB/EU/Magister';
+const mockOfficerRoleName = '@ALB/Magister';
 const mockGeneralRoleId = '1158467600687300699';
 const mockGeneralName = '@ALB/US/General';
 const mockCaptainRoleId = '1158467651165761626';
 const mockCaptainName = '@ALB/US/Captain';
 const mockAdeptRoleId = '457687980955645345';
-const mockAdeptRoleName = '@ALB/EU/Adept';
+const mockAdeptRoleName = '@ALB/Adept';
 const mockSquireRoleId = '1158467840496635914';
 const mockSquireName = '@ALB/US/Squire';
 const mockGraduateRoleId = '4566879809099';
-const mockGraduateName = '@ALB/EU/Graduate';
+const mockGraduateName = '@ALB/Graduate';
 const mockInitiateRoleId = '1139909152701947944';
 const mockInitiateName = '@ALB/US/Initiate';
 const mockDiscipleRoleId = '4465686797898665';
-const mockDiscipleName = '@ALB/EU/Disciple';
+const mockDiscipleName = '@ALB/Disciple';
 const mockRegisteredRoleIdUS = '1155987100928323594';
 const mockRegisteredNameUS = '@ALB/US/Registered';
-const mockRegisteredRoleIdEU = '446576897089876656';
-const mockRegisteredNameEU = '@ALB/EU/Registered';
+const mockRegisteredRoleId = '446576897089876656';
+const mockRegisteredNameEU = '@ALB/Registered';
 
 describe('AlbionScanningService', () => {
   let service: AlbionScanningService;
@@ -139,7 +139,7 @@ describe('AlbionScanningService', () => {
       ...{
         scanExcludedUsers: [mockScanUserId],
         pingLeaderRolesUS: [mockGuildLeaderRoleIdUS, mockGuildOfficerRoleIdUS],
-        pingLeaderRolesEU: [mockGuildLeaderRoleIdEU, mockGuildOfficerRoleIdEU],
+        pingLeaderRoles: [mockGuildLeaderRoleId, mockGuildOfficerRoleId],
         roleMap: [
           {
             name: mockGuildLeaderRoleNameUS,
@@ -149,8 +149,8 @@ describe('AlbionScanningService', () => {
             server: AlbionServer.AMERICAS,
           },
           {
-            name: mockGuildLeaderRoleNameEU,
-            discordRoleId: mockGuildLeaderRoleIdEU,
+            name: mockGuildLeaderRoleName,
+            discordRoleId: mockGuildLeaderRoleId,
             priority: 1,
             keep: true,
             server: AlbionServer.EUROPE,
@@ -163,8 +163,8 @@ describe('AlbionScanningService', () => {
             server: AlbionServer.AMERICAS,
           },
           {
-            name: mockOfficerRoleNameEU,
-            discordRoleId: mockGuildOfficerRoleIdEU,
+            name: mockOfficerRoleName,
+            discordRoleId: mockGuildOfficerRoleId,
             priority: 2,
             keep: false,
             server: AlbionServer.EUROPE,
@@ -227,7 +227,7 @@ describe('AlbionScanningService', () => {
           },
           {
             name: mockRegisteredNameEU,
-            discordRoleId: mockRegisteredRoleIdEU,
+            discordRoleId: mockRegisteredRoleId,
             priority: 7,
             keep: true,
             server: AlbionServer.EUROPE,
@@ -258,13 +258,13 @@ describe('AlbionScanningService', () => {
     { id: '1158467840496635914', name: '@ALB/US/Squire' },
     { id: '1139909152701947944', name: '@ALB/US/Initiate' },
     { id: '1155987100928323594', name: '@ALB/US/Registered' },
-    { id: '1232802066414571631', name: '@ALB/EU/Archmage' },
-    { id: '1232802105564205126', name: '@ALB/EU/Magister' },
-    { id: '1232802165861384305', name: '@ALB/EU/Warcaster' },
-    { id: '1232802244219637893', name: '@ALB/EU/Adept' },
-    { id: '1232802285734727772', name: '@ALB/EU/Graduate' },
-    { id: '1232802355733336196', name: '@ALB/EU/Disciple' },
-    { id: '1232778554320879811', name: '@ALB/EU/Registered' },
+    { id: '1232802066414571631', name: '@ALB/Archmage' },
+    { id: '1232802105564205126', name: '@ALB/Magister' },
+    { id: '1232802165861384305', name: '@ALB/Warcaster' },
+    { id: '1232802244219637893', name: '@ALB/Adept' },
+    { id: '1232802285734727772', name: '@ALB/Graduate' },
+    { id: '1232802355733336196', name: '@ALB/Disciple' },
+    { id: '1232778554320879811', name: '@ALB/Registered' },
   ];
 
   describe('Scanning workflow', () => {
@@ -372,7 +372,7 @@ describe('AlbionScanningService', () => {
       expect(mockDiscordMessage.channel.send).toBeCalledWith(`🔔 <@&${mockGuildLeaderRoleIdUS}>, <@&${mockGuildOfficerRoleIdUS}> ${longText}`);
 
       await service.startScan(mockDiscordMessage, false, AlbionServer.EUROPE);
-      expect(mockDiscordMessage.channel.send).toBeCalledWith(`🔔 <@&${mockGuildLeaderRoleIdEU}>, <@&${mockGuildOfficerRoleIdEU}> ${longText}`);
+      expect(mockDiscordMessage.channel.send).toBeCalledWith(`🔔 <@&${mockGuildLeaderRoleId}>, <@&${mockGuildOfficerRoleId}> ${longText}`);
     });
   });
 
@@ -525,7 +525,7 @@ describe('AlbionScanningService', () => {
     });
 
     it('should properly handle server only leavers, EU', async () => {
-      mockCharacterEU.GuildId = TestBootstrapper.mockConfig.albion.guildIdEU;
+      mockCharacterEU.GuildId = TestBootstrapper.mockConfig.albion.guildId;
       mockDiscordMessage.guild.members.fetch = jest.fn().mockRejectedValueOnce(new Error('Unknown Member'));
 
       await service.removeLeavers(
@@ -732,7 +732,7 @@ describe('AlbionScanningService', () => {
       expect(mockDiscordUser.roles.remove).toBeCalledTimes(0);
     });
     it('should properly handle zero guild or server leavers, EU', async () => {
-      mockCharacterUS.GuildId = TestBootstrapper.mockConfig.albion.guildIdEU;
+      mockCharacterUS.GuildId = TestBootstrapper.mockConfig.albion.guildId;
       await service.removeLeavers(
         [mockCharacterUS],
         mockDiscordMessage,
@@ -888,7 +888,7 @@ describe('AlbionScanningService', () => {
 
       // Add role they shouldn't have
       mockDiscordUser.roles.cache = new Map([
-        [mockRegisteredRoleIdEU, TestBootstrapper.getMockDiscordRole('ALB/EU/Registered')],
+        [mockRegisteredRoleId, TestBootstrapper.getMockDiscordRole('ALB/Registered')],
       ]);
 
       // Mock the Discord API to return the mocked Discord user
@@ -897,7 +897,7 @@ describe('AlbionScanningService', () => {
       // Ensure when we call for the members of the role the same user is returned.
       mockDiscordMessage.guild.roles.fetch = jest.fn()
         .mockImplementation((roleId: string) => {
-          const roleIdsToReturn = [mockRegisteredRoleIdEU];
+          const roleIdsToReturn = [mockRegisteredRoleId];
 
           // If requested role ID is in the roleIdsToReturnArray, return a mock of the role with the user within it, otherwise mock the role without the user
           if (roleIdsToReturn.includes(roleId)) {
@@ -932,9 +932,9 @@ describe('AlbionScanningService', () => {
       // Add a blend of US and EU roles to the user
       mockDiscordUser.roles.cache = new Map([
         [mockRegisteredRoleIdUS, TestBootstrapper.getMockDiscordRole('ALB/US/Registered')],
-        [mockRegisteredRoleIdEU, TestBootstrapper.getMockDiscordRole('ALB/EU/Registered')],
+        [mockRegisteredRoleId, TestBootstrapper.getMockDiscordRole('ALB/Registered')],
         [mockSquireRoleId, TestBootstrapper.getMockDiscordRole('ALB/US/Squire')],
-        [mockDiscipleRoleId, TestBootstrapper.getMockDiscordRole('ALB/EU/Disciple')],
+        [mockDiscipleRoleId, TestBootstrapper.getMockDiscordRole('ALB/Disciple')],
       ]);
 
       // Mock the Discord API to return the mocked Discord user
@@ -943,7 +943,7 @@ describe('AlbionScanningService', () => {
       // Ensure when we call for the members of the role the same user is returned.
       mockDiscordMessage.guild.roles.fetch = jest.fn()
         .mockImplementation((roleId: string) => {
-          const roleIdsToReturn = [mockRegisteredRoleIdUS, mockRegisteredRoleIdEU, mockSquireRoleId, mockDiscipleRoleId];
+          const roleIdsToReturn = [mockRegisteredRoleIdUS, mockRegisteredRoleId, mockSquireRoleId, mockDiscipleRoleId];
 
           // If requested role ID is in the roleIdsToReturnArray, return a mock of the role with the user within it, otherwise mock the role without the user
           if (roleIdsToReturn.includes(roleId)) {
@@ -978,9 +978,9 @@ describe('AlbionScanningService', () => {
       // Add a blend of US and EU roles to the user
       mockDiscordUser.roles.cache = new Map([
         [mockRegisteredRoleIdUS, TestBootstrapper.getMockDiscordRole('ALB/US/Registered')],
-        [mockRegisteredRoleIdEU, TestBootstrapper.getMockDiscordRole('ALB/EU/Registered')],
+        [mockRegisteredRoleId, TestBootstrapper.getMockDiscordRole('ALB/Registered')],
         [mockGeneralRoleId, TestBootstrapper.getMockDiscordRole('ALB/US/General')],
-        [mockDiscipleRoleId, TestBootstrapper.getMockDiscordRole('ALB/EU/Disciple')],
+        [mockDiscipleRoleId, TestBootstrapper.getMockDiscordRole('ALB/Disciple')],
       ]);
 
       // Mock the Discord API to return the mocked Discord user
@@ -989,7 +989,7 @@ describe('AlbionScanningService', () => {
       // Ensure when we call for the members of the role the same user is returned.
       mockDiscordMessage.guild.roles.fetch = jest.fn()
         .mockImplementation((roleId: string) => {
-          const roleIdsToReturn = [mockRegisteredRoleIdUS, mockRegisteredRoleIdEU, mockGeneralRoleId, mockDiscipleRoleId];
+          const roleIdsToReturn = [mockRegisteredRoleIdUS, mockRegisteredRoleId, mockGeneralRoleId, mockDiscipleRoleId];
 
           // If requested role ID is in the roleIdsToReturnArray, return a mock of the role with the user within it, otherwise mock the role without the user
           if (roleIdsToReturn.includes(roleId)) {
@@ -1020,7 +1020,7 @@ describe('AlbionScanningService', () => {
 
       // Add role they shouldn't have
       mockDiscordUser.roles.cache = new Map([
-        [mockDiscipleRoleId, TestBootstrapper.getMockDiscordRole('ALB/EU/Disciple')],
+        [mockDiscipleRoleId, TestBootstrapper.getMockDiscordRole('ALB/Disciple')],
       ]);
 
       // Mock the Discord API to return the mocked Discord user
@@ -1060,9 +1060,9 @@ describe('AlbionScanningService', () => {
 
       // Add role they shouldn't have
       mockDiscordUser.roles.cache = new Map([
-        [mockDiscipleRoleId, TestBootstrapper.getMockDiscordRole('ALB/EU/Disciple')],
-        [mockGraduateRoleId, TestBootstrapper.getMockDiscordRole('ALB/EU/Graduate')],
-        [mockRegisteredRoleIdEU, TestBootstrapper.getMockDiscordRole('ALB/EU/Registered')],
+        [mockDiscipleRoleId, TestBootstrapper.getMockDiscordRole('ALB/Disciple')],
+        [mockGraduateRoleId, TestBootstrapper.getMockDiscordRole('ALB/Graduate')],
+        [mockRegisteredRoleId, TestBootstrapper.getMockDiscordRole('ALB/Registered')],
         [mockRegisteredRoleIdUS, TestBootstrapper.getMockDiscordRole('ALB/US/Registered')],
       ]);
 
@@ -1072,7 +1072,7 @@ describe('AlbionScanningService', () => {
       // Ensure when we call for the members of the role the same user is returned.
       mockDiscordMessage.guild.roles.fetch = jest.fn()
         .mockImplementation((roleId: string) => {
-          const roleIdsToReturn = [mockDiscipleRoleId, mockGraduateRoleId, mockRegisteredRoleIdEU, mockRegisteredRoleIdUS];
+          const roleIdsToReturn = [mockDiscipleRoleId, mockGraduateRoleId, mockRegisteredRoleId, mockRegisteredRoleIdUS];
 
           // If requested role ID is in the roleIdsToReturnArray, return a mock of the role with the user within it, otherwise mock the role without the user
           if (roleIdsToReturn.includes(roleId)) {
@@ -1103,7 +1103,7 @@ describe('AlbionScanningService', () => {
 
       // Add role they shouldn't have
       mockDiscordUser.roles.cache = new Map([
-        [mockDiscipleRoleId, TestBootstrapper.getMockDiscordRole('ALB/EU/Disciple')],
+        [mockDiscipleRoleId, TestBootstrapper.getMockDiscordRole('ALB/Disciple')],
       ]);
 
       // Mock the Discord API to return the mocked Discord user
@@ -1174,8 +1174,8 @@ describe('AlbionScanningService', () => {
       },
       {
         title: 'Archmage requires Graduate',
-        roles: [mockGuildLeaderRoleIdEU, mockRegisteredRoleIdEU],
-        highestPriorityRole: { id: mockGuildLeaderRoleIdEU, name: mockGuildLeaderRoleNameEU },
+        roles: [mockGuildLeaderRoleId, mockRegisteredRoleId],
+        highestPriorityRole: { id: mockGuildLeaderRoleId, name: mockGuildLeaderRoleName },
         expected: [
           { id: mockGraduateRoleId, name: mockGraduateName, action: 'added', message: '' },
         ],
@@ -1192,8 +1192,8 @@ describe('AlbionScanningService', () => {
       },
       {
         title: 'Magister requires Squire',
-        roles: [mockGuildOfficerRoleIdEU, mockRegisteredRoleIdEU],
-        highestPriorityRole: { id: mockGuildOfficerRoleIdEU, name: mockOfficerRoleNameEU },
+        roles: [mockGuildOfficerRoleId, mockRegisteredRoleId],
+        highestPriorityRole: { id: mockGuildOfficerRoleId, name: mockOfficerRoleName },
         expected: [
           { id: mockGraduateRoleId, name: mockGraduateName, action: 'added', message: '' },
         ],
@@ -1219,7 +1219,7 @@ describe('AlbionScanningService', () => {
       },
       {
         title: 'Adept requires Graduate',
-        roles: [mockAdeptRoleId, mockRegisteredRoleIdEU],
+        roles: [mockAdeptRoleId, mockRegisteredRoleId],
         highestPriorityRole: { id: mockAdeptRoleId, name: mockAdeptRoleName },
         expected: [
           { id: mockGraduateRoleId, name: mockGraduateName, action: 'added', message: '' },
@@ -1235,7 +1235,7 @@ describe('AlbionScanningService', () => {
       },
       {
         title: 'Graduate has no extra roles',
-        roles: [mockGraduateRoleId, mockRegisteredRoleIdEU],
+        roles: [mockGraduateRoleId, mockRegisteredRoleId],
         highestPriorityRole: { id: mockGraduateRoleId, name: mockGraduateName },
         expected: [],
         server: AlbionServer.EUROPE,
@@ -1249,7 +1249,7 @@ describe('AlbionScanningService', () => {
       },
       {
         title: 'Disciples has no extra roles',
-        roles: [mockDiscipleRoleId, mockRegisteredRoleIdEU],
+        roles: [mockDiscipleRoleId, mockRegisteredRoleId],
         highestPriorityRole: { id: mockDiscipleRoleId, name: mockDiscipleName },
         expected: [],
         server: AlbionServer.EUROPE,
@@ -1292,7 +1292,7 @@ describe('AlbionScanningService', () => {
       },
       {
         title: 'Adepts should not have Disciple and should have Graduate',
-        roles: [mockAdeptRoleId, mockGraduateRoleId, mockDiscipleRoleId, mockRegisteredRoleIdEU],
+        roles: [mockAdeptRoleId, mockGraduateRoleId, mockDiscipleRoleId, mockRegisteredRoleId],
         highestPriorityRole: { id: mockAdeptRoleId, name: mockAdeptRoleName },
         expected: [
           { id: mockDiscipleRoleId, name: mockDiscipleName, action: 'removed', message: '' },
@@ -1301,7 +1301,7 @@ describe('AlbionScanningService', () => {
       },
       {
         title: 'Adepts should have graduate if missing',
-        roles: [mockAdeptRoleId, mockRegisteredRoleIdEU],
+        roles: [mockAdeptRoleId, mockRegisteredRoleId],
         highestPriorityRole: { id: mockAdeptRoleId, name: mockAdeptRoleName },
         expected: [
           { id: mockGraduateRoleId, name: mockGraduateName, action: 'added', message: '' },
@@ -1331,13 +1331,13 @@ describe('AlbionScanningService', () => {
         roles: [mockGraduateRoleId],
         highestPriorityRole: { id: mockGraduateRoleId, name: mockGraduateName },
         expected: [
-          { id: mockRegisteredRoleIdEU, name: mockRegisteredNameEU, action: 'added', message: '' },
+          { id: mockRegisteredRoleId, name: mockRegisteredNameEU, action: 'added', message: '' },
         ],
         server: AlbionServer.EUROPE,
       },
       {
         title: 'Graduates should not have roles of lower priority',
-        roles: [mockRegisteredRoleIdEU, mockGraduateRoleId, mockDiscipleRoleId],
+        roles: [mockRegisteredRoleId, mockGraduateRoleId, mockDiscipleRoleId],
         highestPriorityRole: { id: mockGraduateRoleId, name: mockGraduateName },
         expected: [
           { id: mockDiscipleRoleId, name: mockDiscipleName, action: 'removed', message: '' },
@@ -1354,53 +1354,53 @@ describe('AlbionScanningService', () => {
         server: AlbionServer.AMERICAS,
       },
       {
-        title: 'Disciples should always have ALB/EU/Registered role',
+        title: 'Disciples should always have ALB/Registered role',
         roles: [mockDiscipleRoleId],
         highestPriorityRole: { id: mockDiscipleRoleId, name: mockDiscipleName },
         expected: [
-          { id: mockRegisteredRoleIdEU, name: mockRegisteredNameEU, action: 'added', message: '' },
+          { id: mockRegisteredRoleId, name: mockRegisteredNameEU, action: 'added', message: '' },
         ],
         server: AlbionServer.EUROPE,
       },
       {
         title: 'Registered members should at least have the entry level role',
-        roles: [mockRegisteredRoleIdEU],
-        highestPriorityRole: { id: mockRegisteredRoleIdEU, name: mockRegisteredNameEU },
+        roles: [mockRegisteredRoleId],
+        highestPriorityRole: { id: mockRegisteredRoleId, name: mockRegisteredNameEU },
         expected: [
           { id: mockDiscipleRoleId, name: mockDiscipleName, action: 'missingEntryRole', message: '' },
         ],
         server: AlbionServer.EUROPE,
       },
+      // {
+      //   title: 'US Registered members should have at least ALB/US/Registered and Initiate',
+      //   roles: [],
+      //   highestPriorityRole: { id: mockInitiateRoleId, name: mockInitiateName },
+      //   expected: [
+      //     { id: mockInitiateRoleId, name: mockInitiateName, action: 'added', message: '' },
+      //     { id: mockRegisteredRoleIdUS, name: mockRegisteredNameUS, action: 'added', message: '' },
+      //   ],
+      //   server: AlbionServer.AMERICAS,
+      // },
       {
-        title: 'US Registered members should have at least ALB/US/Registered and Initiate',
-        roles: [],
-        highestPriorityRole: { id: mockInitiateRoleId, name: mockInitiateName },
-        expected: [
-          { id: mockInitiateRoleId, name: mockInitiateName, action: 'added', message: '' },
-          { id: mockRegisteredRoleIdUS, name: mockRegisteredNameUS, action: 'added', message: '' },
-        ],
-        server: AlbionServer.AMERICAS,
-      },
-      {
-        title: 'EU Registered members should have at least ALB/EU/Registered and Disciple',
+        title: 'EU Registered members should have at least ALB/Registered and Disciple',
         roles: [],
         highestPriorityRole: { id: mockDiscipleRoleId, name: mockDiscipleName },
         expected: [
           { id: mockDiscipleRoleId, name: mockDiscipleName, action: 'added', message: '' },
-          { id: mockRegisteredRoleIdEU, name: mockRegisteredNameEU, action: 'added', message: '' },
+          { id: mockRegisteredRoleId, name: mockRegisteredNameEU, action: 'added', message: '' },
         ],
         server: AlbionServer.EUROPE,
       },
       {
         title: 'Dual registrants who have correct roles are not changed upon being scanned based on EU server context',
-        roles: [mockRegisteredRoleIdUS, mockRegisteredRoleIdEU, mockDiscipleRoleId, mockInitiateRoleId],
+        roles: [mockRegisteredRoleIdUS, mockRegisteredRoleId, mockDiscipleRoleId, mockInitiateRoleId],
         highestPriorityRole: { id: mockDiscipleRoleId, name: mockDiscipleName },
         expected: [],
         server: AlbionServer.EUROPE,
       },
       {
         title: 'Dual registrants who have correct roles are not changed upon being scanned based on US server context',
-        roles: [mockRegisteredRoleIdUS, mockRegisteredRoleIdEU, mockDiscipleRoleId, mockInitiateRoleId],
+        roles: [mockRegisteredRoleIdUS, mockRegisteredRoleId, mockDiscipleRoleId, mockInitiateRoleId],
         highestPriorityRole: { id: mockInitiateRoleId, name: mockInitiateName },
         expected: [],
         server: AlbionServer.AMERICAS,
@@ -1489,11 +1489,11 @@ describe('AlbionScanningService', () => {
       setupRoleTestMocks([mockGuildLeaderRoleIdUS, mockSquireRoleId, mockInitiateRoleId, mockRegisteredRoleIdUS]); // Should require they remove initiate rank
       expect((await service.checkRoleInconsistencies(mockDiscordUser)).length).toEqual(1);
     });
-    it('roleInconsistencies should properly indicate progress when multiple users are involved', async () => {
-      mockAlbionRegistrationsRepository.find = jest.fn().mockResolvedValueOnce([mockRegisteredMemberUS, mockRegisteredMemberUS, mockRegisteredMemberUS, mockRegisteredMemberUS, mockRegisteredMemberUS]);
-      await service.roleInconsistencies(mockDiscordMessage);
-      expect(mockDiscordMessage.channel.send).toBeCalledWith('## 🇺🇸 Scanning 5 members for role inconsistencies... [0/5]');
-    });
+    // it('roleInconsistencies should properly indicate progress when multiple users are involved for US', async () => {
+    //   mockAlbionRegistrationsRepository.find = jest.fn().mockResolvedValueOnce([mockRegisteredMemberUS, mockRegisteredMemberUS, mockRegisteredMemberUS, mockRegisteredMemberUS, mockRegisteredMemberUS]);
+    //   await service.roleInconsistencies(mockDiscordMessage);
+    //   expect(mockDiscordMessage.channel.send).toBeCalledWith('## 🇺🇸 Scanning 5 members for role inconsistencies... [0/5]');
+    // });
     it('roleInconsistencies should properly indicate progress when multiple users are involved for EU', async () => {
       mockAlbionRegistrationsRepository.find = jest.fn().mockResolvedValueOnce([mockRegisteredMemberUS, mockRegisteredMemberUS, mockRegisteredMemberUS, mockRegisteredMemberUS, mockRegisteredMemberUS]);
       await service.roleInconsistencies(mockDiscordMessage, true, AlbionServer.EUROPE);

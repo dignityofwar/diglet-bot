@@ -152,7 +152,6 @@ export class PS2GameVerificationService implements OnApplicationBootstrap {
 
     await this.sendMessage(`🎉 <@${targetMember.id}> your in game character **${character.name.first}** has been manually verified by <@${createdByMember.id}>! Welcome to the [DIG] outfit!
 🔓 You can now see our private section <#${this.config.get('discord.channels.ps2Private')}>. Should you leave the outfit, you will automatically lose this access.
-ℹ️ For info on how to be promoted to Zealot to use our Armory assets, please visit <#${this.config.get('discord.channels.ps2HowToRankUp')}>.
 ️📝 Please note your Discord server nickname (not your username) has been automatically changed to match your character's name. You are free to change it again, but please ensure it is still a resemblance of your character name.
 ===================`);
 
@@ -331,7 +330,6 @@ export class PS2GameVerificationService implements OnApplicationBootstrap {
     await this.unwatch(character);
     await message.channel.send(`### 🎉 <@${guildMember.id}> your in game character **${character.name.first}** has been successfully verified! Welcome to the [DIG] outfit!
 🔓 You can now see our private section <#${this.config.get('discord.channels.ps2Private')}>. Should you leave the outfit, you will automatically lose this access.
-ℹ️ For info on how to be promoted to Zealot to use our Armory assets, please visit <#${this.config.get('discord.channels.ps2HowToRankUp')}>.
 ️📝 Please note your Discord server nickname (not your username) has been automatically changed to match your character's name. You are free to change it again, but please ensure it is still a resemblance of your character name.
 ===================`);
 
@@ -341,7 +339,7 @@ export class PS2GameVerificationService implements OnApplicationBootstrap {
   private async applyDiscordChanges(character: CensusCharacterWithOutfitInterface, guildMember: GuildMember, remove = false) {
     // Add the PS2/verified role to the Discord user
     const verifiedRoleId = this.config.get('discord.roles.ps2Verified');
-    const verifyRole = await this.discordService.getMemberRole(guildMember, verifiedRoleId);
+    const verifyRole = await this.discordService.getRoleViaMember(guildMember, verifiedRoleId);
 
     if (!verifyRole) {
       throw new Error(`Could not find role with ID ${verifiedRoleId}`);

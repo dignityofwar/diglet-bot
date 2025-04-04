@@ -1,8 +1,7 @@
-FROM node:20.15.1
+FROM node:20.18.2
 
 ARG VERSION
 ENV VERSION=${VERSION}
-
 
 RUN npm install --ignore-scripts -g pnpm@9.1.2
 

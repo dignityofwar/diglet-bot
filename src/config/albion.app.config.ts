@@ -17,7 +17,7 @@ const rolesToRankProduction: AlbionRoleMapInterface[] = [
     server: AlbionServer.AMERICAS,
   },
   {
-    name: '@ALB/EU/Archmage',
+    name: '@ALB/Archmage',
     discordRoleId: '1218115619732455474',
     priority: 1,
     keep: true,
@@ -31,7 +31,7 @@ const rolesToRankProduction: AlbionRoleMapInterface[] = [
     server: AlbionServer.AMERICAS,
   },
   {
-    name: '@ALB/EU/Magister',
+    name: '@ALB/Magister',
     discordRoleId: '1218115569455464498',
     priority: 2,
     keep: false,
@@ -45,7 +45,7 @@ const rolesToRankProduction: AlbionRoleMapInterface[] = [
     server: AlbionServer.AMERICAS,
   },
   {
-    name: '@ALB/EU/Warcaster',
+    name: '@ALB/Warcaster',
     discordRoleId: '1218115480426905641',
     priority: 3,
     keep: false,
@@ -59,7 +59,7 @@ const rolesToRankProduction: AlbionRoleMapInterface[] = [
     server: AlbionServer.AMERICAS,
   },
   {
-    name: '@ALB/EU/Adept',
+    name: '@ALB/Adept',
     discordRoleId: '1218115422029873153',
     priority: 4,
     keep: false,
@@ -73,7 +73,7 @@ const rolesToRankProduction: AlbionRoleMapInterface[] = [
     server: AlbionServer.AMERICAS,
   },
   {
-    name: '@ALB/EU/Graduate',
+    name: '@ALB/Graduate',
     discordRoleId: '1218115340009996339',
     priority: 5,
     keep: true,
@@ -87,7 +87,7 @@ const rolesToRankProduction: AlbionRoleMapInterface[] = [
     server: AlbionServer.AMERICAS,
   },
   {
-    name: '@ALB/EU/Disciple',
+    name: '@ALB/Disciple',
     discordRoleId: '1218115269419995166',
     priority: 6,
     keep: false,
@@ -101,7 +101,7 @@ const rolesToRankProduction: AlbionRoleMapInterface[] = [
     server: AlbionServer.AMERICAS,
   },
   {
-    name: '@ALB/EU/Registered',
+    name: '@ALB/Registered',
     discordRoleId: '1224609941260603402',
     priority: 7,
     keep: true,
@@ -117,7 +117,7 @@ const rolesToRankDevelopment: AlbionRoleMapInterface[] = [
     server: AlbionServer.AMERICAS,
   },
   {
-    name: '@ALB/EU/Archmage',
+    name: '@ALB/Archmage',
     discordRoleId: '1232802066414571631',
     priority: 1,
     keep: true,
@@ -131,7 +131,7 @@ const rolesToRankDevelopment: AlbionRoleMapInterface[] = [
     server: AlbionServer.AMERICAS,
   },
   {
-    name: '@ALB/EU/Magister',
+    name: '@ALB/Magister',
     discordRoleId: '1232802105564205126',
     priority: 2,
     keep: false,
@@ -145,7 +145,7 @@ const rolesToRankDevelopment: AlbionRoleMapInterface[] = [
     server: AlbionServer.AMERICAS,
   },
   {
-    name: '@ALB/EU/Warcaster',
+    name: '@ALB/Warcaster',
     discordRoleId: '1232802165861384305',
     priority: 3,
     keep: false,
@@ -159,7 +159,7 @@ const rolesToRankDevelopment: AlbionRoleMapInterface[] = [
     server: AlbionServer.AMERICAS,
   },
   {
-    name: '@ALB/EU/Adept',
+    name: '@ALB/Adept',
     discordRoleId: '1232802244219637893',
     priority: 4,
     keep: false,
@@ -173,7 +173,7 @@ const rolesToRankDevelopment: AlbionRoleMapInterface[] = [
     server: AlbionServer.AMERICAS,
   },
   {
-    name: '@ALB/EU/Graduate',
+    name: '@ALB/Graduate',
     discordRoleId: '1232802285734727772',
     priority: 5,
     keep: true,
@@ -187,7 +187,7 @@ const rolesToRankDevelopment: AlbionRoleMapInterface[] = [
     server: AlbionServer.AMERICAS,
   },
   {
-    name: '@ALB/EU/Disciple',
+    name: '@ALB/Disciple',
     discordRoleId: '1232802355733336196',
     priority: 6,
     keep: false,
@@ -201,7 +201,7 @@ const rolesToRankDevelopment: AlbionRoleMapInterface[] = [
     server: AlbionServer.AMERICAS,
   },
   {
-    name: '@ALB/EU/Registered',
+    name: '@ALB/Registered',
     discordRoleId: '1232778554320879811',
     priority: 7,
     keep: true,
@@ -211,17 +211,17 @@ const rolesToRankDevelopment: AlbionRoleMapInterface[] = [
 const roleMap = process.env.ENVIRONMENT === 'production' ? rolesToRankProduction : rolesToRankDevelopment;
 const findRole = (roleName: string) => roleMap.filter((role) => role.name === roleName)[0];
 const pingLeaderRolesUS = [findRole('@ALB/US/Guildmaster').discordRoleId, findRole('@ALB/US/Master').discordRoleId];
-const pingLeaderRolesEU = [findRole('@ALB/EU/Archmage').discordRoleId, findRole('@ALB/EU/Magister').discordRoleId];
+const pingLeaderRoles = [findRole('@ALB/Archmage').discordRoleId, findRole('@ALB/Magister').discordRoleId];
 
 export default () => ({
   guildIdUS: 'btPZRoLvTUqLC7URnDRgSQ',
-  guildIdEU: '0_zTfLfASD2Wtw6Tc-yckA',
+  guildId: '0_zTfLfASD2Wtw6Tc-yckA',
   roleMap,
   pingLeaderRolesUS,
-  pingLeaderRolesEU,
+  pingLeaderRoles,
   scanExcludedUsers: [], // Discord IDs
   guildLeaderRoleUS: findRole('@ALB/US/Guildmaster'),
-  guildLeaderRoleEU: findRole('@ALB/EU/Archmage'),
+  guildLeaderRole: findRole('@ALB/Archmage'),
   guildOfficerRoleUS: findRole('@ALB/US/Master'),
-  guildOfficerRoleEU: findRole('@ALB/EU/Magister'),
+  guildOfficerRole: findRole('@ALB/Magister'),
 });

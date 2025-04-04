@@ -14,8 +14,7 @@ export interface PurgableMemberList {
     ps2Verified: Collection<string, GuildMember>;
     foxhole: Collection<string, GuildMember>;
     albion: Collection<string, GuildMember>;
-    albionUSRegistered: Collection<string, GuildMember>;
-    albionEURegistered: Collection<string, GuildMember>;
+    albionRegistered: Collection<string, GuildMember>;
   }
   totalMembers: number;
   totalBots: number;
@@ -37,12 +36,11 @@ export class PurgeService {
 
   preflightChecks(message: Message) {
     const onboardedRole = message.guild.roles.cache.find(role => role.name === 'Onboarded');
-    const ps2Role = message.guild.roles.cache.find(role => role.name === 'Planetside2');
-    const ps2VerifiedRole = message.guild.roles.cache.find(role => role.name === 'PS2/Verified');
+    const ps2Role = message.guild.roles.cache.find(role => role.name === 'Rec/Planetside2');
+    const ps2VerifiedRole = message.guild.roles.cache.find(role => role.name === 'Rec/PS2/Verified');
     const foxholeRole = message.guild.roles.cache.find(role => role.name === 'Rec/Foxhole');
     const albionRole = message.guild.roles.cache.find(role => role.name === 'Albion Online');
-    const albionUSRegistered = message.guild.roles.cache.find(role => role.name === 'ALB/US/Registered');
-    const albionEURegistered = message.guild.roles.cache.find(role => role.name === 'ALB/EU/Registered');
+    const albionRegistered = message.guild.roles.cache.find(role => role.name === 'ALB/Registered');
 
     const devUserId = this.config.get('discord.devUserId');
 
@@ -52,11 +50,11 @@ export class PurgeService {
     }
 
     if (!ps2Role) {
-      throw new Error(`Could not find Planetside2 role! Pinging Bot Dev <@${devUserId}>!`);
+      throw new Error(`Could not find Rec/Planetside2 role! Pinging Bot Dev <@${devUserId}>!`);
     }
 
     if (!ps2VerifiedRole) {
-      throw new Error(`Could not find PS2/Verified role! Pinging Bot Dev <@${devUserId}>!`);
+      throw new Error(`Could not find Rec/PS2/Verified role! Pinging Bot Dev <@${devUserId}>!`);
     }
 
     if (!foxholeRole) {
@@ -67,7 +65,7 @@ export class PurgeService {
       throw new Error(`Could not find Albion Online role! Pinging Bot Dev <@${devUserId}>!`);
     }
 
-    if (!albionUSRegistered || !albionEURegistered) {
+    if (!albionRegistered) {
       throw new Error(`Could not find Albion Online registered role(s)! Pinging Bot Dev <@${devUserId}>!`);
     }
 
@@ -77,8 +75,7 @@ export class PurgeService {
       ps2VerifiedRole,
       foxholeRole,
       albionRole,
-      albionUSRegistered,
-      albionEURegistered,
+      albionRegistered,
     };
   }
 
@@ -97,7 +94,7 @@ export class PurgeService {
     catch (err) {
       const string = `## ❌ Error commencing the purge!\n${err.message}`;
       this.logger.error(string);
-      await statusMessage.edit(string);
+      await statusMessage.channel.send(string);
       return;
     }
 
@@ -148,8 +145,7 @@ export class PurgeService {
     let ps2VerifiedRole: Role;
     let foxholeRole: Role;
     let albionRole: Role;
-    let albionUSRegistered: Role;
-    let albionEURegistered: Role;
+    let albionRegistered: Role;
 
     try {
       const roles = this.preflightChecks(message);
@@ -158,8 +154,7 @@ export class PurgeService {
       ps2VerifiedRole = roles.ps2VerifiedRole;
       foxholeRole = roles.foxholeRole;
       albionRole = roles.albionRole;
-      albionUSRegistered = roles.albionUSRegistered;
-      albionEURegistered = roles.albionEURegistered;
+      albionRegistered = roles.albionRegistered;
     }
     catch (err) {
       const string = `Preflight checks failed! Err: ${err.message}`;
@@ -223,8 +218,7 @@ export class PurgeService {
         ps2Verified: members.filter(member => this.isPurgable(member, activeMembers, onboardedRole) && member.roles.cache.has(ps2VerifiedRole.id)),
         foxhole: members.filter(member => this.isPurgable(member, activeMembers, onboardedRole) && member.roles.cache.has(foxholeRole.id)),
         albion: members.filter(member => this.isPurgable(member, activeMembers, onboardedRole) && member.roles.cache.has(albionRole.id)),
-        albionUSRegistered: members.filter(member => this.isPurgable(member, activeMembers, onboardedRole) && member.roles.cache.has(albionUSRegistered.id)),
-        albionEURegistered: members.filter(member => this.isPurgable(member, activeMembers, onboardedRole) && member.roles.cache.has(albionEURegistered.id)),
+        albionRegistered: members.filter(member => this.isPurgable(member, activeMembers, onboardedRole) && member.roles.cache.has(albionRegistered.id)),
       },
       totalMembers: members.size,
       totalBots: members.filter(member => member.user.bot).size,
@@ -265,7 +259,7 @@ export class PurgeService {
     for (const activeMember of activeRecords) {
       count++;
 
-      if (count % 10 === 0 || count === activeRecords.length) {
+      if (count % 50 === 0 || count === activeRecords.length) {
         const percent = (Math.floor((count / activeRecords.length) * 100)).toFixed(0);
         const string = `Getting active Discord members [${count}/${activeRecords.length}] (${percent}%)...`;
         await statusMessage.edit(string);
@@ -310,6 +304,11 @@ export class PurgeService {
   isPurgable(member: GuildMember, activeMembers: Collection<string, GuildMember>, onboardedRole: Role): boolean {
     // Ignore bots.
     if (member.user.bot) {
+      return false;
+    }
+
+    // Ignore the DIG Admin account
+    if (member.user.id === '808064520265924689') {
       return false;
     }
 
@@ -460,7 +459,7 @@ Note, these numbers will not add up to total numbers, as a member can be in mult
 - Total PS2 verified purged: **${purgables.purgableByGame.ps2Verified.size}**
 - Total Foxhole purged: **${purgables.purgableByGame.foxhole.size}**
 - Total Albion purged: **${purgables.purgableByGame.albion.size}**
-- Total Albion Registered purged: **${purgables.purgableByGame.albionEURegistered.size}**`;
+- Total Albion Registered purged: **${purgables.purgableByGame.albionRegistered.size}**`;
 
     await originMessage.channel.send(purgeReport);
     await originMessage.channel.send(gameStatsReport);

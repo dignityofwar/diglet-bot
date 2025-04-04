@@ -1,12 +1,25 @@
-name: CI
+name: Production Deployment
 
 on:
   push:
     branches: [main]
+    # Ensures only actual code changes trigger the workflow, otherwise we don't want to create a full on build.
+    paths:
+      - '.github/workflows/**'     # GitHub Actions workflows
+      - 'src/**'                   # Source code directory
+      - 'package.json'             # Node.js dependencies and scripts
+      - 'pnpm-lock.yaml'           # Lock file for Node.js dependencies
+      - '.eslint*'                 # ESLint configuration
+      - 'Dockerfile'               # Dockerfile
+      - 'docker-compose.yml'       # Docker Compose file
+      - 'entrypoint.sh'            # Entrypoint script for Docker container
+      - 'jest.config.js'           # Jest configuration
+      - 'mikro-orm.config.ts'      # MikroORM configuration
+      - 'sonar-project.properties' # SonarQube configuration'
 
 jobs:
   build:
-    name: Build & Test
+    name: Build & Test application
     uses: ./.github/workflows/build-and-test-main.yml
     secrets: inherit
 

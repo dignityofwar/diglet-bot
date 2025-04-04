@@ -5,11 +5,40 @@ import { ConfigService } from '@nestjs/config';
 import { TestingModule } from '@nestjs/testing';
 import { MikroORM } from '@mikro-orm/core';
 import { AlbionServer } from './albion/interfaces/albion.api.interfaces';
+import { PS2MembersEntity } from './database/entities/ps2.members.entity';
+import { PS2RankMapInterface } from './config/ps2.app.config';
 
 const guildLeaderRoleUS = '44546543371337';
-const guildLeaderRoleEU = '64354579789809089';
+const guildLeaderRole = '64354579789809089';
 const guildOfficerRoleUS = '465544343342364';
-const guildOfficerRoleEU = '66343435879886';
+const guildOfficerRole = '66343435879886';
+
+const ps2RankMap: PS2RankMapInterface = {
+  '@PS2/Verified': {
+    ranks: null,
+    discordRoleId: '1139909190664601611',
+  },
+  '@PS2/Zealot': {
+    ranks: ['6'],
+    discordRoleId: '1139909319886905496',
+  },
+  '@PS2/SL': {
+    ranks: ['4', '5'],
+    discordRoleId: '1142546129112805517',
+  },
+  '@PS2/PL': {
+    ranks: ['3'],
+    discordRoleId: '1142546081922682900',
+  },
+  '@PS2/Officer': {
+    ranks: ['2'],
+    discordRoleId: '1142546051606257755',
+  },
+  '@PS2/Leader': {
+    ranks: ['1'],
+    discordRoleId: '1142546013685559337',
+  },
+};
 
 // Define a type for your EntityManager mock if you like:
 interface EntityManagerMock {
@@ -155,7 +184,7 @@ export class TestBootstrapper {
     } as any;
   }
 
-  static getMockDiscordRole(roleId: string) {
+  static getMockDiscordRole(roleId = '4969797969594') {
     return {
       id: roleId,
       name: 'mockrole',
@@ -255,11 +284,11 @@ export class TestBootstrapper {
     return {
       Id: 'clhoV9OdRm-5BuYQYZBT_Q',
       Name: `Maelstrome26${server === AlbionServer.AMERICAS ? 'US' : 'EU'}`,
-      GuildId: guildId ?? server === AlbionServer.AMERICAS ? this.mockConfig.albion.guildIdUS : this.mockConfig.albion.guildIdEU,
+      GuildId: guildId ?? server === AlbionServer.AMERICAS ? this.mockConfig.albion.guildIdUS : this.mockConfig.albion.guildId,
     } as any;
   }
 
-  static getMockPS2Character(characterId: string, outfitId: string) {
+  static getMockPS2Character(characterId = '123456', outfitId = '123456') {
     return {
       character_id: characterId,
       name: {
@@ -277,25 +306,53 @@ export class TestBootstrapper {
     } as any;
   }
 
+  static getMockPS2Outfit(outfitId = '123456') {
+    return {
+      outfit_id: outfitId,
+      name: 'Test Outfit',
+      name_lower: 'test outfit',
+      alias: 'TO',
+      alias_lower: 'to',
+    };
+  }
+
+  static getMockPS2MemberEntity(
+    characterId = '123456',
+    characterName = 'MrBojangles',
+    discordMemberId = '123456'
+  ): PS2MembersEntity {
+    return {
+      id: 1,
+      createdAt: new Date,
+      updatedAt: new Date,
+      discordId: discordMemberId,
+      characterId: characterId,
+      characterName: characterName,
+      manual: false,
+      manualCreatedByDiscordId: null,
+      manualCreatedByDiscordName: null,
+    };
+  }
+
   static readonly mockConfig = {
     albion: {
       guildIdUS: '44545423435',
-      guildIdEU: '6567576868',
+      guildId: '6567576868',
       guildLeaderRoleUS: { discordRoleId: guildLeaderRoleUS },
-      guildLeaderRoleEU: { discordRoleId: guildLeaderRoleEU },
+      guildLeaderRole: { discordRoleId: guildLeaderRole },
       guildOfficerRoleUS: { discordRoleId: guildOfficerRoleUS },
-      guildOfficerRoleEU: { discordRoleId: guildOfficerRoleEU },
+      guildOfficerRole: { discordRoleId: guildOfficerRole },
       pingLeaderRolesUS: [guildLeaderRoleUS, guildOfficerRoleUS],
-      pingLeaderRolesEU: [guildLeaderRoleEU, guildOfficerRoleEU],
+      pingLeaderRoles: [guildLeaderRole, guildOfficerRole],
     },
     discord: {
       devUserId: '474839309484',
       channels: {
         albionRegistration: '396474759683473',
         albionUSRoles: '487573839485',
-        albionEURoles: '657687978899',
+        albionRoles: '657687978899',
         albionUSAnnouncements: '4845759049437495',
-        albionEUAnnouncements: '6655756786797',
+        albionAnnouncements: '6655756786797',
         albionScans: '4858696849494',
         ps2Verify: '558787980890809',
         ps2Private: '9705950678045896095',
@@ -304,13 +361,13 @@ export class TestBootstrapper {
       },
       roles: {
         albionUSMember: '454647566868675',
-        albionEUMember: '623445457656789',
+        albionMember: '623445457656789',
         albionUSRegistered: '4657676767676',
-        albionEURegistered: '67845345346565',
+        albionRegistered: '67845345346565',
         albionUSAnnouncements: '4566987855434',
-        albionEUAnnouncements: '6879876745643543',
+        albionAnnouncements: '6879876745643543',
         pingLeaderRolesUS: [guildLeaderRoleUS, guildOfficerRoleUS],
-        pingLeaderRolesEU: [guildLeaderRoleEU, guildOfficerRoleEU],
+        pingLeaderRoles: [guildLeaderRole, guildOfficerRole],
         ps2Verified: '059769706045',
       },
     },
@@ -318,6 +375,8 @@ export class TestBootstrapper {
       censusServiceId: 'dignityofwar',
       censusTimeout: 30000,
       outfitId: '866685885885885',
+      pingRoles: ['1234567890', '9876543210'],
+      rankMap: ps2RankMap,
     },
   };
 
