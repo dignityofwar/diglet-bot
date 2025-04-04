@@ -433,7 +433,7 @@ describe('AlbionScanningService', () => {
       );
       expect(setTimeout).toHaveBeenCalledTimes(1);
       expect(setTimeout).toHaveBeenLastCalledWith(expect.any(Function), 10000);
-      expect(mockDiscordMessage.channel.send).toBeCalledWith('## ⚠️ Couldn\'t gather characters from Americas ALB API. Retrying in 10s...');
+      expect(mockDiscordMessage.channel.send).toBeCalledWith('## ⚠️ Couldn\'t gather characters from Americas ALB API.\nError: "Operation went boom".\nRetrying in 10s...');
       expect(mockDiscordMessage.channel.send).toBeCalledWith('🇺🇸 Gathering 1 characters from the Americas ALB API... (attempt #2)');
     }, 15000);
   });
@@ -680,7 +680,7 @@ describe('AlbionScanningService', () => {
       expect(mockAlbionRegistrationsRepository.getEntityManager().removeAndFlush).toBeCalled();
       expect(mockDiscordUser.roles.remove).toBeCalledTimes(7);
 
-      expect(mockDiscordMessage.channel.send).toHaveBeenCalledWith(`ERROR: Unable to remove Albion Character "${mockCharacterUS.Name}" (${mockCharacterUS.Id}) from registration database! Pinging <@${mockDevUserId}>!`);
+      expect(mockDiscordMessage.channel.send).toHaveBeenCalledWith(`ERROR: Unable to remove Albion Character "${mockCharacterUS.Name}" (${mockCharacterUS.Id}) from registration database!\nError: "Operation went boom".\nPinging <@${mockDevUserId}>!`);
     });
     it('should properly handle guild leavers and handle database errors, EU', async () => {
       // Mock the Albion API response to denote the character has left the guild
@@ -699,7 +699,7 @@ describe('AlbionScanningService', () => {
       expect(mockAlbionRegistrationsRepository.getEntityManager().removeAndFlush).toBeCalled();
       expect(mockDiscordUser.roles.remove).toBeCalledTimes(6);
 
-      expect(mockDiscordMessage.channel.send).toHaveBeenCalledWith(`ERROR: Unable to remove Albion Character "${mockCharacterEU.Name}" (${mockCharacterEU.Id}) from registration database! Pinging <@${mockDevUserId}>!`);
+      expect(mockDiscordMessage.channel.send).toHaveBeenCalledWith(`ERROR: Unable to remove Albion Character "${mockCharacterEU.Name}" (${mockCharacterEU.Id}) from registration database!\nError: "Operation went boom".\nPinging <@${mockDevUserId}>!`);
     });
     it('should properly call the correct member to delete from the database', async () => {
       // Mock the Albion API response to denote the character has left the guild

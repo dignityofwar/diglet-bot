@@ -177,6 +177,7 @@ export class PS2GameScanningService {
       try {
         discordMember = await message.guild.members.fetch({ user: member.discordId, force: true });
       }
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       catch (err) {
         this.logger.log(`${dryRun ? '[DRY RUN] ' : ''}User ${character.name.first} has left the server!`);
         await this.removeDiscordLeaver(member, character, dryRun);
@@ -246,7 +247,7 @@ export class PS2GameScanningService {
         await discordMember.roles.remove(rank.discordRoleId);
       }
       catch (err) {
-        await getChannel(message).send(`ERROR: Unable to remove role "${role.name}" from ${character.name.first} (${character.character_id}). Pinging <@${this.config.get('discord.devUserId')}>!`);
+        await getChannel(message).send(`ERROR: Unable to remove role "${role.name}" from ${character.name.first} (${character.character_id}).\nError: "${err.message}".\nPinging <@${this.config.get('discord.devUserId')}>!`);
       }
     }
 

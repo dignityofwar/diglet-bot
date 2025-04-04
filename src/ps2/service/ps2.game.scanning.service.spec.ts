@@ -501,7 +501,7 @@ describe('PS2GameScanningService', () => {
 
       expect(mockDiscordMember.roles.remove).toHaveBeenCalledWith(mockVerifiedRank.discordRoleId);
       expect(mockDiscordMessage.channel.send).toHaveBeenCalledWith(
-        `ERROR: Unable to remove role "${mockDiscordRole.name}" from ${mockPS2Character.name.first} (${mockPS2Character.character_id}). Pinging <@${TestBootstrapper.mockConfig.discord.devUserId}>!`
+        `ERROR: Unable to remove role "${mockDiscordRole.name}" from ${mockPS2Character.name.first} (${mockPS2Character.character_id}).\nError: "Discord says no".\nPinging <@${TestBootstrapper.mockConfig.discord.devUserId}>!`
       );
     });
   });

@@ -277,7 +277,7 @@ export class PS2GameVerificationService implements OnApplicationBootstrap {
       }
       catch (err) {
         // Fucked
-        await getChannel(message).send(`Failed to remove the verification attempt from the database. Pinging <@${this.config.get('discord.devUserId')}>!`);
+        await getChannel(message).send(`Failed to remove the verification attempt from the database. Error: "${err.message}". Pinging <@${this.config.get('discord.devUserId')}>!`);
         return;
       }
     }
@@ -355,7 +355,7 @@ export class PS2GameVerificationService implements OnApplicationBootstrap {
       }
     }
     catch (err) {
-      return await this.handleFailedVerification(character, `Unable to add/remove the PS2/Verified role to user! Pinging <@${this.config.get('discord.devUserId')}>!`, guildMember, true);
+      return await this.handleFailedVerification(character, `Unable to add/remove the PS2/Verified role to user! Error: "${err.message}". Pinging <@${this.config.get('discord.devUserId')}>!`, guildMember, true);
     }
 
     // Edit their nickname to match their in game
@@ -365,7 +365,7 @@ export class PS2GameVerificationService implements OnApplicationBootstrap {
       }
     }
     catch (err) {
-      await this.sendMessage(`Unable to set nickname for user \`${guildMember.nickname || guildMember.displayName}\`. If you're an admin or staff this won't work as the bot has no power over you! Pinging <@${this.config.get('discord.devUserId')}>!`);
+      await this.sendMessage(`Unable to set nickname for user \`${guildMember.nickname || guildMember.displayName}\`. If you're an admin or staff this won't work as the bot has no power over you!\nError:"${err.message}"\nPinging <@${this.config.get('discord.devUserId')}>!`);
     }
   }
 
