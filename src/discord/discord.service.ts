@@ -34,7 +34,7 @@ export class DiscordService {
       return await this.discordClient.channels.fetch(channelId);
     }
     catch (err) {
-      throw new Error(`Failed to fetch channel with ID ${channelId}`);
+      throw new Error(`Failed to fetch channel with ID ${channelId}! Error: ${err.message}.`);
     }
   }
 

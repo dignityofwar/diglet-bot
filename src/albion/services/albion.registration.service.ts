@@ -241,7 +241,7 @@ export class AlbionRegistrationService implements OnApplicationBootstrap {
       await data.discordMember?.setNickname(data.character.Name);
     }
     catch (err) {
-      const errorMessage = `⚠️ Unable to set your nickname. If you're Staff this won't work as the bot has no power over you! Pinging <@${this.config.get('discord.devUserId')}>!`;
+      const errorMessage = `⚠️ Unable to set your nickname. If you're Staff this won't work as the bot has no power over you!\nError: "${err.message}".\nPinging <@${this.config.get('discord.devUserId')}>!`;
       await channel.send(errorMessage);
       this.logger.error(errorMessage);
     }

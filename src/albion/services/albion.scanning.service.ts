@@ -130,7 +130,7 @@ export class AlbionScanningService {
     }
     catch (err) {
       await statusMessage.delete();
-      const tempMessage = await getChannel(message).send(`## ⚠️ Couldn't gather characters from ${server} ALB API. Retrying in 10s...`);
+      const tempMessage = await getChannel(message).send(`## ⚠️ Couldn't gather characters from ${server} ALB API.\nError: "${err.message}".\nRetrying in 10s...`);
       await new Promise(resolve => setTimeout(resolve, 10000));
       await tempMessage.delete();
       return this.gatherCharacters(guildMembers, message, tries, server);
@@ -197,6 +197,7 @@ export class AlbionScanningService {
       try {
         discordMember = await message.guild.members.fetch({ user: member.discordId, force: true });
       }
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       catch (err) {
         // No discord member means they've left the server. Flag them as removed and proceed with guild check.
         this.logger.log(`User ${character.Name} has left the Discord server`);
@@ -230,7 +231,7 @@ export class AlbionScanningService {
         await this.albionRegistrationsRepository.getEntityManager().removeAndFlush(member);
       }
       catch (err) {
-        await getChannel(message).send(`ERROR: Unable to remove Albion Character "${character.Name}" (${character.Id}) from registration database! Pinging <@${this.config.get('discord.devUserId')}>!`);
+        await getChannel(message).send(`ERROR: Unable to remove Albion Character "${character.Name}" (${character.Id}) from registration database!\nError: "${err.message}".\nPinging <@${this.config.get('discord.devUserId')}>!`);
       }
 
       // If Discord member does not exist, there are no discord actions to take.
@@ -431,6 +432,7 @@ export class AlbionScanningService {
       try {
         discordMember = await message.guild.members.fetch({ user: member.discordId, force: true });
       }
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       catch (err) {
         this.logger.warn(`Unable to fetch Discord member for ${member.characterName}! Assuming they've left the server, skipping suggestions for them.`);
         continue;
