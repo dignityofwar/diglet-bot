@@ -160,7 +160,7 @@ describe('ActivityService', () => {
 
       mockActivityRepository.findAll = jest.fn().mockResolvedValue(activityRecords);
 
-      mockActivityStatisticsRepository.persistAndFlush = jest.fn();
+      mockActivityStatisticsRepository.getEntityManager().persistAndFlush = jest.fn();
     });
 
     it('should collate activity records and create statistics', async () => {
@@ -189,7 +189,7 @@ describe('ActivityService', () => {
     });
 
     it('should handle database errors', async () => {
-      mockActivityStatisticsRepository.persistAndFlush = jest.fn().mockRejectedValue(new Error('Database error'));
+      mockActivityStatisticsRepository.getEntityManager().persistAndFlush = jest.fn().mockRejectedValue(new Error('Database error'));
 
       await expect(activityService.enumerateActivity()).rejects.toThrow('Error enumerating activity records. Error: Database error');
     });
