@@ -6,7 +6,9 @@
   "lockFileMaintenance": {
     "enabled": true,
     "automerge": true,
-    "schedule": ["before 6am on sunday"]
+    "schedule": [
+      "before 6am on sunday"
+    ]
   },
   "packageRules": [
     {
@@ -20,17 +22,29 @@
     },
     {
       "description": "Automerge linters and formatters",
-      "matchDepTypes": ["devDependencies"],
-      "matchPackagePatterns": ["lint", "prettier"],
+      "matchDepTypes": [
+        "devDependencies"
+      ],
       "automerge": true,
-      "schedule": ["before 6am on saturday"]
+      "schedule": [
+        "before 6am on saturday"
+      ],
+      "matchPackageNames": [
+        "/lint/",
+        "/prettier/"
+      ]
     },
     {
       "description": "Automerge non-major updates",
-      "matchUpdateTypes": ["minor", "patch"],
+      "matchUpdateTypes": [
+        "minor",
+        "patch"
+      ],
       "matchCurrentVersion": "!/^0/",
       "automerge": true,
-      "schedule":  ["before 6am on saturday"]
+      "schedule": [
+        "before 6am on saturday"
+      ]
     }
   ]
 }
