@@ -147,12 +147,13 @@ export class AlbionScanningService {
     // Save all the characters to a map we can easily pick out later via character ID
     const charactersMap = new Map<string, AlbionPlayerInterface>();
     const leavers: string[] = [];
+
     for (const character of characters) {
       charactersMap.set(character.Id, character);
     }
 
     // Get the registered members from the database
-    const registeredMembers: AlbionRegistrationsEntity[] = await this.albionRegistrationsRepository.find({ guildId });
+    const registeredMembers: AlbionRegistrationsEntity[] = await this.albionRegistrationsRepository.getEntityManager().find({ guildId });
 
     const statusMessage = await message.channel.send(`### ${emoji} Scanned 0/${registeredMembers.length} registered members...`);
 
