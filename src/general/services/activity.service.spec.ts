@@ -185,7 +185,7 @@ describe('ActivityService', () => {
         },
       );
 
-      expect(mockActivityStatisticsRepository.persistAndFlush).toHaveBeenCalledWith(mockStatistics);
+      expect(mockActivityStatisticsRepository.getEntityManager().persistAndFlush).toHaveBeenCalledWith(mockStatistics);
     });
 
     it('should handle database errors', async () => {
