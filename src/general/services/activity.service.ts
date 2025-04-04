@@ -36,8 +36,6 @@ export class ActivityService {
   async startEnumeration(message: Message): Promise<void> {
     try {
       this.logger.log('Starting activity enumeration');
-      await getChannel(message).send('Starting daily activity enumeration...');
-
       let stats: ActivityStatisticsEntity;
 
       try {

@@ -7,7 +7,7 @@ import { Logger } from '@nestjs/common';
 import { TestBootstrapper } from '../../test.bootstrapper';
 import { getRepositoryToken } from '@mikro-orm/nestjs';
 import { ActivityStatisticsEntity } from '../../database/entities/activity.statistics.entity';
-import { friendlyDate } from '../../helpers';
+import { friendlyDate, generateDateInPast } from '../../helpers';
 
 describe('ActivityService', () => {
   let activityService: ActivityService;
@@ -64,10 +64,8 @@ describe('ActivityService', () => {
     mockActivityRepository = module.get(getRepositoryToken(ActivityEntity));
 
     mockStatusMessage = TestBootstrapper.getMockDiscordMessage();
-
     mockChannel = TestBootstrapper.getMockDiscordTextChannel();
     mockChannel.send = jest.fn().mockResolvedValue(mockStatusMessage);
-
   });
 
   it('should be defined', () => {
@@ -125,37 +123,37 @@ describe('ActivityService', () => {
           id: 23456781,
           discordId: '23456781',
           discordNickname: 'testuser1',
-          lastActivity: generateDate(0.5),
+          lastActivity: generateDateInPast(0.5),
         } as ActivityEntity,
         {
           id: 23456782,
           discordId: '23456782',
           discordNickname: 'testuser2',
-          lastActivity: generateDate(1.9),
+          lastActivity: generateDateInPast(1.9),
         } as ActivityEntity,
         {
           id: 23456783,
           discordId: '23456783',
           discordNickname: 'testuser3',
-          lastActivity: generateDate(2.8),
+          lastActivity: generateDateInPast(2.8),
         } as ActivityEntity,
         {
           id: 23456784,
           discordId: '23456784',
           discordNickname: 'testuser4',
-          lastActivity: generateDate(34.3),
+          lastActivity: generateDateInPast(34.3),
         } as ActivityEntity,
         {
           id: 23456785,
           discordId: '23456785',
           discordNickname: 'testuser5',
-          lastActivity: generateDate(89),
+          lastActivity: generateDateInPast(89),
         } as ActivityEntity,
         {
           id: 23456786,
           discordId: '23456786',
           discordNickname: 'testuser6',
-          lastActivity: generateDate(100),
+          lastActivity: generateDateInPast(100),
         } as ActivityEntity,
       ];
 
@@ -229,7 +227,6 @@ describe('ActivityService', () => {
       it('should send a message and start enumeration', async () => {
         await activityService.startEnumeration(mockStatusMessage);
 
-        expect(mockStatusMessage.channel.send).toHaveBeenCalledWith('Starting daily activity enumeration...');
         expect(activityService.enumerateActivity).toHaveBeenCalled();
       });
 
@@ -248,7 +245,6 @@ describe('ActivityService', () => {
 
         await activityService.startEnumeration(mockStatusMessage);
 
-        expect(mockStatusMessage.channel.send).toHaveBeenCalledWith('Starting daily activity enumeration...');
         expect(mockStatusMessage.channel.send).toHaveBeenCalledWith(mockReport);
         expect(mockStatusMessage.channel.send).toHaveBeenCalledWith('Error starting activity enumeration. Error: Send error!');
       });
@@ -264,17 +260,9 @@ describe('ActivityService', () => {
       it('should properly generate the report', async () => {
         await activityService.startEnumeration(mockStatusMessage);
 
-        expect(mockStatusMessage.channel.send).toHaveBeenCalledWith('Starting daily activity enumeration...');
-
         expect(mockStatusMessage.channel.send).toHaveBeenCalledWith(mockReport);
       });
     });
   });
 });
 
-const generateDate = (daysInactive: number): Date => {
-  const now = new Date();
-  // Subtract daysInactive (which may be fractional) in milliseconds
-  const newTime = now.getTime() - daysInactive * 24 * 60 * 60 * 1000;
-  return new Date(newTime);
-};
