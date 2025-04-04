@@ -16,4 +16,4 @@ RUN pnpm build
 RUN chown node:node /app
 USER node
 
-ENTRYPOINT /app/entrypoint.sh
+ENTRYPOINT ["/app/entrypoint.sh"]
