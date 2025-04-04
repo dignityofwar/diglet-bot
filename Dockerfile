@@ -10,10 +10,9 @@ COPY . /app
 
 WORKDIR /app
 
-RUN pnpm build
+# Build and lock the execution down to node non privledged user
+RUN pnpm build && chown node:node /app
 
-# Lock the execution down to node non privledged user
-RUN chown node:node /app
 USER node
 
 ENTRYPOINT ["/app/entrypoint.sh"]
