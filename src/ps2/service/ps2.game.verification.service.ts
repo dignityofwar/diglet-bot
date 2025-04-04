@@ -3,7 +3,6 @@ import { CensusWebsocketService } from './census.websocket.service';
 import { ConfigService } from '@nestjs/config';
 import { Channel, GuildMember, Message, TextChannel } from 'discord.js';
 import { CensusCharacterWithOutfitInterface } from '../interfaces/CensusCharacterResponseInterface';
-import { EventBusService } from './event.bus.service';
 import { Death } from 'ps2census';
 import { EventConstants } from '../constants/EventConstants';
 import { PS2VerificationAttemptEntity } from '../../database/entities/ps2.verification.attempt.entity';
@@ -11,6 +10,7 @@ import { InjectRepository } from '@mikro-orm/nestjs';
 import { EntityRepository } from '@mikro-orm/core';
 import { PS2MembersEntity } from '../../database/entities/ps2.members.entity';
 import { DiscordService } from '../../discord/discord.service';
+import EventEmitter from 'events';
 
 // This service exists to subscribe to the PS2 Census websocket service and listen for particular events concerning characters.
 // A long promise will be created, waiting for the character to do the actions performed.
@@ -32,7 +32,7 @@ export class PS2GameVerificationService implements OnApplicationBootstrap {
     private readonly discordService: DiscordService,
     private readonly config: ConfigService,
     private readonly censusWebsocketService: CensusWebsocketService,
-    private readonly eventBus: EventBusService,
+    private readonly eventBus: EventEmitter,
     @InjectRepository(PS2VerificationAttemptEntity) private readonly ps2VerificationAttemptRepository: EntityRepository<PS2VerificationAttemptEntity>,
     @InjectRepository(PS2MembersEntity) private readonly ps2MembersRepository: EntityRepository<PS2MembersEntity>
   ) {
