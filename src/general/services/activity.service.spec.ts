@@ -7,6 +7,7 @@ import { Logger } from '@nestjs/common';
 import { TestBootstrapper } from '../../test.bootstrapper';
 import { getRepositoryToken } from '@mikro-orm/nestjs';
 import { ActivityStatisticsEntity } from '../../database/entities/activity.statistics.entity';
+import { friendlyDate } from '../../helpers';
 
 describe('ActivityService', () => {
   let activityService: ActivityService;
@@ -195,8 +196,7 @@ describe('ActivityService', () => {
     });
 
     describe('startEnumeration', () => {
-      const nowSecs = Math.floor(Date.now() / 1000);
-      const mockReport = `# Activity Report <t:${nowSecs}:D>
+      const mockReport = `# Activity Report ${friendlyDate(new Date())}
 - 👥 Total Users: **6**
 - 🫥 Inactive Users (>90d): **1** (16.7%)
 - 👀 Active Users:
