@@ -89,13 +89,16 @@ export class JoinerLeaverService {
     }
     const stat = latestRecord[0];
 
-    // Send a message to the channel with the report
-    await getChannel(message).send(`## Joiner & Leavers:
+    const report = `## Joiner & Leavers:
 - 👋 Joiners: **${stat.joiners}**
 - 🚪 Leavers: **${stat.leavers}**
 - 👍 Rejoiners: **${stat.rejoiners}**
 - 🥺 Early Leavers: (<48h): **${stat.earlyLeavers}**
-- ⏳ Average Time to Leave: **${stat.avgTimeToLeave}**`);
+- ⏳ Average Time to Leave: **${stat.avgTimeToLeave}**`;
+
+    // Send a message to the channel with the report
+    await getChannel(message).send(report);
+    this.logger.log(report);
   }
 
   async enumerateJoinerLeavers(): Promise<void> {
@@ -115,6 +118,17 @@ export class JoinerLeaverService {
     }).length;
 
     const avgTimeToLeave = this.calculateAvgTimeToLeave(joinerLeaverRecords);
+
+    // Create a date and set it to be midnight of the day it was run
+    const date = new Date();
+    date.setHours(0, 0, 0, 0);
+
+    // Check if there is already a report on the same date, if so, delete it
+    const existingReport = await this.joinerLeaverStatisticsRepository.findOne({ createdAt: date });
+    if (existingReport) {
+      await this.joinerLeaverStatisticsRepository.getEntityManager().removeAndFlush(existingReport);
+      this.logger.warn(`Removed existing report for date ${date}`);
+    }
 
     const entity = new JoinerLeaverStatisticsEntity({
       joiners,
