@@ -73,6 +73,8 @@ export class JoinerLeaverService {
     catch (err) {
       const error = `Error enumerating joiner leaver records. Error: ${err.message}`;
       this.logger.error(error);
+      await getChannel(message).send(error);
+      return;
     }
     const latestRecord = await this.joinerLeaverStatisticsRepository.find(
       {},
@@ -82,9 +84,10 @@ export class JoinerLeaverService {
       }
     );
 
-    if (!latestRecord) {
-      this.logger.error('No joiner leaver statistics found!');
-      await getChannel(message).send('No joiner leaver statistics found!');
+    if (!latestRecord[0]) {
+      const error = 'No joiner leaver statistics found!';
+      this.logger.error(error);
+      await getChannel(message).send(error);
       return;
     }
     const stat = latestRecord[0];

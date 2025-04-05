@@ -221,6 +221,24 @@ describe('JoinerLeaverService', () => {
 
       expect(mockStatusMessage.channel.send).toHaveBeenCalledWith(mockReport);
     });
+
+    it('should handle error during enumeration', async () => {
+      joinerLeaverService.enumerateJoinerLeavers = jest.fn().mockRejectedValue(new Error('Test error'));
+
+      await joinerLeaverService.startEnumeration(mockStatusMessage);
+
+      expect(mockJoinerLeaverStatisticsRepository.find).not.toHaveBeenCalled();
+      expect(mockStatusMessage.channel.send).toHaveBeenCalledWith('Error enumerating joiner leaver records. Error: Test error');
+    });
+
+    it('should handle no statistics found', async () => {
+      mockJoinerLeaverStatisticsRepository.find = jest.fn().mockResolvedValue([]);
+
+      await joinerLeaverService.startEnumeration(mockStatusMessage);
+
+      expect(mockJoinerLeaverStatisticsRepository.find).toHaveBeenCalled();
+      expect(mockStatusMessage.channel.send).toHaveBeenCalledWith('No joiner leaver statistics found!');
+    });
   });
 
   describe('enumerateJoinerLeavers', () => {
