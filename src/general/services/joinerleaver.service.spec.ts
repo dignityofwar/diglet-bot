@@ -212,13 +212,13 @@ Stats as of April 5th 2025
 - ⏳ Average Time to Leave: **1d 13h 37m**`;
 
     beforeEach(() => {
-      mockJoinerLeaverStatisticsRepository.find = jest.fn().mockResolvedValue([mockJoinerLeaverStatisticsEntity]);
+      mockJoinerLeaverStatisticsRepository.findOne = jest.fn().mockResolvedValue(mockJoinerLeaverStatisticsEntity);
     });
 
     it('should produce the leaver report', async () => {
       await joinerLeaverService.startEnumeration(mockStatusMessage);
 
-      expect(mockJoinerLeaverStatisticsRepository.find).toHaveBeenCalled();
+      expect(mockJoinerLeaverStatisticsRepository.findOne).toHaveBeenCalled();
 
       expect(mockStatusMessage.channel.send).toHaveBeenCalledWith(mockReport);
     });
@@ -228,16 +228,16 @@ Stats as of April 5th 2025
 
       await joinerLeaverService.startEnumeration(mockStatusMessage);
 
-      expect(mockJoinerLeaverStatisticsRepository.find).not.toHaveBeenCalled();
+      expect(mockJoinerLeaverStatisticsRepository.findOne).not.toHaveBeenCalled();
       expect(mockStatusMessage.channel.send).toHaveBeenCalledWith('Error enumerating joiner leaver records. Error: Test error');
     });
 
     it('should handle no statistics found', async () => {
-      mockJoinerLeaverStatisticsRepository.find = jest.fn().mockResolvedValue([]);
+      mockJoinerLeaverStatisticsRepository.findOne = jest.fn().mockResolvedValue(null);
 
       await joinerLeaverService.startEnumeration(mockStatusMessage);
 
-      expect(mockJoinerLeaverStatisticsRepository.find).toHaveBeenCalled();
+      expect(mockJoinerLeaverStatisticsRepository.findOne).toHaveBeenCalled();
       expect(mockStatusMessage.channel.send).toHaveBeenCalledWith('No joiner leaver statistics found!');
     });
   });
