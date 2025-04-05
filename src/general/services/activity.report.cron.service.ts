@@ -4,6 +4,7 @@ import { ConfigService } from '@nestjs/config';
 import { DiscordService } from '../../discord/discord.service';
 import { Cron } from '@nestjs/schedule';
 import { ActivityService } from './activity.service';
+import { JoinerLeaverService } from './joinerleaver.service';
 
 @Injectable()
 export class ActivityReportCronService implements OnApplicationBootstrap {
@@ -13,7 +14,8 @@ export class ActivityReportCronService implements OnApplicationBootstrap {
   constructor(
     private readonly discordService: DiscordService,
     private readonly config: ConfigService,
-    private readonly activityService: ActivityService
+    private readonly activityService: ActivityService,
+    private readonly joinerLeaverService: JoinerLeaverService
   ) {}
 
   async onApplicationBootstrap(): Promise<void> {
@@ -37,5 +39,6 @@ export class ActivityReportCronService implements OnApplicationBootstrap {
     this.logger.log('Running Activity Enumeration Job');
     const message = await this.channel.send('Starting daily activity enumeration...');
     await this.activityService.startEnumeration(message);
+    await this.joinerLeaverService.startEnumeration(message);
   }
 }
