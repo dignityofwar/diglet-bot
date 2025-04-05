@@ -210,7 +210,7 @@ describe('ActivityService', () => {
       beforeEach(() => {
         activityService.enumerateActivity = jest.fn();
 
-        mockActivityStatisticsRepository.find = jest.fn().mockResolvedValue([{
+        mockActivityStatisticsRepository.findOne = jest.fn().mockResolvedValue({
           totalUsers: 6,
           inactiveUsers: 1,
           activeUsers90d: 5,
@@ -221,7 +221,7 @@ describe('ActivityService', () => {
           activeUsers3d: 3,
           activeUsers2d: 2,
           activeUsers1d: 1,
-        }]);
+        });
       });
 
       it('should send a message and start enumeration', async () => {
@@ -249,7 +249,7 @@ describe('ActivityService', () => {
       });
 
       it('should handle empty database', async () => {
-        mockActivityStatisticsRepository.find = jest.fn().mockResolvedValue([]);
+        mockActivityStatisticsRepository.findOne = jest.fn().mockResolvedValue(null);
 
         await activityService.startEnumeration(mockStatusMessage);
 

@@ -67,8 +67,24 @@ export class JoinerLeaverService {
   async startEnumeration(message: Message): Promise<void> {
     this.logger.log('Starting joiner leaver enumeration');
 
+    let stats: JoinerLeaverStatisticsEntity;
+
     try {
       await this.enumerateJoinerLeavers();
+
+      // Get today's record
+      // Create a date and set it to be midnight of the day it was run
+      const date = new Date();
+      date.setHours(0, 0, 0, 0);
+      // Check if there is already a report on the same date
+      stats = await this.joinerLeaverStatisticsRepository.findOne({ createdAt: date });
+
+      if (!stats) {
+        const error = 'No joiner leaver statistics found!';
+        this.logger.error(error);
+        await getChannel(message).send(error);
+        return;
+      }
     }
     catch (err) {
       const error = `Error enumerating joiner leaver records. Error: ${err.message}`;
@@ -76,29 +92,14 @@ export class JoinerLeaverService {
       await getChannel(message).send(error);
       return;
     }
-    const latestRecord = await this.joinerLeaverStatisticsRepository.find(
-      {},
-      {
-        orderBy: { createdAt: 'desc' },
-        limit: 1,
-      }
-    );
-
-    if (!latestRecord[0]) {
-      const error = 'No joiner leaver statistics found!';
-      this.logger.error(error);
-      await getChannel(message).send(error);
-      return;
-    }
-    const stat = latestRecord[0];
 
     const report = `## Joiners & Leavers:
 Stats as of April 5th 2025
-- 👋 Joiners: **${stat.joiners}**
-- 🚪 Leavers: **${stat.leavers}**
-- 👍 Rejoiners: **${stat.rejoiners}**
-- 🥺 Early Leavers: (<48h): **${stat.earlyLeavers}**
-- ⏳ Average Time to Leave: **${stat.avgTimeToLeave}**`;
+- 👋 Joiners: **${stats.joiners}**
+- 🚪 Leavers: **${stats.leavers}**
+- 👍 Rejoiners: **${stats.rejoiners}**
+- 🥺 Early Leavers: (<48h): **${stats.earlyLeavers}**
+- ⏳ Average Time to Leave: **${stats.avgTimeToLeave}**`;
 
     // Send a message to the channel with the report
     await getChannel(message).send(report);

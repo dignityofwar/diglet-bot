@@ -42,21 +42,18 @@ export class ActivityService {
         await this.enumerateActivity();
         this.logger.log('Activity enumeration completed');
 
-        // Get the latest record
-        const result = await this.activityStatisticsRepository.find(
-          {},
-          {
-            orderBy: { createdAt: 'desc' },
-            limit: 1,
-          }
-        );
+        // Get today's record
+        // Create a date and set it to be midnight of the day it was run
+        const date = new Date();
+        date.setHours(0, 0, 0, 0);
 
-        if (result.length === 0) {
+        // Check if there is already a report on the same date
+        stats = await this.activityStatisticsRepository.findOne({ createdAt: date });
+
+        if (!stats) {
           // noinspection ExceptionCaughtLocallyJS
           throw new Error('No activity statistics found!');
         }
-
-        stats = result[0];
       }
       catch (err) {
         const error = `Error enumerating activity records. Error: ${err.message}`;
