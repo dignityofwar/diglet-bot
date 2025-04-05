@@ -156,9 +156,16 @@ export class JoinerLeaverService {
         const diff = Math.abs(record.leaveDate.getTime() - record.joinDate.getTime());
         return acc + diff;
       }, 0) / leavers;
+
+    // Convert the average time to leave from milliseconds to days, hours, and minutes
+    // If leavers is 0, return "N/A"
     const avgTimeToLeaveDays = Math.floor(avgTimeToLeave / (1000 * 3600 * 24));
     const avgTimeToLeaveHours = Math.floor((avgTimeToLeave % (1000 * 3600 * 24)) / (1000 * 3600));
     const avgTimeToLeaveMinutes = Math.floor((avgTimeToLeave % (1000 * 3600)) / (1000 * 60));
+
+    if (leavers === 0) {
+      return 'N/A';
+    }
 
     return `${avgTimeToLeaveDays}d ${avgTimeToLeaveHours}h ${avgTimeToLeaveMinutes}m`;
   }

@@ -332,6 +332,14 @@ describe('JoinerLeaverService', () => {
 
         expect(averageTime).toBe('1d 13h 25m');
       });
+
+      it('should return "N/A" if there are no leavers', () => {
+        const simpleJoinerLeaveEntities: JoinerLeaverEntity[] = [];
+
+        const averageTime = joinerLeaverService.calculateAvgTimeToLeave(simpleJoinerLeaveEntities);
+
+        expect(averageTime).toBe('N/A');
+      });
     });
   });
 });
