@@ -7,6 +7,7 @@ import { MikroORM } from '@mikro-orm/core';
 import { AlbionServer } from './albion/interfaces/albion.api.interfaces';
 import { PS2MembersEntity } from './database/entities/ps2.members.entity';
 import { PS2RankMapInterface } from './config/ps2.app.config';
+import { Collection, Role, Snowflake } from 'discord.js';
 
 const guildLeaderRoleUS = '44546543371337';
 const guildLeaderRole = '64354579789809089';
@@ -142,10 +143,18 @@ export class TestBootstrapper {
       roles: {
         cache: {
           get: jest.fn().mockImplementation(() => TestBootstrapper.getMockDiscordRole('4969797969594')),
+          clear: jest.fn(),
         },
         fetch: jest.fn().mockImplementation(() => TestBootstrapper.getMockDiscordRole('4969797969594')),
       },
     };
+  }
+
+  static getMockGuildRoleListCollection() {
+    return new Collection<Snowflake, Role>()
+      .set('123456789012345678', { id: '123456789012345678', name: 'Onboarded' } as Role)
+      .set('234567890123456789', { id: '234567890123456789', name: 'Rec/BestGameEver' } as Role)
+      .set('345678901234567890', { id: '345678901234567890', name: 'Rec/PS2/Leader' } as Role);
   }
 
   static getMockDiscordGuildManager(id: string) {

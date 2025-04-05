@@ -4,6 +4,7 @@ import { ConfigService } from '@nestjs/config';
 import { DiscordService } from './discord.service';
 import { TestBootstrapper } from '../test.bootstrapper';
 import { getChannel } from './discord.hacks';
+import { Collection, Role, Snowflake } from 'discord.js';
 
 describe('DiscordService', () => {
   let service: DiscordService;
@@ -280,6 +281,31 @@ describe('DiscordService', () => {
 
       expect(member.send).toHaveBeenCalledWith(message);
       expect(service['logger'].error).toHaveBeenCalledWith(`Failed to send DM to member ${member.id}`, error);
+    });
+  });
+
+  describe('getAllRolesFromGuild', () => {
+    let mockGuild: any;
+
+    beforeEach(() => {
+      mockGuild = TestBootstrapper.getMockGuild('123456789012345678');
+      mockGuild.roles.fetch = jest.fn().mockResolvedValue(TestBootstrapper.getMockGuildRoleListCollection());
+    });
+
+    it('should fetch all roles from the guild', async () => {
+      const result = await service.getAllRolesFromGuild(mockGuild);
+
+      expect(mockGuild.roles.cache.clear).toHaveBeenCalled();
+      expect(mockGuild.roles.fetch).toHaveBeenCalled();
+      expect(result.get('123456789012345678').id).toBeDefined();
+      expect(result.size).toBe(TestBootstrapper.getMockGuildRoleListCollection().size);
+    });
+
+    it('should throw on Discord error', async () => {
+      mockGuild.roles.fetch = jest.fn().mockRejectedValue(new Error('Discord error'));
+
+      await expect(service.getAllRolesFromGuild(mockGuild)).rejects.toThrow(`Failed to fetch roles from guild ${mockGuild.id}. Error: Discord error`);
+      expect(mockGuild.roles.cache.clear).toHaveBeenCalled();
     });
   });
 });
