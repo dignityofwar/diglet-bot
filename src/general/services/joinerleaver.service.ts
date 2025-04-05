@@ -93,6 +93,7 @@ export class JoinerLeaverService {
     const stat = latestRecord[0];
 
     const report = `## Joiners & Leavers:
+Stats as of April 5th 2025
 - 👋 Joiners: **${stat.joiners}**
 - 🚪 Leavers: **${stat.leavers}**
 - 👍 Rejoiners: **${stat.rejoiners}**

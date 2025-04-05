@@ -204,6 +204,7 @@ describe('JoinerLeaverService', () => {
 
   describe('startEnumeration', () => {
     const mockReport = `## Joiners & Leavers:
+Stats as of April 5th 2025
 - 👋 Joiners: **10**
 - 🚪 Leavers: **5**
 - 👍 Rejoiners: **2**
