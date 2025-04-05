@@ -7,6 +7,8 @@ interface JoinerLeaverStatisticsEntityOptions {
   rejoiners: number;
   earlyLeavers: number;
   avgTimeToLeave: string;
+  createdAt?: Date;
+  updatedAt?: Date;
 }
 
 @Entity()

@@ -131,6 +131,8 @@ export class JoinerLeaverService {
     }
 
     const entity = new JoinerLeaverStatisticsEntity({
+      createdAt: date,
+      updatedAt: date,
       joiners,
       leavers,
       rejoiners,
