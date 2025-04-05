@@ -92,7 +92,7 @@ export class JoinerLeaverService {
     }
     const stat = latestRecord[0];
 
-    const report = `## Joiner & Leavers:
+    const report = `## Joiners & Leavers:
 - 👋 Joiners: **${stat.joiners}**
 - 🚪 Leavers: **${stat.leavers}**
 - 👍 Rejoiners: **${stat.rejoiners}**

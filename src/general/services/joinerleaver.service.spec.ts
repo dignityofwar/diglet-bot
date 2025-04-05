@@ -203,7 +203,7 @@ describe('JoinerLeaverService', () => {
   });
 
   describe('startEnumeration', () => {
-    const mockReport = `## Joiner & Leavers:
+    const mockReport = `## Joiners & Leavers:
 - 👋 Joiners: **10**
 - 🚪 Leavers: **5**
 - 👍 Rejoiners: **2**
