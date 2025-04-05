@@ -6,12 +6,14 @@ import { TextChannel } from 'discord.js';
 import { TestBootstrapper } from '../../test.bootstrapper';
 import { ActivityReportCronService } from './activity.report.cron.service';
 import { ActivityService } from './activity.service';
+import { JoinerLeaverService } from './joinerleaver.service';
 
 describe('ActivityReportCronService', () => {
   let activityReportCronService: ActivityReportCronService;
   let discordService: DiscordService;
   let configService: ConfigService;
   let activityService: ActivityService;
+  let joinerLeaverService: JoinerLeaverService;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
@@ -35,6 +37,12 @@ describe('ActivityReportCronService', () => {
             startEnumeration: jest.fn(),
           },
         },
+        {
+          provide: JoinerLeaverService,
+          useValue: {
+            startEnumeration: jest.fn(),
+          },
+        },
         Logger,
       ],
     }).compile();
@@ -43,6 +51,7 @@ describe('ActivityReportCronService', () => {
     discordService = module.get<DiscordService>(DiscordService);
     configService = module.get<ConfigService>(ConfigService);
     activityService = module.get<ActivityService>(ActivityService);
+    joinerLeaverService = module.get<JoinerLeaverService>(JoinerLeaverService);
   });
 
   describe('onApplicationBootstrap', () => {
@@ -82,7 +91,7 @@ describe('ActivityReportCronService', () => {
   });
 
   describe('runReport', () => {
-    it('should run the enumeration command', async () => {
+    it('should run the enumeration commands', async () => {
       const mockMessage = TestBootstrapper.getMockDiscordMessage();
 
       const mockChannel = {
@@ -98,6 +107,7 @@ describe('ActivityReportCronService', () => {
 
       expect(mockChannel.send).toHaveBeenCalledWith('Starting daily activity enumeration...');
       expect(activityService.startEnumeration).toHaveBeenCalledWith(mockMessage);
+      expect(joinerLeaverService.startEnumeration).toHaveBeenCalledWith(mockMessage);
     });
   });
 });
