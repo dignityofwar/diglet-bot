@@ -240,7 +240,6 @@ describe('ActivityService', () => {
 
       it('should handle errors after enumeration', async () => {
         mockStatusMessage.channel.send = jest.fn()
-          .mockResolvedValueOnce(true)
           .mockRejectedValueOnce(new Error('Send error!'));
 
         await activityService.startEnumeration(mockStatusMessage);
