@@ -108,6 +108,7 @@ describe('ActivityReportCronService', () => {
       expect(mockChannel.send).toHaveBeenCalledWith('Starting daily activity enumeration...');
       expect(activityService.startEnumeration).toHaveBeenCalledWith(mockMessage);
       expect(joinerLeaverService.startEnumeration).toHaveBeenCalledWith(mockMessage);
+      expect(mockMessage.delete).toHaveBeenCalled();
     });
   });
 });

@@ -38,7 +38,10 @@ export class ActivityReportCronService implements OnApplicationBootstrap {
   async runReport(): Promise<void> {
     this.logger.log('Running Activity Enumeration Job');
     const message = await this.channel.send('Starting daily activity enumeration...');
+
     await this.activityService.startEnumeration(message);
     await this.joinerLeaverService.startEnumeration(message);
+
+    await message.delete();
   }
 }

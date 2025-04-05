@@ -2,11 +2,11 @@
 import { Test } from '@nestjs/testing';
 import { TestBootstrapper } from '../../test.bootstrapper';
 import { ActivityReportCommand } from './activity.report.command';
-import { ActivityService } from '../services/activity.service';
+import { ActivityReportCronService } from '../services/activity.report.cron.service';
 
 describe('ActivityReportCommand', () => {
   let command: ActivityReportCommand;
-  let service: ActivityService;
+  let activityReportCronService: ActivityReportCronService;
   let mockInteraction: any;
   let mockDiscordUser: any;
 
@@ -15,25 +15,25 @@ describe('ActivityReportCommand', () => {
       providers: [
         ActivityReportCommand,
         {
-          provide: ActivityService,
+          provide: ActivityReportCronService,
           useValue: {
-            startEnumeration: jest.fn(),
+            runReport: jest.fn(),
           },
         },
       ],
     }).compile();
 
     command = moduleRef.get<ActivityReportCommand>(ActivityReportCommand);
-    service = moduleRef.get<ActivityService>(ActivityService);
+    activityReportCronService = moduleRef.get<ActivityReportCronService>(ActivityReportCronService);
     // Mock a ChatInputCommandInteraction
     mockDiscordUser = TestBootstrapper.getMockDiscordUser();
     mockInteraction = TestBootstrapper.getMockDiscordInteraction('123456789', mockDiscordUser);
   });
 
   it('should initiate the report', async () => {
-    await command.onActivityEnumerateCommand(mockInteraction);
+    await command.onActivityReportCommand(mockInteraction);
 
-    expect(mockInteraction[0].channel.send).toHaveBeenCalledWith('Starting Activity Enumeration report via command...');
-    expect(service.startEnumeration).toHaveBeenCalled();
+    expect(mockInteraction[0].reply).toHaveBeenCalledWith('Starting Activity Report via command...');
+    expect(activityReportCronService.runReport).toHaveBeenCalled();
   });
 });
