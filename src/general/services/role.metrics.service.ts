@@ -68,6 +68,14 @@ export class RoleMetricsService {
       return;
     }
 
+    // Sort the communityGames by the value
+    stat.communityGames = Object.fromEntries(
+      Object.entries(stat.communityGames).sort(([, a], [, b]) => b - a)
+    );
+    stat.recGames = Object.fromEntries(
+      Object.entries(stat.recGames).sort(([, a], [, b]) => b - a)
+    );
+
     // Since the role metrics are stored as JSON objects, we will have to deconstruct them into legible strings.
     // Each communityGame and recGame is in the format of:
     // {"Albion Online": 5, "Foxhole": 10}

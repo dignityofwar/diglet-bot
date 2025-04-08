@@ -137,10 +137,13 @@ describe('RoleMetricsService', () => {
 Stats as of April 5th 2025. All statistics state members who have the role AND are active <90d.
 - Onboarded: **3**
 - Community Games
-  - Albion Online: **2**
+  - Albion Online: **100**
+  - Some Game: **12**
   - Foxhole: **1**
 - Rec Games
-  - Rec/BestGameEver: **3**
+  - Rec/BestGameEver: **100**
+  - Rec/Mediocre Game: **32**
+  - Rec/WorstGameEver: **5**
 `;
 
     beforeEach(() => {
@@ -148,7 +151,19 @@ Stats as of April 5th 2025. All statistics state members who have the role AND a
       roleMetricsService.enumerateRoleIds = jest.fn().mockResolvedValue(mockRoleList);
       roleMetricsService.enumerateRoleMetrics = jest.fn();
 
-      mockRoleMetricsRepository.findOne = jest.fn().mockResolvedValue(mockRoleMetricsEntity);
+      const mockRoleMetricsEntityExtras = mockRoleMetricsEntity;
+      mockRoleMetricsEntityExtras.communityGames = {
+        'Albion Online': 100,
+        'Foxhole': 1,
+        'Some Game': 12,
+      };
+      mockRoleMetricsEntityExtras.recGames = {
+        'Rec/BestGameEver': 100,
+        'Rec/WorstGameEver': 5,
+        'Rec/Mediocre Game': 32,
+      };
+
+      mockRoleMetricsRepository.findOne = jest.fn().mockResolvedValue(mockRoleMetricsEntityExtras);
     });
 
     it('should error if guild is not found', async () => {
