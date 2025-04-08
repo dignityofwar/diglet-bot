@@ -9,6 +9,7 @@ import { ActivityEntity } from './entities/activity.entity';
 import { ActivityStatisticsEntity } from './entities/activity.statistics.entity';
 import { JoinerLeaverEntity } from './entities/joiner.leaver.entity';
 import { JoinerLeaverStatisticsEntity } from './entities/joiner.leaver.statistics.entity';
+import { RoleMetricsEntity } from './entities/role.metrics.entity';
 
 @Module({
   imports: [
@@ -23,6 +24,7 @@ import { JoinerLeaverStatisticsEntity } from './entities/joiner.leaver.statistic
         JoinerLeaverStatisticsEntity,
         PS2MembersEntity,
         PS2VerificationAttemptEntity,
+        RoleMetricsEntity,
       ],
     }),
   ],

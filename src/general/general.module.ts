@@ -16,6 +16,7 @@ import { PurgeCronService } from './services/purge.cron.service';
 import { ActivityReportCronService } from './services/activity.report.cron.service';
 import { ActivityReportCommand } from './commands/activity.report.command';
 import { JoinerLeaverService } from './services/joinerleaver.service';
+import { RoleMetricsService } from './services/role.metrics.service';
 
 @Module({
   imports: [
@@ -30,6 +31,7 @@ import { JoinerLeaverService } from './services/joinerleaver.service';
     DiscordService,
     JoinerLeaverService,
     PurgeService,
+    RoleMetricsService,
 
     // Commands
     ActivityReportCommand,

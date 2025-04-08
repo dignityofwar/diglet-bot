@@ -7,6 +7,7 @@ import { TestBootstrapper } from '../../test.bootstrapper';
 import { ActivityReportCronService } from './activity.report.cron.service';
 import { ActivityService } from './activity.service';
 import { JoinerLeaverService } from './joinerleaver.service';
+import { RoleMetricsService } from './role.metrics.service';
 
 describe('ActivityReportCronService', () => {
   let activityReportCronService: ActivityReportCronService;
@@ -14,6 +15,7 @@ describe('ActivityReportCronService', () => {
   let configService: ConfigService;
   let activityService: ActivityService;
   let joinerLeaverService: JoinerLeaverService;
+  let roleMetricsService: RoleMetricsService;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
@@ -43,6 +45,12 @@ describe('ActivityReportCronService', () => {
             startEnumeration: jest.fn(),
           },
         },
+        {
+          provide: RoleMetricsService,
+          useValue: {
+            startEnumeration: jest.fn(),
+          },
+        },
         Logger,
       ],
     }).compile();
@@ -52,6 +60,7 @@ describe('ActivityReportCronService', () => {
     configService = module.get<ConfigService>(ConfigService);
     activityService = module.get<ActivityService>(ActivityService);
     joinerLeaverService = module.get<JoinerLeaverService>(JoinerLeaverService);
+    roleMetricsService = module.get<RoleMetricsService>(RoleMetricsService);
   });
 
   describe('onApplicationBootstrap', () => {
@@ -108,6 +117,7 @@ describe('ActivityReportCronService', () => {
       expect(mockChannel.send).toHaveBeenCalledWith('Starting daily activity enumeration...');
       expect(activityService.startEnumeration).toHaveBeenCalledWith(mockMessage);
       expect(joinerLeaverService.startEnumeration).toHaveBeenCalledWith(mockMessage);
+      expect(roleMetricsService.startEnumeration).toHaveBeenCalledWith(mockMessage);
       expect(mockMessage.delete).toHaveBeenCalled();
     });
   });

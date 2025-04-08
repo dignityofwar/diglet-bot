@@ -1,6 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { InjectDiscordClient } from '@discord-nestjs/core';
-import { Channel, Client, Guild, GuildMember, Message, Role } from 'discord.js';
+import { Channel, Client, Collection, Guild, GuildMember, Message, Role, Snowflake } from 'discord.js';
 import { getChannel } from './discord.hacks';
 
 @Injectable()
@@ -123,6 +123,21 @@ export class DiscordService {
     }
     catch (err) {
       this.logger.error(`Failed to send DM to member ${member.id}`, err);
+    }
+  }
+
+  async getAllRolesFromGuild(guild: Guild): Promise<Collection<Snowflake, Role>> {
+    try {
+      // Cache bust
+      guild.roles.cache.clear();
+
+      // Re-fetch all roles from the guild
+      return await guild.roles.fetch();
+    }
+    catch (err) {
+      const error = `Failed to fetch roles from guild ${guild.id}. Error: ${err.message}`;
+      this.logger.error(error);
+      throw new Error(error);
     }
   }
 }

@@ -7,6 +7,7 @@ import { MikroORM } from '@mikro-orm/core';
 import { AlbionServer } from './albion/interfaces/albion.api.interfaces';
 import { PS2MembersEntity } from './database/entities/ps2.members.entity';
 import { PS2RankMapInterface } from './config/ps2.app.config';
+import { Collection, Role, Snowflake } from 'discord.js';
 
 const guildLeaderRoleUS = '44546543371337';
 const guildLeaderRole = '64354579789809089';
@@ -129,7 +130,7 @@ export class TestBootstrapper {
     } as any;
   }
 
-  static getMockGuild(id: string) {
+  static getMockGuild(id: string = '123456789') {
     return {
       id,
       members: {
@@ -142,10 +143,26 @@ export class TestBootstrapper {
       roles: {
         cache: {
           get: jest.fn().mockImplementation(() => TestBootstrapper.getMockDiscordRole('4969797969594')),
+          clear: jest.fn(),
         },
         fetch: jest.fn().mockImplementation(() => TestBootstrapper.getMockDiscordRole('4969797969594')),
       },
     };
+  }
+
+  static readonly mockOnboardedRoleId = '123456789012345678';
+  static readonly mockAlbionOnlineId = '212345';
+  static readonly mockFoxholeId = '2123456';
+  static readonly mockRecBestGameEverId = '312345';
+  static readonly mockRecPS2LeaderId = '3123456';
+
+  static getMockGuildRoleListCollection() {
+    return new Collection<Snowflake, Role>()
+      .set(this.mockOnboardedRoleId, { id: this.mockOnboardedRoleId, name: 'Onboarded' } as Role)
+      .set(this.mockAlbionOnlineId, { id: this.mockAlbionOnlineId, name: 'Albion Online' } as Role)
+      .set(this.mockFoxholeId, { id: this.mockFoxholeId, name: 'Foxhole' } as Role)
+      .set(this.mockRecBestGameEverId, { id: this.mockRecBestGameEverId, name: 'Rec/BestGameEver' } as Role)
+      .set(this.mockRecPS2LeaderId, { id: this.mockRecPS2LeaderId, name: 'Rec/PS2/Leader' } as Role);
   }
 
   static getMockDiscordGuildManager(id: string) {
@@ -172,6 +189,7 @@ export class TestBootstrapper {
           };
         }),
         sendTyping: jest.fn(),
+        guild: this.getMockGuild('123456789'),
       },
       member: this.getMockDiscordUser(),
       roles: {
