@@ -207,6 +207,53 @@ Stats as of April 5th 2025. All statistics state members who have the role AND a
       discordService.getAllRolesFromGuild = jest.fn().mockResolvedValue(TestBootstrapper.getMockGuildRoleListCollection());
     });
 
+    it('should throw error if no roles were found from discord', async () => {
+      discordService.getAllRolesFromGuild = jest.fn().mockResolvedValue(new Collection<Snowflake, Role>());
+
+      // Expect this to throw an exception
+      await expect(roleMetricsService.enumerateRoleIds(mockGuild)).rejects.toThrow('Roles not found!');
+    });
+
+    it('should throw error if the onboarded role was not found', async () => {
+      discordService.getAllRolesFromGuild = jest.fn().mockResolvedValue(new Collection<Snowflake, Role>([
+        [TestBootstrapper.mockRecPS2LeaderId, {
+          id: TestBootstrapper.mockRecPS2LeaderId,
+          name: 'Rec/PS2/Leader',
+        } as Role],
+      ]));
+
+      // Expect this to throw an exception
+      await expect(roleMetricsService.enumerateRoleIds(mockGuild)).rejects.toThrow('Onboarded role not found!');
+    });
+
+    it('should throw if no community game roles were found', async () => {
+      discordService.getAllRolesFromGuild = jest.fn().mockResolvedValue(new Collection<Snowflake, Role>([
+        [TestBootstrapper.mockOnboardedRoleId, {
+          id: TestBootstrapper.mockOnboardedRoleId,
+          name: 'Onboarded',
+        } as Role],
+      ]));
+
+      // Expect this to throw an exception
+      await expect(roleMetricsService.enumerateRoleIds(mockGuild)).rejects.toThrow('Community game roles not found!');
+    });
+
+    it('should throw if no rec game roles were found', async () => {
+      discordService.getAllRolesFromGuild = jest.fn().mockResolvedValue(new Collection<Snowflake, Role>([
+        [TestBootstrapper.mockOnboardedRoleId, {
+          id: TestBootstrapper.mockOnboardedRoleId,
+          name: 'Onboarded',
+        } as Role],
+        [TestBootstrapper.mockAlbionOnlineId, {
+          id: TestBootstrapper.mockAlbionOnlineId,
+          name: 'Albion Online',
+        } as Role],
+      ]));
+
+      // Expect this to throw an exception
+      await expect(roleMetricsService.enumerateRoleIds(mockGuild)).rejects.toThrow('Rec game roles not found!');
+    });
+
     it('should return the onboarded role', async () => {
       const roles = await roleMetricsService.enumerateRoleIds(mockGuild);
 
@@ -302,6 +349,14 @@ Stats as of April 5th 2025. All statistics state members who have the role AND a
         });
       });
       mockGuild.members.fetch = jest.fn().mockResolvedValue(mockMemberCollection);
+    });
+
+    it('should error if no members were found on Discord', async () => {
+
+      mockGuild.members.fetch = jest.fn().mockResolvedValue(null);
+
+      // Expect this to throw an exception
+      await expect(roleMetricsService.enumerateRoleMetrics(mockRoleList, mockGuild)).rejects.toThrow('Discord Guild Members not found!');
     });
 
     it('should properly record the role metrics', async () => {

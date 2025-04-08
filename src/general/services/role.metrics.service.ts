@@ -103,31 +103,27 @@ ${recGames}
 
     // Get all roles from the guild, uncached
     const roles = await this.discordService.getAllRolesFromGuild(guild);
-    if (!roles) {
-      this.logger.error('Roles not found');
-      return;
+    if (!roles || roles.size === 0) {
+      throw new Error('Roles not found!');
     }
 
     // Find the Onboarded role
     const onboardedRole = roles.find(role => role.name === this.onboarded);
     if (!onboardedRole) {
-      this.logger.error('Onboarded role not found');
-      return;
+      throw new Error('Onboarded role not found!');
     }
 
     // Find the tracked community game roles
     const communityGameRoles = roles.filter(role => this.trackedCommunityGames.includes(role.name));
 
     if (communityGameRoles.size === 0) {
-      this.logger.error('Community game roles not found!');
-      return;
+      throw new Error('Community game roles not found!');
     }
 
     // Find all roles with the 'Rec/' prefix
     const recGameRoles = roles.filter(role => role.name.startsWith('Rec/'));
     if (recGameRoles.size === 0) {
-      this.logger.error('Rec game roles not found!');
-      return;
+      throw new Error('Rec game roles not found!');
     }
 
     // Filter out the ignored rec game roles
@@ -146,8 +142,7 @@ ${recGames}
     // Get the members from the guild
     const members = await guild.members.fetch();
     if (!members) {
-      this.logger.error('Members not found!');
-      return;
+      throw new Error('Discord Guild Members not found!');
     }
 
     const activeMembers = await this.getActiveMembers();
