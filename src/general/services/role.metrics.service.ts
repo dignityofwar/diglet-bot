@@ -146,7 +146,12 @@ ${recGames}
     const activeMembers = await this.getActiveMembers();
 
     // Get the onboarded role counts
-    const onboardedRoleCount = members.filter((member => member.roles.cache.has(roles.onboardedRole.id))).size;
+    const onboardedRoleCount = members.filter(member =>
+      member.roles.cache.has(roles.onboardedRole.id) &&
+        activeMembers.some(
+          activeMember => activeMember.discordId === member.id &&
+          activeMember.lastActivity > generateDateInPast(this.activeDayThreshold)
+        )).size;
 
     // Get the community game role counts, using the role name as a key
     const communityGameRoleCounts = roles.communityGameRoles.map(role => {
@@ -156,7 +161,8 @@ ${recGames}
       const size = members.filter(member =>
         member.roles.cache.has(role.id) &&
         activeMembers.some(
-          activeMember => activeMember.discordId === member.id
+          activeMember => activeMember.discordId === member.id &&
+          activeMember.lastActivity > generateDateInPast(this.activeDayThreshold)
         )).size;
       return [role.name, size];
     });
@@ -169,7 +175,8 @@ ${recGames}
       const size = members.filter(member =>
         member.roles.cache.has(role.id) &&
         activeMembers.some(
-          activeMember => activeMember.discordId === member.id
+          activeMember => activeMember.discordId === member.id &&
+          activeMember.lastActivity > generateDateInPast(this.activeDayThreshold)
         )).size;
       return [role.name, size];
     });

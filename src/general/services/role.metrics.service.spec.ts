@@ -324,8 +324,8 @@ Stats as of April 5th 2025. All statistics state members who have the role AND a
           [TestBootstrapper.mockRecPS2LeaderId]: false,
           [TestBootstrapper.mockRecBestGameEverId]: true,
         },
-        // These should NOT be counted
-        'inactive': {
+        // These should NOT be counted as the user is inactive
+        '345678': {
           [TestBootstrapper.mockOnboardedRoleId]: true,
           [TestBootstrapper.mockAlbionOnlineId]: true,
           [TestBootstrapper.mockFoxholeId]: true,
@@ -352,7 +352,6 @@ Stats as of April 5th 2025. All statistics state members who have the role AND a
     });
 
     it('should error if no members were found on Discord', async () => {
-
       mockGuild.members.fetch = jest.fn().mockResolvedValue(null);
 
       // Expect this to throw an exception
@@ -363,7 +362,7 @@ Stats as of April 5th 2025. All statistics state members who have the role AND a
       await roleMetricsService.enumerateRoleMetrics(mockRoleList, mockGuild);
 
       expect(mockRoleMetricsRepository.getEntityManager().persistAndFlush).toHaveBeenCalledWith(expect.objectContaining({
-        onboarded: 3,
+        onboarded: 3, // NOT 4
         communityGames: {
           'Albion Online': 2,
           'Foxhole': 1,
