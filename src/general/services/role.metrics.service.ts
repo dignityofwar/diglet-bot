@@ -23,13 +23,6 @@ export class RoleMetricsService {
     'Albion Online',
     'Foxhole',
   ];
-  private readonly ignoredRecGameRoles = [
-    'Rec/PS2/Leader',
-    'Rec/PS2/Verified',
-    'Rec/PS2/DIGlet',
-    'Rec/PS2/Platoons',
-    'Rec/PS2/Announcements',
-  ];
   private readonly activeDayThreshold = 90; // 90 days
 
   constructor(
@@ -126,8 +119,13 @@ ${recGames}
       throw new Error('Rec game roles not found!');
     }
 
-    // Filter out the ignored rec game roles
-    const filteredRecGameRoles = recGameRoles.filter(role => !this.ignoredRecGameRoles.includes(role.name));
+    // Filter out any Rec/*/X roles, we don't want to count those.
+    // Any roles that contain a second slash will be filtered out.
+    const filteredRecGameRoles = recGameRoles.filter(role => {
+      const name = role.name;
+      const slashCount = (name.match(/\//g) || []).length;
+      return slashCount === 1;
+    });
 
     return {
       onboardedRole: onboardedRole,
