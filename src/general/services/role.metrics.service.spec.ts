@@ -376,6 +376,13 @@ Stats as of April 5th 2025. All statistics state members who have the role AND a
       expect(roleMetricsService['logger'].log).toHaveBeenCalledWith('Starting role metrics enumeration...');
       expect(roleMetricsService['logger'].log).toHaveBeenCalledWith('Role metrics enumeration completed.');
     });
+
+    it('should delete the previous role metrics', async () => {
+      mockRoleMetricsRepository.findOne = jest.fn().mockResolvedValue(mockRoleMetricsEntity);
+      await roleMetricsService.enumerateRoleMetrics(mockRoleList, mockGuild);
+
+      expect(mockRoleMetricsRepository.getEntityManager().removeAndFlush).toHaveBeenCalledWith(mockRoleMetricsEntity);
+    });
   });
 
   describe('getActiveMembers', () => {

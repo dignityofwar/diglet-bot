@@ -188,6 +188,12 @@ ${recGames}
     const createdAt = new Date();
     createdAt.setHours(0, 0, 0, 0);
 
+    // If there is already a record, delete it
+    const existingRecords = await this.roleMetricsRepository.find({ createdAt });
+    if (existingRecords) {
+      await this.roleMetricsRepository.getEntityManager().removeAndFlush(existingRecords);
+    }
+
     // Create the role metrics entity
     const roleMetrics = new RoleMetricsEntity({
       createdAt,
