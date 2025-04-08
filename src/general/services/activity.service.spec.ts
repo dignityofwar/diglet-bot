@@ -198,7 +198,7 @@ describe('ActivityService', () => {
       const mockReport = `# Activity Report ${friendlyDate(new Date())}
 - 👥 Total Users: **6**
 - 🫥 Inactive Users (>90d): **1** (16.7%)
-- 👀 Active Users:
+- 👀 Active Users (% of total):
   - <90d: **5** (83.3%)
   - <60d: **4** (66.7%)
   - <30d: **3** (50.0%)
