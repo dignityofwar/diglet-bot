@@ -41,8 +41,6 @@ export class RoleMetricsService {
   async startEnumeration(message: Message): Promise<void> {
     this.logger.log('Starting role metrics enumeration');
 
-    let stat: RoleMetricsEntity;
-
     try {
       // Get the guild from the message
       const guild = getChannel(message).guild;
@@ -68,15 +66,14 @@ export class RoleMetricsService {
     const date = new Date();
     date.setHours(0, 0, 0, 0);
     // Check if there is already a report on the same date
-    const latestRecord = await this.roleMetricsRepository.findOne({ createdAt: date });
+    const stat = await this.roleMetricsRepository.findOne({ createdAt: date });
 
-    if (!latestRecord?.id) {
+    if (!stat?.id) {
       const error = 'No role metrics found!';
       this.logger.error(error);
       await getChannel(message).send(error);
       return;
     }
-    stat = latestRecord;
 
     // Since the role metrics are stored as JSON objects, we will have to deconstruct them into legible strings.
     // Each communityGame and recGame is in the format of:

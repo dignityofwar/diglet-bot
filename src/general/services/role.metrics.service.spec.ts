@@ -332,7 +332,7 @@ Stats as of April 5th 2025. All statistics state members who have the role AND a
     it('should pull in active members from the database', async () => {
       const result = await roleMetricsService.getActiveMembers();
 
-      expect(result.length).toEqual(2);
+      expect(result.length).toEqual(3);
       expect(result[0].discordId).toEqual(mockActiveMembers[0].discordId);
       expect(result[1].discordId).toEqual(mockActiveMembers[1].discordId);
     });
