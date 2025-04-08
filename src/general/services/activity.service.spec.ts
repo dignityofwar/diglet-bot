@@ -14,6 +14,7 @@ describe('ActivityService', () => {
 
   let mockChannel: any;
   let mockStatusMessage: any;
+
   const mockActivityEntity = {
     discordId: '123456',
     discordNickname: 'testuser',

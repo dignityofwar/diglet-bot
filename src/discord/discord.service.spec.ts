@@ -4,7 +4,6 @@ import { ConfigService } from '@nestjs/config';
 import { DiscordService } from './discord.service';
 import { TestBootstrapper } from '../test.bootstrapper';
 import { getChannel } from './discord.hacks';
-import { Collection, Role, Snowflake } from 'discord.js';
 
 describe('DiscordService', () => {
   let service: DiscordService;
@@ -297,7 +296,7 @@ describe('DiscordService', () => {
 
       expect(mockGuild.roles.cache.clear).toHaveBeenCalled();
       expect(mockGuild.roles.fetch).toHaveBeenCalled();
-      expect(result.get('123456789012345678').id).toBeDefined();
+      expect(result.get(TestBootstrapper.mockOnboardedRoleId).id).toBeDefined();
       expect(result.size).toBe(TestBootstrapper.getMockGuildRoleListCollection().size);
     });
 

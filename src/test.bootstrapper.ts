@@ -130,7 +130,7 @@ export class TestBootstrapper {
     } as any;
   }
 
-  static getMockGuild(id: string) {
+  static getMockGuild(id: string = '123456789') {
     return {
       id,
       members: {
@@ -150,11 +150,19 @@ export class TestBootstrapper {
     };
   }
 
+  static readonly mockOnboardedRoleId = '123456789012345678';
+  static readonly mockAlbionOnlineId = '212345';
+  static readonly mockFoxholeId = '2123456';
+  static readonly mockRecBestGameEverId = '312345';
+  static readonly mockRecPS2LeaderId = '3123456';
+
   static getMockGuildRoleListCollection() {
     return new Collection<Snowflake, Role>()
-      .set('123456789012345678', { id: '123456789012345678', name: 'Onboarded' } as Role)
-      .set('234567890123456789', { id: '234567890123456789', name: 'Rec/BestGameEver' } as Role)
-      .set('345678901234567890', { id: '345678901234567890', name: 'Rec/PS2/Leader' } as Role);
+      .set(this.mockOnboardedRoleId, { id: this.mockOnboardedRoleId, name: 'Onboarded' } as Role)
+      .set(this.mockAlbionOnlineId, { id: this.mockAlbionOnlineId, name: 'Albion Online' } as Role)
+      .set(this.mockFoxholeId, { id: this.mockFoxholeId, name: 'Foxhole' } as Role)
+      .set(this.mockRecBestGameEverId, { id: this.mockRecBestGameEverId, name: 'Rec/BestGameEver' } as Role)
+      .set(this.mockRecPS2LeaderId, { id: this.mockRecPS2LeaderId, name: 'Rec/PS2/Leader' } as Role);
   }
 
   static getMockDiscordGuildManager(id: string) {
@@ -181,6 +189,7 @@ export class TestBootstrapper {
           };
         }),
         sendTyping: jest.fn(),
+        guild: this.getMockGuild('123456789'),
       },
       member: this.getMockDiscordUser(),
       roles: {
