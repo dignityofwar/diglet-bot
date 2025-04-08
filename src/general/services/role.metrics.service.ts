@@ -80,8 +80,14 @@ export class RoleMetricsService {
     // Each communityGame and recGame is in the format of:
     // {"Albion Online": 5, "Foxhole": 10}
     // We will need to get the keys and values, and format them into a string
-    const communityGames = Object.entries(stat.communityGames).map(([key, value]) => `  - ${key}: **${value}**`).join('\n');
-    const recGames = Object.entries(stat.recGames).map(([key, value]) => `  - ${key}: **${value}**`).join('\n');
+    const communityGames = Object.entries(stat.communityGames).map(([key, value]) => {
+      const percentage = ((value / stat.onboarded) * 100).toFixed(1);
+      return `  - ${key}: **${value}** (${percentage}%)`;
+    }).join('\n');
+    const recGames = Object.entries(stat.recGames).map(([key, value]) => {
+      const percentage = ((value / stat.onboarded) * 100).toFixed(1);
+      return `  - ${key}: **${value}** (${percentage}%)`;
+    }).join('\n');
     const onboarded = stat.onboarded;
 
     // Format the report
