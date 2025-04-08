@@ -378,10 +378,17 @@ Stats as of April 5th 2025. All statistics state members who have the role AND a
     });
 
     it('should delete the previous role metrics', async () => {
-      mockRoleMetricsRepository.findOne = jest.fn().mockResolvedValue(mockRoleMetricsEntity);
+      const date = new Date();
+      date.setHours(0, 0, 0, 0);
+
+      const mockRoleMetricsEntityToday = {
+        ...mockRoleMetricsEntity,
+        createdAt: date,
+      };
+      mockRoleMetricsRepository.find = jest.fn().mockResolvedValue([mockRoleMetricsEntityToday]);
       await roleMetricsService.enumerateRoleMetrics(mockRoleList, mockGuild);
 
-      expect(mockRoleMetricsRepository.getEntityManager().removeAndFlush).toHaveBeenCalledWith(mockRoleMetricsEntity);
+      expect(mockRoleMetricsRepository.getEntityManager().removeAndFlush).toHaveBeenCalledWith([mockRoleMetricsEntityToday]);
     });
   });
 
