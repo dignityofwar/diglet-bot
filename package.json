@@ -30,11 +30,11 @@
   "dependencies": {
     "@discord-nestjs/common": "^5.2.12",
     "@discord-nestjs/core": "^5.3.14",
-    "@mikro-orm/core": "6.4.11",
-    "@mikro-orm/mariadb": "6.4.11",
-    "@mikro-orm/migrations": "6.4.11",
+    "@mikro-orm/core": "6.4.12",
+    "@mikro-orm/mariadb": "6.4.12",
+    "@mikro-orm/migrations": "6.4.12",
     "@mikro-orm/nestjs": "^6.0.0",
-    "@mikro-orm/seeder": "6.4.11",
+    "@mikro-orm/seeder": "6.4.12",
     "@mikro-orm/sql-highlighter": "^1.0.1",
     "@nestjs/common": "11.0.16",
     "@nestjs/config": "4.0.2",
@@ -49,7 +49,7 @@
     "ps2census": "^4.6.0"
   },
   "devDependencies": {
-    "@mikro-orm/cli": "6.4.11",
+    "@mikro-orm/cli": "6.4.12",
     "@nestjs/cli": "11.0.6",
     "@nestjs/schematics": "11.0.3",
     "@nestjs/testing": "^11.0.0",
