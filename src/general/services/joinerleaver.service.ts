@@ -94,13 +94,16 @@ export class JoinerLeaverService {
     }
 
     const earlyLeaverRate = (stats.earlyLeavers / stats.leavers * 100).toFixed(1);
+    const earlyLeaverToJoiners = (stats.earlyLeavers / stats.joiners * 100).toFixed(1);
 
     const report = `## Joiners & Leavers:
 Stats as of April 5th 2025
 - 👋 Joiners: **${stats.joiners}**
 - 🚪 Leavers: **${stats.leavers}**
+  - 🥺 Early Leavers: (<48h): **${stats.earlyLeavers}**
+    - ${earlyLeaverToJoiners}% of joiners (bounce rate)
+    - ${earlyLeaverRate}% of all leavers
 - 👍 Rejoiners: **${stats.rejoiners}**
-- 🥺 Early Leavers: (<48h): **${stats.earlyLeavers}** (${earlyLeaverRate}% of leavers)
 - ⏳ Average Time to Leave: **${stats.avgTimeToLeave}**`;
 
     // Send a message to the channel with the report

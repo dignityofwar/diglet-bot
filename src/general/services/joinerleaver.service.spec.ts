@@ -207,8 +207,10 @@ describe('JoinerLeaverService', () => {
 Stats as of April 5th 2025
 - 👋 Joiners: **10**
 - 🚪 Leavers: **5**
+  - 🥺 Early Leavers: (<48h): **1**
+    - 10.0% of joiners (bounce rate)
+    - 20.0% of all leavers
 - 👍 Rejoiners: **2**
-- 🥺 Early Leavers: (<48h): **1** (20.0% of leavers)
 - ⏳ Average Time to Leave: **1d 13h 37m**`;
 
     beforeEach(() => {
