@@ -161,7 +161,7 @@ export class PS2GameScanningService {
     for (const member of ps2Members) {
       const character = characters.find((char) => char.character_id === member.characterId);
       let discordMember: GuildMember | null = null;
-      this.logger.debug(`Checking ${member.characterName}...`);
+      this.logger.log(`Checking ${member.characterName}...`);
 
       // The character for some reason doesn't exist. This may be because of Census Server Errors, therefore we need to skip them this time.
       // This is to prevent a rather nasty bug / scenario where we remove literally everyone because Census is on its arse.
