@@ -22,7 +22,7 @@ export class PS2VerifyManualCommand {
     private readonly config: ConfigService,
     private readonly ps2GameVerificationService: PS2GameVerificationService,
   ) {}
-§
+
   @Handler()
   async onPS2VerifyManualCommand(
     @InteractionEvent(SlashCommandPipe) dto: PS2VerifyManualDto,
