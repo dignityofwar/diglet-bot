@@ -2,7 +2,6 @@ import { Injectable, Logger } from '@nestjs/common';
 import { On } from '@discord-nestjs/core';
 import {
   Events,
-  GuildMember,
   Message,
   MessageReaction,
   User,
@@ -61,9 +60,10 @@ export class MessageEvents {
   }
 
   async handlePartialReactions(reaction: MessageReaction, user: User): Promise<{ reaction: MessageReaction, user: User }> {
+    let realReaction: MessageReaction = reaction;
     if (reaction.partial) {
       try {
-        reaction = await reaction.fetch();
+        realReaction = await reaction.fetch();
       }
       catch (error) {
         this.logger.error(`Error fetching reaction: ${error.message}`);
@@ -71,9 +71,11 @@ export class MessageEvents {
       }
     }
 
+    let realUser = user;
+
     if (user.partial) {
       try {
-        user = await user.fetch();
+        realUser = await user.fetch();
       }
       catch (error) {
         this.logger.error(`Error fetching user "${user.displayName}": ${error.message}`);
@@ -81,7 +83,10 @@ export class MessageEvents {
       }
     }
 
-    return { reaction, user };
+    return {
+      reaction: realReaction,
+      user: realUser,
+    };
   }
 
   // Annoyingly, these events are not additive and have to be defined every time.

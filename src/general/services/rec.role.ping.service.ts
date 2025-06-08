@@ -1,5 +1,5 @@
 import { Injectable, Logger, OnApplicationBootstrap } from '@nestjs/common';
-import { Collection, Guild, Message, Role, Snowflake } from 'discord.js';
+import { Guild, Message, Snowflake } from 'discord.js';
 import { DiscordService } from '../../discord/discord.service';
 import { ConfigService } from '@nestjs/config';
 import { Cron } from '@nestjs/schedule';
@@ -74,7 +74,7 @@ export class RecRolePingService implements OnApplicationBootstrap {
   }
 
   async onMessage(message: Message): Promise<void> {
-    if (!this.recGameRoleIds || !this.recGameRoleIds.length) {
+    if (!this?.recGameRoleIds.length) {
       this.logger.warn('No rec game roles loaded, skipping message processing.');
       return;
     }
