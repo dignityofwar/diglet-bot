@@ -30,7 +30,7 @@ import { ScheduleModule } from '@nestjs/schedule';
         },
         registerCommandOptions: [
           {
-            forGuild: configService.get('GUILD_ID_WITH_COMMANDS'),
+            forGuild: configService.get('discord.guildId'),
             removeCommandsBefore: true,
           },
         ],

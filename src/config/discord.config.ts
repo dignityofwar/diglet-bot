@@ -1,5 +1,6 @@
 export default () => ({
   devUserId: process.env.DISCORD_DEVUSER_ID,
+  guildId: process.env.GUILD_ID_WITH_COMMANDS,
   channels: {
     albionRegistration: process.env.CHANNEL_ALBION_REGISTRATION,
     albionUSRoles: process.env.CHANNEL_ALBION_US_ROLES,
