@@ -8,6 +8,7 @@ import {
   User,
 } from 'discord.js';
 import { DatabaseService } from '../../database/services/database.service';
+import { RecRolePingService } from '../services/rec.role.ping.service';
 
 @Injectable()
 export class MessageEvents {
@@ -15,23 +16,27 @@ export class MessageEvents {
 
   constructor(
     private readonly databaseService: DatabaseService,
+    private readonly recRolePingService: RecRolePingService,
   ) {}
 
-  async handleMessageEvent(member: GuildMember, type: string): Promise<void> {
-    if (!member?.user) {
+  async handleMessageEvent(message: Message, type: string): Promise<void> {
+    if (!message.member?.user) {
       throw new Error(`Message ${type} event could not be processed as the GuildMember was not found.`);
     }
-    if (member.user.bot) return;
+    if (message.member.user.bot) {
+      return;
+    }
 
-    const name = member.displayName || member.nickname || member.user.username || null;
+    const name = message.member.displayName || message.member.nickname || message.member.user.username || null;
 
     if (!name) {
-      throw new Error(`Message ${type} event could not be processed as member ID "${member.id}" does not have a name!`);
+      throw new Error(`Message ${type} event could not be processed as member ID "${message.member.id}" does not have a name!`);
     }
 
     this.logger.verbose(`Message ${type} event detected from: ${name}`);
 
-    await this.databaseService.updateActivity(member);
+    await this.databaseService.updateActivity(message.member);
+    await this.recRolePingService.onMessage(message);
   }
 
   async handleMessageReaction(
@@ -39,7 +44,9 @@ export class MessageEvents {
     user: User,
     type: string
   ): Promise<void> {
-    if (user.bot) return;
+    if (user.bot) {
+      return;
+    }
 
     this.logger.debug(`Message Reaction ${type} event detected from "${user.displayName}"`);
 
@@ -81,7 +88,7 @@ export class MessageEvents {
   @On(Events.MessageCreate)
   async onMessageCreate(message: Message): Promise<void> {
     try {
-      await this.handleMessageEvent(message.member, 'create');
+      await this.handleMessageEvent(message, 'create');
       this.logger.verbose(`Message create event handled for ${message.member.displayName}`);
     }
     catch (error) {
@@ -92,7 +99,7 @@ export class MessageEvents {
   @On(Events.MessageUpdate)
   async onMessageUpdate(message: Message): Promise<void> {
     try {
-      await this.handleMessageEvent(message.member, 'update');
+      await this.handleMessageEvent(message, 'update');
       this.logger.verbose(`Message update event handled for ${message.member.displayName}`);
     }
     catch (error) {
@@ -103,7 +110,7 @@ export class MessageEvents {
   @On(Events.MessageDelete)
   async onMessageDelete(message: Message): Promise<void> {
     try {
-      await this.handleMessageEvent(message.member, 'delete');
+      await this.handleMessageEvent(message, 'delete');
       this.logger.verbose(`Message delete event handled for ${message.member.displayName}`);
     }
     catch (error) {
