@@ -38,7 +38,7 @@ export class AlbionRegistrationService implements OnApplicationBootstrap {
     // Store the Discord guild channel and ensure we can send messages to it
     const verifyChannelId = this.config.get('discord.channels.albionRegistration');
 
-    this.verificationChannel = await this.discordService.getChannel(verifyChannelId);
+    this.verificationChannel = await this.discordService.getTextChannel(verifyChannelId);
     if (!this.verificationChannel) {
       this.throwError(`Could not find channel with ID ${verifyChannelId}`);
     }
@@ -99,7 +99,7 @@ export class AlbionRegistrationService implements OnApplicationBootstrap {
     // Any failures here will be caught then mention the user with the error.
     try {
       const data = await this.getInfo(characterName, server, discordMemberId, discordGuildId);
-      const channel = await this.discordService.getChannel(discordChannelId) as TextChannel;
+      const channel = await this.discordService.getTextChannel(discordChannelId);
 
       this.logger.debug(`Handling Albion character "${data.character.Name}" registration for "${data.discordMember.displayName}" on server "${data.server}"`);
 

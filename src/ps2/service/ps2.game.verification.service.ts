@@ -22,12 +22,12 @@ import { getChannel } from '../../discord/discord.hacks';
 export class PS2GameVerificationService implements OnApplicationBootstrap {
   private readonly logger = new Logger(PS2GameVerificationService.name);
   private verificationChannel: Channel;
-  private monitoringCharacters: Map<string, CensusCharacterWithOutfitInterface> = new Map();
-  private guildMembersMap: Map<string, GuildMember> = new Map();
-  private deadline = 1000 * 60 * 5; // 5 minutes
+  private readonly monitoringCharacters: Map<string, CensusCharacterWithOutfitInterface> = new Map();
+  private readonly guildMembersMap: Map<string, GuildMember> = new Map();
+  private readonly deadline = 1000 * 60 * 5; // 5 minutes
   private timer: NodeJS.Timeout;
-  private messagesMap: Map<string, Message> = new Map();
-  private timeMessagesMap: Map<string, Message> = new Map();
+  private readonly messagesMap: Map<string, Message> = new Map();
+  private readonly timeMessagesMap: Map<string, Message> = new Map();
 
   constructor(
     private readonly discordService: DiscordService,
@@ -43,7 +43,7 @@ export class PS2GameVerificationService implements OnApplicationBootstrap {
     // Store the Discord guild channel and ensure we can send messages to it
     const verifyChannelId = this.config.get('discord.channels.ps2Verify');
 
-    this.verificationChannel = await this.discordService.getChannel(verifyChannelId);
+    this.verificationChannel = await this.discordService.getTextChannel(verifyChannelId);
     if (!this.verificationChannel) {
       throw new Error(`Could not find channel with ID ${verifyChannelId}`);
     }

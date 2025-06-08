@@ -52,19 +52,19 @@ describe('PurgeCronService', () => {
       } as unknown as TextChannel;
 
       (configService.get as jest.Mock).mockReturnValue('test-channel-id');
-      (discordService.getChannel as jest.Mock).mockResolvedValue(mockChannel);
+      (discordService.getTextChannel as jest.Mock).mockResolvedValue(mockChannel);
 
       await purgeCronService.onApplicationBootstrap();
 
       expect(configService.get).toHaveBeenCalledWith('discord.channels.thanosSnaps');
-      expect(discordService.getChannel).toHaveBeenCalledWith('test-channel-id');
+      expect(discordService.getTextChannel).toHaveBeenCalledWith('test-channel-id');
       expect(mockChannel.isTextBased).toHaveBeenCalled();
       expect(purgeCronService['channel']).toBe(mockChannel);
     });
 
     it('should throw an error if the channel is not found', async () => {
       (configService.get as jest.Mock).mockReturnValue('test-channel-id');
-      (discordService.getChannel as jest.Mock).mockResolvedValue(null);
+      (discordService.getTextChannel as jest.Mock).mockResolvedValue(null);
 
       await expect(purgeCronService.onApplicationBootstrap()).rejects.toThrow('Could not find channel with ID test-channel-id');
     });
@@ -75,7 +75,7 @@ describe('PurgeCronService', () => {
       } as unknown as TextChannel;
 
       (configService.get as jest.Mock).mockReturnValue('test-channel-id');
-      (discordService.getChannel as jest.Mock).mockResolvedValue(mockChannel);
+      (discordService.getTextChannel as jest.Mock).mockResolvedValue(mockChannel);
 
       await expect(purgeCronService.onApplicationBootstrap()).rejects.toThrow('Channel with ID test-channel-id is not a text channel');
     });

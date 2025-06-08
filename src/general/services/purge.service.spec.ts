@@ -443,7 +443,7 @@ DIG Community Staff`;
     //     filter: jest.fn(),
     //   });
     //
-    //   // Mock the getChannel(message).send method
+    //   // Mock the getTextChannel(message).send method
     //   mockMessage.channel.send = jest.fn();
     //
     //   // Mock the fetch method on the guild members
