@@ -36,7 +36,7 @@ describe('AlbionCronService', () => {
         {
           provide: DiscordService,
           useValue: {
-            getChannel: jest.fn(),
+            getTextChannel: jest.fn(),
             getUser: jest.fn(),
             getRole: jest.fn(),
           },

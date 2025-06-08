@@ -22,13 +22,14 @@ import { getChannel } from '../../discord/discord.hacks';
 export class PS2GameVerificationService implements OnApplicationBootstrap {
   private readonly logger = new Logger(PS2GameVerificationService.name);
   private verificationChannel: Channel;
-  private readonly monitoringCharacters: Map<string, CensusCharacterWithOutfitInterface> = new Map();
-  private readonly guildMembersMap: Map<string, GuildMember> = new Map();
-  private readonly deadline = 1000 * 60 * 5; // 5 minutes
+  private monitoringCharacters: Map<string, CensusCharacterWithOutfitInterface> = new Map();
+  private guildMembersMap: Map<string, GuildMember> = new Map();
+  private deadline = 1000 * 60 * 5; // 5 minutes
   private timer: NodeJS.Timeout;
-  private readonly messagesMap: Map<string, Message> = new Map();
-  private readonly timeMessagesMap: Map<string, Message> = new Map();
+  private messagesMap: Map<string, Message> = new Map();
+  private timeMessagesMap: Map<string, Message> = new Map();
 
+  // noinspection OverlyComplexFunctionJS
   constructor(
     private readonly discordService: DiscordService,
     private readonly config: ConfigService,
@@ -191,6 +192,7 @@ export class PS2GameVerificationService implements OnApplicationBootstrap {
     this.censusWebsocketService.unwatchCharacter(character);
   }
 
+  // noinspection FunctionWithMultipleLoopsJS
   private async init() {
     // Flush any pending verification attempts that were in progress
     const verificationAttempts = await this.ps2VerificationAttemptRepository.findAll();

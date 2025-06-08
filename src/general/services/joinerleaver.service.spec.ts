@@ -8,9 +8,11 @@ import { JoinerLeaverEntity } from '../../database/entities/joiner.leaver.entity
 import { GuildMember } from 'discord.js';
 import { generateDateInPast } from '../../helpers';
 import { JoinerLeaverStatisticsEntity } from '../../database/entities/joiner.leaver.statistics.entity';
+import { DiscordService } from '../../discord/discord.service';
 
 describe('JoinerLeaverService', () => {
   let joinerLeaverService: JoinerLeaverService;
+  let discordService: DiscordService;
 
   let mockChannel: any;
   let mockStatusMessage: any;
@@ -55,15 +57,24 @@ describe('JoinerLeaverService', () => {
           provide: getRepositoryToken(JoinerLeaverStatisticsEntity),
           useValue: mockJoinerLeaverStatisticsRepository,
         },
+        {
+          provide: DiscordService,
+          useValue: {
+            getTextChannel: jest.fn().mockResolvedValue(mockChannel),
+          },
+        },
         Logger,
       ],
     }).compile();
 
     joinerLeaverService = module.get<JoinerLeaverService>(JoinerLeaverService);
+    discordService = module.get(DiscordService);
     mockGuildMember = TestBootstrapper.getMockDiscordUser();
     mockStatusMessage = TestBootstrapper.getMockDiscordMessage();
     mockChannel = TestBootstrapper.getMockDiscordTextChannel();
-    mockChannel.send = jest.fn().mockResolvedValue(mockStatusMessage);
+
+    // Stub the Discord service getTextChannel
+    jest.spyOn(discordService, 'getTextChannel').mockResolvedValue(mockChannel);
 
     jest.spyOn(joinerLeaverService['logger'], 'error');
     jest.spyOn(joinerLeaverService['logger'], 'warn');
@@ -222,7 +233,7 @@ Stats as of April 5th 2025
 
       expect(mockJoinerLeaverStatisticsRepository.findOne).toHaveBeenCalled();
 
-      expect(mockStatusMessage.channel.send).toHaveBeenCalledWith(mockReport);
+      expect(mockChannel.send).toHaveBeenCalledWith(mockReport);
     });
 
     it('should handle error during enumeration', async () => {
@@ -231,7 +242,7 @@ Stats as of April 5th 2025
       await joinerLeaverService.startEnumeration(mockStatusMessage);
 
       expect(mockJoinerLeaverStatisticsRepository.findOne).not.toHaveBeenCalled();
-      expect(mockStatusMessage.channel.send).toHaveBeenCalledWith('Error enumerating joiner leaver records. Error: Test error');
+      expect(mockChannel.send).toHaveBeenCalledWith('Error enumerating joiner leaver records. Error: Test error');
     });
 
     it('should handle no statistics found', async () => {
@@ -240,7 +251,7 @@ Stats as of April 5th 2025
       await joinerLeaverService.startEnumeration(mockStatusMessage);
 
       expect(mockJoinerLeaverStatisticsRepository.findOne).toHaveBeenCalled();
-      expect(mockStatusMessage.channel.send).toHaveBeenCalledWith('No joiner leaver statistics found!');
+      expect(mockChannel.send).toHaveBeenCalledWith('No joiner leaver statistics found!');
     });
   });
 

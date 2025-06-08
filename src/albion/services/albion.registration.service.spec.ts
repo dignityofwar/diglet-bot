@@ -59,7 +59,7 @@ describe('AlbionRegistrationService', () => {
         {
           provide: DiscordService,
           useValue: {
-            getChannel: jest.fn().mockResolvedValue(TestBootstrapper.getMockDiscordTextChannel()),
+            getTextChannel: jest.fn().mockResolvedValue(TestBootstrapper.getMockDiscordTextChannel()),
             getMemberRole: jest.fn(),
             getGuildMember: jest.fn(),
           },

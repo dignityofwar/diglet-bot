@@ -3,12 +3,15 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { MessageEvents } from './message.events';
 import { DatabaseService } from '../../database/services/database.service';
 import { TestBootstrapper } from '../../test.bootstrapper';
+import { RecRolePingService } from '../services/rec.role.ping.service';
 
 jest.mock('../../database/services/database.service');
 
 describe('MessageEvents', () => {
   let messageEvents: MessageEvents;
   let databaseService: any;
+  let recRolePingService: RecRolePingService;
+
   let mockMessage: any;
   let mockUser: any;
   let mockMessageReaction: any;
@@ -16,12 +19,26 @@ describe('MessageEvents', () => {
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
-      providers: [MessageEvents, DatabaseService],
+      providers: [
+        MessageEvents,
+        {
+          provide: DatabaseService,
+          useValue: {
+            updateActivity: jest.fn(),
+          },
+        },
+        {
+          provide: RecRolePingService,
+          useValue: {
+            onMessage: jest.fn(),
+          },
+        },
+      ],
     }).compile();
 
     messageEvents = module.get<MessageEvents>(MessageEvents);
     databaseService = module.get<DatabaseService>(DatabaseService);
-    databaseService.updateActivity = jest.fn();
+    recRolePingService = module.get<RecRolePingService>(RecRolePingService);
 
     // Mocking Discord.js objects
     mockUser = TestBootstrapper.getMockDiscordUser();
@@ -36,22 +53,28 @@ describe('MessageEvents', () => {
 
   describe('handleMessageEvent', () => {
     it('should handle a message event for a non-bot user', async () => {
-      await messageEvents.handleMessageEvent(mockGuildMember, 'create');
-      expect(databaseService.updateActivity).toHaveBeenCalledWith(mockGuildMember);
+      await messageEvents.handleMessageEvent(mockMessage, 'create');
+
+      expect(databaseService.updateActivity).toHaveBeenCalledWith(mockMessage.member);
+      expect(recRolePingService.onMessage).toHaveBeenCalledWith(mockMessage);
     });
 
     it('should not handle message events for bot users', async () => {
-      mockGuildMember.user.bot = true;
-      await messageEvents.handleMessageEvent(mockGuildMember, 'create');
+      mockMessage.member.user.bot = true;
+
+      await messageEvents.handleMessageEvent(mockMessage, 'create');
+
       expect(databaseService.updateActivity).not.toHaveBeenCalled();
+      expect(recRolePingService.onMessage).not.toHaveBeenCalled();
     });
 
     it('should handle message events null users', async () => {
-      mockGuildMember.user = null;
-      expect(messageEvents.handleMessageEvent(mockGuildMember, 'create')).rejects.toThrowError('Message create event could not be processed as the GuildMember was not found.');
-      expect(messageEvents.handleMessageEvent(mockGuildMember, 'update')).rejects.toThrowError('Message update event could not be processed as the GuildMember was not found.');
-      expect(messageEvents.handleMessageEvent(mockGuildMember, 'delete')).rejects.toThrowError('Message delete event could not be processed as the GuildMember was not found.');
+      mockMessage.member.user = null;
+      await expect(messageEvents.handleMessageEvent(mockMessage, 'create')).rejects.toThrow('Message create event could not be processed as the GuildMember was not found.');
+      await expect(messageEvents.handleMessageEvent(mockMessage, 'update')).rejects.toThrow('Message update event could not be processed as the GuildMember was not found.');
+      await expect(messageEvents.handleMessageEvent(mockMessage, 'delete')).rejects.toThrow('Message delete event could not be processed as the GuildMember was not found.');
     });
+
     const eventTypes = ['create', 'update', 'delete'];
     const memberDetails = [
       { detail: 'displayName', value: null },
@@ -61,9 +84,9 @@ describe('MessageEvents', () => {
 
     memberDetails.forEach(({ detail, value }) => {
       it(`should handle message events with no ${detail} on GuildMember`, async () => {
-        mockGuildMember.displayName = null;
-        mockGuildMember.nickname = null;
-        mockGuildMember.user.username = null;
+        mockMessage.member.displayName = null;
+        mockMessage.member.nickname = null;
+        mockMessage.member.user.username = null;
         if (detail === 'nickname') {
           mockGuildMember.nickname = value;
         }
@@ -72,7 +95,7 @@ describe('MessageEvents', () => {
         }
 
         for (const type of eventTypes) {
-          expect(messageEvents.handleMessageEvent(mockGuildMember, type)).rejects.toThrowError(`Message ${type} event could not be processed as member ID "${mockGuildMember.id}" does not have a name!`);
+          await expect(messageEvents.handleMessageEvent(mockMessage, type)).rejects.toThrowError(`Message ${type} event could not be processed as member ID "${mockGuildMember.id}" does not have a name!`);
           expect(databaseService.updateActivity).not.toHaveBeenCalled();
         }
       });

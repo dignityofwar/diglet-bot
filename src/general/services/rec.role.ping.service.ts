@@ -97,7 +97,7 @@ export class RecRolePingService implements OnApplicationBootstrap {
     }
 
     // Log the message content and the mentioned rec roles
-    this.logger.log(`Message from ${message.author.id} mentions rec roles: ${mentionedRecRoles.map(role => role.name).join(', ')}`);
+    this.logger.log(`Message from ${message.member.id} mentions rec roles: ${mentionedRecRoles.map(role => role.name).join(', ')}`);
 
     // Send a message to the channel it came from
     const content = 'If you just got pinged, remember our Rec Game pings are opt in. You can opt out here: https://discord.com/channels/90078410642034688/1170026809807622229. Please do this **before** muting the server entirely.';

@@ -20,7 +20,7 @@ describe('PurgeCronService', () => {
         {
           provide: DiscordService,
           useValue: {
-            getChannel: jest.fn(),
+            getTextChannel: jest.fn(),
           },
         },
         {
