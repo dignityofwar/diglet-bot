@@ -51,7 +51,7 @@ describe('PS2GameVerificationService', () => {
         {
           provide: DiscordService,
           useValue: {
-            getChannel: jest.fn(),
+            getTextChannel: jest.fn(),
             getUser: jest.fn(),
             getRole: jest.fn(),
             getMemberRole: jest.fn(),
@@ -109,12 +109,12 @@ describe('PS2GameVerificationService', () => {
     });
 
     it('should fail boot if channel does not exist', async () => {
-      discordService.getChannel = jest.fn().mockReturnValue(null);
+      discordService.getTextChannel = jest.fn().mockReturnValue(null);
       await expect(service.onApplicationBootstrap()).rejects.toThrow(`Could not find channel with ID ${verifyChannelId}`);
     });
 
     it('should fail boot if channel is not a text channel', async () => {
-      discordService.getChannel = jest.fn().mockReturnValue({
+      discordService.getTextChannel = jest.fn().mockReturnValue({
         isTextBased: jest.fn().mockReturnValue(false),
       });
 

@@ -68,7 +68,7 @@ describe('DiscordService', () => {
       const mockChannel = {}; // The expect returned channel data.
       mockDiscordClient.channels.fetch.mockResolvedValueOnce(mockChannel);
 
-      const result = await service.getChannel(channelId);
+      const result = await service.getTextChannel(channelId);
 
       expect(result).toEqual(mockChannel);
       expect(mockDiscordClient.channels.fetch).toHaveBeenCalledWith(channelId);
@@ -79,7 +79,7 @@ describe('DiscordService', () => {
       const mockError = new Error('Channel not found');
       mockDiscordClient.channels.fetch.mockRejectedValueOnce(mockError);
 
-      await expect(service.getChannel(channelId)).rejects.toThrow(`Failed to fetch channel with ID ${channelId}`);
+      await expect(service.getTextChannel(channelId)).rejects.toThrow(`Failed to fetch channel with ID ${channelId}`);
       expect(mockDiscordClient.channels.fetch).toHaveBeenCalledWith(channelId);
     });
   });

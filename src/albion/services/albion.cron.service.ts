@@ -23,7 +23,7 @@ export class AlbionCronService implements OnApplicationBootstrap {
     const channelId = this.config.get('discord.channels.albionScans');
 
     // Check if the channel exists
-    this.channel = await this.discordService.getChannel(channelId) as TextChannel;
+    this.channel = await this.discordService.getTextChannel(channelId);
 
     if (!this.channel) {
       throw new Error(`Could not find channel with ID ${channelId}`);

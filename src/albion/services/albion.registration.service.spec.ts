@@ -59,7 +59,7 @@ describe('AlbionRegistrationService', () => {
         {
           provide: DiscordService,
           useValue: {
-            getChannel: jest.fn().mockResolvedValue(TestBootstrapper.getMockDiscordTextChannel()),
+            getTextChannel: jest.fn().mockResolvedValue(TestBootstrapper.getMockDiscordTextChannel()),
             getMemberRole: jest.fn(),
             getGuildMember: jest.fn(),
           },
@@ -113,7 +113,7 @@ describe('AlbionRegistrationService', () => {
 
   describe('Bootstrap', () => {
     it('should throw an error if the channel could not be found', async () => {
-      discordService.getChannel = jest.fn().mockReturnValue(null);
+      discordService.getTextChannel = jest.fn().mockReturnValue(null);
 
       await expect(service.onApplicationBootstrap()).rejects.toThrowError(`Could not find channel with ID ${mockRegistrationChannelId}`);
     });
@@ -121,7 +121,7 @@ describe('AlbionRegistrationService', () => {
       const channel = {
         isTextBased: jest.fn().mockReturnValue(false),
       };
-      discordService.getChannel = jest.fn().mockReturnValue(channel);
+      discordService.getTextChannel = jest.fn().mockReturnValue(channel);
 
       await expect(service.onApplicationBootstrap()).rejects.toThrowError(`Channel with ID ${mockRegistrationChannelId} is not a text channel`);
     });
@@ -292,7 +292,7 @@ describe('AlbionRegistrationService', () => {
     it('should properly handle discord errors, mentioning the user', async () => {
       const errorMsg = 'Some error from Discord';
       albionApiService.getCharacter = jest.fn().mockResolvedValue(mockCharacter);
-      discordService.getChannel = jest.fn().mockImplementation(() => {
+      discordService.getTextChannel = jest.fn().mockImplementation(() => {
         throw new Error(errorMsg);
       });
 
@@ -400,7 +400,7 @@ describe('AlbionRegistrationService', () => {
       });
       const mockChannel = TestBootstrapper.getMockDiscordTextChannel();
       // Mock the Discord service to return the above mocked channel
-      discordService.getChannel = jest.fn().mockResolvedValue(mockChannel);
+      discordService.getTextChannel = jest.fn().mockResolvedValue(mockChannel);
 
       mockRegistrationDataEU.discordMember.roles.add = jest.fn().mockReturnValue(true);
       mockRegistrationDataEU.discordMember.setNickname = jest.fn().mockImplementation(() => {
@@ -431,7 +431,7 @@ describe('AlbionRegistrationService', () => {
       mockDiscordUser.setNickname = jest.fn().mockReturnValue(true);
       const mockChannel = TestBootstrapper.getMockDiscordTextChannel();
       // Mock the Discord service to return the above mocked channel
-      discordService.getChannel = jest.fn().mockResolvedValue(mockChannel);
+      discordService.getTextChannel = jest.fn().mockResolvedValue(mockChannel);
 
       await expect(service.handleRegistration(
         mockRegistrationData.character.Name,
@@ -465,7 +465,7 @@ CC <@&${mockUSLeaderRoleId}>, <@&${mockUSOfficerRoleId}>`,
       mockDiscordUser.setNickname = jest.fn().mockReturnValue(true);
       const mockChannel = TestBootstrapper.getMockDiscordTextChannel();
       // Mock the Discord service to return the above mocked channel
-      discordService.getChannel = jest.fn().mockResolvedValue(mockChannel);
+      discordService.getTextChannel = jest.fn().mockResolvedValue(mockChannel);
 
       await expect(service.handleRegistration(
         mockRegistrationDataEU.character.Name,

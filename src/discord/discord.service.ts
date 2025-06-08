@@ -1,6 +1,15 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { InjectDiscordClient } from '@discord-nestjs/core';
-import { Channel, Client, Collection, Guild, GuildMember, Message, Role, Snowflake } from 'discord.js';
+import {
+  Client,
+  Collection,
+  Guild,
+  GuildMember,
+  Message,
+  Role,
+  Snowflake,
+  TextChannel,
+} from 'discord.js';
 import { getChannel } from './discord.hacks';
 
 @Injectable()
@@ -29,9 +38,10 @@ export class DiscordService {
     return guild;
   }
 
-  async getChannel(channelId: string): Promise<Channel> {
+  async getTextChannel(channelId: string): Promise<TextChannel> {
     try {
-      return await this.discordClient.channels.fetch(channelId);
+      // Bloodly hell TS chill out with the type checks!
+      return await this.discordClient.channels.fetch(channelId) as TextChannel;
     }
     catch (err) {
       throw new Error(`Failed to fetch channel with ID ${channelId}! Error: ${err.message}.`);

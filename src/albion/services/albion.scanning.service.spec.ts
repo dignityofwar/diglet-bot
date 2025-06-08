@@ -109,7 +109,7 @@ describe('AlbionScanningService', () => {
         {
           provide: DiscordService,
           useValue: {
-            getChannel: jest.fn(),
+            getTextChannel: jest.fn(),
             getMemberRole: jest.fn(),
           },
         },

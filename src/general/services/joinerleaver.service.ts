@@ -5,7 +5,7 @@ import { Events, GuildMember, Message } from 'discord.js';
 import { JoinerLeaverEntity } from '../../database/entities/joiner.leaver.entity';
 import { On } from '@discord-nestjs/core';
 import { JoinerLeaverStatisticsEntity } from '../../database/entities/joiner.leaver.statistics.entity';
-import { getChannel } from '../../discord/discord.hacks';
+import { DiscordService } from '../../discord/discord.service';
 
 @Injectable()
 export class JoinerLeaverService {
@@ -14,6 +14,7 @@ export class JoinerLeaverService {
   constructor(
     @InjectRepository(JoinerLeaverEntity) private readonly joinerLeaverRepository: EntityRepository<JoinerLeaverEntity>,
     @InjectRepository(JoinerLeaverStatisticsEntity) private readonly joinerLeaverStatisticsRepository: EntityRepository<JoinerLeaverStatisticsEntity>,
+    private readonly discordService: DiscordService,
   ) {}
 
   @On(Events.GuildMemberAdd)
@@ -69,6 +70,8 @@ export class JoinerLeaverService {
 
     let stats: JoinerLeaverStatisticsEntity;
 
+    const channel = await this.discordService.getTextChannel(message.channel.id);
+
     try {
       await this.enumerateJoinerLeavers();
 
@@ -82,14 +85,14 @@ export class JoinerLeaverService {
       if (!stats) {
         const error = 'No joiner leaver statistics found!';
         this.logger.error(error);
-        await getChannel(message).send(error);
+        await channel.send(error);
         return;
       }
     }
     catch (err) {
       const error = `Error enumerating joiner leaver records. Error: ${err.message}`;
       this.logger.error(error);
-      await getChannel(message).send(error);
+      await channel.send(error);
       return;
     }
 
@@ -107,7 +110,7 @@ Stats as of April 5th 2025
 - ⏳ Average Time to Leave: **${stats.avgTimeToLeave}**`;
 
     // Send a message to the channel with the report
-    await getChannel(message).send(report);
+    await channel.send(report);
     this.logger.log(report);
   }
 

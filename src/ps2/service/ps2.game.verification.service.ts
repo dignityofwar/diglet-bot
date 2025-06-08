@@ -29,6 +29,7 @@ export class PS2GameVerificationService implements OnApplicationBootstrap {
   private messagesMap: Map<string, Message> = new Map();
   private timeMessagesMap: Map<string, Message> = new Map();
 
+  // noinspection OverlyComplexFunctionJS
   constructor(
     private readonly discordService: DiscordService,
     private readonly config: ConfigService,
@@ -43,7 +44,7 @@ export class PS2GameVerificationService implements OnApplicationBootstrap {
     // Store the Discord guild channel and ensure we can send messages to it
     const verifyChannelId = this.config.get('discord.channels.ps2Verify');
 
-    this.verificationChannel = await this.discordService.getChannel(verifyChannelId);
+    this.verificationChannel = await this.discordService.getTextChannel(verifyChannelId);
     if (!this.verificationChannel) {
       throw new Error(`Could not find channel with ID ${verifyChannelId}`);
     }
@@ -191,6 +192,7 @@ export class PS2GameVerificationService implements OnApplicationBootstrap {
     this.censusWebsocketService.unwatchCharacter(character);
   }
 
+  // noinspection FunctionWithMultipleLoopsJS
   private async init() {
     // Flush any pending verification attempts that were in progress
     const verificationAttempts = await this.ps2VerificationAttemptRepository.findAll();

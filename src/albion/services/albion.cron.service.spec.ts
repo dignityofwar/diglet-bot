@@ -36,7 +36,7 @@ describe('AlbionCronService', () => {
         {
           provide: DiscordService,
           useValue: {
-            getChannel: jest.fn(),
+            getTextChannel: jest.fn(),
             getUser: jest.fn(),
             getRole: jest.fn(),
           },
@@ -60,19 +60,19 @@ describe('AlbionCronService', () => {
   });
 
   it('should initialize without errors', async () => {
-    discordService.getChannel = jest.fn().mockReturnValue({
+    discordService.getTextChannel = jest.fn().mockReturnValue({
       isTextBased: jest.fn().mockReturnValue(true),
     });
     await expect(service.onApplicationBootstrap()).resolves.not.toThrow();
   });
 
   it('init should throw an error if channel does not exist', async () => {
-    discordService.getChannel = jest.fn().mockReturnValue(null);
+    discordService.getTextChannel = jest.fn().mockReturnValue(null);
     await expect(service.onApplicationBootstrap()).rejects.toThrow(`Could not find channel with ID ${scanChannelId}`);
   });
 
   it('init should throw an error channel is not a text channel', async () => {
-    discordService.getChannel = jest.fn().mockReturnValue({
+    discordService.getTextChannel = jest.fn().mockReturnValue({
       isTextBased: jest.fn().mockReturnValue(false),
     });
 
@@ -80,7 +80,7 @@ describe('AlbionCronService', () => {
   });
 
   it('should upon being called send two messages to the channel', async () => {
-    discordService.getChannel = jest.fn().mockReturnValue({
+    discordService.getTextChannel = jest.fn().mockReturnValue({
       isTextBased: jest.fn().mockReturnValue(true),
       send: jest.fn().mockResolvedValue(true),
     });
