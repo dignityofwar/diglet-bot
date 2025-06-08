@@ -55,7 +55,7 @@ describe('RecRolePingService', () => {
   describe('onApplicationBootstrap', () => {
     it('should log booting message', async () => {
       // Mock gather roles so it doesn't execute
-      jest.spyOn(service, 'gatherRoles');
+      service['gatherRoles'] = jest.fn();
       await service.onApplicationBootstrap();
       expect(service['logger'].log).toHaveBeenCalledWith('Booting RecRolePingService...');
     });
