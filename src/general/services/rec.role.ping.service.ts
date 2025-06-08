@@ -42,9 +42,9 @@ export class RecRolePingService implements OnApplicationBootstrap {
       return;
     }
 
-    // Find the rec game roles
+    // Find the rec game roles, exclude any roles that start with Rec/PS2/
     const recGameRoles = roles.filter(role =>
-      role.name.toLowerCase().includes('rec/')
+      role.name.startsWith('Rec') && !role.name.startsWith('Rec/PS2/')
     );
 
     if (!recGameRoles.size) {
@@ -58,7 +58,6 @@ export class RecRolePingService implements OnApplicationBootstrap {
 
     // Echo the rec roles loaded to the log
     this.logger.log(`Rec game roles loaded: ${recGameRoles.map(role => `"${role.name}"`).join(', ')}`);
-    console.log(this.recGameRoleIds);
   }
 
   @Cron('0 * * * *') // Top of every hour
