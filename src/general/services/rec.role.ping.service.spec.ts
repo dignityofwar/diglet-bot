@@ -10,7 +10,7 @@ describe('RecRolePingService', () => {
   let service: RecRolePingService;
   let discordService: DiscordService;
   let configService: ConfigService;
-  const responseMessage = 'If you just got pinged, remember our Rec Game pings are opt in. You can opt out here: https://discord.com/channels/90078410642034688/1170026809807622229. Please do this **before** muting the server entirely.';
+  const responseMessage = 'If you just got pinged, remember our Rec Game pings are opt in. You can opt out here: https://discord.com/channels/90078410642034688/1170026809807622229/1208438379126071296. Please do this **before** muting the server entirely.';
 
   beforeEach(async () => {
     const moduleRef = await Test.createTestingModule({
