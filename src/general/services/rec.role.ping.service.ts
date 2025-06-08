@@ -29,10 +29,10 @@ export class RecRolePingService implements OnApplicationBootstrap {
 
     this.guild = guild;
 
-    await this.gatherRoles(guild);
+    this.recGameRoleIds = await this.gatherRoles(guild);
   }
 
-  async gatherRoles(guild: Guild): Promise<void> {
+  async gatherRoles(guild: Guild): Promise<string[] | undefined> {
     this.logger.log('Gathering rec roles from guild...');
 
     // Force fetch all roles in the guild
@@ -43,21 +43,25 @@ export class RecRolePingService implements OnApplicationBootstrap {
     }
 
     // Find the rec game roles, exclude any roles that start with Rec/PS2/
-    const recGameRoles = roles.filter(role =>
-      role.name.startsWith('Rec') && !role.name.startsWith('Rec/PS2/')
-    );
+    const recGameRoles = roles.filter(role => {
+      // Convert to lowercase
+      const roleName = role.name.toLowerCase();
+
+      return roleName.startsWith('rec/') && !roleName.startsWith('rec/ps2/');
+    });
 
     if (!recGameRoles.size) {
       this.logger.error('No rec game roles found in the guild!');
       return;
     }
 
-    // Convert the roles to a list of role IDs
-    // We need to into each role and pull out the ID
-    this.recGameRoleIds = Array.from(recGameRoles.values()).map(role => role.id);
-
     // Echo the rec roles loaded to the log
     this.logger.log(`Rec game roles loaded: ${recGameRoles.map(role => `"${role.name}"`).join(', ')}`);
+
+    // Convert the roles to a list of role IDs
+    // We need to into each role and pull out the ID
+    return Array.from(recGameRoles.values()).map(role => role.id);
+
   }
 
   @Cron('0 * * * *') // Top of every hour
@@ -69,7 +73,7 @@ export class RecRolePingService implements OnApplicationBootstrap {
 
     this.logger.log('Gathering rec roles from guild via cron...');
 
-    await this.gatherRoles(this.guild);
+    this.recGameRoleIds = await this.gatherRoles(this.guild);
   }
 
   async onMessage(message: Message): Promise<void> {
@@ -99,7 +103,7 @@ export class RecRolePingService implements OnApplicationBootstrap {
     this.logger.log(`Message from ${message.member.id} mentions rec roles: ${mentionedRecRoles.map(role => role.name).join(', ')}`);
 
     // Send a message to the channel it came from
-    const content = 'If you just got pinged, remember our Rec Game pings are opt in. You can opt out here: https://discord.com/channels/90078410642034688/1170026809807622229/1208438379126071296. Please do this **before** muting the server entirely.';
+    const content = 'If you just got pinged, remember our Rec Game pings are opt in. You can opt out here: https://discord.com/channels/90078410642034688/1170026809807622229/1208438379126071296.';
 
     try {
       const channel = await this.discordService.getTextChannel(message.channel.id);

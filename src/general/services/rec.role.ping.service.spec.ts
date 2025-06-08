@@ -10,7 +10,7 @@ describe('RecRolePingService', () => {
   let service: RecRolePingService;
   let discordService: DiscordService;
   let configService: ConfigService;
-  const responseMessage = 'If you just got pinged, remember our Rec Game pings are opt in. You can opt out here: https://discord.com/channels/90078410642034688/1170026809807622229/1208438379126071296. Please do this **before** muting the server entirely.';
+  const responseMessage = 'If you just got pinged, remember our Rec Game pings are opt in. You can opt out here: https://discord.com/channels/90078410642034688/1170026809807622229/1208438379126071296.';
 
   beforeEach(async () => {
     const moduleRef = await Test.createTestingModule({
@@ -55,7 +55,7 @@ describe('RecRolePingService', () => {
   describe('onApplicationBootstrap', () => {
     it('should log booting message', async () => {
       // Mock gather roles so it doesn't execute
-      jest.spyOn(service, 'gatherRoles').mockResolvedValue();
+      jest.spyOn(service, 'gatherRoles');
       await service.onApplicationBootstrap();
       expect(service['logger'].log).toHaveBeenCalledWith('Booting RecRolePingService...');
     });
@@ -79,7 +79,7 @@ describe('RecRolePingService', () => {
     });
 
     it('should call gatherRoles', async () => {
-      const gatherRolesSpy = jest.spyOn(service, 'gatherRoles').mockResolvedValue();
+      const gatherRolesSpy = jest.spyOn(service, 'gatherRoles');
       const mockGuild = {
         roles: {
           fetch: jest.fn().mockResolvedValue(new Map()),
@@ -121,11 +121,15 @@ describe('RecRolePingService', () => {
       expect(service['logger'].error).toHaveBeenCalledWith('No rec game roles found in the guild!');
     });
 
-    it('should filter the currect number of roles', async () => {
+    it('should filter the correct number of roles', async () => {
       const mockRoles = new Collection<string, any>(new Collection([
         ['1337', { id: '1337', name: 'rec/game1' }],
         ['2', { id: '2', name: 'other/game2' }],
         ['3', { id: '3', name: 'rec/game3' }],
+        ['4', { id: '4', name: 'Rec/PS2/Leader' }],
+        ['5', { id: '5', name: 'Rec/PS2/DIGlet' }],
+        ['6', { id: '6', name: 'Rec/Helldivers 2' }],
+        ['7', { id: '7', name: 'Rec' }],
       ]));
 
       const mockGuild = {
@@ -134,8 +138,9 @@ describe('RecRolePingService', () => {
         },
       } as any;
 
-      await service.gatherRoles(mockGuild);
-      expect(service['recGameRoleIds']).toEqual(['1337', '3']);
+      const result = await service.gatherRoles(mockGuild);
+
+      expect(result).toEqual(['1337', '3', '6']);
     });
   });
 
