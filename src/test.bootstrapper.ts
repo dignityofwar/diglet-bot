@@ -177,6 +177,11 @@ export class TestBootstrapper {
 
   static getMockDiscordMessage() {
     return {
+      author: {
+        id: TestBootstrapper.getMockDiscordUser().id,
+        username: TestBootstrapper.getMockDiscordUser().user.username,
+        bot: false,
+      },
       edit: jest.fn(),
       delete: jest.fn(),
       channel: {
