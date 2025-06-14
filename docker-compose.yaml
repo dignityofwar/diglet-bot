@@ -1,7 +1,7 @@
 services:
   digletbot-db:
     container_name: digletbot-db
-    image: mariadb:11.7.2
+    image: mariadb:11.8.2
     restart: unless-stopped
     ports:
       - "3306:3306"
