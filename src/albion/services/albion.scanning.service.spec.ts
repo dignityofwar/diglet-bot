@@ -60,8 +60,8 @@ describe('AlbionScanningService', () => {
   let mockRegisteredMemberEU: AlbionRegistrationsEntity;
 
   beforeEach(async () => {
-    mockCharacterUS = TestBootstrapper.getMockAlbionCharacter(TestBootstrapper, AlbionServer.AMERICAS);
-    mockCharacterEU = TestBootstrapper.getMockAlbionCharacter(TestBootstrapper, AlbionServer.EUROPE);
+    mockCharacterUS = TestBootstrapper.getMockAlbionCharacter(AlbionServer.AMERICAS);
+    mockCharacterEU = TestBootstrapper.getMockAlbionCharacter(AlbionServer.EUROPE);
     mockRegisteredMemberUS = {
       id: 123456789,
       discordId: '123456789',

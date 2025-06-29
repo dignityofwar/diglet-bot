@@ -29,7 +29,9 @@ describe('AlbionRegistrationService', () => {
 
   beforeEach(async () => {
     mockAlbionRegistrationsRepository = TestBootstrapper.getMockEntityRepo();
-    mockCharacter = TestBootstrapper.getMockAlbionCharacter(TestBootstrapper.mockConfig.albion.guildId) as any;
+    mockCharacter = TestBootstrapper.getMockAlbionCharacter(
+      AlbionServer.EUROPE
+    ) as any;
     mockDiscordUser = TestBootstrapper.getMockDiscordUser();
 
     mockRegistrationDataEU = {

@@ -297,13 +297,12 @@ export class TestBootstrapper {
   }
 
   static getMockAlbionCharacter(
-    guildId,
-    server: AlbionServer = AlbionServer.EUROPE,
+    server: AlbionServer = AlbionServer.AMERICAS
   ) {
     return {
       Id: 'clhoV9OdRm-5BuYQYZBT_Q',
       Name: `Maelstrome26${server === AlbionServer.AMERICAS ? 'US' : 'EU'}`,
-      GuildId: guildId ?? this.mockConfig.albion.guildId,
+      GuildId: server === AlbionServer.AMERICAS ? this.mockConfig.albion.guildIdUS : this.mockConfig.albion.guildId,
     } as any;
   }
 
@@ -355,6 +354,7 @@ export class TestBootstrapper {
 
   static readonly mockConfig = {
     albion: {
+      guildIdUS: '44545423435',
       guildId: '6567576868',
       guildLeaderRoleUS: { discordRoleId: guildLeaderRoleUS },
       guildLeaderRole: { discordRoleId: guildLeaderRole },
