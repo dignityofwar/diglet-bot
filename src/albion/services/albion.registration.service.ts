@@ -26,6 +26,7 @@ export class AlbionRegistrationService implements OnApplicationBootstrap {
   private readonly logger = new Logger(AlbionRegistrationService.name);
 
   private verificationChannel: Channel;
+  private lastMessageId: string | null = null;
 
   constructor(
     private readonly discordService: DiscordService,
@@ -96,10 +97,18 @@ export class AlbionRegistrationService implements OnApplicationBootstrap {
     discordGuildId: string,
     discordChannelId: string
   ) {
+    let channel: TextChannel;
+    try {
+      channel = await this.discordService.getTextChannel(discordChannelId);
+    }
+    catch (err) {
+      this.logger.error(`Failed to get channel with ID ${discordChannelId}! Err: ${err.message}`);
+      throw new Error(`Failed to get channel with ID ${discordChannelId}. Please try again later.`);
+    }
+
     // Any failures here will be caught then mention the user with the error.
     try {
       const data = await this.getInfo(characterName, server, discordMemberId, discordGuildId);
-      const channel = await this.discordService.getTextChannel(discordChannelId);
 
       this.logger.debug(`Handling Albion character "${data.character.Name}" registration for "${data.discordMember.displayName}" on server "${data.server}"`);
 
@@ -112,6 +121,9 @@ export class AlbionRegistrationService implements OnApplicationBootstrap {
       this.logger.error(`Registration failed for character "${characterName}"! Err: ${err.message}`);
       throw err;
     }
+
+    // In all cases, we send a reminder that this is for guild registrations only.
+    await this.sendAllianceRegistrationReminder(channel);
   }
 
   private throwError(error: string) {
@@ -265,5 +277,30 @@ CC <@&${pingRoles.join('>, <@&')}>`;
       content: messageContent,
       flags: MessageFlags.SuppressEmbeds,
     });
+  }
+
+  private async sendAllianceRegistrationReminder(channel: TextChannel) {
+    // If the old message exists, delete it
+    if (this.lastMessageId) {
+      try {
+        const oldMessage = await channel.messages.fetch(this.lastMessageId);
+        if (oldMessage) {
+          await oldMessage.delete();
+        }
+      }
+      catch (err) {
+        this.logger.warn(`Failed to delete old registration reminder message! Err: ${err.message}`);
+      }
+    }
+
+    const messageContent = '# This is for DIG _Guild_ registrations only.\n' +
+'For alliance, see here: https://discord.com/channels/90078410642034688/1375362179834052688/1375362497460178975';
+    const newMessage = await channel.send({
+      content: messageContent,
+      flags: MessageFlags.SuppressEmbeds,
+    });
+
+    // Store the new message ID for future reference
+    this.lastMessageId = newMessage.id;
   }
 }
