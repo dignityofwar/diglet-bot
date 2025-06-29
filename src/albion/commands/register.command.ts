@@ -102,7 +102,7 @@ export class AlbionRegisterCommand {
     }
 
     const messageContent = '# This is for DIG _Guild_ registrations only.\n' +
-      'For alliance, see here: https://discord.com/channels/90078410642034688/1375362179834052688/1375362497460178975';
+'For alliance, see here: https://discord.com/channels/90078410642034688/1375362179834052688/1375362497460178975';
     const newMessage = await channel.send({
       content: messageContent,
       flags: MessageFlags.SuppressEmbeds,
