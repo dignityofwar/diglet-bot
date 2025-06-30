@@ -72,8 +72,6 @@ export class AlbionRegisterCommand {
         discordMemberGuildId,
         discordChannelId
       );
-
-      await this.sendAllianceRegistrationReminder(message);
     }
     catch (err) {
       await getChannel(message).send(`⛔️ **ERROR:** ${err.message}`);
@@ -82,6 +80,8 @@ export class AlbionRegisterCommand {
 
     // Delete the placeholder
     await message.delete();
+
+    await this.sendAllianceRegistrationReminder(message);
   }
 
   async sendAllianceRegistrationReminder(
