@@ -64,7 +64,6 @@ export class AlbionRegisterCommand {
     discordChannelId: string,
     message: Message
   ) {
-    let channel;
     try {
       await this.albionRegistrationService.handleRegistration(
         characterName,
@@ -73,8 +72,8 @@ export class AlbionRegisterCommand {
         discordMemberGuildId,
         discordChannelId
       );
-      channel = getChannel(message);
-      await this.sendAllianceRegistrationReminder(channel);
+
+      await this.sendAllianceRegistrationReminder(message);
     }
     catch (err) {
       await getChannel(message).send(`⛔️ **ERROR:** ${err.message}`);
@@ -86,8 +85,10 @@ export class AlbionRegisterCommand {
   }
 
   async sendAllianceRegistrationReminder(
-    channel: TextChannel,
+    message: Message,
   ): Promise<void> {
+    const channel = getChannel(message);
+
     // Delete the last message if it exists
     if (this.lastAllianceReminderMessageId) {
       try {
