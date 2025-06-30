@@ -82,7 +82,7 @@ describe('ActivityService', () => {
 
     it('should not remove the activity record on a dry run', async () => {
       await activityService.removeActivityRecord(mockActivityEntity, true);
-      expect(mockActivityRepository.getEntityManager().removeAndFlush).toBeCalledTimes(0);
+      expect(mockActivityRepository.getEntityManager().removeAndFlush).toHaveBeenCalledTimes(0);
     });
 
     it('should properly handle database errors and throw an custom error', async () => {
@@ -92,7 +92,7 @@ describe('ActivityService', () => {
         .rejects
         .toThrow('Error removing activity record for leaver testuser (123456). Error: Database went boom!');
 
-      expect(mockActivityRepository.getEntityManager().removeAndFlush).toBeCalledTimes(1);
+      expect(mockActivityRepository.getEntityManager().removeAndFlush).toHaveBeenCalledTimes(1);
     });
   });
 

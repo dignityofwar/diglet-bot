@@ -57,7 +57,7 @@ describe('CensusApiService', () => {
           censusServiceId: '',
         },
       });
-      await expect(service.onModuleInit()).rejects.toThrowError('PS2_CENSUS_SERVICE_ID is not defined.');
+      await expect(service.onModuleInit()).rejects.toThrow('PS2_CENSUS_SERVICE_ID is not defined.');
     });
 
     it('should throw upon census being unavailable or errors', async () => {
@@ -83,7 +83,7 @@ describe('CensusApiService', () => {
     it('should throw when no response data was returned', async () => {
       mockClient.get = jest.fn().mockResolvedValue({});
 
-      await expect(service.sendRequest(mockUrl)).rejects.toThrowError('No data was received from Census!');
+      await expect(service.sendRequest(mockUrl)).rejects.toThrow('No data was received from Census!');
 
       expect(mockClient.get).toHaveBeenCalledWith(mockUrl);
     });
@@ -150,7 +150,7 @@ describe('CensusApiService', () => {
       const name = 'IDoNotExist101010101010101';
       service.sendRequest = jest.fn().mockResolvedValue({ character_list: [] });
 
-      await expect(service.getCharacter(name)).rejects.toThrowError(`Character \`${name}\` does not exist. Please ensure you have spelt it correctly.`);
+      await expect(service.getCharacter(name)).rejects.toThrow(`Character \`${name}\` does not exist. Please ensure you have spelt it correctly.`);
     });
 
     it('should throw an error if a character search exhausts its retries', async () => {
@@ -159,7 +159,7 @@ describe('CensusApiService', () => {
         throw new CensusRetriesError('Census Retries exhausted.');
       });
 
-      await expect(service.getCharacter(name)).rejects.toThrowError('Census Retries exhausted.');
+      await expect(service.getCharacter(name)).rejects.toThrow('Census Retries exhausted.');
     });
   });
   describe('getCharacterById', () => {
@@ -180,7 +180,7 @@ describe('CensusApiService', () => {
       const id = '12343435465464646454';
 
       service.sendRequest = jest.fn().mockResolvedValue({ character_list: [] });
-      await expect(service.getCharacterById(id)).rejects.toThrowError(`Character with ID **${id}** does not exist.`);
+      await expect(service.getCharacterById(id)).rejects.toThrow(`Character with ID **${id}** does not exist.`);
     });
 
     it('should throw an error when Census falls on its arse', async () => {
@@ -188,7 +188,7 @@ describe('CensusApiService', () => {
         throw new CensusServerError('Census errored.');
       });
 
-      await expect(service.getCharacterById('123456')).rejects.toThrowError('Census Errored when fetching character with ID **123456**. Err: Census errored.');
+      await expect(service.getCharacterById('123456')).rejects.toThrow('Census Errored when fetching character with ID **123456**. Err: Census errored.');
     });
   });
 
@@ -208,7 +208,7 @@ describe('CensusApiService', () => {
       const outfitId = '123434354654';
       service.sendRequest = jest.fn().mockResolvedValue({ outfit_list: [] });
 
-      await expect(service.getOutfit(outfitId)).rejects.toThrowError(`Outfit with ID **${outfitId}** does not exist.`);
+      await expect(service.getOutfit(outfitId)).rejects.toThrow(`Outfit with ID **${outfitId}** does not exist.`);
     });
 
     it('should throw an error when Census falls on its arse', async () => {
@@ -216,7 +216,7 @@ describe('CensusApiService', () => {
         throw new CensusServerError('Census errored.');
       });
 
-      await expect(service.getOutfit('123456')).rejects.toThrowError('Census Errored when fetching outfit with ID **123456**. Err: Census errored.');
+      await expect(service.getOutfit('123456')).rejects.toThrow('Census Errored when fetching outfit with ID **123456**. Err: Census errored.');
     });
   });
 });

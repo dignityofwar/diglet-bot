@@ -52,7 +52,7 @@ describe('AlbionApiService', () => {
 
     await expect(service.getCharacter('who.dis', AlbionServer.AMERICAS))
       .rejects
-      .toThrowError('Character **who.dis** does not seem to exist on the Americas server. Please ensure: \n1. You\'ve supplied your **exact** character name (case sensitive).\n2. You\'ve chosen the correct Albion server.\n3. Your character is older than 48 hours.');
+      .toThrow('Character **who.dis** does not seem to exist on the Americas server. Please ensure: \n1. You\'ve supplied your **exact** character name (case sensitive).\n2. You\'ve chosen the correct Albion server.\n3. Your character is older than 48 hours.');
   });
 
   it('should return a character based on exact match amongst partial matches', async () => {
@@ -133,7 +133,7 @@ describe('AlbionApiService', () => {
 
     await expect(service.getCharacter('Maelstrome', AlbionServer.AMERICAS))
       .rejects
-      .toThrowError(`Character ID \`${id}\` does not match API response consistently. Pinging <@${TestBootstrapper.mockConfig.discord.devUserId}>!`);
+      .toThrow(`Character ID \`${id}\` does not match API response consistently. Pinging <@${TestBootstrapper.mockConfig.discord.devUserId}>!`);
   });
 
   it('should handle a character having duplicates, as long as only one of them is in the guild', async () => {
@@ -208,7 +208,7 @@ describe('AlbionApiService', () => {
 
     await expect(service.getCharacter(characterName, AlbionServer.AMERICAS))
       .rejects
-      .toThrowError(`multiple characters for **${characterName}** were found, none of them are a guild member.`);
+      .toThrow(`multiple characters for **${characterName}** were found, none of them are a guild member.`);
   });
   it('should throw error when multiple characters of the same name in the guild', async () => {
     const characterName = 'NightRaven2511';
@@ -251,7 +251,7 @@ describe('AlbionApiService', () => {
 
     await expect(service.getCharacter(characterName, AlbionServer.AMERICAS))
       .rejects
-      .toThrowError(`multiple characters for **NightRaven2511** were found within the DIG guild. This is an unsupported use case for this registration system. Pinging <@${TestBootstrapper.mockConfig.discord.devUserId}>!`);
+      .toThrow(`multiple characters for **NightRaven2511** were found within the DIG guild. This is an unsupported use case for this registration system. Pinging <@${TestBootstrapper.mockConfig.discord.devUserId}>!`);
   });
 
   it('should return a character with all uppercase letters', async () => {
@@ -331,7 +331,7 @@ describe('AlbionApiService', () => {
     const receivedMembers = await service.getAllGuildMembers(guildId, AlbionServer.AMERICAS);
 
     expect(receivedMembers).toEqual(mockMembers);
-    expect(mockRequest.get).toBeCalledWith(`/guilds/${guildId}/members`);
+    expect(mockRequest.get).toHaveBeenCalledWith(`/guilds/${guildId}/members`);
   });
 
   describe('Europe', () => {

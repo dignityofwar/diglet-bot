@@ -87,6 +87,6 @@ describe('PS2CronService', () => {
     await service.onApplicationBootstrap();
     await service.runPS2Scans();
     // eslint-disable-next-line
-    expect((service as any).channel.send).toBeCalledTimes(2);
+    expect((service as any).channel.send).toHaveBeenCalledTimes(2);
   });
 });
