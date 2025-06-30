@@ -125,4 +125,18 @@ describe('AlbionRegisterCommand', () => {
       expect(mockDiscordMessage.delete).toHaveBeenCalled();
     });
   });
+
+  describe('sendAllianceRegistrationReminder', () => {
+    it('should delete the last reminder message if it exists', async () => {
+      command['lastAllianceReminderMessageId'] = '1234567890';
+      const mockDelete = jest.fn();
+      const mockLastMessage = { delete: mockDelete };
+      mockDiscordMessage.channel.messages.fetch = jest.fn().mockResolvedValue(mockLastMessage);
+
+      await command.sendAllianceRegistrationReminder(mockDiscordMessage.channel);
+
+      expect(mockDiscordMessage.channel.messages.fetch).toHaveBeenCalledWith('1234567890');
+      expect(mockDelete).toHaveBeenCalled();
+    });
+  });
 });

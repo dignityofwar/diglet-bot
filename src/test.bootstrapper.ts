@@ -191,6 +191,13 @@ export class TestBootstrapper {
         }),
         sendTyping: jest.fn(),
         guild: this.getMockGuild('123456789'),
+        messages : {
+          fetch: jest.fn().mockResolvedValue({
+            id: '1234567890',
+            content: 'Mock message content',
+            delete: jest.fn(),
+          }),
+        },
       },
       member: this.getMockDiscordUser(),
       roles: {
