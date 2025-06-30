@@ -1,5 +1,5 @@
 import { Command, EventParams, Handler, InteractionEvent } from '@discord-nestjs/core';
-import { ApplicationCommandType, ChatInputCommandInteraction, GuildMember, Message, MessageFlags, TextChannel } from 'discord.js';
+import { ApplicationCommandType, ChatInputCommandInteraction, GuildMember, Message, MessageFlags } from 'discord.js';
 import { SlashCommandPipe } from '@discord-nestjs/common';
 import { AlbionRegisterDto } from '../dto/albion.register.dto';
 import { Injectable, Logger } from '@nestjs/common';
