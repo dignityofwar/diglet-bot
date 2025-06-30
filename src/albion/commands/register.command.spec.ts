@@ -139,7 +139,7 @@ describe('AlbionRegisterCommand', () => {
       const mockLastMessage = { delete: mockDelete };
       mockDiscordMessage.channel.messages.fetch = jest.fn().mockResolvedValue(mockLastMessage);
 
-      await command.sendAllianceRegistrationReminder(mockDiscordMessage.channel);
+      await command.sendAllianceRegistrationReminder(mockDiscordMessage);
 
       expect(mockDiscordMessage.channel.messages.fetch).toHaveBeenCalledWith('1234567890');
       expect(mockDelete).toHaveBeenCalled();
@@ -154,7 +154,7 @@ describe('AlbionRegisterCommand', () => {
       const mockLastMessage = { delete: mockDelete };
       mockDiscordMessage.channel.messages.fetch = jest.fn().mockResolvedValue(mockLastMessage);
 
-      await command.sendAllianceRegistrationReminder(mockDiscordMessage.channel);
+      await command.sendAllianceRegistrationReminder(mockDiscordMessage);
 
       expect(mockDiscordMessage.channel.messages.fetch).toHaveBeenCalledWith('1234567890');
       expect(mockDelete).toHaveBeenCalled();
@@ -165,7 +165,7 @@ describe('AlbionRegisterCommand', () => {
       const mockSend = jest.fn().mockResolvedValue({ id: 'newMessageId' });
       mockDiscordMessage.channel.send = mockSend;
 
-      await command.sendAllianceRegistrationReminder(mockDiscordMessage.channel);
+      await command.sendAllianceRegistrationReminder(mockDiscordMessage);
 
       expect(mockSend).toHaveBeenCalledWith({
         content: '# This is for DIG _Guild_ registrations only.\n' +
