@@ -138,5 +138,19 @@ describe('AlbionRegisterCommand', () => {
       expect(mockDiscordMessage.channel.messages.fetch).toHaveBeenCalledWith('1234567890');
       expect(mockDelete).toHaveBeenCalled();
     });
+
+    it('should send a new reminder message and set the message ID', async () => {
+      const mockSend = jest.fn().mockResolvedValue({ id: 'newMessageId' });
+      mockDiscordMessage.channel.send = mockSend;
+
+      await command.sendAllianceRegistrationReminder(mockDiscordMessage.channel);
+
+      expect(mockSend).toHaveBeenCalledWith({
+        content: '# This is for DIG _Guild_ registrations only.\n' +
+          'For alliance, see here: https://discord.com/channels/90078410642034688/1375362179834052688/1375362497460178975',
+        flags: 4,
+      });
+      expect(command['lastAllianceReminderMessageId']).toBe('newMessageId');
+    });
   });
 });
