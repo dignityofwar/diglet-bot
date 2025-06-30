@@ -46,6 +46,12 @@ describe('AlbionRegisterCommand', () => {
 
     mockDiscordInteraction = TestBootstrapper.getMockDiscordInteraction(expectedChannelId, mockDiscordUser);
     mockDiscordMessage = TestBootstrapper.getMockDiscordMessage();
+
+    // Filled spies
+    jest.spyOn(command['logger'], 'error');
+    jest.spyOn(command['logger'], 'warn');
+    jest.spyOn(command['logger'], 'log');
+    jest.spyOn(command['logger'], 'debug');
   });
 
   it('should be defined', () => {
@@ -137,6 +143,22 @@ describe('AlbionRegisterCommand', () => {
 
       expect(mockDiscordMessage.channel.messages.fetch).toHaveBeenCalledWith('1234567890');
       expect(mockDelete).toHaveBeenCalled();
+      expect(mockDiscordMessage.channel.send).toHaveBeenCalled();
+    });
+
+    it('should log an error when unable to delete message', async () => {
+      command['lastAllianceReminderMessageId'] = '1234567890';
+      const mockDelete = jest.fn().mockImplementation(() => {
+        throw new Error('Unable to delete message');
+      });
+      const mockLastMessage = { delete: mockDelete };
+      mockDiscordMessage.channel.messages.fetch = jest.fn().mockResolvedValue(mockLastMessage);
+
+      await command.sendAllianceRegistrationReminder(mockDiscordMessage.channel);
+
+      expect(mockDiscordMessage.channel.messages.fetch).toHaveBeenCalledWith('1234567890');
+      expect(mockDelete).toHaveBeenCalled();
+      expect(command['logger'].error).toHaveBeenCalledWith('Failed to delete last alliance reminder message: Unable to delete message');
     });
 
     it('should send a new reminder message and set the message ID', async () => {
