@@ -96,10 +96,18 @@ export class AlbionRegistrationService implements OnApplicationBootstrap {
     discordGuildId: string,
     discordChannelId: string
   ) {
+    let channel: TextChannel;
+    try {
+      channel = await this.discordService.getTextChannel(discordChannelId);
+    }
+    catch (err) {
+      const errorMessage = `Failed to get channel with ID ${discordChannelId}! Err: ${err.message}. Pinging <@${this.config.get('discord.devUserId')}>!`;
+      this.throwError(errorMessage);
+    }
+
     // Any failures here will be caught then mention the user with the error.
     try {
       const data = await this.getInfo(characterName, server, discordMemberId, discordGuildId);
-      const channel = await this.discordService.getTextChannel(discordChannelId);
 
       this.logger.debug(`Handling Albion character "${data.character.Name}" registration for "${data.discordMember.displayName}" on server "${data.server}"`);
 
@@ -148,10 +156,6 @@ export class AlbionRegistrationService implements OnApplicationBootstrap {
       guildId: data.guildId,
       discordId: String(data.discordMember.user.id),
     });
-
-    console.log(foundByDiscord);
-    console.log(data.discordMember);
-    console.log(data.discordMember.user.id);
 
     // No previous registrations found
     if (!foundByCharacter && !foundByDiscord) {

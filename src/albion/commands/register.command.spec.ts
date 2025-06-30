@@ -46,6 +46,12 @@ describe('AlbionRegisterCommand', () => {
 
     mockDiscordInteraction = TestBootstrapper.getMockDiscordInteraction(expectedChannelId, mockDiscordUser);
     mockDiscordMessage = TestBootstrapper.getMockDiscordMessage();
+
+    // Filled spies
+    jest.spyOn(command['logger'], 'error');
+    jest.spyOn(command['logger'], 'warn');
+    jest.spyOn(command['logger'], 'log');
+    jest.spyOn(command['logger'], 'debug');
   });
 
   it('should be defined', () => {
@@ -94,7 +100,13 @@ describe('AlbionRegisterCommand', () => {
         mockDiscordInteraction[0].channelId
       );
       expect(mockDiscordMessage.delete).toHaveBeenCalled();
+      expect(mockDiscordMessage.channel.send).toHaveBeenLastCalledWith({
+        content: '# This is for DIG _Guild_ registrations only.\n' +
+'For alliance, see here: https://discord.com/channels/90078410642034688/1375362179834052688/1375362497460178975',
+        flags: 4,
+      });
     });
+
     it('should handle errors from the registration service', async () => {
       const errorMessage = `Sorry <@${mockDiscordUser.id}>, Something went boom!`;
       albionRegistrationService.handleRegistration = jest.fn().mockRejectedValue(new Error(errorMessage));
@@ -117,6 +129,50 @@ describe('AlbionRegisterCommand', () => {
       );
       expect(mockDiscordMessage.channel.send).toHaveBeenCalledWith(`⛔️ **ERROR:** ${errorMessage}`);
       expect(mockDiscordMessage.delete).toHaveBeenCalled();
+    });
+  });
+
+  describe('sendAllianceRegistrationReminder', () => {
+    it('should delete the last reminder message if it exists', async () => {
+      command['lastAllianceReminderMessageId'] = '1234567890';
+      const mockDelete = jest.fn();
+      const mockLastMessage = { delete: mockDelete };
+      mockDiscordMessage.channel.messages.fetch = jest.fn().mockResolvedValue(mockLastMessage);
+
+      await command.sendAllianceRegistrationReminder(mockDiscordMessage.channel);
+
+      expect(mockDiscordMessage.channel.messages.fetch).toHaveBeenCalledWith('1234567890');
+      expect(mockDelete).toHaveBeenCalled();
+      expect(mockDiscordMessage.channel.send).toHaveBeenCalled();
+    });
+
+    it('should log an error when unable to delete message', async () => {
+      command['lastAllianceReminderMessageId'] = '1234567890';
+      const mockDelete = jest.fn().mockImplementation(() => {
+        throw new Error('Unable to delete message');
+      });
+      const mockLastMessage = { delete: mockDelete };
+      mockDiscordMessage.channel.messages.fetch = jest.fn().mockResolvedValue(mockLastMessage);
+
+      await command.sendAllianceRegistrationReminder(mockDiscordMessage.channel);
+
+      expect(mockDiscordMessage.channel.messages.fetch).toHaveBeenCalledWith('1234567890');
+      expect(mockDelete).toHaveBeenCalled();
+      expect(command['logger'].error).toHaveBeenCalledWith('Failed to delete last alliance reminder message: Unable to delete message');
+    });
+
+    it('should send a new reminder message and set the message ID', async () => {
+      const mockSend = jest.fn().mockResolvedValue({ id: 'newMessageId' });
+      mockDiscordMessage.channel.send = mockSend;
+
+      await command.sendAllianceRegistrationReminder(mockDiscordMessage.channel);
+
+      expect(mockSend).toHaveBeenCalledWith({
+        content: '# This is for DIG _Guild_ registrations only.\n' +
+          'For alliance, see here: https://discord.com/channels/90078410642034688/1375362179834052688/1375362497460178975',
+        flags: 4,
+      });
+      expect(command['lastAllianceReminderMessageId']).toBe('newMessageId');
     });
   });
 });

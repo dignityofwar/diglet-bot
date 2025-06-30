@@ -177,6 +177,7 @@ export class TestBootstrapper {
 
   static getMockDiscordMessage() {
     return {
+      id: '1234567890',
       edit: jest.fn(),
       delete: jest.fn(),
       channel: {
@@ -190,6 +191,13 @@ export class TestBootstrapper {
         }),
         sendTyping: jest.fn(),
         guild: this.getMockGuild('123456789'),
+        messages : {
+          fetch: jest.fn().mockResolvedValue({
+            id: '1234567890',
+            content: 'Mock message content',
+            delete: jest.fn(),
+          }),
+        },
       },
       member: this.getMockDiscordUser(),
       roles: {
@@ -252,7 +260,7 @@ export class TestBootstrapper {
     return {
       id: '1234567890', // A mock channel ID
       name: 'test-text-channel', // A mock channel name
-      send: jest.fn(),
+      send: jest.fn().mockReturnValue(TestBootstrapper.getMockDiscordMessage()),
     };
   }
 
@@ -296,13 +304,12 @@ export class TestBootstrapper {
   }
 
   static getMockAlbionCharacter(
-    guildId,
     server: AlbionServer = AlbionServer.AMERICAS
   ) {
     return {
       Id: 'clhoV9OdRm-5BuYQYZBT_Q',
       Name: `Maelstrome26${server === AlbionServer.AMERICAS ? 'US' : 'EU'}`,
-      GuildId: guildId ?? server === AlbionServer.AMERICAS ? this.mockConfig.albion.guildIdUS : this.mockConfig.albion.guildId,
+      GuildId: server === AlbionServer.AMERICAS ? this.mockConfig.albion.guildIdUS : this.mockConfig.albion.guildId,
     } as any;
   }
 

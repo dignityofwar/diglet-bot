@@ -1,5 +1,5 @@
 import { Command, EventParams, Handler, InteractionEvent } from '@discord-nestjs/core';
-import { ApplicationCommandType, ChatInputCommandInteraction, GuildMember, Message } from 'discord.js';
+import { ApplicationCommandType, ChatInputCommandInteraction, GuildMember, Message, MessageFlags, TextChannel } from 'discord.js';
 import { SlashCommandPipe } from '@discord-nestjs/common';
 import { AlbionRegisterDto } from '../dto/albion.register.dto';
 import { Injectable, Logger } from '@nestjs/common';
@@ -16,6 +16,8 @@ import { getChannel } from '../../discord/discord.hacks';
 @Injectable()
 export class AlbionRegisterCommand {
   private readonly logger = new Logger(AlbionRegisterCommand.name);
+
+  private lastAllianceReminderMessageId: string | null = null;
 
   constructor(
     private readonly config: ConfigService,
@@ -62,6 +64,7 @@ export class AlbionRegisterCommand {
     discordChannelId: string,
     message: Message
   ) {
+    let channel;
     try {
       await this.albionRegistrationService.handleRegistration(
         characterName,
@@ -70,6 +73,8 @@ export class AlbionRegisterCommand {
         discordMemberGuildId,
         discordChannelId
       );
+      channel = getChannel(message);
+      await this.sendAllianceRegistrationReminder(channel);
     }
     catch (err) {
       await getChannel(message).send(`⛔️ **ERROR:** ${err.message}`);
@@ -78,5 +83,31 @@ export class AlbionRegisterCommand {
 
     // Delete the placeholder
     await message.delete();
+  }
+
+  async sendAllianceRegistrationReminder(
+    channel: TextChannel,
+  ): Promise<void> {
+    // Delete the last message if it exists
+    if (this.lastAllianceReminderMessageId) {
+      try {
+        const lastMessage = await channel.messages.fetch(this.lastAllianceReminderMessageId);
+        if (lastMessage) {
+          await lastMessage.delete();
+        }
+      }
+      catch (error) {
+        this.logger.error(`Failed to delete last alliance reminder message: ${error.message}`);
+      }
+    }
+
+    const messageContent = '# This is for DIG _Guild_ registrations only.\n' +
+'For alliance, see here: https://discord.com/channels/90078410642034688/1375362179834052688/1375362497460178975';
+    const newMessage = await channel.send({
+      content: messageContent,
+      flags: MessageFlags.SuppressEmbeds,
+    });
+
+    this.lastAllianceReminderMessageId = newMessage.id;
   }
 }
