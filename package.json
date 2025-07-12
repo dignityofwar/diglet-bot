@@ -54,7 +54,7 @@
     "@nestjs/schematics": "11.0.5",
     "@nestjs/testing": "^11.0.0",
     "@types/jest": "^30.0.0",
-    "@types/node": "22.15.33",
+    "@types/node": "22.16.0",
     "@typescript-eslint/eslint-plugin": "8.34.1",
     "@typescript-eslint/parser": "8.34.1",
     "eslint": "8.57.1",
