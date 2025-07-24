@@ -18,6 +18,7 @@ import { ActivityReportCommand } from './commands/activity.report.command';
 import { JoinerLeaverService } from './services/joinerleaver.service';
 import { RoleMetricsService } from './services/role.metrics.service';
 import { RecRolePingService } from './services/rec.role.ping.service';
+import { HealthcheckService } from './services/healthcheck.service';
 
 @Module({
   imports: [
@@ -30,6 +31,7 @@ import { RecRolePingService } from './services/rec.role.ping.service';
     ActivityService,
     DatabaseService,
     DiscordService,
+    HealthcheckService,
     JoinerLeaverService,
     PurgeService,
     RecRolePingService,
