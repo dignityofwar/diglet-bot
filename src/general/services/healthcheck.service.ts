@@ -32,7 +32,5 @@ export class HealthcheckService {
     });
 
     await client.get(healthcheckUUID);
-
-    this.logger.log('Healthcheck pinged at ' + new Date().toISOString());
   }
 }
