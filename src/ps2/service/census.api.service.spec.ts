@@ -60,6 +60,7 @@ describe('CensusApiService', () => {
           censusServiceId: '',
         },
       });
+
       await expect(service.onModuleInit()).rejects.toThrow('PS2_CENSUS_SERVICE_ID is not defined.');
     }, testTimeout);
 
@@ -183,6 +184,7 @@ describe('CensusApiService', () => {
       const id = '12343435465464646454';
 
       service.sendRequest = jest.fn().mockResolvedValue({ character_list: [] });
+
       await expect(service.getCharacterById(id)).rejects.toThrow(`Character with ID **${id}** does not exist.`);
     }, testTimeout);
 
