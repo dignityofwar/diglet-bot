@@ -36,7 +36,7 @@ jobs:
           target-branch: main
 
       - name: Create new GitHub Release
-        uses: ncipollo/release-action@v1.16.0
+        uses: ncipollo/release-action@v1.18.0
         with:
           tag: ${{ steps.version.outputs.newTag }}
           generateReleaseNotes: true

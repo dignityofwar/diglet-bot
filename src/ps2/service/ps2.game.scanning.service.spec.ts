@@ -118,7 +118,7 @@ describe('PS2GameScanningService', () => {
         mockDiscordMessage
       );
 
-      expect(mockDiscordMessage.channel.send).toBeCalledWith(`❌ ${error}`);
+      expect(mockDiscordMessage.channel.send).toHaveBeenCalledWith(`❌ ${error}`);
       expect(result).toEqual([]);
     });
 
@@ -128,7 +128,7 @@ describe('PS2GameScanningService', () => {
 
       const result = await service.gatherCharacters([TestBootstrapper.getMockPS2Character(mockCharacterId, mockOutfitId)], mockDiscordMessage);
 
-      expect(mockDiscordMessage.channel.send).toBeCalledWith(`❌ ${error}`);
+      expect(mockDiscordMessage.channel.send).toHaveBeenCalledWith(`❌ ${error}`);
       expect(result).toEqual([]);
     });
 
@@ -146,7 +146,7 @@ describe('PS2GameScanningService', () => {
         mockDiscordMessage
       );
 
-      expect(mockDiscordMessage.channel.send).toBeCalledWith(`❌ ${error}`);
+      expect(mockDiscordMessage.channel.send).toHaveBeenCalledWith(`❌ ${error}`);
       expect(result).toEqual([mockCharacter]);
     });
   });
