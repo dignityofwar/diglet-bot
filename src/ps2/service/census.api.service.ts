@@ -14,7 +14,7 @@ import { CensusServerError } from '../interfaces/CensusServerError';
 export class CensusApiService implements OnModuleInit {
   private readonly logger = new Logger(CensusApiService.name);
   private static readonly RETRY_ATTEMPTS = 10;
-  private static readonly RETRY_DELAY_MS = 10000;
+  private static readonly RETRY_DELAY_MS = 3000;
 
   constructor(
     private readonly censusClientFactory: CensusAxiosFactory,
