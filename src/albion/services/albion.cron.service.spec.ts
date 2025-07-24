@@ -87,6 +87,6 @@ describe('AlbionCronService', () => {
     await service.onApplicationBootstrap();
     await service.runAlbionScansEU();
     // eslint-disable-next-line
-    expect((service as any).channel.send).toBeCalledTimes(1);
+    expect((service as any).channel.send).toHaveBeenCalledTimes(1);
   });
 });

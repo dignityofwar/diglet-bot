@@ -95,7 +95,7 @@ describe('MessageEvents', () => {
         }
 
         for (const type of eventTypes) {
-          await expect(messageEvents.handleMessageEvent(mockMessage, type)).rejects.toThrowError(`Message ${type} event could not be processed as member ID "${mockGuildMember.id}" does not have a name!`);
+          await expect(messageEvents.handleMessageEvent(mockMessage, type)).rejects.toThrow(`Message ${type} event could not be processed as member ID "${mockGuildMember.id}" does not have a name!`);
           expect(databaseService.updateActivity).not.toHaveBeenCalled();
         }
       });

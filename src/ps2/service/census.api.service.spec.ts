@@ -60,6 +60,7 @@ describe('CensusApiService', () => {
           censusServiceId: '',
         },
       });
+      
       await expect(service.onModuleInit()).rejects.toThrowError('PS2_CENSUS_SERVICE_ID is not defined.');
     }, testTimeout);
 
@@ -86,7 +87,7 @@ describe('CensusApiService', () => {
     it('should throw when no response data was returned', async () => {
       mockClient.get = jest.fn().mockResolvedValue({});
 
-      await expect(service.sendRequest(mockUrl)).rejects.toThrowError('No data was received from Census!');
+      await expect(service.sendRequest(mockUrl)).rejects.toThrow('No data was received from Census!');
 
       expect(mockClient.get).toHaveBeenCalledWith(mockUrl);
     }, testTimeout);
@@ -183,6 +184,7 @@ describe('CensusApiService', () => {
       const id = '12343435465464646454';
 
       service.sendRequest = jest.fn().mockResolvedValue({ character_list: [] });
+      
       await expect(service.getCharacterById(id)).rejects.toThrowError(`Character with ID **${id}** does not exist.`);
     }, testTimeout);
 
