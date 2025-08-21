@@ -261,6 +261,9 @@ export class TestBootstrapper {
       id: '1234567890', // A mock channel ID
       name: 'test-text-channel', // A mock channel name
       send: jest.fn().mockReturnValue(TestBootstrapper.getMockDiscordMessage()),
+      guild: {
+        id: '123456789',
+      },
     };
   }
 
@@ -369,6 +372,22 @@ export class TestBootstrapper {
       guildOfficerRole: { discordRoleId: guildOfficerRole },
       pingLeaderRolesUS: [guildLeaderRoleUS, guildOfficerRoleUS],
       pingLeaderRoles: [guildLeaderRole, guildOfficerRole],
+      roleMap: [
+        {
+          name: '@ALB/Archmage',
+          discordRoleId: '1218115619732455474',
+          priority: 1,
+          keep: true,
+          server: AlbionServer.EUROPE,
+        },
+        {
+          name: '@ALB/Magister',
+          discordRoleId: '1218115569455464498',
+          priority: 2,
+          keep: false,
+          server: AlbionServer.EUROPE,
+        },
+      ],
     },
     discord: {
       devUserId: '474839309484',

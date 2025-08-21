@@ -13,7 +13,6 @@ import { AlbionReportsService } from './services/albion.reports.service';
 import { AlbionUtilities } from './utilities/albion.utilities';
 import { AlbionReportsCommand } from './commands/reports.command';
 import { AlbionLogCommand } from './commands/log.command';
-import { AlbionDiscordEnforcementService } from './services/albion.discord.enforcement.service';
 
 @Module({
   imports: [
@@ -25,7 +24,6 @@ import { AlbionDiscordEnforcementService } from './services/albion.discord.enfor
   providers: [
     AlbionApiService,
     AlbionCronService,
-    AlbionDiscordEnforcementService,
     AlbionLogCommand,
     AlbionRegisterCommand,
     AlbionRegistrationService,

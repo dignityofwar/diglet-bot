@@ -10,9 +10,7 @@ import { AlbionPlayerInterface, AlbionServer } from '../interfaces/albion.api.in
 import { AlbionScanningService } from './albion.scanning.service';
 import { AlbionApiService } from './albion.api.service';
 import { AlbionUtilities } from '../utilities/albion.utilities';
-import { AlbionGuildMembersEntity } from '../../database/entities/albion.guildmembers.entity';
 import { TestBootstrapper } from '../../test.bootstrapper';
-import { AlbionDiscordEnforcementService } from './albion.discord.enforcement.service';
 
 const mockDevUserId = TestBootstrapper.mockConfig.discord.devUserId;
 const mockScanUserId = '1337';
@@ -47,13 +45,10 @@ const mockRegisteredNameEU = '@ALB/Registered';
 
 describe('AlbionScanningService', () => {
   let service: AlbionScanningService;
-  // let discordEnforcementService: AlbionDiscordEnforcementService;
   let albionApiService: AlbionApiService;
   let mockDiscordUser: any;
   let mockDiscordMessage: any;
-  let mockAlbionGuildMember: AlbionGuildMembersEntity;
   let mockAlbionRegistrationsRepository: EntityRepository<AlbionRegistrationsEntity>;
-  let mockAlbionGuildMembersRepository: EntityRepository<AlbionGuildMembersEntity>;
   let mockCharacterUS: AlbionPlayerInterface;
   let mockCharacterEU: AlbionPlayerInterface;
   let mockRegisteredMemberUS: AlbionRegistrationsEntity;
@@ -86,23 +81,14 @@ describe('AlbionScanningService', () => {
       createdAt: new Date(),
       updatedAt: new Date(),
     } as AlbionRegistrationsEntity;
-    mockAlbionGuildMember = {
-      id: 123456789,
-      characterId: mockCharacterUS.Id,
-      characterName: mockCharacterUS.Name,
-      registered: false,
-      warned: false,
-    } as AlbionGuildMembersEntity;
 
     mockAlbionRegistrationsRepository = TestBootstrapper.getMockRepositoryInjected(mockRegisteredMemberUS);
-    mockAlbionGuildMembersRepository = TestBootstrapper.getMockRepositoryInjected(mockAlbionGuildMember);
     mockDiscordUser = TestBootstrapper.getMockDiscordUser();
     mockDiscordMessage = TestBootstrapper.getMockDiscordMessage();
 
     const moduleRef = await Test.createTestingModule({
       providers: [
         AlbionScanningService,
-        AlbionDiscordEnforcementService,
         ReflectMetadataProvider,
         AlbionApiService,
         AlbionUtilities,
@@ -123,15 +109,10 @@ describe('AlbionScanningService', () => {
           provide: getRepositoryToken(AlbionRegistrationsEntity),
           useValue: mockAlbionRegistrationsRepository,
         },
-        {
-          provide: getRepositoryToken(AlbionGuildMembersEntity),
-          useValue: mockAlbionGuildMembersRepository,
-        },
       ],
     }).compile();
 
     service = moduleRef.get<AlbionScanningService>(AlbionScanningService);
-    // discordEnforcementService = moduleRef.get<AlbionDiscordEnforcementService>(AlbionDiscordEnforcementService);
     albionApiService = moduleRef.get<AlbionApiService>(AlbionApiService);
 
     const albionMerged = {
@@ -313,11 +294,10 @@ describe('AlbionScanningService', () => {
 
       await service.startScan(mockDiscordMessage, false, AlbionServer.AMERICAS);
       expect(mockDiscordMessage.edit).toHaveBeenCalledWith('# 🇺🇸 Starting scan...');
-      expect(mockDiscordMessage.edit).toHaveBeenCalledWith('# 🇺🇸 Task: [1/5] Gathering 1 characters from the ALB API...');
-      expect(mockDiscordMessage.edit).toHaveBeenCalledWith('# 🇺🇸 Task: [2/5] Checking 1 characters for membership status...');
-      expect(mockDiscordMessage.edit).toHaveBeenCalledWith('# 🇺🇸 Task: [3/5] Performing reverse role scan...');
-      expect(mockDiscordMessage.edit).toHaveBeenCalledWith('# 🇺🇸 Task: [4/5] Checking for role inconsistencies...');
-      expect(mockDiscordMessage.edit).toHaveBeenCalledWith('# 🇺🇸 Task: [5/5] Discord enforcement scan...');
+      expect(mockDiscordMessage.edit).toHaveBeenCalledWith('# 🇺🇸 Task: [1/4] Gathering 1 characters from the ALB API...');
+      expect(mockDiscordMessage.edit).toHaveBeenCalledWith('# 🇺🇸 Task: [2/4] Checking 1 characters for membership status...');
+      expect(mockDiscordMessage.edit).toHaveBeenCalledWith('# 🇺🇸 Task: [3/4] Performing reverse role scan...');
+      expect(mockDiscordMessage.edit).toHaveBeenCalledWith('# 🇺🇸 Task: [4/4] Checking for role inconsistencies...');
       expect(mockDiscordMessage.channel.send).toHaveBeenCalledWith('## 🇺🇸 Scan complete!');
       expect(mockDiscordMessage.channel.send).toHaveBeenCalledWith('------------------------------------------');
       expect(mockDiscordMessage.delete).toHaveBeenCalled();
@@ -331,11 +311,10 @@ describe('AlbionScanningService', () => {
 
       await service.startScan(mockDiscordMessage, false, AlbionServer.EUROPE);
       expect(mockDiscordMessage.edit).toHaveBeenCalledWith('# 🇪🇺 Starting scan...');
-      expect(mockDiscordMessage.edit).toHaveBeenCalledWith('# 🇪🇺 Task: [1/5] Gathering 1 characters from the ALB API...');
-      expect(mockDiscordMessage.edit).toHaveBeenCalledWith('# 🇪🇺 Task: [2/5] Checking 1 characters for membership status...');
-      expect(mockDiscordMessage.edit).toHaveBeenCalledWith('# 🇪🇺 Task: [3/5] Performing reverse role scan...');
-      expect(mockDiscordMessage.edit).toHaveBeenCalledWith('# 🇪🇺 Task: [4/5] Checking for role inconsistencies...');
-      expect(mockDiscordMessage.edit).toHaveBeenCalledWith('# 🇪🇺 Task: [5/5] Discord enforcement scan...');
+      expect(mockDiscordMessage.edit).toHaveBeenCalledWith('# 🇪🇺 Task: [1/4] Gathering 1 characters from the ALB API...');
+      expect(mockDiscordMessage.edit).toHaveBeenCalledWith('# 🇪🇺 Task: [2/4] Checking 1 characters for membership status...');
+      expect(mockDiscordMessage.edit).toHaveBeenCalledWith('# 🇪🇺 Task: [3/4] Performing reverse role scan...');
+      expect(mockDiscordMessage.edit).toHaveBeenCalledWith('# 🇪🇺 Task: [4/4] Checking for role inconsistencies...');
       expect(mockDiscordMessage.channel.send).toHaveBeenCalledWith('## 🇪🇺 Scan complete!');
       expect(mockDiscordMessage.delete).toHaveBeenCalled();
     });

@@ -8,9 +8,8 @@ import { AlbionRegistrationsEntity } from '../../database/entities/albion.regist
 import { AlbionPlayerInterface, AlbionServer } from '../interfaces/albion.api.interfaces';
 import { AlbionRoleMapInterface } from '../../config/albion.app.config';
 import { AlbionUtilities } from '../utilities/albion.utilities';
-import { AlbionGuildMembersEntity } from '../../database/entities/albion.guildmembers.entity';
-import { AlbionDiscordEnforcementService } from './albion.discord.enforcement.service';
 import { getChannel } from '../../discord/discord.hacks';
+import { AlbionDeregistrationService } from './albion.deregistration.service';
 
 export interface RoleInconsistencyResult {
   id: string,
@@ -23,15 +22,14 @@ export interface RoleInconsistencyResult {
 export class AlbionScanningService {
   private readonly logger = new Logger(AlbionScanningService.name);
 
+  // noinspection OverlyComplexFunctionJS
   constructor(
     private readonly albionApiService: AlbionApiService,
-    private readonly discordEnforcementService: AlbionDiscordEnforcementService,
     private readonly config: ConfigService,
+    private readonly albionDeregistrationService: AlbionDeregistrationService,
     private readonly albionUtilities: AlbionUtilities,
-    @InjectRepository(AlbionRegistrationsEntity) private readonly albionRegistrationsRepository: EntityRepository<AlbionRegistrationsEntity>,
-    @InjectRepository(AlbionGuildMembersEntity) private readonly albionGuildMembersRepository: EntityRepository<AlbionGuildMembersEntity>
-  ) {
-  }
+    @InjectRepository(AlbionRegistrationsEntity) private readonly albionRegistrationsRepository: EntityRepository<AlbionRegistrationsEntity>
+  ) {}
 
   // Pull the list of verified members from the database and check if they're still in the Guild
   // If they're not, remove the ALB/Registered role from them and any other non opt-in Albion roles e.g. ALB/Initiate, ALB/Squire etc.
@@ -56,7 +54,7 @@ export class AlbionScanningService {
     let actionRequired = false;
 
     try {
-      await message.edit(`# ${emoji} Task: [1/5] Gathering ${length} characters from the ALB API...`);
+      await message.edit(`# ${emoji} Task: [1/4] Gathering ${length} characters from the ALB API...`);
       characters = await this.gatherCharacters(guildMembers, message, 0, server);
     }
     catch (err) {
@@ -71,19 +69,15 @@ export class AlbionScanningService {
     }
 
     try {
-      await message.edit(`# ${emoji} Task: [2/5] Checking ${length} characters for membership status...`);
+      await message.edit(`# ${emoji} Task: [2/4] Checking ${length} characters for membership status...`);
       if (await this.removeLeavers(characters, message, dryRun, server)) actionRequired = true;
 
       // Check if members have roles they shouldn't have
-      await message.edit(`# ${emoji} Task: [3/5] Performing reverse role scan...`);
+      await message.edit(`# ${emoji} Task: [3/4] Performing reverse role scan...`);
       await this.reverseRoleScan(message, dryRun, server);
 
-      await message.edit(`# ${emoji} Task: [4/5] Checking for role inconsistencies...`);
+      await message.edit(`# ${emoji} Task: [4/4] Checking for role inconsistencies...`);
       if (await this.roleInconsistencies(message, dryRun, server)) actionRequired = true;
-
-      await message.edit(`# ${emoji} Task: [5/5] Discord enforcement scan...`);
-      await getChannel(message).send(`${emoji} DISCORD ENFORCEMENT SCAN DISABLED!`);
-      // if (await this.discordEnforcementScan(message, dryRun, server)) actionRequired = true;
     }
     catch (err) {
       await message.edit('## 🇺🇸 ❌ An error occurred while scanning!');
@@ -226,41 +220,10 @@ export class AlbionScanningService {
         continue;
       }
 
-      // Delete their registration record
-      try {
-        await this.albionRegistrationsRepository.getEntityManager().removeAndFlush(member);
-      }
-      catch (err) {
-        await getChannel(message).send(`ERROR: Unable to remove Albion Character "${character.Name}" (${character.Id}) from registration database!\nError: "${err.message}".\nPinging <@${this.config.get('discord.devUserId')}>!`);
-      }
-
-      // If Discord member does not exist, there are no discord actions to take.
-      if (!discordMember) {
-        continue;
-      }
-
-      // Strip their roles if they still remain on the server
-      // Remove all roles from the user
-      for (const roleMap of Object.values(roleMaps)) {
-        // If role is not for the correct server, skip it
-        if (roleMap.server !== server) {
-          continue;
-        }
-
-        // Force fetch the role, so we get a proper list of updated members
-        const role = message.guild.roles.cache.get(roleMap.discordRoleId);
-        // Check if the user still has the role
-        const hasRole = role.members.has(discordMember.id);
-
-        if (hasRole) {
-          try {
-            await discordMember.roles.remove(roleMap.discordRoleId);
-          }
-          catch (err) {
-            await getChannel(message).send(`ERROR: Unable to remove role "${role.name}" from ${character.Name} (${character.Id}). Err: "${err.message}". Pinging <@${this.config.get('discord.devUserId')}>!`);
-          }
-        }
-      }
+      await this.albionDeregistrationService.deregister(
+        member.discordId,
+        getChannel(message)
+      );
     }
 
     this.logger.log(`Found ${leavers.length} changes to make.`);

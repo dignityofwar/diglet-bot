@@ -49,13 +49,13 @@ export class DiscordService {
   }
 
   // Gets a guild member from the Discord server cache
-  async getGuildMember(guildId: string, memberId: string): Promise<GuildMember> {
+  async getGuildMember(guildId: string, memberId: string, forceFetch = false): Promise<GuildMember> {
     const server = await this.getGuild(guildId);
 
     let member: GuildMember;
 
     try {
-      member = await server.members.fetch(memberId);
+      member = await server.members.fetch({ user: memberId, force: forceFetch });
     }
     catch (err) {
       const error = `Failed to fetch member with ID ${memberId}. Err: ${err.message}`;
