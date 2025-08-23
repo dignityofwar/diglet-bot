@@ -100,7 +100,25 @@ describe('DiscordService', () => {
       expect(result.displayName).toEqual(mockMember.displayName);
       expect(result.user.username).toEqual(mockMember.user.username);
       expect(service.getGuild).toHaveBeenCalledWith(guildId);
-      expect(mockGuild.members.fetch).toHaveBeenCalledWith(memberId);
+      expect(mockGuild.members.fetch).toHaveBeenCalledWith({ force: false, user: memberId });
+    });
+
+    it('should force fetch guild member', async () => {
+      const guildId = '123456';
+      const memberId = '64321';
+      const mockMember = TestBootstrapper.getMockDiscordUser(); // The expected returned member data.
+
+      const mockGuild = TestBootstrapper.getMockGuild(guildId);
+
+      service.getGuild = jest.fn().mockResolvedValue(mockGuild);
+
+      const result = await service.getGuildMember(guildId, memberId, true);
+
+      expect(result.id).toEqual(mockMember.id);
+      expect(result.displayName).toEqual(mockMember.displayName);
+      expect(result.user.username).toEqual(mockMember.user.username);
+      expect(service.getGuild).toHaveBeenCalledWith(guildId);
+      expect(mockGuild.members.fetch).toHaveBeenCalledWith({ force: true, user: memberId });
     });
 
     it('should throw with a warning log when the member is blank', async () => {
@@ -115,7 +133,7 @@ describe('DiscordService', () => {
       await expect(service.getGuildMember(guildId, memberId)).rejects.toThrow(errorMsg);
       expect(service['logger'].warn).toHaveBeenCalledWith(errorMsg);
       expect(service.getGuild).toHaveBeenCalledWith(guildId);
-      expect(mockGuild.members.fetch).toHaveBeenCalledWith(memberId);
+      expect(mockGuild.members.fetch).toHaveBeenCalledWith({ force: false, user: memberId });
     });
 
     it('should throw an error when Discord call errors', async () => {
@@ -132,7 +150,7 @@ describe('DiscordService', () => {
       await expect(service.getGuildMember(guildId, memberId)).rejects.toThrow(errorMsg);
       expect(service['logger'].error).toHaveBeenCalledWith(errorMsg, expect.any(Error));
       expect(service.getGuild).toHaveBeenCalledWith(guildId);
-      expect(mockGuild.members.fetch).toHaveBeenCalledWith(memberId);
+      expect(mockGuild.members.fetch).toHaveBeenCalledWith({ force: false, user: memberId });
     });
   });
 

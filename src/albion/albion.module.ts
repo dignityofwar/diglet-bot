@@ -13,6 +13,8 @@ import { AlbionReportsService } from './services/albion.reports.service';
 import { AlbionUtilities } from './utilities/albion.utilities';
 import { AlbionReportsCommand } from './commands/reports.command';
 import { AlbionLogCommand } from './commands/log.command';
+import { AlbionDeregisterCommand } from './commands/deregistration.command';
+import { AlbionDeregistrationService } from './services/albion.deregistration.service';
 
 @Module({
   imports: [
@@ -24,6 +26,8 @@ import { AlbionLogCommand } from './commands/log.command';
   providers: [
     AlbionApiService,
     AlbionCronService,
+    AlbionDeregisterCommand,
+    AlbionDeregistrationService,
     AlbionLogCommand,
     AlbionRegisterCommand,
     AlbionRegistrationService,
