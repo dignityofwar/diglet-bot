@@ -74,18 +74,21 @@ describe('AlbionDeregistrationService', () => {
   });
 
   describe('deregister', () => {
+    // Set up spies on stripRegistration and stripRoles
+    let stripRegistrationSpy: any;
+    let stripRolesSpy: any;
+
     beforeEach(() => {
       jest.clearAllMocks();
+
+      stripRegistrationSpy = jest.spyOn(service, 'stripRegistration').mockResolvedValue();
+      stripRolesSpy = jest.spyOn(service, 'stripRoles').mockResolvedValue();
 
       // Set up so that the Discordservice always returns a mock member
       jest.spyOn(discordService, 'getGuildMember').mockResolvedValue(mockDiscordMember);
     });
 
     it('should call stripRegistration and stripRoles', async () => {
-      // Set up spies on stripRegistration and stripRoles
-      const stripRegistrationSpy = jest.spyOn(service, 'stripRegistration').mockResolvedValue();
-      const stripRolesSpy = jest.spyOn(service, 'stripRoles').mockResolvedValue();
-
       await service.deregister(mockDiscordMember.id, mockChannel);
 
       expect(stripRegistrationSpy).toHaveBeenCalledWith(mockRegistration, mockChannel);
@@ -94,10 +97,6 @@ describe('AlbionDeregistrationService', () => {
     });
 
     it('should not call stripRoles if discord member has left ', async () => {
-      // Set up spies on stripRegistration and stripRoles
-      const stripRegistrationSpy = jest.spyOn(service, 'stripRegistration').mockResolvedValue();
-      const stripRolesSpy = jest.spyOn(service, 'stripRoles').mockResolvedValue();
-
       // Mock the Discord service to throw an error, simulating a member that has left
       jest.spyOn(discordService, 'getGuildMember').mockRejectedValue(new Error('Member not found'));
 
@@ -105,6 +104,16 @@ describe('AlbionDeregistrationService', () => {
 
       expect(stripRegistrationSpy).toHaveBeenCalledWith(mockRegistration, mockChannel);
 
+      expect(stripRolesSpy).not.toHaveBeenCalled();
+    });
+
+    it('should not call stripRegistration or stripRoles if no registration found', async () => {
+      // Mock the repository to return no registration
+      mockAlbionRegistrationsRepository.findOne = jest.fn().mockResolvedValue([]);
+
+      await service.deregister(mockDiscordMember.id, mockChannel);
+
+      expect(stripRegistrationSpy).not.toHaveBeenCalled();
       expect(stripRolesSpy).not.toHaveBeenCalled();
     });
   });
@@ -132,7 +141,6 @@ describe('AlbionDeregistrationService', () => {
   describe('stripRoles', () => {
     const mockRoles = [
       { id: '1218115619732455474', name: 'ALB/Registered' },
-      { id: '1218115619732455474', name: 'ALB/Foo' },
       { id: '1218115569455464498', name: 'ALB/Bar' },
     ];
 
@@ -168,6 +176,26 @@ describe('AlbionDeregistrationService', () => {
       await service.stripRoles(mockDiscordMember, mockChannel);
 
       expect(mockChannel.send).toHaveBeenCalledWith(`ERROR: Unable to remove role "${mockRoles[0].name}" from ${mockDiscordMember.user.username} (${mockDiscordMember.id}). Err: "Discord says no". Pinging <@${TestBootstrapper.mockConfig.discord.devUserId}>!`);
+    });
+
+    it('should skip roles the member does not have', async () => {
+      // Adjust the mock to simulate the member not having the second role
+      jest.spyOn(discordService, 'getRoleViaMember').mockImplementation(async (member, roleId) => {
+        // eslint-disable-next-line max-nested-callbacks
+        const role = mockRoles.find(searchRole => searchRole.id === roleId);
+
+        return {
+          ...role,
+          members: {
+            has: jest.fn().mockReturnValue(roleId !== mockRoles[1].id), // Member does not have the second role
+          },
+        } as any as Role;
+      });
+
+      await service.stripRoles(mockDiscordMember, mockChannel);
+
+      expect(mockDiscordMember.roles.remove).toHaveBeenCalledWith(mockRoles[0].id);
+      expect(mockDiscordMember.roles.remove).not.toHaveBeenCalledWith(mockRoles[1].id); // Should not be called for the second role
     });
   });
 });
