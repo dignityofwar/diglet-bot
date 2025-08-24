@@ -145,6 +145,7 @@ describe('AlbionDeregistrationService', () => {
     ];
 
     beforeEach(() => {
+      jest.clearAllMocks();
       // Set up a mock implementation for the discordService.getRoleViaMember
       jest.spyOn(discordService, 'getRoleViaMember').mockImplementation(async (member, roleId) => {
         // eslint-disable-next-line max-nested-callbacks
