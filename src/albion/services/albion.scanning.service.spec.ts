@@ -444,14 +444,12 @@ describe('AlbionScanningService', () => {
       expect(mockDiscordMessage.channel.send).toHaveBeenCalledWith('## 🇺🇸 🚪 1 leavers detected!');
       expect(mockDiscordMessage.channel.send).toHaveBeenCalledWith(`- 🇺🇸 👋 <@${mockDiscordUser.id}>'s character **${mockCharacterUS.Name}** has left the Guild but remains on the Discord server. Their roles and registration status have been stripped.`);
 
-      // Holy reference issues, Batman!
       expect(albionDeregistrationService.deregister).toHaveBeenCalledWith(
         mockDiscordMessage.channel,
-        expect.objectContaining({
-          discordMember: expect.objectContaining({
-            id: mockDiscordUser.id,
-          }),
-        })
+        {
+          character: mockCharacterUS.Name,
+          discordMember: mockDiscordUser.id,
+        }
       );
     });
 
@@ -471,14 +469,12 @@ describe('AlbionScanningService', () => {
       expect(mockDiscordMessage.channel.send).toHaveBeenCalledWith('## 🇪🇺 🚪 1 leavers detected!');
       expect(mockDiscordMessage.channel.send).toHaveBeenCalledWith(`- 🇪🇺 👋 <@${mockDiscordUser.id}>'s character **${mockCharacterEU.Name}** has left the Guild but remains on the Discord server. Their roles and registration status have been stripped.`);
 
-      // Holy reference issues, Batman!
       expect(albionDeregistrationService.deregister).toHaveBeenCalledWith(
         mockDiscordMessage.channel,
-        expect.objectContaining({
-          discordMember: expect.objectContaining({
-            id: mockDiscordUser.id,
-          }),
-        })
+        {
+          character: mockCharacterEU.Name,
+          discordMember: mockDiscordUser.id,
+        }
       );
     });
 
@@ -506,14 +502,12 @@ describe('AlbionScanningService', () => {
       expect(mockDiscordMessage.channel.send).toHaveBeenCalledWith('## 🇺🇸 🚪 1 leavers detected!');
       expect(mockDiscordMessage.channel.send).toHaveBeenCalledWith(`- 🇺🇸 👋 <@${mockDiscordUser.id}>'s character **${mockCharacterUS.Name}** has left the Guild but remains on the Discord server. Their roles and registration status have been stripped.`);
 
-      // Holy reference issues, Batman!
       expect(albionDeregistrationService.deregister).toHaveBeenCalledWith(
         mockDiscordMessage.channel,
-        expect.objectContaining({
-          discordMember: expect.objectContaining({
-            id: mockDiscordUser.id,
-          }),
-        })
+        {
+          character: mockCharacterUS.Name,
+          discordMember: mockDiscordUser.id,
+        }
       );
     });
 
@@ -662,14 +656,12 @@ describe('AlbionScanningService', () => {
       expect(mockDiscordMessage.channel.send).toHaveBeenCalledWith('## 🇺🇸 🚪 1 leavers detected!');
       expect(mockDiscordMessage.channel.send).toHaveBeenCalledWith(`- 🇺🇸 👋 <@${mockDiscordUser.id}>'s character **${mockCharacterUS.Name}** has left the Guild but remains on the Discord server. Their roles and registration status have been stripped.`);
 
-      // Holy reference issues, Batman!
       expect(albionDeregistrationService.deregister).toHaveBeenCalledWith(
         mockDiscordMessage.channel,
-        expect.objectContaining({
-          discordMember: expect.objectContaining({
-            id: mockDiscordUser.id,
-          }),
-        })
+        {
+          character: mockCharacterUS.Name,
+          discordMember: mockDiscordUser.id,
+        }
       );
     });
 
@@ -698,14 +690,12 @@ describe('AlbionScanningService', () => {
       expect(mockDiscordMessage.channel.send).toHaveBeenCalledWith('## 🇪🇺 🚪 1 leavers detected!');
       expect(mockDiscordMessage.channel.send).toHaveBeenCalledWith(`- 🇪🇺 👋 <@${mockDiscordUser.id}>'s character **${mockCharacterEU.Name}** has left the Guild but remains on the Discord server. Their roles and registration status have been stripped.`);
 
-      // Holy reference issues, Batman!
       expect(albionDeregistrationService.deregister).toHaveBeenCalledWith(
         mockDiscordMessage.channel,
-        expect.objectContaining({
-          discordMember: expect.objectContaining({
-            id: mockDiscordUser.id,
-          }),
-        })
+        {
+          character: mockCharacterEU.Name,
+          discordMember: mockDiscordUser.id,
+        }
       );
     });
 

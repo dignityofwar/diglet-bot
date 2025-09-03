@@ -113,26 +113,30 @@ describe('AlbionDeregistrationService', () => {
       expect(mockChannel.send).not.toHaveBeenCalled();
     });
 
-    it('should deregister via discordMember (no guild fetch)', async () => {
-      const dto: AlbionDeregisterDto = { discordMember: mockDiscordMember };
+    it('should deregister via discordMember', async () => {
+      const dto: AlbionDeregisterDto = { discordMember: mockDiscordMember.id };
       mockAlbionRegistrationsRepository.findOne.mockResolvedValueOnce(mockRegistration);
 
       await service.deregister(mockChannel, dto);
 
-      expect(mockAlbionRegistrationsRepository.findOne).toHaveBeenCalledWith({ discordId: mockDiscordMember.id });
-      expect(discordService.getGuildMember).not.toHaveBeenCalled();
+      expect(mockAlbionRegistrationsRepository.findOne).toHaveBeenCalledWith({ discordId: dto.discordMember });
+      expect(discordService.getGuildMember).toHaveBeenCalledWith(
+        mockChannel.guild.id,
+        mockRegistration.discordId,
+        true
+      );
       expect(stripRegistrationSpy).toHaveBeenCalledWith(mockRegistration, mockChannel);
       expect(stripRolesSpy).toHaveBeenCalledWith(mockDiscordMember, mockChannel);
     });
 
     it('should send not found message for discordMember path', async () => {
-      const dto: AlbionDeregisterDto = { discordMember: mockDiscordMember };
+      const dto: AlbionDeregisterDto = { discordMember: mockDiscordMember.id };
       mockAlbionRegistrationsRepository.findOne.mockResolvedValueOnce(null);
 
       await service.deregister(mockChannel, dto);
 
       expect(mockChannel.send).toHaveBeenCalledWith(
-        `❌ No registration found for Discord User ID "${mockDiscordMember.user.username}"!`
+        `❌ No registration found for Discord User ID "${mockDiscordMember.id}"!`
       );
       expect(stripRegistrationSpy).not.toHaveBeenCalled();
       expect(stripRolesSpy).not.toHaveBeenCalled();

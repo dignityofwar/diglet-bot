@@ -25,7 +25,13 @@ export class AlbionDeregisterCommand {
   ): Promise<void> {
     this.logger.log('Received Albion Deregister Command', dto);
 
-    const name = dto.character ?? dto.discordMember?.user?.username ?? 'unknown';
+    // If neither character nor discordMember is provided, throw
+    if (!dto.character && !dto.discordMember) {
+      await interaction[0].reply('❌ You must provide either a character name or a Discord member to deregister.');
+      return;
+    }
+
+    const name = dto.character ?? dto.discordMember ?? 'Unknown';
 
     // Create placeholder message
     const message = await interaction[0].channel.send(`Deregistration process for ${name} started. Please wait...`);

@@ -1,5 +1,4 @@
 import { Param, ParamType } from '@discord-nestjs/core';
-import { GuildMember } from 'discord.js';
 
 export class AlbionDeregisterDto {
   @Param({
@@ -20,5 +19,5 @@ export class AlbionDeregisterDto {
      required: false,
      type: ParamType.USER,
    })
-     discordMember?: GuildMember;
+     discordMember?: string;
 }

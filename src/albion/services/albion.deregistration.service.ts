@@ -29,12 +29,12 @@ export class AlbionDeregistrationService {
       throw new Error('Either character or discordId must be provided for deregistration.');
     }
 
-    const discordUserId = dto.discordMember?.id ?? null;
+    const discordId = dto.discordMember ?? null;
 
     // If we got a discordId, find it via that
     let registration: AlbionRegistrationsEntity | null = null;
-    if (discordUserId) {
-      registration = await this.albionRegistrationsRepository.findOne({ discordId: discordUserId });
+    if (discordId) {
+      registration = await this.albionRegistrationsRepository.findOne({ discordId });
     }
 
     // If we have a character, find it via that
@@ -43,7 +43,7 @@ export class AlbionDeregistrationService {
     }
 
     if (!registration) {
-      const error = dto.character ? `No registration found for character "${dto.character}"!` : `No registration found for Discord User ID "${dto.discordMember?.user?.username}"!`;
+      const error = dto.character ? `No registration found for character "${dto.character}"!` : `No registration found for Discord User ID "${dto.discordMember}"!`;
       this.logger.error(error);
       await responseChannel.send(`❌ ${error}`);
       return;
@@ -52,24 +52,17 @@ export class AlbionDeregistrationService {
     // Get the discord user
     let discordMember: GuildMember | null = null;
 
-    // If we already have it via the DTO use it
-    if (dto.discordMember) {
-      discordMember = dto.discordMember;
+    try {
+      discordMember = await this.discordService.getGuildMember(
+        responseChannel.guild.id,
+        registration.discordId,
+        true
+      );
     }
-    // Otherwise try to fetch it
-    else {
-      try {
-        discordMember = await this.discordService.getGuildMember(
-          responseChannel.guild.id,
-          registration.discordId,
-          true
-        );
-      }
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      catch (err) {
-      // No discord member means they've left the server.
-        this.logger.warn(`User ${registration.characterName} has left the Discord server, no actions will be taken for Discord roles.`);
-      }
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    catch (err) {
+    // No discord member means they've left the server.
+      this.logger.warn(`User ${registration.characterName} has left the Discord server, no actions will be taken for Discord roles.`);
     }
 
     await this.stripRegistration(registration, responseChannel);

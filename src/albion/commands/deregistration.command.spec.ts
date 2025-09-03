@@ -81,6 +81,14 @@ describe('AlbionDeregisterCommand', () => {
     );
   });
 
+  it('should throw if neither character nor discordMember is provided', async () => {
+    const mockDto = {};
+    await command.onAlbionDeregisterCommand(mockDto, mockDiscordInteraction);
+
+    expect(mockDiscordInteraction[0].reply).toHaveBeenCalledWith('❌ You must provide either a character name or a Discord member to deregister.');
+    expect(albionDeregistrationService.deregister).not.toHaveBeenCalled();
+  });
+
   it('should delete the placeholder message after deregistration', async () => {
     await command.onAlbionDeregisterCommand(dto, mockDiscordInteraction);
 
