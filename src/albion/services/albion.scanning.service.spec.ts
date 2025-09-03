@@ -443,7 +443,16 @@ describe('AlbionScanningService', () => {
       expect(mockDiscordMessage.channel.send).toHaveBeenCalledWith('### 🇺🇸 Scanned 0/1 registered members...');
       expect(mockDiscordMessage.channel.send).toHaveBeenCalledWith('## 🇺🇸 🚪 1 leavers detected!');
       expect(mockDiscordMessage.channel.send).toHaveBeenCalledWith(`- 🇺🇸 👋 <@${mockDiscordUser.id}>'s character **${mockCharacterUS.Name}** has left the Guild but remains on the Discord server. Their roles and registration status have been stripped.`);
-      expect(albionDeregistrationService.deregister).toHaveBeenCalledWith(mockDiscordMessage.channel, { discordMember: mockDiscordUser });
+
+      // Holy reference issues, Batman!
+      expect(albionDeregistrationService.deregister).toHaveBeenCalledWith(
+        mockDiscordMessage.channel,
+        expect.objectContaining({
+          discordMember: expect.objectContaining({
+            id: mockDiscordUser.id,
+          }),
+        })
+      );
     });
 
     it('should properly handle guild only leavers who have joined a new guild, EU', async () => {
@@ -461,7 +470,16 @@ describe('AlbionScanningService', () => {
       expect(mockDiscordMessage.channel.send).toHaveBeenCalledWith('### 🇪🇺 Scanned 0/1 registered members...');
       expect(mockDiscordMessage.channel.send).toHaveBeenCalledWith('## 🇪🇺 🚪 1 leavers detected!');
       expect(mockDiscordMessage.channel.send).toHaveBeenCalledWith(`- 🇪🇺 👋 <@${mockDiscordUser.id}>'s character **${mockCharacterEU.Name}** has left the Guild but remains on the Discord server. Their roles and registration status have been stripped.`);
-      expect(albionDeregistrationService.deregister).toHaveBeenCalledWith(mockRegisteredMemberEU.discordId, mockDiscordMessage.channel);
+
+      // Holy reference issues, Batman!
+      expect(albionDeregistrationService.deregister).toHaveBeenCalledWith(
+        mockDiscordMessage.channel,
+        expect.objectContaining({
+          discordMember: expect.objectContaining({
+            id: mockDiscordUser.id,
+          }),
+        })
+      );
     });
 
     it('should NOT take action when guild only leavers have joined a new guild with a dry run', async () => {
@@ -487,7 +505,16 @@ describe('AlbionScanningService', () => {
       expect(mockDiscordMessage.channel.send).toHaveBeenCalledWith('### 🇺🇸 Scanned 0/1 registered members...');
       expect(mockDiscordMessage.channel.send).toHaveBeenCalledWith('## 🇺🇸 🚪 1 leavers detected!');
       expect(mockDiscordMessage.channel.send).toHaveBeenCalledWith(`- 🇺🇸 👋 <@${mockDiscordUser.id}>'s character **${mockCharacterUS.Name}** has left the Guild but remains on the Discord server. Their roles and registration status have been stripped.`);
-      expect(albionDeregistrationService.deregister).toHaveBeenCalledWith(mockDiscordMessage.channel, { discordMember: mockDiscordUser });
+
+      // Holy reference issues, Batman!
+      expect(albionDeregistrationService.deregister).toHaveBeenCalledWith(
+        mockDiscordMessage.channel,
+        expect.objectContaining({
+          discordMember: expect.objectContaining({
+            id: mockDiscordUser.id,
+          }),
+        })
+      );
     });
 
     it('should properly handle server only leavers, US', async () => {
@@ -505,7 +532,12 @@ describe('AlbionScanningService', () => {
       expect(mockDiscordMessage.channel.send).toHaveBeenCalledWith('## 🇺🇸 🚪 1 leavers detected!');
       expect(mockDiscordMessage.channel.send).toHaveBeenCalledWith(`- 🇺🇸 ‼️🫥️ Discord member for Character **${mockCharacterUS.Name}** has left the DIG Discord server. Their registration status has been removed. **They require booting from the Guild!**`);
       expect(mockDiscordUser.roles.remove).toHaveBeenCalledTimes(0);
-      expect(albionDeregistrationService.deregister).toHaveBeenCalledWith(mockDiscordMessage.channel, { discordMember: mockDiscordUser });
+
+      expect(albionDeregistrationService.deregister).toHaveBeenCalledWith(
+        mockDiscordMessage.channel, {
+          character: mockCharacterUS.Name,
+        }
+      );
     });
 
     it('should properly handle server only leavers, EU', async () => {
@@ -522,7 +554,12 @@ describe('AlbionScanningService', () => {
       expect(mockDiscordMessage.channel.send).toHaveBeenCalledWith('### 🇪🇺 Scanned 0/1 registered members...');
       expect(mockDiscordMessage.channel.send).toHaveBeenCalledWith('## 🇪🇺 🚪 1 leavers detected!');
       expect(mockDiscordMessage.channel.send).toHaveBeenCalledWith(`- 🇪🇺 ‼️🫥️ Discord member for Character **${mockCharacterEU.Name}** has left the DIG Discord server. Their registration status has been removed. **They require booting from the Guild!**`);
-      expect(albionDeregistrationService.deregister).toHaveBeenCalledWith(mockRegisteredMemberEU.discordId, mockDiscordMessage.channel);
+
+      expect(albionDeregistrationService.deregister).toHaveBeenCalledWith(
+        mockDiscordMessage.channel, {
+          character: mockCharacterEU.Name,
+        }
+      );
     });
 
     it('should NOT take action with server only leavers with a dry run', async () => {
@@ -551,7 +588,12 @@ describe('AlbionScanningService', () => {
       expect(mockDiscordMessage.channel.send).toHaveBeenCalledWith('### 🇺🇸 Scanned 0/1 registered members...');
       expect(mockDiscordMessage.channel.send).toHaveBeenCalledWith('## 🇺🇸 🚪 1 leavers detected!');
       expect(mockDiscordMessage.channel.send).toHaveBeenCalledWith(`- 🇺🇸 💁 Character / Player ${mockCharacterUS.Name} has left **both** the DIG server and the Guild. They are dead to us now 💅`);
-      expect(albionDeregistrationService.deregister).toHaveBeenCalledWith(mockDiscordMessage.channel, { discordMember: mockDiscordUser });
+
+      expect(albionDeregistrationService.deregister).toHaveBeenCalledWith(
+        mockDiscordMessage.channel, {
+          character: mockCharacterUS.Name,
+        }
+      );
     });
 
     it('should properly handle leavers for both server and guild, EU', async () => {
@@ -569,7 +611,12 @@ describe('AlbionScanningService', () => {
       expect(mockDiscordMessage.channel.send).toHaveBeenCalledWith('### 🇪🇺 Scanned 0/1 registered members...');
       expect(mockDiscordMessage.channel.send).toHaveBeenCalledWith('## 🇪🇺 🚪 1 leavers detected!');
       expect(mockDiscordMessage.channel.send).toHaveBeenCalledWith(`- 🇪🇺 💁 Character / Player ${mockCharacterEU.Name} has left **both** the DIG server and the Guild. They are dead to us now 💅`);
-      expect(albionDeregistrationService.deregister).toHaveBeenCalledWith(mockRegisteredMemberEU.discordId, mockDiscordMessage.channel);
+
+      expect(albionDeregistrationService.deregister).toHaveBeenCalledWith(
+        mockDiscordMessage.channel, {
+          character: mockCharacterEU.Name,
+        }
+      );
     });
 
     it('should NOT take action for leavers for both server and guild with a dry run', async () => {
@@ -614,7 +661,16 @@ describe('AlbionScanningService', () => {
       expect(mockDiscordMessage.channel.send).toHaveBeenCalledWith('### 🇺🇸 Scanned 0/1 registered members...');
       expect(mockDiscordMessage.channel.send).toHaveBeenCalledWith('## 🇺🇸 🚪 1 leavers detected!');
       expect(mockDiscordMessage.channel.send).toHaveBeenCalledWith(`- 🇺🇸 👋 <@${mockDiscordUser.id}>'s character **${mockCharacterUS.Name}** has left the Guild but remains on the Discord server. Their roles and registration status have been stripped.`);
-      expect(albionDeregistrationService.deregister).toHaveBeenCalledWith(mockDiscordMessage.channel, { discordMember: mockDiscordUser });
+
+      // Holy reference issues, Batman!
+      expect(albionDeregistrationService.deregister).toHaveBeenCalledWith(
+        mockDiscordMessage.channel,
+        expect.objectContaining({
+          discordMember: expect.objectContaining({
+            id: mockDiscordUser.id,
+          }),
+        })
+      );
     });
 
     it('should properly handle guild only leavers and handle role errors, EU', async () => {
@@ -641,7 +697,16 @@ describe('AlbionScanningService', () => {
       expect(mockDiscordMessage.channel.send).toHaveBeenCalledWith('### 🇪🇺 Scanned 0/1 registered members...');
       expect(mockDiscordMessage.channel.send).toHaveBeenCalledWith('## 🇪🇺 🚪 1 leavers detected!');
       expect(mockDiscordMessage.channel.send).toHaveBeenCalledWith(`- 🇪🇺 👋 <@${mockDiscordUser.id}>'s character **${mockCharacterEU.Name}** has left the Guild but remains on the Discord server. Their roles and registration status have been stripped.`);
-      expect(albionDeregistrationService.deregister).toHaveBeenCalledWith(mockRegisteredMemberEU.discordId, mockDiscordMessage.channel);
+
+      // Holy reference issues, Batman!
+      expect(albionDeregistrationService.deregister).toHaveBeenCalledWith(
+        mockDiscordMessage.channel,
+        expect.objectContaining({
+          discordMember: expect.objectContaining({
+            id: mockDiscordUser.id,
+          }),
+        })
+      );
     });
 
     it('should properly handle zero guild or server leavers, US', async () => {
