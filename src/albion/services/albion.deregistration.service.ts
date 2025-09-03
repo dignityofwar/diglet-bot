@@ -37,7 +37,7 @@ export class AlbionDeregistrationService {
       registration = await this.albionRegistrationsRepository.findOne({ discordId: discordUserId });
     }
 
-    // If we have a characer, find it via that
+    // If we have a character, find it via that
     if (dto.character && !registration) {
       registration = await this.albionRegistrationsRepository.findOne({ characterName: dto.character });
     }
