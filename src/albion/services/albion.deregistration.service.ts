@@ -24,7 +24,7 @@ export class AlbionDeregistrationService {
     responseChannel: GuildTextBasedChannel
   ) {
     // Why findOne returns an array I have no idea.
-    const registration = (await this.albionRegistrationsRepository.findOne({ discordId: discordUserId }))[0];
+    const registration = await this.albionRegistrationsRepository.findOne({ discordId: discordUserId });
 
     if (!registration) {
       this.logger.warn(`No Albion registration found for Discord user ID: ${discordUserId}`);

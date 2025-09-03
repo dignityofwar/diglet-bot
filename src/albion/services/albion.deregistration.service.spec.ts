@@ -39,9 +39,7 @@ describe('AlbionDeregistrationService', () => {
     } as AlbionRegistrationsEntity;
 
     mockAlbionRegistrationsRepository = TestBootstrapper.getMockRepositoryInjected(mockRegistration);
-
     mockChannel = TestBootstrapper.getMockDiscordTextChannel();
-
     mockDiscordMember = TestBootstrapper.getMockDiscordUser();
 
     const moduleRef = await Test.createTestingModule({
@@ -109,7 +107,7 @@ describe('AlbionDeregistrationService', () => {
 
     it('should not call stripRegistration or stripRoles if no registration found', async () => {
       // Mock the repository to return no registration
-      mockAlbionRegistrationsRepository.findOne = jest.fn().mockResolvedValue([]);
+      mockAlbionRegistrationsRepository.findOne = jest.fn().mockResolvedValue(null);
 
       await service.deregister(mockDiscordMember.id, mockChannel);
 
