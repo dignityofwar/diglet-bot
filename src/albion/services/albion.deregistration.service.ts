@@ -43,7 +43,7 @@ export class AlbionDeregistrationService {
     }
 
     if (!registration) {
-      const error = dto.character ? `No registration found for character "${dto.character}"!` : `No registration found for Discord User ID "${dto.discordMember.user.username}"!`;
+      const error = dto.character ? `No registration found for character "${dto.character}"!` : `No registration found for Discord User ID "${dto.discordMember?.user?.username}"!`;
       this.logger.error(error);
       await responseChannel.send(`❌ ${error}`);
       return;
