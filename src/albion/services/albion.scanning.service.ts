@@ -221,8 +221,8 @@ export class AlbionScanningService {
       }
 
       await this.albionDeregistrationService.deregister(
-        member.discordId,
-        getChannel(message)
+        getChannel(message),
+        { discordMember }
       );
     }
 
