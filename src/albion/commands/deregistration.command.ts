@@ -23,7 +23,7 @@ export class AlbionDeregisterCommand {
     @InteractionEvent(SlashCommandPipe) dto: AlbionDeregisterDto,
     @EventParams() interaction: ChatInputCommandInteraction[],
   ): Promise<void> {
-    this.logger.debug('Received Albion Deregister Command');
+    this.logger.log('Received Albion Deregister Command', dto);
 
     // Create placeholder message
     const message = await interaction[0].channel.send(`Deregistration process for ${dto.character} started. Please wait...`);
