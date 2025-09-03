@@ -93,7 +93,7 @@ export class TestBootstrapper {
     const entityManagerMock = { ...defaultEntityManagerMock, ...entityManagerOverrides };
     return {
       find: jest.fn().mockResolvedValueOnce([entity]),
-      findOne: jest.fn().mockResolvedValueOnce([entity]),
+      findOne: jest.fn().mockResolvedValueOnce(entity),
       findAll: jest.fn().mockResolvedValue([entity]),
       create: jest.fn(),
       upsert: jest.fn(),
