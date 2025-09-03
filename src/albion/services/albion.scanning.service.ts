@@ -1,7 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@mikro-orm/nestjs';
 import { EntityRepository } from '@mikro-orm/core';
-import { GuildMember, Message, Role } from 'discord.js';
+import { GuildMember, GuildTextBasedChannel, Message, Role } from 'discord.js';
 import { ConfigService } from '@nestjs/config';
 import { AlbionApiService } from './albion.api.service';
 import { AlbionRegistrationsEntity } from '../../database/entities/albion.registrations.entity';
@@ -220,9 +220,14 @@ export class AlbionScanningService {
         continue;
       }
 
+      const dto = {
+        character: character.Name,
+        discordMember: discordMember ?? undefined,
+      };
+
       await this.albionDeregistrationService.deregister(
-        member.discordId,
-        getChannel(message)
+        message.channel as GuildTextBasedChannel,
+        dto
       );
     }
 

@@ -6,6 +6,7 @@ import { EntityRepository } from '@mikro-orm/core';
 import { GuildMember, GuildTextBasedChannel } from 'discord.js';
 import { AlbionRoleMapInterface } from '../../config/albion.app.config';
 import { DiscordService } from '../../discord/discord.service';
+import { AlbionDeregisterDto } from '../dto/albion.deregister.dto';
 
 @Injectable()
 export class AlbionDeregistrationService {
@@ -20,37 +21,63 @@ export class AlbionDeregistrationService {
 
   // Deregister a user from the Albion Online guild
   async deregister(
-    discordUserId: string,
-    responseChannel: GuildTextBasedChannel
+    responseChannel: GuildTextBasedChannel,
+    dto: AlbionDeregisterDto,
   ) {
-    // Why findOne returns an array I have no idea.
-    const registration = await this.albionRegistrationsRepository.findOne({ discordId: discordUserId });
+    // If neither were supplied, throw
+    if (!dto.character && !dto.discordMember) {
+      throw new Error('Either character or discordId must be provided for deregistration.');
+    }
+
+    const discordUserId = dto.discordMember?.id ?? null;
+
+    // If we got a discordId, find it via that
+    let registration: AlbionRegistrationsEntity | null = null;
+    if (discordUserId) {
+      registration = await this.albionRegistrationsRepository.findOne({ discordId: discordUserId });
+    }
+
+    // If we have a character, find it via that
+    if (dto.character && !registration) {
+      registration = await this.albionRegistrationsRepository.findOne({ characterName: dto.character });
+    }
 
     if (!registration) {
-      this.logger.warn(`No Albion registration found for Discord user ID: ${discordUserId}`);
+      const error = dto.character ? `No registration found for character "${dto.character}"!` : `No registration found for Discord User ID "${dto.discordMember?.user?.username}"!`;
+      this.logger.error(error);
+      await responseChannel.send(`❌ ${error}`);
       return;
     }
 
     // Get the discord user
     let discordMember: GuildMember | null = null;
 
-    try {
-      discordMember = await this.discordService.getGuildMember(
-        responseChannel.guild.id,
-        registration.discordId,
-        true
-      );
+    // If we already have it via the DTO use it
+    if (dto.discordMember) {
+      discordMember = dto.discordMember;
     }
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    catch (err) {
+    // Otherwise try to fetch it
+    else {
+      try {
+        discordMember = await this.discordService.getGuildMember(
+          responseChannel.guild.id,
+          registration.discordId,
+          true
+        );
+      }
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      catch (err) {
       // No discord member means they've left the server.
-      this.logger.warn(`User ${registration.characterName} has left the Discord server, no actions will be taken for Discord roles.`);
+        this.logger.warn(`User ${registration.characterName} has left the Discord server, no actions will be taken for Discord roles.`);
+      }
     }
 
     await this.stripRegistration(registration, responseChannel);
 
     if (!discordMember) {
-      this.logger.warn(`Discord member not found for user ID: ${registration.discordId}. Skipping role removal.`);
+      const error = `Discord Member with ID "${registration.discordId}" not found in Discord! They have likely left the server, so no roles can be stripped.`;
+      this.logger.warn(error);
+      await responseChannel.send(`⚠️ ${error}`);
       return;
     }
 

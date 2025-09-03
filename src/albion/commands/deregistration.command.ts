@@ -2,8 +2,8 @@ import { Command, EventParams, Handler, InteractionEvent } from '@discord-nestjs
 import { ApplicationCommandType, ChatInputCommandInteraction } from 'discord.js';
 import { Injectable, Logger } from '@nestjs/common';
 import { SlashCommandPipe } from '@discord-nestjs/common';
-import { AlbionRegisterDto } from '../dto/albion.register.dto';
 import { AlbionDeregistrationService } from '../services/albion.deregistration.service';
+import { AlbionDeregisterDto } from '../dto/albion.deregister.dto';
 
 @Command({
   name: 'albion-deregister',
@@ -20,7 +20,7 @@ export class AlbionDeregisterCommand {
 
   @Handler()
   async onAlbionDeregisterCommand(
-    @InteractionEvent(SlashCommandPipe) dto: AlbionRegisterDto,
+    @InteractionEvent(SlashCommandPipe) dto: AlbionDeregisterDto,
     @EventParams() interaction: ChatInputCommandInteraction[],
   ): Promise<void> {
     this.logger.debug('Received Albion Deregister Command');
@@ -30,8 +30,8 @@ export class AlbionDeregisterCommand {
 
     try {
       await this.albionDeregistrationService.deregister(
-        interaction[0].member.user.id,
         message.channel,
+        dto,
       );
     }
     catch (err) {

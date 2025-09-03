@@ -60,14 +60,27 @@ describe('AlbionDeregisterCommand', () => {
     );
   });
 
-  it('should call deregister with correct arguments', async () => {
-    await command.onAlbionDeregisterCommand(dto, mockDiscordInteraction);
+  it('should call deregister with character name', async () => {
+    const mockDto = { character: 'Maelstrome' };
+    await command.onAlbionDeregisterCommand(mockDto, mockDiscordInteraction);
 
     mockMessage = (await mockDiscordInteraction[0].channel.send.mock.results[0]).value;
 
     expect(albionDeregistrationService.deregister).toHaveBeenCalledWith(
-      mockDiscordInteraction[0].member.user.id,
       mockMessage.channel,
+      mockDto
+    );
+  });
+
+  it('should call deregister with discord member', async () => {
+    const mockDto = { discordMember: mockDiscordUser };
+    await command.onAlbionDeregisterCommand(mockDto, mockDiscordInteraction);
+
+    mockMessage = (await mockDiscordInteraction[0].channel.send.mock.results[0]).value;
+
+    expect(albionDeregistrationService.deregister).toHaveBeenCalledWith(
+      mockMessage.channel,
+      mockDto
     );
   });
 
