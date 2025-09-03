@@ -25,8 +25,10 @@ export class AlbionDeregisterCommand {
   ): Promise<void> {
     this.logger.log('Received Albion Deregister Command', dto);
 
+    const name = dto.character ?? dto.discordMember?.user?.username ?? 'unknown';
+
     // Create placeholder message
-    const message = await interaction[0].channel.send(`Deregistration process for ${dto.character} started. Please wait...`);
+    const message = await interaction[0].channel.send(`Deregistration process for ${name} started. Please wait...`);
 
     try {
       await this.albionDeregistrationService.deregister(
@@ -36,7 +38,7 @@ export class AlbionDeregisterCommand {
     }
     catch (err) {
       this.logger.error('Error during deregistration process', err);
-      await message.channel.send(`❌ An error occurred during the deregistration process. Error: ${err.message}`);
+      await message.channel.send(`❌ An error occurred during the deregistration process for ${name}. Error: ${err.message}`);
     }
 
     // Delete placeholder

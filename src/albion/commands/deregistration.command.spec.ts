@@ -13,8 +13,6 @@ describe('AlbionDeregisterCommand', () => {
   let mockDiscordUser: any;
   const expectedChannelId = TestBootstrapper.mockConfig.discord.channels.albionRegistration;
 
-  const characterName = 'SomeCharacter';
-
   let mockMessage: any;
   let dto: any;
 
@@ -43,7 +41,7 @@ describe('AlbionDeregisterCommand', () => {
     mockDiscordUser = TestBootstrapper.getMockDiscordUser();
     mockDiscordInteraction = TestBootstrapper.getMockDiscordInteraction(expectedChannelId, mockDiscordUser);
 
-    dto = { character: characterName };
+    dto = { character: 'SomeCharacter' };
 
     // Get the placeholder message that gets generated
   });
@@ -56,19 +54,18 @@ describe('AlbionDeregisterCommand', () => {
     await command.onAlbionDeregisterCommand(dto, mockDiscordInteraction);
 
     expect(mockDiscordInteraction[0].channel.send).toHaveBeenCalledWith(
-      `Deregistration process for ${characterName} started. Please wait...`,
+      `Deregistration process for ${dto.character} started. Please wait...`,
     );
   });
 
   it('should call deregister with character name', async () => {
-    const mockDto = { character: 'Maelstrome' };
-    await command.onAlbionDeregisterCommand(mockDto, mockDiscordInteraction);
+    await command.onAlbionDeregisterCommand(dto, mockDiscordInteraction);
 
     mockMessage = (await mockDiscordInteraction[0].channel.send.mock.results[0]).value;
 
     expect(albionDeregistrationService.deregister).toHaveBeenCalledWith(
       mockMessage.channel,
-      mockDto
+      dto
     );
   });
 
@@ -100,7 +97,7 @@ describe('AlbionDeregisterCommand', () => {
 
     mockMessage = (await mockDiscordInteraction[0].channel.send.mock.results[0]).value;
 
-    expect(mockMessage.channel.send).toHaveBeenCalledWith('❌ An error occurred during the deregistration process. Error: Failure');
+    expect(mockMessage.channel.send).toHaveBeenCalledWith(`❌ An error occurred during the deregistration process for ${dto.character}. Error: Failure`);
 
     expect(mockMessage.delete).toHaveBeenCalled();
   });
