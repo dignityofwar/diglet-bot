@@ -72,8 +72,8 @@ describe('AlbionDeregisterCommand', () => {
     );
   });
 
-  it('should call deregister with discord ID', async () => {
-    const mockDto = { discordId: '1234567890' };
+  it('should call deregister with discord member', async () => {
+    const mockDto = { discordMember: mockDiscordUser };
     await command.onAlbionDeregisterCommand(mockDto, mockDiscordInteraction);
 
     mockMessage = (await mockDiscordInteraction[0].channel.send.mock.results[0]).value;
