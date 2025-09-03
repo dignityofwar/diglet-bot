@@ -11,8 +11,6 @@ describe('AlbionLogCommand', () => {
   const expectedChannelId = TestBootstrapper.mockConfig.discord.channels.albionRegistration;
 
   beforeEach(async () => {
-    mockDiscordUser = TestBootstrapper.getMockDiscordUser();
-
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         AlbionLogCommand,
@@ -26,6 +24,7 @@ describe('AlbionLogCommand', () => {
     }).compile();
 
     command = module.get<AlbionLogCommand>(AlbionLogCommand);
+    mockDiscordUser = TestBootstrapper.getMockDiscordUser();
     mockDiscordInteraction = TestBootstrapper.getMockDiscordInteraction(expectedChannelId, mockDiscordUser);
   });
 

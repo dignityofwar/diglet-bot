@@ -58,7 +58,7 @@ describe('AlbionRegisterCommand', () => {
     expect(command).toBeDefined();
   });
 
-  describe('onAlbionRegisterCommand', () => {
+  describe('onAlbionDeregisterCommand', () => {
     it('should return a message if command did not come from the correct channel', async () => {
       mockDiscordInteraction[0].channelId = '1234';
 

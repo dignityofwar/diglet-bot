@@ -19,7 +19,7 @@ export class AlbionDeregisterCommand {
   ) {}
 
   @Handler()
-  async onAlbionRegisterCommand(
+  async onAlbionDeregisterCommand(
     @InteractionEvent(SlashCommandPipe) dto: AlbionRegisterDto,
     @EventParams() interaction: ChatInputCommandInteraction[],
   ): Promise<void> {
@@ -28,10 +28,16 @@ export class AlbionDeregisterCommand {
     // Create placeholder message
     const message = await interaction[0].channel.send(`Deregistration process for ${dto.character} started. Please wait...`);
 
-    await this.albionDeregistrationService.deregister(
-      interaction[0].member.user.id,
-      message.channel,
-    );
+    try {
+      await this.albionDeregistrationService.deregister(
+        interaction[0].member.user.id,
+        message.channel,
+      );
+    }
+    catch (err) {
+      this.logger.error('Error during deregistration process', err);
+      await message.channel.send(`❌ An error occurred during the deregistration process. Error: ${err.message}`);
+    }
 
     // Delete placeholder
     await message.delete();
