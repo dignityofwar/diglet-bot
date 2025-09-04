@@ -41,7 +41,7 @@ export class AlbionReportsCommand {
       this.albionReportsService.fullReport(message);
     }
     if (dto.squireCandidates) {
-      this.albionReportsService.squireCandidates(message);
+      this.albionReportsService.graduateCandidates(message);
     }
 
     return 'Albion Report Initiated...';

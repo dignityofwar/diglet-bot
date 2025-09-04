@@ -30,7 +30,7 @@ export class AlbionReportsService {
     let albionMembers: AlbionPlayerInterface[] = [];
 
     try {
-      albionMembers = await this.albionApiService.getAllGuildMembers(this.config.get('albion.guildIdUS'), AlbionServer.AMERICAS);
+      albionMembers = await this.albionApiService.getAllGuildMembers(this.config.get('albion.guildId'));
     }
     catch (err) {
       this.logger.error(err);
@@ -51,8 +51,8 @@ export class AlbionReportsService {
     };
 
     const membersReport = {
-      initiates: [],
-      squires: [],
+      disciples: [],
+      graduates: [],
       leadership: [],
       errors: [],
     };
@@ -88,16 +88,16 @@ export class AlbionReportsService {
 
       // Push to the correct array based on the role
       switch (highestRole.name) {
-        case '@ALB/US/Initiate':
-          membersReport.initiates.push(line);
+        case '@ALB/Disciple':
+          membersReport.disciples.push(line);
           break;
-        case '@ALB/US/Squire':
-          membersReport.squires.push(line);
+        case '@ALB/Graduate':
+          membersReport.graduates.push(line);
           break;
-        case '@ALB/US/Captain':
-        case '@ALB/US/General':
-        case '@ALB/US/Master':
-        case '@ALB/US/Guildmaster':
+        case '@ALB/Adept':
+        case '@ALB/Warcaster':
+        case '@ALB/Magister':
+        case '@ALB/Archmage':
           membersReport.leadership.push(line);
           break;
       }
@@ -108,19 +108,19 @@ export class AlbionReportsService {
 
     await getChannel(message).send(`# Metrics \n🧑‍🤝‍🧑 Total Guild members: ${metrics.totalMembers}\n📝 Total registered: ${metrics.totalRegistered} (${regPercent}%)\nℹ️ Total unregistered: ${metrics.totalUnregistered} (${unregPercent}%)`);
 
-    await getChannel(message).send(`# Initiates (${membersReport.initiates.length})`);
-    if (membersReport.initiates.length > 0) {
-      await this.bufferMessages(membersReport.initiates, message);
+    await getChannel(message).send(`# Disciples (${membersReport.disciples.length})`);
+    if (membersReport.disciples.length > 0) {
+      await this.bufferMessages(membersReport.disciples, message);
     }
     else {
-      await getChannel(message).send('No Initiates found!');
+      await getChannel(message).send('No Disciples found!');
     }
-    await getChannel(message).send(`# Squires (${membersReport.squires.length})`);
-    if (membersReport.squires.length > 0) {
-      await this.bufferMessages(membersReport.squires, message);
+    await getChannel(message).send(`# Graduates (${membersReport.graduates.length})`);
+    if (membersReport.graduates.length > 0) {
+      await this.bufferMessages(membersReport.graduates, message);
     }
     else {
-      await getChannel(message).send('No Squires found!');
+      await getChannel(message).send('No Graduates found!');
     }
     await getChannel(message).send(`# Leadership (${membersReport.leadership.length})`);
     if (membersReport.leadership.length > 0) {
@@ -139,15 +139,15 @@ export class AlbionReportsService {
     this.logger.log('Report generated');
   }
 
-  async squireCandidates(message: Message) {
-    this.logger.log('Squire Candidate Report started');
+  async graduateCandidates(message: Message) {
+    this.logger.log('Graduate Candidate Report started');
 
     await message.edit('Loading Registrations...');
 
     // Get all registered members from database
     const registered = await this.albionMembersRepository.findAll();
 
-    await message.edit('Gathering Squires...');
+    await message.edit('Gathering Graduates...');
 
     const membersSorted = registered.sort((a, b) => a.characterName.localeCompare(b.characterName));
 
@@ -173,12 +173,12 @@ export class AlbionReportsService {
         continue;
       }
 
-      if (highestRole.name === '@ALB/US/Initiate' && diffInDays >= 14) {
+      if (highestRole.name === '@ALB/Disciple' && diffInDays >= 14) {
         membersReport.candidates.push(`- ${member.characterName} / <@${discordMember.id}> - registered ${discordRelativeCode}`);
       }
     }
 
-    await getChannel(message).send('# Squire Candidates\nCandidates based on Initiates who have been registered for 14 days or more.');
+    await getChannel(message).send('# Graduate Candidates\nCandidates based on Disciples who have been registered for 14 days or more.');
     if (membersReport.candidates.length > 0) {
       await this.bufferMessages(membersReport.candidates, message);
     }
@@ -192,18 +192,18 @@ export class AlbionReportsService {
     }
     await message.delete();
 
-    this.logger.log('Squire Candidate Report generated');
+    this.logger.log('Graduate Candidate Report generated');
   }
 
   async bufferMessages(membersReportArray: string[], message: Message) {
-    // We need to split the message up due to character limits. Split up each message into 10 initiates each message
+    // We need to split the message up due to character limits. Split up each message into 10 disciples each message
     let count = 0;
     let messageBuffer = '';
     const messagesInBuffer = [];
-    for (const initiate of membersReportArray) {
+    for (const disciple of membersReportArray) {
       count++;
 
-      messageBuffer += `${initiate}\n`;
+      messageBuffer += `${disciple}\n`;
 
       if (count % 10 === 0 || count === membersReportArray.length) {
         messagesInBuffer.push(messageBuffer);

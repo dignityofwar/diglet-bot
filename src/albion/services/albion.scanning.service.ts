@@ -249,17 +249,14 @@ export class AlbionScanningService {
 
   async reverseRoleScan(
     message: Message,
-    dryRun = false,
-    server: AlbionServer = AlbionServer.AMERICAS
+    dryRun = false
   ) {
-    const guildId = server === AlbionServer.AMERICAS ? this.config.get('albion.guildIdUS') : this.config.get('albion.guildId');
-    const emoji = this.serverEmoji(server);
+    const guildId = this.config.get('albion.guildId');
+    const emoji = this.serverEmoji();
 
     // Get the list of roles via the Role Map
     const roleMap: AlbionRoleMapInterface[] = this.config.get('albion.roleMap');
-    // Filter to only the server we care about
-    const roleMapServer = roleMap.filter((role) => role.server === server);
-    const roleMapLength = roleMapServer.length;
+    const roleMapLength = roleMap.length;
 
     const scanMessage = await getChannel(message).send(`### ${emoji} Scanning ${roleMapLength} Discord roles for members who are falsely registered...`);
     const scanCountMessage = await getChannel(message).send('.');
@@ -271,7 +268,7 @@ export class AlbionScanningService {
 
     // Loop each role and scan them
     let count = 0;
-    for (const role of roleMapServer) {
+    for (const role of roleMap) {
       count++;
       let discordRole: Role;
 
@@ -371,12 +368,11 @@ export class AlbionScanningService {
 
   async roleInconsistencies(
     message: Message,
-    dryRun = false,
-    server: AlbionServer = AlbionServer.AMERICAS
+    dryRun = false
   ): Promise<boolean> {
     const suggestions: string[] = [];
-    const emoji = this.serverEmoji(server);
-    const guildId = server === AlbionServer.AMERICAS ? this.config.get('albion.guildIdUS') : this.config.get('albion.guildId');
+    const emoji = this.serverEmoji();
+    const guildId = this.config.get('albion.guildId');
     let actionRequired = false;
 
     // Refresh GuildMembers as some may have been booted / left
@@ -403,7 +399,7 @@ export class AlbionScanningService {
       }
 
       // Get the role inconsistencies
-      const inconsistencies = await this.checkRoleInconsistencies(discordMember, server);
+      const inconsistencies = await this.checkRoleInconsistencies(discordMember);
 
       if (inconsistencies.length > 0) {
         actionRequired = true;
@@ -441,10 +437,9 @@ export class AlbionScanningService {
   }
 
   async checkRoleInconsistencies(
-    discordMember: GuildMember,
-    server: AlbionServer = AlbionServer.AMERICAS
+    discordMember: GuildMember
   ): Promise<RoleInconsistencyResult[]> {
-    const serverEmoji = this.serverEmoji(server);
+    const serverEmoji = this.serverEmoji();
     // If the user is excluded from role inconsistency checks, skip them
     const excludedUsers: string[] = this.config.get('albion.scanExcludedUsers');
     if (excludedUsers.includes(discordMember.id)) {
@@ -452,21 +447,13 @@ export class AlbionScanningService {
     }
 
     const inconsistencies: RoleInconsistencyResult[] = [];
-    const highestPriorityRole = this.albionUtilities.getHighestAlbionRole(discordMember, server);
+    const highestPriorityRole = this.albionUtilities.getHighestAlbionRole(discordMember);
     const roleMap: AlbionRoleMapInterface[] = this.config.get('albion.roleMap');
 
     // If no roles were found, they must have at least registered and initiate
     if (!highestPriorityRole) {
-      let entryRole: AlbionRoleMapInterface;
-      let registeredRole: AlbionRoleMapInterface;
-
-      if (server === AlbionServer.EUROPE) {
-        entryRole = roleMap.filter((role) => role.name === '@ALB/Disciple')[0];
-        registeredRole = roleMap.filter((role) => role.name === '@ALB/Registered')[0];
-      }
-      else {
-        throw new Error('Invalid server!');
-      }
+      const entryRole = roleMap.filter((role) => role.name === '@ALB/Disciple')[0];
+      const registeredRole = roleMap.filter((role) => role.name === '@ALB/Registered')[0];
 
       const action = 'added';
       const reason = 'they have no roles but are registered!';
@@ -486,9 +473,9 @@ export class AlbionScanningService {
     }
 
     // If their highest role is registered, this shouldn't be the case. They should have at least the entry level role.
-    // We need to get the role for the server they're on, and the priority above the registered priority.
+    // We need to get the role for the priority above the registered priority.
     if (highestPriorityRole.name.includes('Registered')) {
-      const entryRole = roleMap.filter((role) => role.server === server && role.priority === highestPriorityRole.priority - 1)[0];
+      const entryRole = roleMap.filter((role) => role.priority === highestPriorityRole.priority - 1)[0];
       const action = 'added';
       const reason = 'they are registered but don\'t have at least the entry level role!';
 
@@ -503,10 +490,6 @@ export class AlbionScanningService {
 
     // Otherwise, this is based off priority of the highest priority role.
     roleMap.forEach((role) => {
-      // If the role is for the wrong server, skip it
-      if (role.server !== server) {
-        return;
-      }
       const shouldHaveRole = role.priority === highestPriorityRole?.priority || (role.priority > highestPriorityRole?.priority && role.keep);
       const hasRole = discordMember.roles.cache.has(role.discordRoleId);
 
