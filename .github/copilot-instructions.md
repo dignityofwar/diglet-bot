@@ -2,6 +2,8 @@
 
 diglet-bot is a TypeScript Discord bot using NestJS framework that serves the Dignity of War community. It supports Albion Online and PlanetSide 2 game integrations with comprehensive member management, verification systems, and automated reporting.
 
+These instructions are designed for GitHub Copilot to assist developers working on the diglet-bot codebase. Most development tasks (building, testing, linting, database operations) can be completed without Discord connectivity, making them suitable for Copilot-assisted development workflows.
+
 Always reference these instructions first and fallback to search or bash commands only when you encounter unexpected information that does not match the info here.
 
 ## Working Effectively
@@ -37,8 +39,9 @@ Always reference these instructions first and fallback to search or bash command
 
 ### Application Testing
 - ALWAYS run the complete bootstrap sequence when setting up or making changes.
-- The bot connects to Discord (requires valid TOKEN in .env) and MariaDB database.
-- Test the development startup: application should start successfully and show Discord command registration.
+- For development/testing purposes, the application can be built and tested without a Discord token.
+- For full bot functionality testing, a valid Discord bot TOKEN is required in .env (not typically needed for Copilot-assisted development).
+- Test the development startup: application should start successfully. With a valid token, it will show Discord command registration.
 - **NEVER CANCEL long-running commands** - builds may take 6+ seconds, tests may take 108+ seconds.
 - Use WSL-specific commands (`pnpm test:wsl`) on Windows Subsystem for Linux to avoid filesystem issues.
 
@@ -97,11 +100,13 @@ src/
 
 ### Environment Variables
 Key variables in `.env`:
-- `TOKEN` -- Discord bot token (required for bot functionality)
+- `TOKEN` -- Discord bot token (required only for actual Discord connectivity; development/testing can proceed without it)
 - `GUILD_ID_WITH_COMMANDS` -- Discord server ID for slash commands
 - `DB_HOST`, `DB_PORT`, `DB_USERNAME`, `DB_PASSWORD`, `DB_NAME` -- database connection
 - `PS2_CENSUS_SERVICE_ID` -- PlanetSide 2 API service ID
 - Various Discord channel and role IDs for different game integrations
+
+**Note**: For Copilot-assisted development, most tasks (building, testing, linting, database operations) can be completed without Discord connectivity.
 
 ### Troubleshooting
 - **Migration failures**: Run `pnpm build` first to compile TypeScript for MikroORM CLI.
