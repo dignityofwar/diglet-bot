@@ -1,14 +1,14 @@
-import { Logger } from "@nestjs/common";
-import { InjectRepository } from "@mikro-orm/nestjs";
-import { AlbionRegistrationsEntity } from "../../database/entities/albion.registrations.entity";
-import { EntityRepository } from "@mikro-orm/core";
-import { DiscordService } from "../../discord/discord.service";
-import { ConfigService } from "@nestjs/config";
-import { AlbionUtilities } from "../utilities/albion.utilities";
-import { Message } from "discord.js";
-import { AlbionApiService } from "./albion.api.service";
-import { AlbionPlayerInterface } from "../interfaces/albion.api.interfaces";
-import { getChannel } from "../../discord/discord.hacks";
+import { Logger } from '@nestjs/common';
+import { InjectRepository } from '@mikro-orm/nestjs';
+import { AlbionRegistrationsEntity } from '../../database/entities/albion.registrations.entity';
+import { EntityRepository } from '@mikro-orm/core';
+import { DiscordService } from '../../discord/discord.service';
+import { ConfigService } from '@nestjs/config';
+import { AlbionUtilities } from '../utilities/albion.utilities';
+import { Message } from 'discord.js';
+import { AlbionApiService } from './albion.api.service';
+import { AlbionPlayerInterface } from '../interfaces/albion.api.interfaces';
+import { getChannel } from '../../discord/discord.hacks';
 
 export class AlbionReportsService {
   private readonly logger = new Logger(AlbionReportsService.name);
@@ -23,26 +23,27 @@ export class AlbionReportsService {
   ) {}
 
   async fullReport(message: Message) {
-    this.logger.log("Full Report started");
+    this.logger.log('Full Report started');
 
-    await message.edit("Getting Guild members from the API...");
+    await message.edit('Getting Guild members from the API...');
 
     // Get total number of members with the Albion Online role
     let albionMembers: AlbionPlayerInterface[] = [];
 
     try {
       albionMembers = await this.albionApiService.getAllGuildMembers(
-        this.config.get("albion.guildId"),
+        this.config.get('albion.guildId'),
       );
-    } catch (err) {
+    }
+    catch (err) {
       this.logger.error(err);
       await message.edit(
-        `Failed to load discord members. Pinging <@${this.config.get("discord.devUserId")}>!`,
+        `Failed to load discord members. Pinging <@${this.config.get('discord.devUserId')}>!`,
       );
       return;
     }
 
-    await message.edit("Loading Registrations...");
+    await message.edit('Loading Registrations...');
 
     // Get all registered members from database
     const registered = await this.albionMembersRepository.findAll();
@@ -64,7 +65,7 @@ export class AlbionReportsService {
       a.characterName.localeCompare(b.characterName),
     );
 
-    await message.edit("Starting report calculations...");
+    await message.edit('Starting report calculations...');
 
     let i = 0;
     for (const member of membersSorted) {
@@ -100,16 +101,16 @@ export class AlbionReportsService {
 
       // Push to the correct array based on the role
       switch (highestRole.name) {
-        case "@ALB/Disciple":
+        case '@ALB/Disciple':
           membersReport.disciples.push(line);
           break;
-        case "@ALB/Graduate":
+        case '@ALB/Graduate':
           membersReport.graduates.push(line);
           break;
-        case "@ALB/Adept":
-        case "@ALB/Warcaster":
-        case "@ALB/Magister":
-        case "@ALB/Archmage":
+        case '@ALB/Adept':
+        case '@ALB/Warcaster':
+        case '@ALB/Magister':
+        case '@ALB/Archmage':
           membersReport.leadership.push(line);
           break;
       }
@@ -131,46 +132,49 @@ export class AlbionReportsService {
     );
     if (membersReport.disciples.length > 0) {
       await this.bufferMessages(membersReport.disciples, message);
-    } else {
-      await getChannel(message).send("No Disciples found!");
+    }
+    else {
+      await getChannel(message).send('No Disciples found!');
     }
     await getChannel(message).send(
       `# Graduates (${membersReport.graduates.length})`,
     );
     if (membersReport.graduates.length > 0) {
       await this.bufferMessages(membersReport.graduates, message);
-    } else {
-      await getChannel(message).send("No Graduates found!");
+    }
+    else {
+      await getChannel(message).send('No Graduates found!');
     }
     await getChannel(message).send(
       `# Leadership (${membersReport.leadership.length})`,
     );
     if (membersReport.leadership.length > 0) {
       await this.bufferMessages(membersReport.leadership, message);
-    } else {
-      await getChannel(message).send("No Leadership members found!");
+    }
+    else {
+      await getChannel(message).send('No Leadership members found!');
     }
 
     if (membersReport.errors.length > 0) {
       await getChannel(message).send(
-        `# Errors\n${membersReport.errors.join("\n")}`,
+        `# Errors\n${membersReport.errors.join('\n')}`,
       );
     }
 
     await message.delete();
 
-    this.logger.log("Report generated");
+    this.logger.log('Report generated');
   }
 
   async graduateCandidates(message: Message) {
-    this.logger.log("Graduate Candidate Report started");
+    this.logger.log('Graduate Candidate Report started');
 
-    await message.edit("Loading Registrations...");
+    await message.edit('Loading Registrations...');
 
     // Get all registered members from database
     const registered = await this.albionMembersRepository.findAll();
 
-    await message.edit("Gathering Graduates...");
+    await message.edit('Gathering Graduates...');
 
     const membersSorted = registered.sort((a, b) =>
       a.characterName.localeCompare(b.characterName),
@@ -210,7 +214,7 @@ export class AlbionReportsService {
         continue;
       }
 
-      if (highestRole.name === "@ALB/Disciple" && diffInDays >= 14) {
+      if (highestRole.name === '@ALB/Disciple' && diffInDays >= 14) {
         membersReport.candidates.push(
           `- ${member.characterName} / <@${discordMember.id}> - registered ${discordRelativeCode}`,
         );
@@ -218,27 +222,28 @@ export class AlbionReportsService {
     }
 
     await getChannel(message).send(
-      "# Graduate Candidates\nCandidates based on Disciples who have been registered for 14 days or more.",
+      '# Graduate Candidates\nCandidates based on Disciples who have been registered for 14 days or more.',
     );
     if (membersReport.candidates.length > 0) {
       await this.bufferMessages(membersReport.candidates, message);
-    } else {
-      await getChannel(message).send("No Candidates found!");
+    }
+    else {
+      await getChannel(message).send('No Candidates found!');
     }
 
     if (membersReport.errors.length > 0) {
-      await getChannel(message).send("# Errors");
+      await getChannel(message).send('# Errors');
       await this.bufferMessages(membersReport.errors, message);
     }
     await message.delete();
 
-    this.logger.log("Graduate Candidate Report generated");
+    this.logger.log('Graduate Candidate Report generated');
   }
 
   async bufferMessages(membersReportArray: string[], message: Message) {
     // We need to split the message up due to character limits. Split up each message into 10 disciples each message
     let count = 0;
-    let messageBuffer = "";
+    let messageBuffer = '';
     const messagesInBuffer = [];
     for (const disciple of membersReportArray) {
       count++;
@@ -247,13 +252,13 @@ export class AlbionReportsService {
 
       if (count % 10 === 0 || count === membersReportArray.length) {
         messagesInBuffer.push(messageBuffer);
-        messageBuffer = "";
+        messageBuffer = '';
       }
     }
 
     for (const bufferedMessage of messagesInBuffer) {
       this.logger.debug(`Sending buffered message: ${bufferedMessage}`);
-      const sentMessage = await getChannel(message).send("---");
+      const sentMessage = await getChannel(message).send('---');
       await sentMessage.edit(bufferedMessage);
     }
   }

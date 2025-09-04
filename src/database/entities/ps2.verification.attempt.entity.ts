@@ -1,6 +1,6 @@
-import { BaseEntity } from "./base.entity";
-import { Entity, Index, Property, Unique } from "@mikro-orm/core";
-import { GuildMember, Message } from "discord.js";
+import { BaseEntity } from './base.entity';
+import { Entity, Index, Property, Unique } from '@mikro-orm/core';
+import { GuildMember, Message } from 'discord.js';
 
 interface PS2VerificationAttemptEntityOptions {
   characterId: string;
@@ -14,10 +14,10 @@ export class PS2VerificationAttemptEntity extends BaseEntity {
   @Property()
   @Unique()
   @Index()
-  characterId: string;
+    characterId: string;
 
   @Property()
-  characterName: string;
+    characterName: string;
 
   constructor(options: PS2VerificationAttemptEntityOptions) {
     super();

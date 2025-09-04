@@ -1,10 +1,10 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { Test } from "@nestjs/testing";
-import { TestBootstrapper } from "../../test.bootstrapper";
-import { ActivityReportCommand } from "./activity.report.command";
-import { ActivityReportCronService } from "../services/activity.report.cron.service";
+import { Test } from '@nestjs/testing';
+import { TestBootstrapper } from '../../test.bootstrapper';
+import { ActivityReportCommand } from './activity.report.command';
+import { ActivityReportCronService } from '../services/activity.report.cron.service';
 
-describe("ActivityReportCommand", () => {
+describe('ActivityReportCommand', () => {
   let command: ActivityReportCommand;
   let activityReportCronService: ActivityReportCronService;
   let mockInteraction: any;
@@ -30,16 +30,16 @@ describe("ActivityReportCommand", () => {
     // Mock a ChatInputCommandInteraction
     mockDiscordUser = TestBootstrapper.getMockDiscordUser();
     mockInteraction = TestBootstrapper.getMockDiscordInteraction(
-      "123456789",
+      '123456789',
       mockDiscordUser,
     );
   });
 
-  it("should initiate the report", async () => {
+  it('should initiate the report', async () => {
     await command.onActivityReportCommand(mockInteraction);
 
     expect(mockInteraction[0].reply).toHaveBeenCalledWith(
-      "Starting Activity Report via command...",
+      'Starting Activity Report via command...',
     );
     expect(activityReportCronService.runReport).toHaveBeenCalled();
   });

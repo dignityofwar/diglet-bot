@@ -1,10 +1,10 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { Test, TestingModule } from "@nestjs/testing";
-import { AlbionLogCommand } from "./log.command";
-import { Logger } from "@nestjs/common";
-import { TestBootstrapper } from "../../test.bootstrapper";
+import { Test, TestingModule } from '@nestjs/testing';
+import { AlbionLogCommand } from './log.command';
+import { Logger } from '@nestjs/common';
+import { TestBootstrapper } from '../../test.bootstrapper';
 
-describe("AlbionLogCommand", () => {
+describe('AlbionLogCommand', () => {
   let command: AlbionLogCommand;
   let mockDiscordInteraction: any;
   let mockDiscordUser: any;
@@ -32,11 +32,11 @@ describe("AlbionLogCommand", () => {
     );
   });
 
-  it("should be defined", () => {
+  it('should be defined', () => {
     expect(command).toBeDefined();
   });
 
-  it("should send a log-themed message", async () => {
+  it('should send a log-themed message', async () => {
     const expectedMessage = `# 🪵\n
 Live by the log,
 Die by the log.
@@ -54,18 +54,18 @@ The log will log our logs with speed.`;
     );
   });
 
-  it("should randomly send one of the predefined images", async () => {
+  it('should randomly send one of the predefined images', async () => {
     await command.onAlbionLogCommand(mockDiscordInteraction);
 
     expect(mockDiscordInteraction[0].channel.send).toHaveBeenCalledWith(
       expect.any(String),
     );
     expect(mockDiscordInteraction[0].channel.send.mock.calls[1][0]).toContain(
-      "https://cdn.discordapp.com/attachments/",
+      'https://cdn.discordapp.com/attachments/',
     );
   });
 
-  it("should react with a log emoji", async () => {
+  it('should react with a log emoji', async () => {
     await command.onAlbionLogCommand(mockDiscordInteraction);
 
     expect(mockDiscordInteraction[0].channel.send).toHaveBeenCalledWith(
@@ -73,6 +73,6 @@ The log will log our logs with speed.`;
     );
     expect(
       mockDiscordInteraction[0].channel.send.mock.results[1].value.react,
-    ).toHaveBeenCalledWith("🪵");
+    ).toHaveBeenCalledWith('🪵');
   });
 });

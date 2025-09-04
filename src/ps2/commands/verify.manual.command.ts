@@ -3,23 +3,23 @@ import {
   EventParams,
   Handler,
   InteractionEvent,
-} from "@discord-nestjs/core";
+} from '@discord-nestjs/core';
 import {
   ApplicationCommandType,
   ChatInputCommandInteraction,
-} from "discord.js";
-import { SlashCommandPipe } from "@discord-nestjs/common";
-import { Injectable, Logger } from "@nestjs/common";
-import { ConfigService } from "@nestjs/config";
-import { CensusCharacterWithOutfitInterface } from "../interfaces/CensusCharacterResponseInterface";
-import { CensusApiService } from "../service/census.api.service";
-import { PS2GameVerificationService } from "../service/ps2.game.verification.service";
-import { PS2VerifyManualDto } from "../dto/PS2VerifyManualDto";
+} from 'discord.js';
+import { SlashCommandPipe } from '@discord-nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
+import { CensusCharacterWithOutfitInterface } from '../interfaces/CensusCharacterResponseInterface';
+import { CensusApiService } from '../service/census.api.service';
+import { PS2GameVerificationService } from '../service/ps2.game.verification.service';
+import { PS2VerifyManualDto } from '../dto/PS2VerifyManualDto';
 
 @Command({
-  name: "ps2-verify-manual",
+  name: 'ps2-verify-manual',
   type: ApplicationCommandType.ChatInput,
-  description: "Manually verify a character in the DIG Outfit",
+  description: 'Manually verify a character in the DIG Outfit',
 })
 @Injectable()
 export class PS2VerifyManualCommand {
@@ -40,7 +40,7 @@ export class PS2VerifyManualCommand {
       `Received onPS2VerifyManualCommand with character ${dto.character}`,
     );
     // Check if the command came from the correct channel ID
-    const verifyChannelId = this.config.get("discord.channels.ps2Verify");
+    const verifyChannelId = this.config.get('discord.channels.ps2Verify');
 
     // Check if channel is correct
     if (interaction[0].channelId !== verifyChannelId) {
@@ -64,7 +64,8 @@ export class PS2VerifyManualCommand {
     // Get the character from the Albion Online API
     try {
       character = await this.censusApiService.getCharacter(dto.character);
-    } catch (err) {
+    }
+    catch (err) {
       if (err instanceof Error) {
         return err.message;
       }
@@ -77,10 +78,10 @@ export class PS2VerifyManualCommand {
         targetMember,
         createdByMember,
       );
-      return "Member manually unverified.";
+      return 'Member manually unverified.';
     }
 
-    const outfitId = this.config.get("ps2.outfitId");
+    const outfitId = this.config.get('ps2.outfitId');
 
     // Check if the character is in the PS2 Outfit
     if (
@@ -108,6 +109,6 @@ export class PS2VerifyManualCommand {
     );
 
     // Successful, but send nothing back as we send a separate message as the command may fail due to census being slow.
-    return "Member manually verified.";
+    return 'Member manually verified.';
   }
 }

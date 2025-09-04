@@ -1,7 +1,7 @@
-import { Injectable, Logger } from "@nestjs/common";
-import { On } from "@discord-nestjs/core";
-import { Events, VoiceState } from "discord.js";
-import { DatabaseService } from "../../database/services/database.service";
+import { Injectable, Logger } from '@nestjs/common';
+import { On } from '@discord-nestjs/core';
+import { Events, VoiceState } from 'discord.js';
+import { DatabaseService } from '../../database/services/database.service';
 
 @Injectable()
 export class VoiceStateEvents {

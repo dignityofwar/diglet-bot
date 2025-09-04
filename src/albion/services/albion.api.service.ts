@@ -1,12 +1,12 @@
-import { Injectable, Logger } from "@nestjs/common";
-import AlbionAxiosFactory from "../factories/albion.axios.factory";
+import { Injectable, Logger } from '@nestjs/common';
+import AlbionAxiosFactory from '../factories/albion.axios.factory';
 import {
   AlbionPlayerInterface,
   AlbionPlayersResponseInterface,
   AlbionSearchResponseInterface,
   AlbionServer,
-} from "../interfaces/albion.api.interfaces";
-import { ConfigService } from "@nestjs/config";
+} from '../interfaces/albion.api.interfaces';
+import { ConfigService } from '@nestjs/config';
 
 @Injectable()
 export class AlbionApiService {
@@ -33,7 +33,7 @@ export class AlbionApiService {
 
     if (response.data.Id !== characterId) {
       this.throwError(
-        `Character ID \`${characterId}\` does not match API response consistently. Pinging <@${this.config.get("discord.devUserId")}>!`,
+        `Character ID \`${characterId}\` does not match API response consistently. Pinging <@${this.config.get('discord.devUserId')}>!`,
       );
     }
 
@@ -64,7 +64,7 @@ export class AlbionApiService {
     }
 
     if (foundPlayer.length > 1) {
-      const guildId = this.config.get("albion.guildId");
+      const guildId = this.config.get('albion.guildId');
       // If there are multiple players found, we need to loop them to check if any of them are in the guild, and return that character
       const foundPlayerInGuild = foundPlayer.filter((player) => {
         return player.GuildId === guildId;
@@ -78,9 +78,10 @@ export class AlbionApiService {
 
       if (foundPlayerInGuild.length === 1) {
         return foundPlayerInGuild[0].Id;
-      } else {
+      }
+      else {
         this.throwError(
-          `multiple characters for **${characterName}** were found within the DIG guild. This is an unsupported use case for this registration system. Pinging <@${this.config.get("discord.devUserId")}>!`,
+          `multiple characters for **${characterName}** were found within the DIG guild. This is an unsupported use case for this registration system. Pinging <@${this.config.get('discord.devUserId')}>!`,
         );
       }
     }

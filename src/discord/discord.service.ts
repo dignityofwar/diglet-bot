@@ -1,5 +1,5 @@
-import { Injectable, Logger } from "@nestjs/common";
-import { InjectDiscordClient } from "@discord-nestjs/core";
+import { Injectable, Logger } from '@nestjs/common';
+import { InjectDiscordClient } from '@discord-nestjs/core';
 import {
   Client,
   Collection,
@@ -9,8 +9,8 @@ import {
   Role,
   Snowflake,
   TextChannel,
-} from "discord.js";
-import { getChannel } from "./discord.hacks";
+} from 'discord.js';
+import { getChannel } from './discord.hacks';
 
 @Injectable()
 export class DiscordService {
@@ -24,7 +24,8 @@ export class DiscordService {
     try {
       // Get the guild from the GuildManager (client.guilds)
       guild = this.discordClient.guilds.cache.get(guildId);
-    } catch (err) {
+    }
+    catch (err) {
       this.logger.error(`Failed to fetch guild with ID ${guildId}`, err);
       throw new Error(
         `Failed to fetch guild with ID ${guildId}. Err: ${err.message}`,
@@ -43,7 +44,8 @@ export class DiscordService {
       return (await this.discordClient.channels.fetch(
         channelId,
       )) as TextChannel;
-    } catch (err) {
+    }
+    catch (err) {
       throw new Error(
         `Failed to fetch channel with ID ${channelId}! Error: ${err.message}.`,
       );
@@ -65,7 +67,8 @@ export class DiscordService {
         user: memberId,
         force: forceFetch,
       });
-    } catch (err) {
+    }
+    catch (err) {
       const error = `Failed to fetch member with ID ${memberId}. Err: ${err.message}`;
       this.logger.error(error, err);
       throw new Error(error);
@@ -91,7 +94,8 @@ export class DiscordService {
       role = await this.discordClient.guilds.cache
         .get(serverId)
         .roles.fetch(roleId);
-    } catch (err) {
+    }
+    catch (err) {
       throw new Error(
         `Failed to fetch role with ID ${roleId}. Err: ${err.message}`,
       );
@@ -111,11 +115,12 @@ export class DiscordService {
   ): Promise<GuildMember> {
     try {
       return await guildMember.kick(reason);
-    } catch (err) {
+    }
+    catch (err) {
       await getChannel(message).send(
         `⚠️ Failed to kick member <@${guildMember.id}>! Err: ${err.message}`,
       );
-      this.logger.error("Failed to kick member", err);
+      this.logger.error('Failed to kick member', err);
     }
   }
 
@@ -123,8 +128,9 @@ export class DiscordService {
     try {
       await message.delete();
       return true;
-    } catch (err) {
-      this.logger.error("Failed to delete message", err);
+    }
+    catch (err) {
+      this.logger.error('Failed to delete message', err);
     }
   }
 
@@ -148,7 +154,8 @@ export class DiscordService {
   async sendDM(member: GuildMember, message: string): Promise<void> {
     try {
       await member.send(message);
-    } catch (err) {
+    }
+    catch (err) {
       this.logger.error(`Failed to send DM to member ${member.id}`, err);
     }
   }
@@ -162,7 +169,8 @@ export class DiscordService {
 
       // Re-fetch all roles from the guild
       return await guild.roles.fetch();
-    } catch (err) {
+    }
+    catch (err) {
       const error = `Failed to fetch roles from guild ${guild.id}. Error: ${err.message}`;
       this.logger.error(error);
       throw new Error(error);

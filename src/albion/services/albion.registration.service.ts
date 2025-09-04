@@ -1,12 +1,12 @@
-import { Injectable, Logger, OnApplicationBootstrap } from "@nestjs/common";
-import { DiscordService } from "../../discord/discord.service";
-import { ConfigService } from "@nestjs/config";
-import { InjectRepository } from "@mikro-orm/nestjs";
-import { AlbionRegistrationsEntity } from "../../database/entities/albion.registrations.entity";
-import { EntityRepository } from "@mikro-orm/core";
-import { Channel, GuildMember, MessageFlags, TextChannel } from "discord.js";
-import { AlbionPlayerInterface } from "../interfaces/albion.api.interfaces";
-import { AlbionApiService } from "./albion.api.service";
+import { Injectable, Logger, OnApplicationBootstrap } from '@nestjs/common';
+import { DiscordService } from '../../discord/discord.service';
+import { ConfigService } from '@nestjs/config';
+import { InjectRepository } from '@mikro-orm/nestjs';
+import { AlbionRegistrationsEntity } from '../../database/entities/albion.registrations.entity';
+import { EntityRepository } from '@mikro-orm/core';
+import { Channel, GuildMember, MessageFlags, TextChannel } from 'discord.js';
+import { AlbionPlayerInterface } from '../interfaces/albion.api.interfaces';
+import { AlbionApiService } from './albion.api.service';
 
 export interface RegistrationData {
   discordMember: GuildMember;
@@ -35,7 +35,7 @@ export class AlbionRegistrationService implements OnApplicationBootstrap {
   async onApplicationBootstrap() {
     // Store the Discord guild channel and ensure we can send messages to it
     const verifyChannelId = this.config.get(
-      "discord.channels.albionRegistration",
+      'discord.channels.albionRegistration',
     );
 
     this.verificationChannel =
@@ -64,11 +64,11 @@ export class AlbionRegistrationService implements OnApplicationBootstrap {
         discordMemberId,
       ),
       character: await this.albionApiService.getCharacter(characterName),
-      serverName: "Albion",
-      serverEmoji: "🏰",
-      guildId: this.config.get("albion.guildId"),
-      guildName: "Dignity Of War",
-      guildPingable: "@ALB/Archmage",
+      serverName: 'Albion',
+      serverEmoji: '🏰',
+      guildId: this.config.get('albion.guildId'),
+      guildName: 'Dignity Of War',
+      guildPingable: '@ALB/Archmage',
     };
   }
 
@@ -104,8 +104,9 @@ export class AlbionRegistrationService implements OnApplicationBootstrap {
     let channel: TextChannel;
     try {
       channel = await this.discordService.getTextChannel(discordChannelId);
-    } catch (err) {
-      const errorMessage = `Failed to get channel with ID ${discordChannelId}! Err: ${err.message}. Pinging <@${this.config.get("discord.devUserId")}>!`;
+    }
+    catch (err) {
+      const errorMessage = `Failed to get channel with ID ${discordChannelId}! Err: ${err.message}. Pinging <@${this.config.get('discord.devUserId')}>!`;
       this.throwError(errorMessage);
     }
 
@@ -125,7 +126,8 @@ export class AlbionRegistrationService implements OnApplicationBootstrap {
 
       // If we got here, we can safely register the character
       await this.registerCharacter(data, channel);
-    } catch (err) {
+    }
+    catch (err) {
       this.logger.error(
         `Registration failed for character "${characterName}"! Err: ${err.message}`,
       );
@@ -140,18 +142,19 @@ export class AlbionRegistrationService implements OnApplicationBootstrap {
 
   private async checkRolesExist(data: RegistrationData) {
     const rolesToCheck = [
-      this.config.get("discord.roles.albionMember"),
-      this.config.get("discord.roles.albionRegistered"),
-      this.config.get("discord.roles.albionAnnouncements"),
+      this.config.get('discord.roles.albionMember'),
+      this.config.get('discord.roles.albionRegistered'),
+      this.config.get('discord.roles.albionAnnouncements'),
     ];
 
     try {
       for (const roleId of rolesToCheck) {
         await this.discordService.getRoleViaMember(data.discordMember, roleId);
       }
-    } catch (err) {
+    }
+    catch (err) {
       this.throwError(
-        `Required Role(s) do not exist! Pinging <@${this.config.get("discord.devUserId")}>! Err: ${err.message}`,
+        `Required Role(s) do not exist! Pinging <@${this.config.get('discord.devUserId')}>! Err: ${err.message}`,
       );
     }
   }
@@ -187,7 +190,8 @@ export class AlbionRegistrationService implements OnApplicationBootstrap {
         data.discordMember.guild.id,
         foundByCharacter.discordId,
       );
-    } catch (err) {
+    }
+    catch (err) {
       this.logger.warn(
         `Unable to find original Discord user for character "${data.character.Name}"! Err: ${err.message}`,
       );
@@ -227,10 +231,10 @@ export class AlbionRegistrationService implements OnApplicationBootstrap {
     channel: TextChannel,
   ) {
     // Add roles based on guild membership
-    const memberRole = this.config.get("discord.roles.albionMember");
-    const registeredRole = this.config.get("discord.roles.albionRegistered");
+    const memberRole = this.config.get('discord.roles.albionMember');
+    const registeredRole = this.config.get('discord.roles.albionRegistered');
     const announcementRole = this.config.get(
-      "discord.roles.albionAnnouncements",
+      'discord.roles.albionAnnouncements',
     );
 
     try {
@@ -252,9 +256,10 @@ export class AlbionRegistrationService implements OnApplicationBootstrap {
           announcementRole,
         ),
       );
-    } catch (err) {
+    }
+    catch (err) {
       this.throwError(
-        `Unable to add roles to "${data.discordMember.displayName}"! Pinging <@${this.config.get("discord.devUserId")}>!\nErr: ${err.message}`,
+        `Unable to add roles to "${data.discordMember.displayName}"! Pinging <@${this.config.get('discord.devUserId')}>!\nErr: ${err.message}`,
       );
     }
 
@@ -267,17 +272,19 @@ export class AlbionRegistrationService implements OnApplicationBootstrap {
         guildId: data.guildId,
       });
       await this.albionRegistrationsRepository.upsert(entity);
-    } catch (err) {
+    }
+    catch (err) {
       this.throwError(
-        `Unable to add you to the database! Pinging <@${this.config.get("discord.devUserId")}>! Err: ${err.message}`,
+        `Unable to add you to the database! Pinging <@${this.config.get('discord.devUserId')}>! Err: ${err.message}`,
       );
     }
 
     // Edit their nickname to match their ingame
     try {
       await data.discordMember?.setNickname(data.character.Name);
-    } catch (err) {
-      const errorMessage = `⚠️ Unable to set your nickname. If you're Staff this won't work as the bot has no power over you!\nError: "${err.message}".\nPinging <@${this.config.get("discord.devUserId")}>!`;
+    }
+    catch (err) {
+      const errorMessage = `⚠️ Unable to set your nickname. If you're Staff this won't work as the bot has no power over you!\nError: "${err.message}".\nPinging <@${this.config.get('discord.devUserId')}>!`;
       await channel.send(errorMessage);
       this.logger.error(errorMessage);
     }
@@ -286,12 +293,12 @@ export class AlbionRegistrationService implements OnApplicationBootstrap {
       `Registration for ${data.character.Name} was successful, returning success response.`,
     );
 
-    const rolesChannel = this.config.get("discord.channels.albionRoles");
+    const rolesChannel = this.config.get('discord.channels.albionRoles');
     const announcementChannel = this.config.get(
-      "discord.channels.albionAnnouncements",
+      'discord.channels.albionAnnouncements',
     );
 
-    const pingRoles = this.config.get("albion.pingLeaderRoles");
+    const pingRoles = this.config.get('albion.pingLeaderRoles');
 
     // Successful!
     const messageContent = `# ✅ Thank you <@${data.discordMember.id}>, your character **${data.character.Name}** has been registered! 🎉
@@ -300,7 +307,7 @@ export class AlbionRegistrationService implements OnApplicationBootstrap {
 * ℹ️ Your Discord server nickname has been automatically changed to match your character name. You are free to change this back should you want to, but please make sure it resembles your in-game name.
 * 🔔 You have automatically been enrolled to our <#${announcementChannel}> announcements channel. If you wish to opt out, go to <#${rolesChannel}>, double tap the 🔔 icon.
 
-CC <@&${pingRoles.join(">, <@&")}>`;
+CC <@&${pingRoles.join('>, <@&')}>`;
     await channel.send({
       content: messageContent,
       flags: MessageFlags.SuppressEmbeds,

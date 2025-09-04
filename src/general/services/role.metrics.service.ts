@@ -1,12 +1,12 @@
-import { Injectable, Logger } from "@nestjs/common";
-import { InjectRepository } from "@mikro-orm/nestjs";
-import { EntityRepository } from "@mikro-orm/core";
-import { Collection, Guild, Message, Role, Snowflake } from "discord.js";
-import { getChannel } from "../../discord/discord.hacks";
-import { RoleMetricsEntity } from "../../database/entities/role.metrics.entity";
-import { ActivityEntity } from "../../database/entities/activity.entity";
-import { generateDateInPast } from "../../helpers";
-import { DiscordService } from "../../discord/discord.service";
+import { Injectable, Logger } from '@nestjs/common';
+import { InjectRepository } from '@mikro-orm/nestjs';
+import { EntityRepository } from '@mikro-orm/core';
+import { Collection, Guild, Message, Role, Snowflake } from 'discord.js';
+import { getChannel } from '../../discord/discord.hacks';
+import { RoleMetricsEntity } from '../../database/entities/role.metrics.entity';
+import { ActivityEntity } from '../../database/entities/activity.entity';
+import { generateDateInPast } from '../../helpers';
+import { DiscordService } from '../../discord/discord.service';
 
 export interface RoleList {
   onboardedRole: Role;
@@ -18,8 +18,8 @@ export interface RoleList {
 export class RoleMetricsService {
   private readonly logger = new Logger(RoleMetricsService.name);
 
-  private readonly onboarded = "Onboarded";
-  private readonly trackedCommunityGames = ["Albion Online", "Foxhole"];
+  private readonly onboarded = 'Onboarded';
+  private readonly trackedCommunityGames = ['Albion Online', 'Foxhole'];
   private readonly activeDayThreshold = 90; // 90 days
 
   constructor(
@@ -31,13 +31,13 @@ export class RoleMetricsService {
   ) {}
 
   async startEnumeration(message: Message): Promise<void> {
-    this.logger.log("Starting role metrics enumeration");
+    this.logger.log('Starting role metrics enumeration');
 
     try {
       // Get the guild from the message
       const guild = getChannel(message).guild;
       if (!guild) {
-        const error = "Guild not found!";
+        const error = 'Guild not found!';
         this.logger.error(error);
         await getChannel(message).send(error);
         return;
@@ -45,7 +45,8 @@ export class RoleMetricsService {
 
       const roleIds = await this.enumerateRoleIds(guild);
       await this.enumerateRoleMetrics(roleIds, guild);
-    } catch (err) {
+    }
+    catch (err) {
       const error = `Error enumerating role metrics. Error: ${err.message}`;
       this.logger.error(error);
       await getChannel(message).send(error);
@@ -60,7 +61,7 @@ export class RoleMetricsService {
     const stat = await this.roleMetricsRepository.findOne({ createdAt: date });
 
     if (!stat?.id) {
-      const error = "No role metrics found!";
+      const error = 'No role metrics found!';
       this.logger.error(error);
       await getChannel(message).send(error);
       return;
@@ -83,13 +84,13 @@ export class RoleMetricsService {
         const percentage = ((value / stat.onboarded) * 100).toFixed(1);
         return `  - ${key}: **${value}** (${percentage}%)`;
       })
-      .join("\n");
+      .join('\n');
     const recGames = Object.entries(stat.recGames)
       .map(([key, value]) => {
         const percentage = ((value / stat.onboarded) * 100).toFixed(1);
         return `  - ${key}: **${value}** (${percentage}%)`;
       })
-      .join("\n");
+      .join('\n');
     const onboarded = stat.onboarded;
 
     // Format the report
@@ -104,22 +105,22 @@ ${recGames}
     // Send a message to the channel with the report
     await getChannel(message).send(report);
     this.logger.log(report);
-    this.logger.log("Role metrics enumeration completed.");
+    this.logger.log('Role metrics enumeration completed.');
   }
 
   async enumerateRoleIds(guild: Guild): Promise<RoleList> {
-    this.logger.log("Starting role ID enumeration");
+    this.logger.log('Starting role ID enumeration');
 
     // Get all roles from the guild, uncached
     const roles = await this.discordService.getAllRolesFromGuild(guild);
     if (!roles || roles.size === 0) {
-      throw new Error("Roles not found!");
+      throw new Error('Roles not found!');
     }
 
     // Find the Onboarded role
     const onboardedRole = roles.find((role) => role.name === this.onboarded);
     if (!onboardedRole) {
-      throw new Error("Onboarded role not found!");
+      throw new Error('Onboarded role not found!');
     }
 
     // Find the tracked community game roles
@@ -128,13 +129,13 @@ ${recGames}
     );
 
     if (communityGameRoles.size === 0) {
-      throw new Error("Community game roles not found!");
+      throw new Error('Community game roles not found!');
     }
 
     // Find all roles with the 'Rec/' prefix
-    const recGameRoles = roles.filter((role) => role.name.startsWith("Rec/"));
+    const recGameRoles = roles.filter((role) => role.name.startsWith('Rec/'));
     if (recGameRoles.size === 0) {
-      throw new Error("Rec game roles not found!");
+      throw new Error('Rec game roles not found!');
     }
 
     // Filter out any Rec/*/X roles, we don't want to count those.
@@ -153,12 +154,12 @@ ${recGames}
   }
 
   async enumerateRoleMetrics(roles: RoleList, guild: Guild): Promise<void> {
-    this.logger.log("Starting role metrics enumeration...");
+    this.logger.log('Starting role metrics enumeration...');
 
     // Get the members from the guild
     const members = await guild.members.fetch();
     if (!members) {
-      throw new Error("Discord Guild Members not found!");
+      throw new Error('Discord Guild Members not found!');
     }
 
     const activeMembers = await this.getActiveMembers();
@@ -242,11 +243,11 @@ ${recGames}
       .getEntityManager()
       .persistAndFlush(roleMetrics);
 
-    this.logger.log("Role metrics enumeration completed.");
+    this.logger.log('Role metrics enumeration completed.');
   }
 
   async getActiveMembers(): Promise<ActivityEntity[]> {
-    this.logger.log("Getting active members");
+    this.logger.log('Getting active members');
 
     // Get the active members from the activity repository
     const activeMembers = await this.activityRepository.findAll();

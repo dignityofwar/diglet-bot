@@ -1,12 +1,12 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { Test, TestingModule } from "@nestjs/testing";
-import { AlbionDeregisterCommand } from "./deregistration.command";
-import { AlbionDeregistrationService } from "../services/albion.deregistration.service";
-import { Logger } from "@nestjs/common";
-import { TestBootstrapper } from "../../test.bootstrapper";
-import { ReflectMetadataProvider } from "@discord-nestjs/core";
+import { Test, TestingModule } from '@nestjs/testing';
+import { AlbionDeregisterCommand } from './deregistration.command';
+import { AlbionDeregistrationService } from '../services/albion.deregistration.service';
+import { Logger } from '@nestjs/common';
+import { TestBootstrapper } from '../../test.bootstrapper';
+import { ReflectMetadataProvider } from '@discord-nestjs/core';
 
-describe("AlbionDeregisterCommand", () => {
+describe('AlbionDeregisterCommand', () => {
   let command: AlbionDeregisterCommand;
   let albionDeregistrationService: AlbionDeregistrationService;
   let mockDiscordInteraction: any;
@@ -47,16 +47,16 @@ describe("AlbionDeregisterCommand", () => {
       mockDiscordUser,
     );
 
-    dto = { character: "SomeCharacter" };
+    dto = { character: 'SomeCharacter' };
 
     // Get the placeholder message that gets generated
   });
 
-  it("should be defined", () => {
+  it('should be defined', () => {
     expect(command).toBeDefined();
   });
 
-  it("should send a placeholder message", async () => {
+  it('should send a placeholder message', async () => {
     await command.onAlbionDeregisterCommand(dto, mockDiscordInteraction);
 
     expect(mockDiscordInteraction[0].channel.send).toHaveBeenCalledWith(
@@ -64,7 +64,7 @@ describe("AlbionDeregisterCommand", () => {
     );
   });
 
-  it("should call deregister with character name", async () => {
+  it('should call deregister with character name', async () => {
     await command.onAlbionDeregisterCommand(dto, mockDiscordInteraction);
 
     mockMessage = (await mockDiscordInteraction[0].channel.send.mock.results[0])
@@ -76,7 +76,7 @@ describe("AlbionDeregisterCommand", () => {
     );
   });
 
-  it("should call deregister with discord member", async () => {
+  it('should call deregister with discord member', async () => {
     const mockDto = { discordMember: mockDiscordUser };
     await command.onAlbionDeregisterCommand(mockDto, mockDiscordInteraction);
 
@@ -89,17 +89,17 @@ describe("AlbionDeregisterCommand", () => {
     );
   });
 
-  it("should throw if neither character nor discordMember is provided", async () => {
+  it('should throw if neither character nor discordMember is provided', async () => {
     const mockDto = {};
     await command.onAlbionDeregisterCommand(mockDto, mockDiscordInteraction);
 
     expect(mockDiscordInteraction[0].reply).toHaveBeenCalledWith(
-      "❌ You must provide either a character name or a Discord member to deregister.",
+      '❌ You must provide either a character name or a Discord member to deregister.',
     );
     expect(albionDeregistrationService.deregister).not.toHaveBeenCalled();
   });
 
-  it("should delete the placeholder message after deregistration", async () => {
+  it('should delete the placeholder message after deregistration', async () => {
     await command.onAlbionDeregisterCommand(dto, mockDiscordInteraction);
 
     mockMessage = (await mockDiscordInteraction[0].channel.send.mock.results[0])
@@ -108,10 +108,10 @@ describe("AlbionDeregisterCommand", () => {
     expect(mockMessage.delete).toHaveBeenCalled();
   });
 
-  it("should not delete the placeholder if deregistration throws", async () => {
+  it('should not delete the placeholder if deregistration throws', async () => {
     albionDeregistrationService.deregister = jest
       .fn()
-      .mockRejectedValueOnce(new Error("Failure"));
+      .mockRejectedValueOnce(new Error('Failure'));
 
     await command.onAlbionDeregisterCommand(dto, mockDiscordInteraction);
     expect(albionDeregistrationService.deregister).toHaveBeenCalled();

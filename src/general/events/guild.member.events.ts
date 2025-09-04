@@ -1,9 +1,9 @@
-import { Injectable, Logger } from "@nestjs/common";
-import { On } from "@discord-nestjs/core";
-import { Events, GuildMember } from "discord.js";
-import { InjectRepository } from "@mikro-orm/nestjs";
-import { EntityRepository } from "@mikro-orm/core";
-import { ActivityEntity } from "../../database/entities/activity.entity";
+import { Injectable, Logger } from '@nestjs/common';
+import { On } from '@discord-nestjs/core';
+import { Events, GuildMember } from 'discord.js';
+import { InjectRepository } from '@mikro-orm/nestjs';
+import { EntityRepository } from '@mikro-orm/core';
+import { ActivityEntity } from '../../database/entities/activity.entity';
 
 @Injectable()
 export class GuildMemberEvents {
@@ -31,7 +31,8 @@ export class GuildMemberEvents {
       this.logger.log(
         `Removed activity record for leaver ${activityRecord.discordNickname} (${activityRecord.discordId})`,
       );
-    } else {
+    }
+    else {
       this.logger.warn(
         `No activity record was found for leaver ${member.displayName} (${member.id}), likely left immediately after joining.`,
       );

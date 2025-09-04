@@ -1,8 +1,8 @@
-import { Injectable, Logger } from "@nestjs/common";
-import { On } from "@discord-nestjs/core";
-import { Events, Message, MessageReaction, User } from "discord.js";
-import { DatabaseService } from "../../database/services/database.service";
-import { RecRolePingService } from "../services/rec.role.ping.service";
+import { Injectable, Logger } from '@nestjs/common';
+import { On } from '@discord-nestjs/core';
+import { Events, Message, MessageReaction, User } from 'discord.js';
+import { DatabaseService } from '../../database/services/database.service';
+import { RecRolePingService } from '../services/rec.role.ping.service';
 
 @Injectable()
 export class MessageEvents {
@@ -74,7 +74,8 @@ export class MessageEvents {
     if (reaction.partial) {
       try {
         realReaction = await reaction.fetch();
-      } catch (error) {
+      }
+      catch (error) {
         this.logger.error(`Error fetching reaction: ${error.message}`);
         throw error;
       }
@@ -85,7 +86,8 @@ export class MessageEvents {
     if (user.partial) {
       try {
         realUser = await user.fetch();
-      } catch (error) {
+      }
+      catch (error) {
         this.logger.error(
           `Error fetching user "${user.displayName}": ${error.message}`,
         );
@@ -103,11 +105,12 @@ export class MessageEvents {
   @On(Events.MessageCreate)
   async onMessageCreate(message: Message): Promise<void> {
     try {
-      await this.handleMessageEvent(message, "create");
+      await this.handleMessageEvent(message, 'create');
       this.logger.verbose(
         `Message create event handled for ${message.member.displayName}`,
       );
-    } catch (error) {
+    }
+    catch (error) {
       this.logger.error(
         `Error handling message create event: ${error.message}`,
       );
@@ -117,11 +120,12 @@ export class MessageEvents {
   @On(Events.MessageUpdate)
   async onMessageUpdate(message: Message): Promise<void> {
     try {
-      await this.handleMessageEvent(message, "update");
+      await this.handleMessageEvent(message, 'update');
       this.logger.verbose(
         `Message update event handled for ${message.member.displayName}`,
       );
-    } catch (error) {
+    }
+    catch (error) {
       this.logger.error(
         `Error handling message update event: ${error.message}`,
       );
@@ -131,11 +135,12 @@ export class MessageEvents {
   @On(Events.MessageDelete)
   async onMessageDelete(message: Message): Promise<void> {
     try {
-      await this.handleMessageEvent(message, "delete");
+      await this.handleMessageEvent(message, 'delete');
       this.logger.verbose(
         `Message delete event handled for ${message.member.displayName}`,
       );
-    } catch (error) {
+    }
+    catch (error) {
       this.logger.error(
         `Error handling message delete event: ${error.message}`,
       );
@@ -150,8 +155,9 @@ export class MessageEvents {
     try {
       const { reaction: fullReaction, user: fullUser } =
         await this.handlePartialReactions(reaction, user);
-      await this.handleMessageReaction(fullReaction, fullUser, "add");
-    } catch (error) {
+      await this.handleMessageReaction(fullReaction, fullUser, 'add');
+    }
+    catch (error) {
       this.logger.error(
         `Error handling message reaction add event. ${error.message}`,
       );
@@ -166,8 +172,9 @@ export class MessageEvents {
     try {
       const { reaction: fullReaction, user: fullUser } =
         await this.handlePartialReactions(reaction, user);
-      await this.handleMessageReaction(fullReaction, fullUser, "remove");
-    } catch (error) {
+      await this.handleMessageReaction(fullReaction, fullUser, 'remove');
+    }
+    catch (error) {
       this.logger.error(
         `Error handling message reaction remove event. ${error.message}`,
       );

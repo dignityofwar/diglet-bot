@@ -1,9 +1,9 @@
-import { Injectable, Logger, OnApplicationBootstrap } from "@nestjs/common";
-import { Cron } from "@nestjs/schedule";
-import { PS2GameScanningService } from "./ps2.game.scanning.service";
-import { TextChannel } from "discord.js";
-import { ConfigService } from "@nestjs/config";
-import { DiscordService } from "../../discord/discord.service";
+import { Injectable, Logger, OnApplicationBootstrap } from '@nestjs/common';
+import { Cron } from '@nestjs/schedule';
+import { PS2GameScanningService } from './ps2.game.scanning.service';
+import { TextChannel } from 'discord.js';
+import { ConfigService } from '@nestjs/config';
+import { DiscordService } from '../../discord/discord.service';
 
 @Injectable()
 export class PS2CronService implements OnApplicationBootstrap {
@@ -17,9 +17,9 @@ export class PS2CronService implements OnApplicationBootstrap {
   ) {}
 
   async onApplicationBootstrap(): Promise<void> {
-    this.logger.log("Initializing PS2 Cron Service");
+    this.logger.log('Initializing PS2 Cron Service');
 
-    const channelId = this.config.get("discord.channels.ps2Scans");
+    const channelId = this.config.get('discord.channels.ps2Scans');
 
     // Check if the channel exists
     this.channel = await this.discordService.getTextChannel(channelId);
@@ -32,13 +32,13 @@ export class PS2CronService implements OnApplicationBootstrap {
     }
   }
 
-  @Cron("30 19 * * *")
+  @Cron('30 19 * * *')
   async runPS2Scans(): Promise<void> {
-    this.logger.log("Running PS2 Scans Cron");
+    this.logger.log('Running PS2 Scans Cron');
 
-    await this.channel.send("Starting daily scan...");
+    await this.channel.send('Starting daily scan...');
 
-    const message = await this.channel.send("Running daily PS2 Scans");
+    const message = await this.channel.send('Running daily PS2 Scans');
 
     await this.ps2GameScanningService.startScan(message);
   }

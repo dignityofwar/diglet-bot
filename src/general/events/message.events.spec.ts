@@ -1,13 +1,13 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { Test, TestingModule } from "@nestjs/testing";
-import { MessageEvents } from "./message.events";
-import { DatabaseService } from "../../database/services/database.service";
-import { TestBootstrapper } from "../../test.bootstrapper";
-import { RecRolePingService } from "../services/rec.role.ping.service";
+import { Test, TestingModule } from '@nestjs/testing';
+import { MessageEvents } from './message.events';
+import { DatabaseService } from '../../database/services/database.service';
+import { TestBootstrapper } from '../../test.bootstrapper';
+import { RecRolePingService } from '../services/rec.role.ping.service';
 
-jest.mock("../../database/services/database.service");
+jest.mock('../../database/services/database.service');
 
-describe("MessageEvents", () => {
+describe('MessageEvents', () => {
   let messageEvents: MessageEvents;
   let databaseService: any;
   let recRolePingService: RecRolePingService;
@@ -51,9 +51,9 @@ describe("MessageEvents", () => {
     jest.clearAllMocks();
   });
 
-  describe("handleMessageEvent", () => {
-    it("should handle a message event for a non-bot user", async () => {
-      await messageEvents.handleMessageEvent(mockMessage, "create");
+  describe('handleMessageEvent', () => {
+    it('should handle a message event for a non-bot user', async () => {
+      await messageEvents.handleMessageEvent(mockMessage, 'create');
 
       expect(databaseService.updateActivity).toHaveBeenCalledWith(
         mockMessage.member,
@@ -61,39 +61,39 @@ describe("MessageEvents", () => {
       expect(recRolePingService.onMessage).toHaveBeenCalledWith(mockMessage);
     });
 
-    it("should not handle message events for bot users", async () => {
+    it('should not handle message events for bot users', async () => {
       mockMessage.member.user.bot = true;
 
-      await messageEvents.handleMessageEvent(mockMessage, "create");
+      await messageEvents.handleMessageEvent(mockMessage, 'create');
 
       expect(databaseService.updateActivity).not.toHaveBeenCalled();
       expect(recRolePingService.onMessage).not.toHaveBeenCalled();
     });
 
-    it("should handle message events null users", async () => {
+    it('should handle message events null users', async () => {
       mockMessage.member.user = null;
       await expect(
-        messageEvents.handleMessageEvent(mockMessage, "create"),
+        messageEvents.handleMessageEvent(mockMessage, 'create'),
       ).rejects.toThrow(
-        "Message create event could not be processed as the GuildMember was not found.",
+        'Message create event could not be processed as the GuildMember was not found.',
       );
       await expect(
-        messageEvents.handleMessageEvent(mockMessage, "update"),
+        messageEvents.handleMessageEvent(mockMessage, 'update'),
       ).rejects.toThrow(
-        "Message update event could not be processed as the GuildMember was not found.",
+        'Message update event could not be processed as the GuildMember was not found.',
       );
       await expect(
-        messageEvents.handleMessageEvent(mockMessage, "delete"),
+        messageEvents.handleMessageEvent(mockMessage, 'delete'),
       ).rejects.toThrow(
-        "Message delete event could not be processed as the GuildMember was not found.",
+        'Message delete event could not be processed as the GuildMember was not found.',
       );
     });
 
-    const eventTypes = ["create", "update", "delete"];
+    const eventTypes = ['create', 'update', 'delete'];
     const memberDetails = [
-      { detail: "displayName", value: null },
-      { detail: "nickname", value: null },
-      { detail: "username", value: null },
+      { detail: 'displayName', value: null },
+      { detail: 'nickname', value: null },
+      { detail: 'username', value: null },
     ];
 
     memberDetails.forEach(({ detail, value }) => {
@@ -101,9 +101,10 @@ describe("MessageEvents", () => {
         mockMessage.member.displayName = null;
         mockMessage.member.nickname = null;
         mockMessage.member.user.username = null;
-        if (detail === "nickname") {
+        if (detail === 'nickname') {
           mockGuildMember.nickname = value;
-        } else {
+        }
+        else {
           mockGuildMember.user.username = value;
         }
 
@@ -119,30 +120,30 @@ describe("MessageEvents", () => {
     });
   });
 
-  describe("handleMessageReaction", () => {
-    it("should handle a message reaction for a non-bot user", async () => {
+  describe('handleMessageReaction', () => {
+    it('should handle a message reaction for a non-bot user', async () => {
       mockMessage.guild.members.cache.get = jest
         .fn()
         .mockReturnValue(mockGuildMember);
       await messageEvents.handleMessageReaction(
         mockMessageReaction,
         mockUser,
-        "add",
+        'add',
       );
       expect(databaseService.updateActivity).toHaveBeenCalled();
     });
 
-    it("should not handle message reactions for bot users", async () => {
+    it('should not handle message reactions for bot users', async () => {
       mockUser.bot = true;
       await messageEvents.handleMessageReaction(
         mockMessageReaction,
         mockUser,
-        "add",
+        'add',
       );
       expect(databaseService.updateActivity).not.toHaveBeenCalled();
     });
 
-    it("should return early when no GuildMember was found", async () => {
+    it('should return early when no GuildMember was found', async () => {
       mockMessageReaction.message.guild.members.cache.get = jest
         .fn()
         .mockReturnValue(undefined);
@@ -150,15 +151,15 @@ describe("MessageEvents", () => {
         await messageEvents.handleMessageReaction(
           mockMessageReaction,
           mockUser,
-          "add",
+          'add',
         ),
       ).toBe(undefined);
       expect(databaseService.updateActivity).not.toHaveBeenCalled();
     });
   });
 
-  describe("handlePartialReactions", () => {
-    it("should handle full reactions without fetching", async () => {
+  describe('handlePartialReactions', () => {
+    it('should handle full reactions without fetching', async () => {
       const result = await messageEvents.handlePartialReactions(
         mockMessageReaction,
         mockUser,
@@ -168,7 +169,7 @@ describe("MessageEvents", () => {
       expect(mockMessageReaction.fetch).not.toHaveBeenCalled();
     });
 
-    it("should fetch partial reactions", async () => {
+    it('should fetch partial reactions', async () => {
       mockMessageReaction.partial = true;
       mockMessageReaction.fetch.mockResolvedValue(mockMessageReaction);
 
@@ -181,34 +182,34 @@ describe("MessageEvents", () => {
     });
   });
 
-  describe("Event Handlers", () => {
-    it("should handle message creation", async () => {
+  describe('Event Handlers', () => {
+    it('should handle message creation', async () => {
       await messageEvents.onMessageCreate(mockMessage);
       expect(databaseService.updateActivity).toHaveBeenCalledWith(
         mockMessage.member,
       );
     });
-    it("should handle message creation from a bot", async () => {
+    it('should handle message creation from a bot', async () => {
       mockMessage.member = TestBootstrapper.getMockDiscordUser(true);
       await messageEvents.onMessageCreate(mockMessage);
       expect(databaseService.updateActivity).toHaveBeenCalledTimes(0);
     });
 
-    it("should handle message update", async () => {
+    it('should handle message update', async () => {
       await messageEvents.onMessageUpdate(mockMessage);
       expect(databaseService.updateActivity).toHaveBeenCalledWith(
         mockMessage.member,
       );
     });
 
-    it("should handle message deletion", async () => {
+    it('should handle message deletion', async () => {
       await messageEvents.onMessageDelete(mockMessage);
       expect(databaseService.updateActivity).toHaveBeenCalledWith(
         mockMessage.member,
       );
     });
 
-    it("should handle message reaction addition", async () => {
+    it('should handle message reaction addition', async () => {
       mockMessageReaction.partial = false; // assuming this is a full reaction
 
       await messageEvents.onMessageReactionAdd(mockMessageReaction, mockUser);
@@ -217,7 +218,7 @@ describe("MessageEvents", () => {
       expect(databaseService.updateActivity).toHaveBeenCalledTimes(1);
     });
 
-    it("should handle message reaction addition from a bot", async () => {
+    it('should handle message reaction addition from a bot', async () => {
       mockMessageReaction.partial = false; // assuming this is a full reaction
       mockUser.bot = true; // assuming this is a bot user
 
@@ -226,7 +227,7 @@ describe("MessageEvents", () => {
       expect(databaseService.updateActivity).toHaveBeenCalledTimes(0);
     });
 
-    it("should handle message reaction removal", async () => {
+    it('should handle message reaction removal', async () => {
       mockMessageReaction.partial = false; // assuming this is a full reaction
       mockUser.bot = false; // assuming this is a non-bot user
 

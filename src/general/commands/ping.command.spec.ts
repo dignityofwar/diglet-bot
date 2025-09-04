@@ -1,10 +1,10 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { PingCommand } from "./ping.command";
-import { Test } from "@nestjs/testing";
-import { ConfigService } from "@nestjs/config";
-import { TestBootstrapper } from "../../test.bootstrapper";
+import { PingCommand } from './ping.command';
+import { Test } from '@nestjs/testing';
+import { ConfigService } from '@nestjs/config';
+import { TestBootstrapper } from '../../test.bootstrapper';
 
-describe("PingCommand", () => {
+describe('PingCommand', () => {
   let service: PingCommand;
   let mockInteraction: any;
   let mockConfigService: ConfigService;
@@ -20,14 +20,14 @@ describe("PingCommand", () => {
     // Mock a ChatInputCommandInteraction
     mockDiscordUser = TestBootstrapper.getMockDiscordUser();
     mockInteraction = TestBootstrapper.getMockDiscordInteraction(
-      "123456789",
+      '123456789',
       mockDiscordUser,
     )[0];
   });
 
-  it("should pong", async () => {
-    const version = "1.2.3";
-    jest.spyOn(mockConfigService, "get").mockReturnValue(version);
+  it('should pong', async () => {
+    const version = '1.2.3';
+    jest.spyOn(mockConfigService, 'get').mockReturnValue(version);
 
     await service.onPingCommand(mockInteraction);
 

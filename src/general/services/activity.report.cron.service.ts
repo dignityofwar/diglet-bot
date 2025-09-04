@@ -1,11 +1,11 @@
-import { Injectable, Logger, OnApplicationBootstrap } from "@nestjs/common";
-import { TextChannel } from "discord.js";
-import { ConfigService } from "@nestjs/config";
-import { DiscordService } from "../../discord/discord.service";
-import { Cron } from "@nestjs/schedule";
-import { ActivityService } from "./activity.service";
-import { JoinerLeaverService } from "./joinerleaver.service";
-import { RoleMetricsService } from "./role.metrics.service";
+import { Injectable, Logger, OnApplicationBootstrap } from '@nestjs/common';
+import { TextChannel } from 'discord.js';
+import { ConfigService } from '@nestjs/config';
+import { DiscordService } from '../../discord/discord.service';
+import { Cron } from '@nestjs/schedule';
+import { ActivityService } from './activity.service';
+import { JoinerLeaverService } from './joinerleaver.service';
+import { RoleMetricsService } from './role.metrics.service';
 
 @Injectable()
 export class ActivityReportCronService implements OnApplicationBootstrap {
@@ -21,9 +21,9 @@ export class ActivityReportCronService implements OnApplicationBootstrap {
   ) {}
 
   async onApplicationBootstrap(): Promise<void> {
-    this.logger.log("Initializing Activity Enumeration Service");
+    this.logger.log('Initializing Activity Enumeration Service');
 
-    const channelId = this.config.get("discord.channels.activityReports");
+    const channelId = this.config.get('discord.channels.activityReports');
 
     // Check if the channel exists
     this.channel = await this.discordService.getTextChannel(channelId);
@@ -36,11 +36,11 @@ export class ActivityReportCronService implements OnApplicationBootstrap {
     }
   }
 
-  @Cron("1 0 * * *")
+  @Cron('1 0 * * *')
   async runReport(): Promise<void> {
-    this.logger.log("Running Activity Enumeration Job");
+    this.logger.log('Running Activity Enumeration Job');
     const message = await this.channel.send(
-      "Starting daily activity enumeration...",
+      'Starting daily activity enumeration...',
     );
 
     await this.activityService.startEnumeration(message);

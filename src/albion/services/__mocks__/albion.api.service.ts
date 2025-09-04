@@ -1,4 +1,4 @@
-import { AlbionPlayersResponseInterface } from "../../interfaces/albion.api.interfaces";
+import { AlbionPlayersResponseInterface } from '../../interfaces/albion.api.interfaces';
 
 export class AlbionApiService {
   async getCharacter(
@@ -24,14 +24,14 @@ export class AlbionApiService {
         },
         Inventory: [],
         Name: characterName,
-        Id: "tOuPzciNRAKEZLEbnkXjJw",
-        GuildName: "DIG - Dignity of War",
-        GuildId: "btPZRoLvTUqLC7URnDRgSQ",
-        AllianceName: "DR0P",
-        AllianceId: "NPlEu0zxQ2uStOPKoKk3Cg",
-        AllianceTag: "",
-        Avatar: "",
-        AvatarRing: "",
+        Id: 'tOuPzciNRAKEZLEbnkXjJw',
+        GuildName: 'DIG - Dignity of War',
+        GuildId: 'btPZRoLvTUqLC7URnDRgSQ',
+        AllianceName: 'DR0P',
+        AllianceId: 'NPlEu0zxQ2uStOPKoKk3Cg',
+        AllianceTag: '',
+        Avatar: '',
+        AvatarRing: '',
         DeathFame: 1235524,
         KillFame: 809607,
         FameRatio: 0.66,
@@ -57,19 +57,19 @@ export class AlbionApiService {
           CrystalLeague: 0,
           FishingFame: 2116,
           FarmingFame: 371900,
-          Timestamp: "2023-07-03T01:56:22.605835Z",
+          Timestamp: '2023-07-03T01:56:22.605835Z',
         },
       },
     };
   }
 
   async getCharacterId(characterName: string): Promise<string> {
-    if (characterName === "Maelstrome26") {
-      return "hd8zVXIjRc6lnb_1FYIgpw";
+    if (characterName === 'Maelstrome26') {
+      return 'hd8zVXIjRc6lnb_1FYIgpw';
     }
 
     throw new Error(
-      "Character does not seem to exist. Please ensure you have supplied your exact name.",
+      'Character does not seem to exist. Please ensure you have supplied your exact name.',
     );
   }
 }

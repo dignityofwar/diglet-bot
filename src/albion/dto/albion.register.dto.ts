@@ -1,15 +1,15 @@
-import { Param } from "@discord-nestjs/core";
+import { Param } from '@discord-nestjs/core';
 // import { AlbionServer } from '../interfaces/albion.api.interfaces';
 
 export class AlbionRegisterDto {
   @Param({
-    name: "character-name",
-    description: "Name of your in-game Albion Character. This must be exact!",
+    name: 'character-name',
+    description: 'Name of your in-game Albion Character. This must be exact!',
     required: true,
     minLength: 3,
     maxLength: 16,
   })
-  character: string;
+    character: string;
 
   // @Choice(AlbionServer)
   // @Param({

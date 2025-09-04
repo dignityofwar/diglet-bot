@@ -3,21 +3,21 @@ import {
   EventParams,
   Handler,
   InteractionEvent,
-} from "@discord-nestjs/core";
+} from '@discord-nestjs/core';
 import {
   ApplicationCommandType,
   ChatInputCommandInteraction,
-} from "discord.js";
-import { Injectable, Logger } from "@nestjs/common";
-import { ConfigService } from "@nestjs/config";
-import { AlbionReportsService } from "../services/albion.reports.service";
-import { SlashCommandPipe } from "@discord-nestjs/common";
-import { AlbionReportsDto } from "../dto/albion.reports.dto";
+} from 'discord.js';
+import { Injectable, Logger } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
+import { AlbionReportsService } from '../services/albion.reports.service';
+import { SlashCommandPipe } from '@discord-nestjs/common';
+import { AlbionReportsDto } from '../dto/albion.reports.dto';
 
 @Command({
-  name: "albion-reports",
+  name: 'albion-reports',
   type: ApplicationCommandType.ChatInput,
-  description: "Run reports on the Albion Guild",
+  description: 'Run reports on the Albion Guild',
 })
 @Injectable()
 export class AlbionReportsCommand {
@@ -33,10 +33,10 @@ export class AlbionReportsCommand {
     @InteractionEvent(SlashCommandPipe) dto: AlbionReportsDto,
     @EventParams() interaction: ChatInputCommandInteraction[],
   ): Promise<string> {
-    this.logger.debug("Received Albion Reports Command");
+    this.logger.debug('Received Albion Reports Command');
 
     // Check if the command came from the correct channel ID
-    const scanChannelId = this.config.get("discord.channels.albionScans");
+    const scanChannelId = this.config.get('discord.channels.albionScans');
 
     // Check if channel is correct
     if (interaction[0].channelId !== scanChannelId) {
@@ -44,7 +44,7 @@ export class AlbionReportsCommand {
     }
 
     const message = await interaction[0].channel.send(
-      "Starting Albion Members Report...",
+      'Starting Albion Members Report...',
     );
 
     if (dto.fullReport) {
@@ -54,6 +54,6 @@ export class AlbionReportsCommand {
       this.albionReportsService.graduateCandidates(message);
     }
 
-    return "Albion Report Initiated...";
+    return 'Albion Report Initiated...';
   }
 }
