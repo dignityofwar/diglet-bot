@@ -36,11 +36,10 @@ export class AlbionScanningService {
   // Also send a message to the #albion-scans channel to denote this has happened.
   async startScan(
     message: Message,
-    dryRun = false,
-    server: AlbionServer = AlbionServer.AMERICAS
+    dryRun = false
   ) {
-    const emoji = this.serverEmoji(server);
-    const guildId = server === AlbionServer.AMERICAS ? this.config.get('albion.guildIdUS') : this.config.get('albion.guildId');
+    const emoji = this.serverEmoji();
+    const guildId = this.config.get('albion.guildId');
 
     await message.edit(`# ${emoji} Starting scan...`);
 
@@ -55,7 +54,7 @@ export class AlbionScanningService {
 
     try {
       await message.edit(`# ${emoji} Task: [1/4] Gathering ${length} characters from the ALB API...`);
-      characters = await this.gatherCharacters(guildMembers, message, 0, server);
+      characters = await this.gatherCharacters(guildMembers, message, 0);
     }
     catch (err) {
       await message.edit(`## ${emoji} ❌ An error occurred while gathering data from the API!`);
@@ -70,17 +69,17 @@ export class AlbionScanningService {
 
     try {
       await message.edit(`# ${emoji} Task: [2/4] Checking ${length} characters for membership status...`);
-      if (await this.removeLeavers(characters, message, dryRun, server)) actionRequired = true;
+      if (await this.removeLeavers(characters, message, dryRun)) actionRequired = true;
 
       // Check if members have roles they shouldn't have
       await message.edit(`# ${emoji} Task: [3/4] Performing reverse role scan...`);
-      await this.reverseRoleScan(message, dryRun, server);
+      await this.reverseRoleScan(message, dryRun);
 
       await message.edit(`# ${emoji} Task: [4/4] Checking for role inconsistencies...`);
-      if (await this.roleInconsistencies(message, dryRun, server)) actionRequired = true;
+      if (await this.roleInconsistencies(message, dryRun)) actionRequired = true;
     }
     catch (err) {
-      await message.edit('## 🇺🇸 ❌ An error occurred while scanning!');
+      await message.edit('## 🏰 ❌ An error occurred while scanning!');
       await getChannel(message).send(`Error: ${err.message}`);
     }
 
@@ -88,8 +87,7 @@ export class AlbionScanningService {
     await getChannel(message).send(`## ${emoji} Scan complete!`);
     // If any of the tasks flagged for action, tell them now.
     if (actionRequired && !dryRun) {
-      const configKey = server === AlbionServer.AMERICAS ? 'albion.pingLeaderRolesUS' : 'albion.pingLeaderRoles';
-      const scanPingRoles = this.config.get(configKey);
+      const scanPingRoles = this.config.get('albion.pingLeaderRoles');
       const text = `🔔 <@&${scanPingRoles.join('>, <@&')}> Please review the above actions marked with (‼️) and make any necessary changes manually. To scan again without pinging, run the \`/albion-scan\` command with the \`dry-run\` flag set to \`true\`.`;
       await getChannel(message).send(text);
     }
@@ -101,10 +99,9 @@ export class AlbionScanningService {
   async gatherCharacters(
     guildMembers: AlbionRegistrationsEntity[],
     message: Message,
-    tries = 0,
-    server: AlbionServer = AlbionServer.AMERICAS
+    tries = 0
   ) {
-    const emoji = this.serverEmoji(server);
+    const emoji = this.serverEmoji();
     const characterPromises: Promise<AlbionPlayerInterface>[] = [];
     tries++;
     const length = guildMembers.length;
@@ -112,10 +109,10 @@ export class AlbionScanningService {
       await getChannel(message).send(`## ❌ An error occurred while gathering data for ${length} characters! Giving up after 3 tries! Pinging <@${this.config.get('discord.devUserId')}>!`);
       return null;
     }
-    const statusMessage = await getChannel(message).send(`${emoji} Gathering ${length} characters from the ${server} ALB API... (attempt #${tries})`);
+    const statusMessage = await getChannel(message).send(`${emoji} Gathering ${length} characters from Albion API... (attempt #${tries})`);
 
     for (const member of guildMembers) {
-      characterPromises.push(this.albionApiService.getCharacterById(member.characterId, server));
+      characterPromises.push(this.albionApiService.getCharacterById(member.characterId));
     }
 
     try {
@@ -124,21 +121,20 @@ export class AlbionScanningService {
     }
     catch (err) {
       await statusMessage.delete();
-      const tempMessage = await getChannel(message).send(`## ⚠️ Couldn't gather characters from ${server} ALB API.\nError: "${err.message}".\nRetrying in 10s...`);
+      const tempMessage = await getChannel(message).send(`## ⚠️ Couldn't gather characters from Albion API.\nError: "${err.message}".\nRetrying in 10s...`);
       await new Promise(resolve => setTimeout(resolve, 10000));
       await tempMessage.delete();
-      return this.gatherCharacters(guildMembers, message, tries, server);
+      return this.gatherCharacters(guildMembers, message, tries);
     }
   }
 
   async removeLeavers(
     characters: AlbionPlayerInterface[],
     message: Message,
-    dryRun = false,
-    server: AlbionServer = AlbionServer.AMERICAS
+    dryRun = false
   ): Promise<boolean> {
-    const emoji = this.serverEmoji(server);
-    const guildId = server === AlbionServer.AMERICAS ? this.config.get('albion.guildIdUS') : this.config.get('albion.guildId');
+    const emoji = this.serverEmoji();
+    const guildId = this.config.get('albion.guildId');
     // Save all the characters to a map we can easily pick out later via character ID
     const charactersMap = new Map<string, AlbionPlayerInterface>();
     const leavers: string[] = [];
@@ -543,7 +539,7 @@ export class AlbionScanningService {
     return inconsistencies;
   }
 
-  serverEmoji(server: AlbionServer) {
-    return server === AlbionServer.AMERICAS ? '🇺🇸' : '🇪🇺';
+  serverEmoji() {
+    return '🏰';
   }
 }

@@ -5,7 +5,6 @@ import { AlbionRegisterDto } from '../dto/albion.register.dto';
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { AlbionRegistrationService } from '../services/albion.registration.service';
-import { AlbionServer } from '../interfaces/albion.api.interfaces';
 import { getChannel } from '../../discord/discord.hacks';
 
 @Command({
@@ -44,7 +43,6 @@ export class AlbionRegisterCommand {
 
     this.registrationCommandProxy(
       dto.character,
-      AlbionServer.EUROPE,
       member.id,
       member.guild.id,
       interaction[0].channelId,
@@ -58,7 +56,6 @@ export class AlbionRegisterCommand {
   // This is here so we can respond in the command immediately so the command doesn't "fail", and then handle the registration in the background
   async registrationCommandProxy(
     characterName: string,
-    server: AlbionServer,
     discordMemberId: string,
     discordMemberGuildId: string,
     discordChannelId: string,
@@ -67,7 +64,6 @@ export class AlbionRegisterCommand {
     try {
       await this.albionRegistrationService.handleRegistration(
         characterName,
-        server,
         discordMemberId,
         discordMemberGuildId,
         discordChannelId

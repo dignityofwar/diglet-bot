@@ -1,12 +1,10 @@
 // eslint-disable-next-line no-shadow
 export enum AlbionServer {
-  AMERICAS = 'Americas',
   EUROPE = 'Europe',
 }
 
 // eslint-disable-next-line no-shadow
 export enum AlbionApiEndpoint {
-  ALBION_AMERICAS = 'https://gameinfo.albiononline.com/api/gameinfo',
   ALBION_EUROPE = 'https://gameinfo-ams.albiononline.com/api/gameinfo',
 }
 
