@@ -1,43 +1,43 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { Injectable } from '@nestjs/common';
-import _ from 'lodash';
-import { ConfigService } from '@nestjs/config';
-import { TestingModule } from '@nestjs/testing';
-import { MikroORM } from '@mikro-orm/core';
-import { AlbionServer } from './albion/interfaces/albion.api.interfaces';
-import { PS2MembersEntity } from './database/entities/ps2.members.entity';
-import { PS2RankMapInterface } from './config/ps2.app.config';
-import { Collection, Role, Snowflake } from 'discord.js';
+import { Injectable } from "@nestjs/common";
+import _ from "lodash";
+import { ConfigService } from "@nestjs/config";
+import { TestingModule } from "@nestjs/testing";
+import { MikroORM } from "@mikro-orm/core";
+import { AlbionServer } from "./albion/interfaces/albion.api.interfaces";
+import { PS2MembersEntity } from "./database/entities/ps2.members.entity";
+import { PS2RankMapInterface } from "./config/ps2.app.config";
+import { Collection, Role, Snowflake } from "discord.js";
 
-const guildLeaderRoleUS = '44546543371337';
-const guildLeaderRole = '64354579789809089';
-const guildOfficerRoleUS = '465544343342364';
-const guildOfficerRole = '66343435879886';
+const guildLeaderRoleUS = "44546543371337";
+const guildLeaderRole = "64354579789809089";
+const guildOfficerRoleUS = "465544343342364";
+const guildOfficerRole = "66343435879886";
 
 const ps2RankMap: PS2RankMapInterface = {
-  '@PS2/Verified': {
+  "@PS2/Verified": {
     ranks: null,
-    discordRoleId: '1139909190664601611',
+    discordRoleId: "1139909190664601611",
   },
-  '@PS2/Zealot': {
-    ranks: ['6'],
-    discordRoleId: '1139909319886905496',
+  "@PS2/Zealot": {
+    ranks: ["6"],
+    discordRoleId: "1139909319886905496",
   },
-  '@PS2/SL': {
-    ranks: ['4', '5'],
-    discordRoleId: '1142546129112805517',
+  "@PS2/SL": {
+    ranks: ["4", "5"],
+    discordRoleId: "1142546129112805517",
   },
-  '@PS2/PL': {
-    ranks: ['3'],
-    discordRoleId: '1142546081922682900',
+  "@PS2/PL": {
+    ranks: ["3"],
+    discordRoleId: "1142546081922682900",
   },
-  '@PS2/Officer': {
-    ranks: ['2'],
-    discordRoleId: '1142546051606257755',
+  "@PS2/Officer": {
+    ranks: ["2"],
+    discordRoleId: "1142546051606257755",
   },
-  '@PS2/Leader': {
-    ranks: ['1'],
-    discordRoleId: '1142546013685559337',
+  "@PS2/Leader": {
+    ranks: ["1"],
+    discordRoleId: "1142546013685559337",
   },
 };
 
@@ -74,15 +74,17 @@ export class TestBootstrapper {
       }),
     } as any;
 
-    const mockInit = jest.spyOn(MikroORM, 'init');
-    mockInit.mockResolvedValue(Promise.resolve({
-      em: mockEntityManager,
-    } as any));
+    const mockInit = jest.spyOn(MikroORM, "init");
+    mockInit.mockResolvedValue(
+      Promise.resolve({
+        em: mockEntityManager,
+      } as any),
+    );
   }
 
   static getMockRepositoryInjected(
     entity: any,
-    entityManagerOverrides?: Partial<EntityManagerMock>
+    entityManagerOverrides?: Partial<EntityManagerMock>,
   ) {
     const defaultEntityManagerMock: EntityManagerMock = {
       persistAndFlush: jest.fn().mockResolvedValue(true),
@@ -90,7 +92,10 @@ export class TestBootstrapper {
     };
 
     // Merge in any overrides, for instance to have removeAndFlush reject
-    const entityManagerMock = { ...defaultEntityManagerMock, ...entityManagerOverrides };
+    const entityManagerMock = {
+      ...defaultEntityManagerMock,
+      ...entityManagerOverrides,
+    };
     return {
       find: jest.fn().mockResolvedValueOnce([entity]),
       findOne: jest.fn().mockResolvedValueOnce(entity),
@@ -103,8 +108,8 @@ export class TestBootstrapper {
   }
 
   private static readonly mockDiscordGuildMember = {
-    displayName: 'mockuser',
-    id: '90078072660852736',
+    displayName: "mockuser",
+    id: "90078072660852736",
     fetch: jest.fn(),
     roles: {
       add: jest.fn(),
@@ -121,48 +126,73 @@ export class TestBootstrapper {
   static getMockDiscordUser(isBot = false) {
     return {
       ...this.mockDiscordGuildMember,
-      guild: this.getMockGuild('1234567890'),
+      guild: this.getMockGuild("1234567890"),
       user: {
-        id: '90078072660852736',
-        username: 'mockuser',
+        id: "90078072660852736",
+        username: "mockuser",
         bot: isBot,
       },
     } as any;
   }
 
-  static getMockGuild(id: string = '123456789') {
+  static getMockGuild(id: string = "123456789") {
     return {
       id,
       members: {
         cache: {
-          get: jest.fn().mockImplementation(() => TestBootstrapper.getMockDiscordUser()),
+          get: jest
+            .fn()
+            .mockImplementation(() => TestBootstrapper.getMockDiscordUser()),
           has: jest.fn().mockImplementation(() => true),
         },
         fetch: jest.fn().mockImplementation(() => this.getMockDiscordUser()),
       },
       roles: {
         cache: {
-          get: jest.fn().mockImplementation(() => TestBootstrapper.getMockDiscordRole('4969797969594')),
+          get: jest
+            .fn()
+            .mockImplementation(() =>
+              TestBootstrapper.getMockDiscordRole("4969797969594"),
+            ),
           clear: jest.fn(),
         },
-        fetch: jest.fn().mockImplementation(() => TestBootstrapper.getMockDiscordRole('4969797969594')),
+        fetch: jest
+          .fn()
+          .mockImplementation(() =>
+            TestBootstrapper.getMockDiscordRole("4969797969594"),
+          ),
       },
     };
   }
 
-  static readonly mockOnboardedRoleId = '123456789012345678';
-  static readonly mockAlbionOnlineId = '212345';
-  static readonly mockFoxholeId = '2123456';
-  static readonly mockRecBestGameEverId = '312345';
-  static readonly mockRecPS2LeaderId = '3123456';
+  static readonly mockOnboardedRoleId = "123456789012345678";
+  static readonly mockAlbionOnlineId = "212345";
+  static readonly mockFoxholeId = "2123456";
+  static readonly mockRecBestGameEverId = "312345";
+  static readonly mockRecPS2LeaderId = "3123456";
 
   static getMockGuildRoleListCollection() {
     return new Collection<Snowflake, Role>()
-      .set(this.mockOnboardedRoleId, { id: this.mockOnboardedRoleId, name: 'Onboarded' } as Role)
-      .set(this.mockAlbionOnlineId, { id: this.mockAlbionOnlineId, name: 'Albion Online' } as Role)
-      .set(this.mockFoxholeId, { id: this.mockFoxholeId, name: 'Foxhole' } as Role)
-      .set(this.mockRecBestGameEverId, { id: this.mockRecBestGameEverId, name: 'Rec/BestGameEver' } as Role)
-      .set(this.mockRecPS2LeaderId, { id: this.mockRecPS2LeaderId, name: 'Rec/PS2/Leader' } as Role);
+      .set(this.mockOnboardedRoleId, {
+        id: this.mockOnboardedRoleId,
+        name: "Onboarded",
+      } as Role)
+      .set(this.mockAlbionOnlineId, {
+        id: this.mockAlbionOnlineId,
+        name: "Albion Online",
+      } as Role)
+      .set(this.mockFoxholeId, {
+        id: this.mockFoxholeId,
+        name: "Foxhole",
+      } as Role)
+      .set(this.mockRecBestGameEverId, {
+        id: this.mockRecBestGameEverId,
+        name: "Rec/BestGameEver",
+      } as Role)
+      .set(this.mockRecPS2LeaderId, {
+        id: this.mockRecPS2LeaderId,
+        name: "Rec/PS2/Leader",
+      } as Role);
   }
 
   static getMockDiscordGuildManager(id: string) {
@@ -177,7 +207,7 @@ export class TestBootstrapper {
 
   static getMockDiscordMessage() {
     return {
-      id: '1234567890',
+      id: "1234567890",
       edit: jest.fn(),
       delete: jest.fn(),
       channel: {
@@ -190,11 +220,11 @@ export class TestBootstrapper {
           };
         }),
         sendTyping: jest.fn(),
-        guild: this.getMockGuild('123456789'),
-        messages : {
+        guild: this.getMockGuild("123456789"),
+        messages: {
           fetch: jest.fn().mockResolvedValue({
-            id: '1234567890',
-            content: 'Mock message content',
+            id: "1234567890",
+            content: "Mock message content",
             delete: jest.fn(),
           }),
         },
@@ -205,15 +235,15 @@ export class TestBootstrapper {
           has: jest.fn(),
         },
       },
-      guild: this.getMockGuild('1234567890'),
+      guild: this.getMockGuild("1234567890"),
       react: jest.fn(),
     } as any;
   }
 
-  static getMockDiscordRole(roleId = '4969797969594') {
+  static getMockDiscordRole(roleId = "4969797969594") {
     return {
       id: roleId,
-      name: 'mockrole',
+      name: "mockrole",
       members: {
         has: jest.fn().mockImplementation(() => true),
         cache: {
@@ -229,16 +259,24 @@ export class TestBootstrapper {
         channelId: channelId,
         guild: {
           roles: {
-            fetch: jest.fn().mockImplementation(() => this.getMockDiscordRole('4969797969594')),
+            fetch: jest
+              .fn()
+              .mockImplementation(() =>
+                this.getMockDiscordRole("4969797969594"),
+              ),
           },
           members: {
-            fetch: jest.fn().mockImplementation(() => this.getMockDiscordUser()),
+            fetch: jest
+              .fn()
+              .mockImplementation(() => this.getMockDiscordUser()),
           },
         },
         member: mockDiscordUser,
         user: mockDiscordUser.user,
         channel: {
-          send: jest.fn().mockReturnValue(TestBootstrapper.getMockDiscordMessage()),
+          send: jest
+            .fn()
+            .mockReturnValue(TestBootstrapper.getMockDiscordMessage()),
         },
         reply: jest.fn(),
       },
@@ -258,19 +296,19 @@ export class TestBootstrapper {
 
   static getMockDiscordTextChannel() {
     return {
-      id: '1234567890', // A mock channel ID
-      name: 'test-text-channel', // A mock channel name
+      id: "1234567890", // A mock channel ID
+      name: "test-text-channel", // A mock channel name
       send: jest.fn().mockReturnValue(TestBootstrapper.getMockDiscordMessage()),
       guild: {
-        id: '123456789',
+        id: "123456789",
       },
     };
   }
 
   static getMockDiscordVoiceChannel() {
     return {
-      id: '1234567890', // A mock channel ID
-      name: 'Test Voice Channel', // A mock channel name
+      id: "1234567890", // A mock channel ID
+      name: "Test Voice Channel", // A mock channel name
     };
   }
 
@@ -293,7 +331,7 @@ export class TestBootstrapper {
 
   static getMockDiscordClient() {
     return {
-      guilds: TestBootstrapper.getMockDiscordGuildManager('123456789'),
+      guilds: TestBootstrapper.getMockDiscordGuildManager("123456789"),
       channels: {
         fetch: jest.fn(),
       },
@@ -306,53 +344,54 @@ export class TestBootstrapper {
     };
   }
 
-  static getMockAlbionCharacter(
-    server: AlbionServer = AlbionServer.AMERICAS
-  ) {
+  static getMockAlbionCharacter(server: AlbionServer = AlbionServer.AMERICAS) {
     return {
-      Id: 'clhoV9OdRm-5BuYQYZBT_Q',
-      Name: `Maelstrome26${server === AlbionServer.AMERICAS ? 'US' : 'EU'}`,
-      GuildId: server === AlbionServer.AMERICAS ? this.mockConfig.albion.guildIdUS : this.mockConfig.albion.guildId,
+      Id: "clhoV9OdRm-5BuYQYZBT_Q",
+      Name: `Maelstrome26${server === AlbionServer.AMERICAS ? "US" : "EU"}`,
+      GuildId:
+        server === AlbionServer.AMERICAS
+          ? this.mockConfig.albion.guildIdUS
+          : this.mockConfig.albion.guildId,
     } as any;
   }
 
-  static getMockPS2Character(characterId = '123456', outfitId = '123456') {
+  static getMockPS2Character(characterId = "123456", outfitId = "123456") {
     return {
       character_id: characterId,
       name: {
-        first: 'Maelstrome26',
-        first_lower: 'maelstrome26',
+        first: "Maelstrome26",
+        first_lower: "maelstrome26",
       },
       outfit_info: {
         outfit_id: outfitId,
         character_id: characterId,
-        member_since: '1441379570',
-        member_since_date: '2015-09-04 15:12:50.0',
-        rank: 'Platoon Leader',
-        rank_ordinal: '3',
+        member_since: "1441379570",
+        member_since_date: "2015-09-04 15:12:50.0",
+        rank: "Platoon Leader",
+        rank_ordinal: "3",
       },
     } as any;
   }
 
-  static getMockPS2Outfit(outfitId = '123456') {
+  static getMockPS2Outfit(outfitId = "123456") {
     return {
       outfit_id: outfitId,
-      name: 'Test Outfit',
-      name_lower: 'test outfit',
-      alias: 'TO',
-      alias_lower: 'to',
+      name: "Test Outfit",
+      name_lower: "test outfit",
+      alias: "TO",
+      alias_lower: "to",
     };
   }
 
   static getMockPS2MemberEntity(
-    characterId = '123456',
-    characterName = 'MrBojangles',
-    discordMemberId = '123456'
+    characterId = "123456",
+    characterName = "MrBojangles",
+    discordMemberId = "123456",
   ): PS2MembersEntity {
     return {
       id: 1,
-      createdAt: new Date,
-      updatedAt: new Date,
+      createdAt: new Date(),
+      updatedAt: new Date(),
       discordId: discordMemberId,
       characterId: characterId,
       characterName: characterName,
@@ -364,8 +403,8 @@ export class TestBootstrapper {
 
   static readonly mockConfig = {
     albion: {
-      guildIdUS: '44545423435',
-      guildId: '6567576868',
+      guildIdUS: "44545423435",
+      guildId: "6567576868",
       guildLeaderRoleUS: { discordRoleId: guildLeaderRoleUS },
       guildLeaderRole: { discordRoleId: guildLeaderRole },
       guildOfficerRoleUS: { discordRoleId: guildOfficerRoleUS },
@@ -374,15 +413,15 @@ export class TestBootstrapper {
       pingLeaderRoles: [guildLeaderRole, guildOfficerRole],
       roleMap: [
         {
-          name: '@ALB/Archmage',
-          discordRoleId: '1218115619732455474',
+          name: "@ALB/Archmage",
+          discordRoleId: "1218115619732455474",
           priority: 1,
           keep: true,
           server: AlbionServer.EUROPE,
         },
         {
-          name: '@ALB/Magister',
-          discordRoleId: '1218115569455464498',
+          name: "@ALB/Magister",
+          discordRoleId: "1218115569455464498",
           priority: 2,
           keep: false,
           server: AlbionServer.EUROPE,
@@ -390,43 +429,43 @@ export class TestBootstrapper {
       ],
     },
     discord: {
-      devUserId: '474839309484',
+      devUserId: "474839309484",
       channels: {
-        albionRegistration: '396474759683473',
-        albionUSRoles: '487573839485',
-        albionRoles: '657687978899',
-        albionUSAnnouncements: '4845759049437495',
-        albionAnnouncements: '6655756786797',
-        albionScans: '4858696849494',
-        ps2Verify: '558787980890809',
-        ps2Private: '9705950678045896095',
-        ps2HowToRankUp: '84594873574837596',
-        ps2Scans: '8558496070888',
+        albionRegistration: "396474759683473",
+        albionUSRoles: "487573839485",
+        albionRoles: "657687978899",
+        albionUSAnnouncements: "4845759049437495",
+        albionAnnouncements: "6655756786797",
+        albionScans: "4858696849494",
+        ps2Verify: "558787980890809",
+        ps2Private: "9705950678045896095",
+        ps2HowToRankUp: "84594873574837596",
+        ps2Scans: "8558496070888",
       },
       roles: {
-        albionUSMember: '454647566868675',
-        albionMember: '623445457656789',
-        albionUSRegistered: '4657676767676',
-        albionRegistered: '67845345346565',
-        albionUSAnnouncements: '4566987855434',
-        albionAnnouncements: '6879876745643543',
+        albionUSMember: "454647566868675",
+        albionMember: "623445457656789",
+        albionUSRegistered: "4657676767676",
+        albionRegistered: "67845345346565",
+        albionUSAnnouncements: "4566987855434",
+        albionAnnouncements: "6879876745643543",
         pingLeaderRolesUS: [guildLeaderRoleUS, guildOfficerRoleUS],
         pingLeaderRoles: [guildLeaderRole, guildOfficerRole],
-        ps2Verified: '059769706045',
+        ps2Verified: "059769706045",
       },
     },
     ps2: {
-      censusServiceId: 'dignityofwar',
+      censusServiceId: "dignityofwar",
       censusTimeout: 30000,
-      outfitId: '866685885885885',
-      pingRoles: ['1234567890', '9876543210'],
+      outfitId: "866685885885885",
+      pingRoles: ["1234567890", "9876543210"],
       rankMap: ps2RankMap,
     },
   };
 
   static setupConfig(moduleRef: TestingModule, overrideData?: any) {
     const config = moduleRef.get<ConfigService>(ConfigService);
-    return jest.spyOn(config, 'get').mockImplementation((key: string) => {
+    return jest.spyOn(config, "get").mockImplementation((key: string) => {
       const data = overrideData ?? this.mockConfig;
 
       const result = _.get(data, key);
