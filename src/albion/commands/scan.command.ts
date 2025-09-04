@@ -1,5 +1,13 @@
-import { Command, EventParams, Handler, InteractionEvent } from '@discord-nestjs/core';
-import { ApplicationCommandType, ChatInputCommandInteraction } from 'discord.js';
+import {
+  Command,
+  EventParams,
+  Handler,
+  InteractionEvent,
+} from '@discord-nestjs/core';
+import {
+  ApplicationCommandType,
+  ChatInputCommandInteraction,
+} from 'discord.js';
 import { SlashCommandPipe } from '@discord-nestjs/common';
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
@@ -9,7 +17,8 @@ import { AlbionScanningService } from '../services/albion.scanning.service';
 @Command({
   name: 'albion-scan',
   type: ApplicationCommandType.ChatInput,
-  description: 'Trigger a scan of verified DIG Guild members to ensure they\'re valid members',
+  description:
+    'Trigger a scan of verified DIG Guild members to ensure they\'re valid members',
 })
 @Injectable()
 export class AlbionScanCommand {
@@ -35,9 +44,11 @@ export class AlbionScanCommand {
       return `Please use the <#${scanChannelId}> channel to perform Scans.`;
     }
 
-    const message = await interaction[0].channel.send('Starting Albion Members scan...');
+    const message = await interaction[0].channel.send(
+      'Starting Albion Members scan...',
+    );
 
-    this.albionScanningService.startScan(message, dto.dryRun, dto.server);
+    this.albionScanningService.startScan(message, dto.dryRun);
 
     return `Albion Scan initiated!${dto.dryRun ? ' [DRY RUN, NO CHANGES WILL ACTUALLY BE PERFORMED]' : ''}`;
   }

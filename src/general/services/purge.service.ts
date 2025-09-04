@@ -16,7 +16,7 @@ export interface PurgableMemberList {
     foxhole: Collection<string, GuildMember>;
     albion: Collection<string, GuildMember>;
     albionRegistered: Collection<string, GuildMember>;
-  }
+  };
   totalMembers: number;
   totalBots: number;
   totalHumans: number;
@@ -32,42 +32,67 @@ export class PurgeService {
     private readonly discordService: DiscordService,
     private readonly activityService: ActivityService,
     private readonly config: ConfigService,
-    @InjectRepository(ActivityEntity) private readonly activityRepository: EntityRepository<ActivityEntity>,
+    @InjectRepository(ActivityEntity)
+    private readonly activityRepository: EntityRepository<ActivityEntity>,
   ) {}
 
   preflightChecks(message: Message) {
-    const onboardedRole = message.guild.roles.cache.find(role => role.name === 'Onboarded');
-    const ps2Role = message.guild.roles.cache.find(role => role.name === 'Rec/Planetside2');
-    const ps2VerifiedRole = message.guild.roles.cache.find(role => role.name === 'Rec/PS2/Verified');
-    const foxholeRole = message.guild.roles.cache.find(role => role.name === 'Rec/Foxhole');
-    const albionRole = message.guild.roles.cache.find(role => role.name === 'Albion Online');
-    const albionRegistered = message.guild.roles.cache.find(role => role.name === 'ALB/Registered');
+    const onboardedRole = message.guild.roles.cache.find(
+      (role) => role.name === 'Onboarded',
+    );
+    const ps2Role = message.guild.roles.cache.find(
+      (role) => role.name === 'Rec/Planetside2',
+    );
+    const ps2VerifiedRole = message.guild.roles.cache.find(
+      (role) => role.name === 'Rec/PS2/Verified',
+    );
+    const foxholeRole = message.guild.roles.cache.find(
+      (role) => role.name === 'Rec/Foxhole',
+    );
+    const albionRole = message.guild.roles.cache.find(
+      (role) => role.name === 'Albion Online',
+    );
+    const albionRegistered = message.guild.roles.cache.find(
+      (role) => role.name === 'ALB/Registered',
+    );
 
     const devUserId = this.config.get('discord.devUserId');
 
     // 1. Preflight checks
     if (!onboardedRole) {
-      throw new Error(`Could not find Onboarded role! Pinging Bot Dev <@${devUserId}>!`);
+      throw new Error(
+        `Could not find Onboarded role! Pinging Bot Dev <@${devUserId}>!`,
+      );
     }
 
     if (!ps2Role) {
-      throw new Error(`Could not find Rec/Planetside2 role! Pinging Bot Dev <@${devUserId}>!`);
+      throw new Error(
+        `Could not find Rec/Planetside2 role! Pinging Bot Dev <@${devUserId}>!`,
+      );
     }
 
     if (!ps2VerifiedRole) {
-      throw new Error(`Could not find Rec/PS2/Verified role! Pinging Bot Dev <@${devUserId}>!`);
+      throw new Error(
+        `Could not find Rec/PS2/Verified role! Pinging Bot Dev <@${devUserId}>!`,
+      );
     }
 
     if (!foxholeRole) {
-      throw new Error(`Could not find Rec/Foxhole role! Pinging Bot Dev <@${devUserId}>!`);
+      throw new Error(
+        `Could not find Rec/Foxhole role! Pinging Bot Dev <@${devUserId}>!`,
+      );
     }
 
     if (!albionRole) {
-      throw new Error(`Could not find Albion Online role! Pinging Bot Dev <@${devUserId}>!`);
+      throw new Error(
+        `Could not find Albion Online role! Pinging Bot Dev <@${devUserId}>!`,
+      );
     }
 
     if (!albionRegistered) {
-      throw new Error(`Could not find Albion Online registered role(s)! Pinging Bot Dev <@${devUserId}>!`);
+      throw new Error(
+        `Could not find Albion Online registered role(s)! Pinging Bot Dev <@${devUserId}>!`,
+      );
     }
 
     return {
@@ -83,9 +108,11 @@ export class PurgeService {
   async startPurge(
     originMessage: Message,
     dryRun = true,
-    interactionMember: GuildMember | null = null
+    interactionMember: GuildMember | null = null,
   ): Promise<void> {
-    const statusMessage = await getChannel(originMessage).send('Snapping fingers...');
+    const statusMessage = await getChannel(originMessage).send(
+      'Snapping fingers...',
+    );
 
     let purgables: PurgableMemberList;
 
@@ -100,23 +127,28 @@ export class PurgeService {
     }
 
     if (purgables.purgableMembers.size === 0) {
-      const string = '## ✅ All members are active and onboarded.\nThey have been saved from Thanos, this time...';
+      const string =
+        '## ✅ All members are active and onboarded.\nThey have been saved from Thanos, this time...';
       this.logger.log(string);
       await getChannel(originMessage).send(string);
       return;
     }
 
-    await statusMessage.edit(`Found ${purgables.purgableMembers.size} members who have disobeyed Thanos...\nI don't feel too good Mr Stark...`);
+    await statusMessage.edit(
+      `Found ${purgables.purgableMembers.size} members who have disobeyed Thanos...\nI don't feel too good Mr Stark...`,
+    );
 
     // I don't feel too good Mr Stark...
-    await getChannel(originMessage).send('https://media2.giphy.com/media/XzkGfRsUweB9ouLEsE/giphy.gif');
+    await getChannel(originMessage).send(
+      'https://media2.giphy.com/media/XzkGfRsUweB9ouLEsE/giphy.gif',
+    );
 
     // Let the purge commence...
     try {
       await this.kickPurgableMembers(
         originMessage,
         purgables.purgableMembers,
-        dryRun
+        dryRun,
       );
     }
     catch (err) {
@@ -127,19 +159,23 @@ export class PurgeService {
     }
 
     // Thanos is pleased
-    await getChannel(originMessage).send('https://media1.tenor.com/m/g0oFjHy6W1cAAAAC/thanos-smile.gif');
+    await getChannel(originMessage).send(
+      'https://media1.tenor.com/m/g0oFjHy6W1cAAAAC/thanos-smile.gif',
+    );
 
     await getChannel(originMessage).send('## ✅ Purge complete.');
     await this.generateReport(purgables, originMessage);
 
     if (interactionMember) {
-      await getChannel(originMessage).send(`Thanos thanks you for your service, <@${interactionMember.user.id}>.`);
+      await getChannel(originMessage).send(
+        `Thanos thanks you for your service, <@${interactionMember.user.id}>.`,
+      );
     }
   }
 
   async getPurgableMembers(
     message: Message,
-    dryRun = true
+    dryRun = true,
   ): Promise<PurgableMemberList> {
     let onboardedRole: Role;
     let ps2Role: Role;
@@ -164,7 +200,9 @@ export class PurgeService {
     }
 
     // 2. Get a list of active members and hydrate their cache.
-    const statusMessage = await getChannel(message).send('Collating Active Discord Members...');
+    const statusMessage = await getChannel(message).send(
+      'Collating Active Discord Members...',
+    );
     // Check the active members, and while we're at it remove any that are no longer on the server.
     const activeMembers = await this.resolveActiveMembers(message, dryRun);
 
@@ -181,7 +219,9 @@ export class PurgeService {
       return;
     }
     this.logger.log(`${members.size} members found`);
-    await statusMessage.edit(`${members.size} members found. Sorting members...`);
+    await statusMessage.edit(
+      `${members.size} members found. Sorting members...`,
+    );
 
     // Sort the members alphabetically, so we don't lose our minds in the output
     members = this.sortMembers(members);
@@ -190,10 +230,12 @@ export class PurgeService {
     const batchSize = 25; // Define the size of each batch
 
     // Refresh the cache of each member
-    await statusMessage.edit(`Refreshing member cache [0/${members.size}] (0%)...`);
+    await statusMessage.edit(
+      `Refreshing member cache [0/${members.size}] (0%)...`,
+    );
     for (let m = 0; m < members.size; m += batchSize) {
       const batch = membersArray.slice(m, m + batchSize);
-      const promises = batch.map(member => member.fetch());
+      const promises = batch.map((member) => member.fetch());
 
       try {
         await Promise.all(promises);
@@ -206,31 +248,55 @@ export class PurgeService {
 
       const percent = Math.floor((m / members.size) * 100);
 
-      await statusMessage.edit(`Refreshing member cache [${m}/${members.size}] (${percent}%)...`);
+      await statusMessage.edit(
+        `Refreshing member cache [${m}/${members.size}] (${percent}%)...`,
+      );
     }
 
     await statusMessage.edit('Crunching the numbers...');
 
     // Filter out bots and people who are onboarded already
     const results = {
-      purgableMembers: members.filter(member => this.isPurgable(member, activeMembers, onboardedRole)),
+      purgableMembers: members.filter((member) =>
+        this.isPurgable(member, activeMembers, onboardedRole),
+      ),
       purgableByGame: {
-        ps2: members.filter(member => this.isPurgable(member, activeMembers, onboardedRole) && member.roles.cache.has(ps2Role.id)),
-        ps2Verified: members.filter(member => this.isPurgable(member, activeMembers, onboardedRole) && member.roles.cache.has(ps2VerifiedRole.id)),
-        foxhole: members.filter(member => this.isPurgable(member, activeMembers, onboardedRole) && member.roles.cache.has(foxholeRole.id)),
-        albion: members.filter(member => this.isPurgable(member, activeMembers, onboardedRole) && member.roles.cache.has(albionRole.id)),
-        albionRegistered: members.filter(member => this.isPurgable(member, activeMembers, onboardedRole) && member.roles.cache.has(albionRegistered.id)),
+        ps2: members.filter(
+          (member) =>
+            this.isPurgable(member, activeMembers, onboardedRole) &&
+            member.roles.cache.has(ps2Role.id),
+        ),
+        ps2Verified: members.filter(
+          (member) =>
+            this.isPurgable(member, activeMembers, onboardedRole) &&
+            member.roles.cache.has(ps2VerifiedRole.id),
+        ),
+        foxhole: members.filter(
+          (member) =>
+            this.isPurgable(member, activeMembers, onboardedRole) &&
+            member.roles.cache.has(foxholeRole.id),
+        ),
+        albion: members.filter(
+          (member) =>
+            this.isPurgable(member, activeMembers, onboardedRole) &&
+            member.roles.cache.has(albionRole.id),
+        ),
+        albionRegistered: members.filter(
+          (member) =>
+            this.isPurgable(member, activeMembers, onboardedRole) &&
+            member.roles.cache.has(albionRegistered.id),
+        ),
       },
       totalMembers: members.size,
-      totalBots: members.filter(member => member.user.bot).size,
-      totalHumans: members.filter(member => !member.user.bot).size,
-      inGracePeriod: members.filter(member => {
+      totalBots: members.filter((member) => member.user.bot).size,
+      totalHumans: members.filter((member) => !member.user.bot).size,
+      inGracePeriod: members.filter((member) => {
         // If in 1 weeks grace period
         if (member.joinedTimestamp > Date.now() - 604800000) {
           return true;
         }
       }).size,
-      inactive: members.filter(member => {
+      inactive: members.filter((member) => {
         if (!activeMembers.has(member.user.id)) {
           return true;
         }
@@ -243,7 +309,10 @@ export class PurgeService {
   }
 
   // Builds a map of active members and hydrates their GuildMember objects, for later negative comparison in isPurgable.
-  async resolveActiveMembers(message: Message, dryRun: boolean) : Promise<Collection<string, GuildMember>> {
+  async resolveActiveMembers(
+    message: Message,
+    dryRun: boolean,
+  ): Promise<Collection<string, GuildMember>> {
     this.logger.log('Getting active Discord members...');
     let count = 0;
 
@@ -255,30 +324,35 @@ export class PurgeService {
       lastActivity: { $gt: thresholdDate },
     });
 
-    const statusMessage = await getChannel(message).send(`Getting active Discord members [0/${activeRecords.length}] (0%)...`);
+    const statusMessage = await getChannel(message).send(
+      `Getting active Discord members [0/${activeRecords.length}] (0%)...`,
+    );
 
     for (const activeMember of activeRecords) {
       count++;
 
       if (count % 50 === 0 || count === activeRecords.length) {
-        const percent = (Math.floor((count / activeRecords.length) * 100)).toFixed(0);
+        const percent = Math.floor(
+          (count / activeRecords.length) * 100,
+        ).toFixed(0);
         const string = `Getting active Discord members [${count}/${activeRecords.length}] (${percent}%)...`;
         await statusMessage.edit(string);
         this.logger.debug(string);
       }
       const guildMember = await this.discordService.getGuildMember(
         message.guild.id,
-        activeMember.discordId
+        activeMember.discordId,
       );
 
       // If the member is not found, remove their activity record as they're no longer on the server as it's pointless to keep it.
       if (!guildMember) {
-        this.logger.warn(`Member ${activeMember.discordNickname} was not found on the server, removing from activity records.`);
+        this.logger.warn(
+          `Member ${activeMember.discordNickname} was not found on the server, removing from activity records.`,
+        );
 
         try {
           await this.activityService.removeActivityRecord(activeMember, dryRun);
         }
-
         catch (err) {
           const devUserId = this.config.get('discord.devUserId');
           const error = `Error removing activity record for leaver ${activeMember.discordNickname} (${activeMember.discordId}). Error: ${err.message}`;
@@ -287,10 +361,7 @@ export class PurgeService {
         }
         continue;
       }
-      activeMembers.set(
-        activeMember.discordId,
-        guildMember
-      );
+      activeMembers.set(activeMember.discordId, guildMember);
     }
 
     const string = `Detected **${activeMembers.size}** active members!`;
@@ -302,7 +373,11 @@ export class PurgeService {
   }
 
   // Determines if a member is purgable or not. Returns true if they are.
-  isPurgable(member: GuildMember, activeMembers: Collection<string, GuildMember>, onboardedRole: Role): boolean {
+  isPurgable(
+    member: GuildMember,
+    activeMembers: Collection<string, GuildMember>,
+    onboardedRole: Role,
+  ): boolean {
     // Ignore bots.
     if (member.user.bot) {
       return false;
@@ -332,10 +407,13 @@ export class PurgeService {
   async kickPurgableMembers(
     message: Message,
     purgableMembers: Collection<string, GuildMember>,
-    dryRun = true
+    dryRun = true,
   ): Promise<void> {
-    await getChannel(message).send(`Kicking ${purgableMembers.size} purgable members...`);
-    let lastKickedMessage = await getChannel(message).send('Kicking started...');
+    await getChannel(message).send(
+      `Kicking ${purgableMembers.size} purgable members...`,
+    );
+    let lastKickedMessage =
+      await getChannel(message).send('Kicking started...');
 
     this.logger.log(`Kicking ${purgableMembers.size} purgable members...`);
     let count = 0;
@@ -346,7 +424,8 @@ export class PurgeService {
     for (const member of purgableMembers.values()) {
       count++;
 
-      const name = member.displayName || member.nickname || member.user.username;
+      const name =
+        member.displayName || member.nickname || member.user.username;
       const date = new Date().toLocaleString();
 
       if (!dryRun) {
@@ -363,7 +442,11 @@ Otherwise, thank you for having joined us, and we wish you all the best. Please 
 DIG Community Staff`;
         await this.discordService.sendDM(member, dmMessage);
 
-        await this.discordService.kickMember(member, message, `Automatic purge: ${date}`);
+        await this.discordService.kickMember(
+          member,
+          message,
+          `Automatic purge: ${date}`,
+        );
         // Removal of activity records is handled by the guildRemoveMember event listener.
       }
       this.logger.log(`Kicked ${name} (${member.user.id})`);
@@ -377,17 +460,23 @@ DIG Community Staff`;
         lastKickedString = '';
 
         await this.discordService.deleteMessage(lastKickedMessage); // Deletes last message, so we can re-new it and bring progress to the bottom
-        lastKickedMessage = await getChannel(message).send(`${prefix}🫰 Kicking progress: ${progress}`);
+        lastKickedMessage = await getChannel(message).send(
+          `${prefix}🫰 Kicking progress: ${progress}`,
+        );
 
         this.logger.log(`Kicking progress: ${progress}`);
       }
     }
 
     this.logger.log(`${purgableMembers.size} members purged.`);
-    await getChannel(message).send(`${prefix}**${purgableMembers.size}** members purged.`);
+    await getChannel(message).send(
+      `${prefix}**${purgableMembers.size}** members purged.`,
+    );
   }
 
-  sortMembers(members: Collection<string, GuildMember>): Collection<string, GuildMember> {
+  sortMembers(
+    members: Collection<string, GuildMember>,
+  ): Collection<string, GuildMember> {
     return members.sort((a, b) => {
       const aName = a.displayName || a.nickname || a.user.username;
       const bName = b.displayName || b.nickname || b.user.username;
@@ -401,20 +490,29 @@ DIG Community Staff`;
     });
   }
 
-  async generateReport(purgables: PurgableMemberList, originMessage: Message): Promise<void> {
+  async generateReport(
+    purgables: PurgableMemberList,
+    originMessage: Message,
+  ): Promise<void> {
     // Hold a list of member IDs that will be sent by the below
     const gameMemberIds: string[] = [];
 
     // Loop through purgable members by game, batch sending the members in each game
     for (const game in purgables.purgableByGame) {
-      if (!purgables.purgableByGame[game] || purgables.purgableByGame[game].size === 0) {
+      if (
+        !purgables.purgableByGame[game] ||
+        purgables.purgableByGame[game].size === 0
+      ) {
         continue;
       }
 
       const batch: string[] = [];
       purgables.purgableByGame[game].each((member: GuildMember) => {
-        const name = member.displayName || member.nickname || member.user.username;
-        batch.push(`- [${game.toUpperCase()}] <@${member.user.id}> / ${name}, joined <t:${Math.floor(member.joinedTimestamp / 1000)}:R>\n`);
+        const name =
+          member.displayName || member.nickname || member.user.username;
+        batch.push(
+          `- [${game.toUpperCase()}] <@${member.user.id}> / ${name}, joined <t:${Math.floor(member.joinedTimestamp / 1000)}:R>\n`,
+        );
         gameMemberIds.push(member.user.id);
       });
       await getChannel(originMessage).send(`### ${game.toUpperCase()}`);
@@ -427,8 +525,11 @@ DIG Community Staff`;
     const batch: string[] = [];
     purgables.purgableMembers.each((member: GuildMember) => {
       if (!gameMemberIds.includes(member.user.id)) {
-        const name = member.displayName || member.nickname || member.user.username;
-        batch.push(`- [NO-GAME] <@${member.user.id}> / ${name}, joined <t:${Math.floor(member.joinedTimestamp / 1000)}:R>\n`);
+        const name =
+          member.displayName || member.nickname || member.user.username;
+        batch.push(
+          `- [NO-GAME] <@${member.user.id}> / ${name}, joined <t:${Math.floor(member.joinedTimestamp / 1000)}:R>\n`,
+        );
       }
     });
 
@@ -437,12 +538,20 @@ DIG Community Staff`;
     // Go through the batches by groups of 20 and spit out the members
     await this.discordService.batchSend(batch, originMessage);
 
-    const percent = Math.floor((purgables.purgableMembers.size / purgables.totalHumans) * 100).toFixed(1);
-    const inactivePercent = Math.floor((purgables.inactive / purgables.purgableMembers.size) * 100).toFixed(1);
+    const percent = Math.floor(
+      (purgables.purgableMembers.size / purgables.totalHumans) * 100,
+    ).toFixed(1);
+    const inactivePercent = Math.floor(
+      (purgables.inactive / purgables.purgableMembers.size) * 100,
+    ).toFixed(1);
     const nonOnboarders = purgables.purgableMembers.size - purgables.inactive;
-    const nonOnboardersPercent = Math.floor((nonOnboarders / purgables.purgableMembers.size) * 100).toFixed(1);
+    const nonOnboardersPercent = Math.floor(
+      (nonOnboarders / purgables.purgableMembers.size) * 100,
+    ).toFixed(1);
 
-    this.logger.log(`Purge complete. ${purgables.purgableMembers.size} members purged. ${percent}% of total humans purged.`);
+    this.logger.log(
+      `Purge complete. ${purgables.purgableMembers.size} members purged. ${percent}% of total humans purged.`,
+    );
 
     const purgeReport = `## 📜 Purge Report
 - Total members at start of purge: **${purgables.totalMembers}**

@@ -1,5 +1,8 @@
 import { Command, EventParams, Handler } from '@discord-nestjs/core';
-import { ApplicationCommandType, ChatInputCommandInteraction } from 'discord.js';
+import {
+  ApplicationCommandType,
+  ChatInputCommandInteraction,
+} from 'discord.js';
 import { Logger } from '@nestjs/common';
 import { ActivityReportCronService } from '../services/activity.report.cron.service';
 
@@ -12,12 +15,12 @@ export class ActivityReportCommand {
   private readonly logger = new Logger(ActivityReportCommand.name);
 
   constructor(
-    private readonly activityReportCronService: ActivityReportCronService
+    private readonly activityReportCronService: ActivityReportCronService,
   ) {}
 
   @Handler()
   async onActivityReportCommand(
-    @EventParams() interaction: ChatInputCommandInteraction[]
+    @EventParams() interaction: ChatInputCommandInteraction[],
   ): Promise<void> {
     this.logger.log('Executing Activity Enumeration via command');
 

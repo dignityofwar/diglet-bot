@@ -17,7 +17,7 @@ export class ActivityReportCronService implements OnApplicationBootstrap {
     private readonly config: ConfigService,
     private readonly activityService: ActivityService,
     private readonly joinerLeaverService: JoinerLeaverService,
-    private readonly roleMetricsService: RoleMetricsService
+    private readonly roleMetricsService: RoleMetricsService,
   ) {}
 
   async onApplicationBootstrap(): Promise<void> {
@@ -39,7 +39,9 @@ export class ActivityReportCronService implements OnApplicationBootstrap {
   @Cron('1 0 * * *')
   async runReport(): Promise<void> {
     this.logger.log('Running Activity Enumeration Job');
-    const message = await this.channel.send('Starting daily activity enumeration...');
+    const message = await this.channel.send(
+      'Starting daily activity enumeration...',
+    );
 
     await this.activityService.startEnumeration(message);
     await this.joinerLeaverService.startEnumeration(message);

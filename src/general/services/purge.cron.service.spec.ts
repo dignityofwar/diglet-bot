@@ -52,12 +52,18 @@ describe('PurgeCronService', () => {
       } as unknown as TextChannel;
 
       (configService.get as jest.Mock).mockReturnValue('test-channel-id');
-      (discordService.getTextChannel as jest.Mock).mockResolvedValue(mockChannel);
+      (discordService.getTextChannel as jest.Mock).mockResolvedValue(
+        mockChannel,
+      );
 
       await purgeCronService.onApplicationBootstrap();
 
-      expect(configService.get).toHaveBeenCalledWith('discord.channels.thanosSnaps');
-      expect(discordService.getTextChannel).toHaveBeenCalledWith('test-channel-id');
+      expect(configService.get).toHaveBeenCalledWith(
+        'discord.channels.thanosSnaps',
+      );
+      expect(discordService.getTextChannel).toHaveBeenCalledWith(
+        'test-channel-id',
+      );
       expect(mockChannel.isTextBased).toHaveBeenCalled();
       expect(purgeCronService['channel']).toBe(mockChannel);
     });
@@ -66,7 +72,9 @@ describe('PurgeCronService', () => {
       (configService.get as jest.Mock).mockReturnValue('test-channel-id');
       (discordService.getTextChannel as jest.Mock).mockResolvedValue(null);
 
-      await expect(purgeCronService.onApplicationBootstrap()).rejects.toThrow('Could not find channel with ID test-channel-id');
+      await expect(purgeCronService.onApplicationBootstrap()).rejects.toThrow(
+        'Could not find channel with ID test-channel-id',
+      );
     });
 
     it('should throw an error if the channel is not text-based', async () => {
@@ -75,9 +83,13 @@ describe('PurgeCronService', () => {
       } as unknown as TextChannel;
 
       (configService.get as jest.Mock).mockReturnValue('test-channel-id');
-      (discordService.getTextChannel as jest.Mock).mockResolvedValue(mockChannel);
+      (discordService.getTextChannel as jest.Mock).mockResolvedValue(
+        mockChannel,
+      );
 
-      await expect(purgeCronService.onApplicationBootstrap()).rejects.toThrow('Channel with ID test-channel-id is not a text channel');
+      await expect(purgeCronService.onApplicationBootstrap()).rejects.toThrow(
+        'Channel with ID test-channel-id is not a text channel',
+      );
     });
   });
 
@@ -96,7 +108,9 @@ describe('PurgeCronService', () => {
 
       await purgeCronService.runPurge();
 
-      expect(mockChannel.send).toHaveBeenCalledWith('Starting daily purge scan...');
+      expect(mockChannel.send).toHaveBeenCalledWith(
+        'Starting daily purge scan...',
+      );
       expect(purgeService.startPurge).toHaveBeenCalledWith(mockMessage, false);
     });
   });

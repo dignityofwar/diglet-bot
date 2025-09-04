@@ -23,7 +23,7 @@ describe('AlbionAxiosFactory', () => {
       },
     };
 
-    albionAxiosFactory.createApiClient(AlbionServer.AMERICAS);
+    albionAxiosFactory.createApiClient(AlbionServer.EUROPE);
     expect(mockedAxios.create).toHaveBeenCalledWith(expectedConfig);
   });
 

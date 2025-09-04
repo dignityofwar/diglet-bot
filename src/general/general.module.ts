@@ -21,11 +21,7 @@ import { RecRolePingService } from './services/rec.role.ping.service';
 import { HealthcheckService } from './services/healthcheck.service';
 
 @Module({
-  imports: [
-    DiscordModule.forFeature(),
-    ConfigModule,
-    DatabaseModule,
-  ],
+  imports: [DiscordModule.forFeature(), ConfigModule, DatabaseModule],
   providers: [
     // Services
     ActivityService,

@@ -1,5 +1,13 @@
-import { Command, EventParams, Handler, InteractionEvent } from '@discord-nestjs/core';
-import { ApplicationCommandType, ChatInputCommandInteraction } from 'discord.js';
+import {
+  Command,
+  EventParams,
+  Handler,
+  InteractionEvent,
+} from '@discord-nestjs/core';
+import {
+  ApplicationCommandType,
+  ChatInputCommandInteraction,
+} from 'discord.js';
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { AlbionReportsService } from '../services/albion.reports.service';
@@ -35,13 +43,15 @@ export class AlbionReportsCommand {
       return `Please use the <#${scanChannelId}> channel to generate Reports.`;
     }
 
-    const message = await interaction[0].channel.send('Starting Albion Members Report...');
+    const message = await interaction[0].channel.send(
+      'Starting Albion Members Report...',
+    );
 
     if (dto.fullReport) {
       this.albionReportsService.fullReport(message);
     }
     if (dto.squireCandidates) {
-      this.albionReportsService.squireCandidates(message);
+      this.albionReportsService.graduateCandidates(message);
     }
 
     return 'Albion Report Initiated...';

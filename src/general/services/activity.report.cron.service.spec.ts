@@ -55,7 +55,9 @@ describe('ActivityReportCronService', () => {
       ],
     }).compile();
 
-    activityReportCronService = module.get<ActivityReportCronService>(ActivityReportCronService);
+    activityReportCronService = module.get<ActivityReportCronService>(
+      ActivityReportCronService,
+    );
     discordService = module.get<DiscordService>(DiscordService);
     configService = module.get<ConfigService>(ConfigService);
     activityService = module.get<ActivityService>(ActivityService);
@@ -70,12 +72,18 @@ describe('ActivityReportCronService', () => {
       } as unknown as TextChannel;
 
       (configService.get as jest.Mock).mockReturnValue('test-channel-id');
-      (discordService.getTextChannel as jest.Mock).mockResolvedValue(mockChannel);
+      (discordService.getTextChannel as jest.Mock).mockResolvedValue(
+        mockChannel,
+      );
 
       await activityReportCronService.onApplicationBootstrap();
 
-      expect(configService.get).toHaveBeenCalledWith('discord.channels.activityReports');
-      expect(discordService.getTextChannel).toHaveBeenCalledWith('test-channel-id');
+      expect(configService.get).toHaveBeenCalledWith(
+        'discord.channels.activityReports',
+      );
+      expect(discordService.getTextChannel).toHaveBeenCalledWith(
+        'test-channel-id',
+      );
       expect(mockChannel.isTextBased).toHaveBeenCalled();
       expect(activityReportCronService['channel']).toBe(mockChannel);
     });
@@ -84,7 +92,9 @@ describe('ActivityReportCronService', () => {
       (configService.get as jest.Mock).mockReturnValue('test-channel-id');
       (discordService.getTextChannel as jest.Mock).mockResolvedValue(null);
 
-      await expect(activityReportCronService.onApplicationBootstrap()).rejects.toThrow('Could not find channel with ID test-channel-id');
+      await expect(
+        activityReportCronService.onApplicationBootstrap(),
+      ).rejects.toThrow('Could not find channel with ID test-channel-id');
     });
 
     it('should throw an error if the channel is not text-based', async () => {
@@ -93,9 +103,15 @@ describe('ActivityReportCronService', () => {
       } as unknown as TextChannel;
 
       (configService.get as jest.Mock).mockReturnValue('test-channel-id');
-      (discordService.getTextChannel as jest.Mock).mockResolvedValue(mockChannel);
+      (discordService.getTextChannel as jest.Mock).mockResolvedValue(
+        mockChannel,
+      );
 
-      await expect(activityReportCronService.onApplicationBootstrap()).rejects.toThrow('Channel with ID test-channel-id is not a text channel');
+      await expect(
+        activityReportCronService.onApplicationBootstrap(),
+      ).rejects.toThrow(
+        'Channel with ID test-channel-id is not a text channel',
+      );
     });
   });
 
@@ -114,10 +130,18 @@ describe('ActivityReportCronService', () => {
 
       await activityReportCronService.runReport();
 
-      expect(mockChannel.send).toHaveBeenCalledWith('Starting daily activity enumeration...');
-      expect(activityService.startEnumeration).toHaveBeenCalledWith(mockMessage);
-      expect(joinerLeaverService.startEnumeration).toHaveBeenCalledWith(mockMessage);
-      expect(roleMetricsService.startEnumeration).toHaveBeenCalledWith(mockMessage);
+      expect(mockChannel.send).toHaveBeenCalledWith(
+        'Starting daily activity enumeration...',
+      );
+      expect(activityService.startEnumeration).toHaveBeenCalledWith(
+        mockMessage,
+      );
+      expect(joinerLeaverService.startEnumeration).toHaveBeenCalledWith(
+        mockMessage,
+      );
+      expect(roleMetricsService.startEnumeration).toHaveBeenCalledWith(
+        mockMessage,
+      );
       expect(mockMessage.delete).toHaveBeenCalled();
     });
   });

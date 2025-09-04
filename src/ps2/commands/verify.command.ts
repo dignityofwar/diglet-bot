@@ -1,5 +1,13 @@
-import { Command, EventParams, Handler, InteractionEvent } from '@discord-nestjs/core';
-import { ApplicationCommandType, ChatInputCommandInteraction } from 'discord.js';
+import {
+  Command,
+  EventParams,
+  Handler,
+  InteractionEvent,
+} from '@discord-nestjs/core';
+import {
+  ApplicationCommandType,
+  ChatInputCommandInteraction,
+} from 'discord.js';
 import { SlashCommandPipe } from '@discord-nestjs/common';
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
@@ -28,7 +36,9 @@ export class PS2VerifyCommand {
     @InteractionEvent(SlashCommandPipe) dto: PS2VerifyDto,
     @EventParams() interaction: ChatInputCommandInteraction[],
   ): Promise<string> {
-    this.logger.debug(`Received PS2VerifyCommand with character ${dto.character}`);
+    this.logger.debug(
+      `Received PS2VerifyCommand with character ${dto.character}`,
+    );
     // Check if the command came from the correct channel ID
     const verifyChannelId = this.config.get('discord.channels.ps2Verify');
 
@@ -52,15 +62,24 @@ export class PS2VerifyCommand {
     const outfitId = this.config.get('ps2.outfitId');
 
     // Check if the character is in the PS2 Outfit
-    if (!character.outfit_info || character.outfit_info?.outfit_id !== outfitId) {
+    if (
+      !character.outfit_info ||
+      character.outfit_info?.outfit_id !== outfitId
+    ) {
       return `Your character **${character.name.first}** has not been detected in the [DIG] outfit. If you are in the outfit, please log out and in again, or wait 24 hours and try again as Census (the game's API) can be slow to update sometimes.`;
     }
 
     // Get the Discord guild member to be able to edit things about them
-    const guildMember = await interaction[0].guild?.members.fetch(interaction[0].user.id);
+    const guildMember = await interaction[0].guild?.members.fetch(
+      interaction[0].user.id,
+    );
 
     // Check first if the registration is valid
-    const isValid = await this.ps2GameVerificationService.isValidRegistrationAttempt(character, guildMember);
+    const isValid =
+      await this.ps2GameVerificationService.isValidRegistrationAttempt(
+        character,
+        guildMember,
+      );
 
     if (isValid !== true) {
       return isValid;

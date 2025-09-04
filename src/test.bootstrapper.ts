@@ -4,14 +4,11 @@ import _ from 'lodash';
 import { ConfigService } from '@nestjs/config';
 import { TestingModule } from '@nestjs/testing';
 import { MikroORM } from '@mikro-orm/core';
-import { AlbionServer } from './albion/interfaces/albion.api.interfaces';
 import { PS2MembersEntity } from './database/entities/ps2.members.entity';
 import { PS2RankMapInterface } from './config/ps2.app.config';
 import { Collection, Role, Snowflake } from 'discord.js';
 
-const guildLeaderRoleUS = '44546543371337';
 const guildLeaderRole = '64354579789809089';
-const guildOfficerRoleUS = '465544343342364';
 const guildOfficerRole = '66343435879886';
 
 const ps2RankMap: PS2RankMapInterface = {
@@ -75,14 +72,16 @@ export class TestBootstrapper {
     } as any;
 
     const mockInit = jest.spyOn(MikroORM, 'init');
-    mockInit.mockResolvedValue(Promise.resolve({
-      em: mockEntityManager,
-    } as any));
+    mockInit.mockResolvedValue(
+      Promise.resolve({
+        em: mockEntityManager,
+      } as any),
+    );
   }
 
   static getMockRepositoryInjected(
     entity: any,
-    entityManagerOverrides?: Partial<EntityManagerMock>
+    entityManagerOverrides?: Partial<EntityManagerMock>,
   ) {
     const defaultEntityManagerMock: EntityManagerMock = {
       persistAndFlush: jest.fn().mockResolvedValue(true),
@@ -90,7 +89,10 @@ export class TestBootstrapper {
     };
 
     // Merge in any overrides, for instance to have removeAndFlush reject
-    const entityManagerMock = { ...defaultEntityManagerMock, ...entityManagerOverrides };
+    const entityManagerMock = {
+      ...defaultEntityManagerMock,
+      ...entityManagerOverrides,
+    };
     return {
       find: jest.fn().mockResolvedValueOnce([entity]),
       findOne: jest.fn().mockResolvedValueOnce(entity),
@@ -135,17 +137,27 @@ export class TestBootstrapper {
       id,
       members: {
         cache: {
-          get: jest.fn().mockImplementation(() => TestBootstrapper.getMockDiscordUser()),
+          get: jest
+            .fn()
+            .mockImplementation(() => TestBootstrapper.getMockDiscordUser()),
           has: jest.fn().mockImplementation(() => true),
         },
         fetch: jest.fn().mockImplementation(() => this.getMockDiscordUser()),
       },
       roles: {
         cache: {
-          get: jest.fn().mockImplementation(() => TestBootstrapper.getMockDiscordRole('4969797969594')),
+          get: jest
+            .fn()
+            .mockImplementation(() =>
+              TestBootstrapper.getMockDiscordRole('4969797969594'),
+            ),
           clear: jest.fn(),
         },
-        fetch: jest.fn().mockImplementation(() => TestBootstrapper.getMockDiscordRole('4969797969594')),
+        fetch: jest
+          .fn()
+          .mockImplementation(() =>
+            TestBootstrapper.getMockDiscordRole('4969797969594'),
+          ),
       },
     };
   }
@@ -158,11 +170,26 @@ export class TestBootstrapper {
 
   static getMockGuildRoleListCollection() {
     return new Collection<Snowflake, Role>()
-      .set(this.mockOnboardedRoleId, { id: this.mockOnboardedRoleId, name: 'Onboarded' } as Role)
-      .set(this.mockAlbionOnlineId, { id: this.mockAlbionOnlineId, name: 'Albion Online' } as Role)
-      .set(this.mockFoxholeId, { id: this.mockFoxholeId, name: 'Foxhole' } as Role)
-      .set(this.mockRecBestGameEverId, { id: this.mockRecBestGameEverId, name: 'Rec/BestGameEver' } as Role)
-      .set(this.mockRecPS2LeaderId, { id: this.mockRecPS2LeaderId, name: 'Rec/PS2/Leader' } as Role);
+      .set(this.mockOnboardedRoleId, {
+        id: this.mockOnboardedRoleId,
+        name: 'Onboarded',
+      } as Role)
+      .set(this.mockAlbionOnlineId, {
+        id: this.mockAlbionOnlineId,
+        name: 'Albion Online',
+      } as Role)
+      .set(this.mockFoxholeId, {
+        id: this.mockFoxholeId,
+        name: 'Foxhole',
+      } as Role)
+      .set(this.mockRecBestGameEverId, {
+        id: this.mockRecBestGameEverId,
+        name: 'Rec/BestGameEver',
+      } as Role)
+      .set(this.mockRecPS2LeaderId, {
+        id: this.mockRecPS2LeaderId,
+        name: 'Rec/PS2/Leader',
+      } as Role);
   }
 
   static getMockDiscordGuildManager(id: string) {
@@ -191,7 +218,7 @@ export class TestBootstrapper {
         }),
         sendTyping: jest.fn(),
         guild: this.getMockGuild('123456789'),
-        messages : {
+        messages: {
           fetch: jest.fn().mockResolvedValue({
             id: '1234567890',
             content: 'Mock message content',
@@ -229,16 +256,24 @@ export class TestBootstrapper {
         channelId: channelId,
         guild: {
           roles: {
-            fetch: jest.fn().mockImplementation(() => this.getMockDiscordRole('4969797969594')),
+            fetch: jest
+              .fn()
+              .mockImplementation(() =>
+                this.getMockDiscordRole('4969797969594'),
+              ),
           },
           members: {
-            fetch: jest.fn().mockImplementation(() => this.getMockDiscordUser()),
+            fetch: jest
+              .fn()
+              .mockImplementation(() => this.getMockDiscordUser()),
           },
         },
         member: mockDiscordUser,
         user: mockDiscordUser.user,
         channel: {
-          send: jest.fn().mockReturnValue(TestBootstrapper.getMockDiscordMessage()),
+          send: jest
+            .fn()
+            .mockReturnValue(TestBootstrapper.getMockDiscordMessage()),
         },
         reply: jest.fn(),
       },
@@ -306,13 +341,11 @@ export class TestBootstrapper {
     };
   }
 
-  static getMockAlbionCharacter(
-    server: AlbionServer = AlbionServer.AMERICAS
-  ) {
+  static getMockAlbionCharacter() {
     return {
       Id: 'clhoV9OdRm-5BuYQYZBT_Q',
-      Name: `Maelstrome26${server === AlbionServer.AMERICAS ? 'US' : 'EU'}`,
-      GuildId: server === AlbionServer.AMERICAS ? this.mockConfig.albion.guildIdUS : this.mockConfig.albion.guildId,
+      Name: 'Maelstrome26EU',
+      GuildId: this.mockConfig.albion.guildId,
     } as any;
   }
 
@@ -347,12 +380,12 @@ export class TestBootstrapper {
   static getMockPS2MemberEntity(
     characterId = '123456',
     characterName = 'MrBojangles',
-    discordMemberId = '123456'
+    discordMemberId = '123456',
   ): PS2MembersEntity {
     return {
       id: 1,
-      createdAt: new Date,
-      updatedAt: new Date,
+      createdAt: new Date(),
+      updatedAt: new Date(),
       discordId: discordMemberId,
       characterId: characterId,
       characterName: characterName,
@@ -364,13 +397,9 @@ export class TestBootstrapper {
 
   static readonly mockConfig = {
     albion: {
-      guildIdUS: '44545423435',
       guildId: '6567576868',
-      guildLeaderRoleUS: { discordRoleId: guildLeaderRoleUS },
       guildLeaderRole: { discordRoleId: guildLeaderRole },
-      guildOfficerRoleUS: { discordRoleId: guildOfficerRoleUS },
       guildOfficerRole: { discordRoleId: guildOfficerRole },
-      pingLeaderRolesUS: [guildLeaderRoleUS, guildOfficerRoleUS],
       pingLeaderRoles: [guildLeaderRole, guildOfficerRole],
       roleMap: [
         {
@@ -378,14 +407,12 @@ export class TestBootstrapper {
           discordRoleId: '1218115619732455474',
           priority: 1,
           keep: true,
-          server: AlbionServer.EUROPE,
         },
         {
           name: '@ALB/Magister',
           discordRoleId: '1218115569455464498',
           priority: 2,
           keep: false,
-          server: AlbionServer.EUROPE,
         },
       ],
     },
@@ -393,9 +420,7 @@ export class TestBootstrapper {
       devUserId: '474839309484',
       channels: {
         albionRegistration: '396474759683473',
-        albionUSRoles: '487573839485',
         albionRoles: '657687978899',
-        albionUSAnnouncements: '4845759049437495',
         albionAnnouncements: '6655756786797',
         albionScans: '4858696849494',
         ps2Verify: '558787980890809',
@@ -404,14 +429,9 @@ export class TestBootstrapper {
         ps2Scans: '8558496070888',
       },
       roles: {
-        albionUSMember: '454647566868675',
         albionMember: '623445457656789',
-        albionUSRegistered: '4657676767676',
         albionRegistered: '67845345346565',
-        albionUSAnnouncements: '4566987855434',
         albionAnnouncements: '6879876745643543',
-        pingLeaderRolesUS: [guildLeaderRoleUS, guildOfficerRoleUS],
-        pingLeaderRoles: [guildLeaderRole, guildOfficerRole],
         ps2Verified: '059769706045',
       },
     },

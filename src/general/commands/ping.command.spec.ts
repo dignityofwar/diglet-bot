@@ -12,17 +12,17 @@ describe('PingCommand', () => {
 
   beforeEach(async () => {
     const moduleRef = await Test.createTestingModule({
-      providers: [
-        PingCommand,
-        ConfigService,
-      ],
+      providers: [PingCommand, ConfigService],
     }).compile();
 
     service = moduleRef.get<PingCommand>(PingCommand);
     mockConfigService = moduleRef.get<ConfigService>(ConfigService);
     // Mock a ChatInputCommandInteraction
     mockDiscordUser = TestBootstrapper.getMockDiscordUser();
-    mockInteraction = TestBootstrapper.getMockDiscordInteraction('123456789', mockDiscordUser)[0];
+    mockInteraction = TestBootstrapper.getMockDiscordInteraction(
+      '123456789',
+      mockDiscordUser,
+    )[0];
   });
 
   it('should pong', async () => {

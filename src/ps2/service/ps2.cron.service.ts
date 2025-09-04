@@ -13,7 +13,7 @@ export class PS2CronService implements OnApplicationBootstrap {
   constructor(
     private readonly discordService: DiscordService,
     private readonly config: ConfigService,
-    private readonly ps2GameScanningService: PS2GameScanningService
+    private readonly ps2GameScanningService: PS2GameScanningService,
   ) {}
 
   async onApplicationBootstrap(): Promise<void> {

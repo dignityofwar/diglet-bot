@@ -2,7 +2,7 @@ import { BaseEntity } from './base.entity';
 import { Entity, Property } from '@mikro-orm/core';
 
 interface GameMetrics {
-  [gameId: string]: number
+  [gameId: string]: number;
 }
 
 interface RoleMetricsEntityOptions {

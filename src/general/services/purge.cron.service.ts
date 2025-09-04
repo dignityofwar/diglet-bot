@@ -12,7 +12,7 @@ export class PurgeCronService implements OnApplicationBootstrap {
   constructor(
     private readonly discordService: DiscordService,
     private readonly config: ConfigService,
-    private readonly purgeService: PurgeService
+    private readonly purgeService: PurgeService,
   ) {}
 
   async onApplicationBootstrap(): Promise<void> {

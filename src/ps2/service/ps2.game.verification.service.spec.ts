@@ -34,8 +34,11 @@ describe('PS2GameVerificationService', () => {
   let editMessageSpy;
 
   beforeEach(async () => {
-    const mockPS2VerificationAttemptRepository = TestBootstrapper.getMockRepositoryInjected({});
-    const mockPS2MembersRepository = TestBootstrapper.getMockRepositoryInjected({});
+    const mockPS2VerificationAttemptRepository =
+      TestBootstrapper.getMockRepositoryInjected({});
+    const mockPS2MembersRepository = TestBootstrapper.getMockRepositoryInjected(
+      {},
+    );
 
     const moduleRef: TestingModule = await Test.createTestingModule({
       providers: [
@@ -59,8 +62,7 @@ describe('PS2GameVerificationService', () => {
         },
         {
           provide: CensusWebsocketService,
-          useValue: {
-          },
+          useValue: {},
         },
         EventEmitter,
         {
@@ -75,29 +77,44 @@ describe('PS2GameVerificationService', () => {
     }).compile();
     TestBootstrapper.setupConfig(moduleRef);
 
-    service = moduleRef.get<PS2GameVerificationService>(PS2GameVerificationService);
+    service = moduleRef.get<PS2GameVerificationService>(
+      PS2GameVerificationService,
+    );
     discordService = moduleRef.get<DiscordService>(DiscordService);
-    ps2VerificationAttemptRepository = moduleRef.get(getRepositoryToken(PS2VerificationAttemptEntity));
+    ps2VerificationAttemptRepository = moduleRef.get(
+      getRepositoryToken(PS2VerificationAttemptEntity),
+    );
     ps2MembersRepository = moduleRef.get(getRepositoryToken(PS2MembersEntity));
 
     // A mock instance of a GuildMember
     mockDiscordUser = TestBootstrapper.getMockDiscordUser();
     mockDiscordMessage = TestBootstrapper.getMockDiscordMessage();
-    mockPS2Character = TestBootstrapper.getMockPS2Character(mockCharacterId, mockOutfitId) as any;
+    mockPS2Character = TestBootstrapper.getMockPS2Character(
+      mockCharacterId,
+      mockOutfitId,
+    ) as any;
 
     mockDeathEvent = {
       character_id: mockPS2Character.character_id,
       attacker_character_id: mockPS2Character.character_id,
-    } as any ;
+    } as any;
 
     // Handle map mocking
     service['monitoringCharacters'] = new Map();
-    service['monitoringCharacters'].set(mockPS2Character.character_id, mockPS2Character);
+    service['monitoringCharacters'].set(
+      mockPS2Character.character_id,
+      mockPS2Character,
+    );
     service['messagesMap'] = new Map();
-    service['messagesMap'].set(mockPS2Character.character_id, mockDiscordMessage);
+    service['messagesMap'].set(
+      mockPS2Character.character_id,
+      mockDiscordMessage,
+    );
 
     // Filled spies
-    editMessageSpy = jest.spyOn(service as any, 'editMessage').mockResolvedValue(true);
+    editMessageSpy = jest
+      .spyOn(service as any, 'editMessage')
+      .mockResolvedValue(true);
     jest.spyOn(service['logger'], 'error');
     jest.spyOn(service['logger'], 'warn');
     jest.spyOn(service['logger'], 'log');
@@ -110,7 +127,9 @@ describe('PS2GameVerificationService', () => {
 
     it('should fail boot if channel does not exist', async () => {
       discordService.getTextChannel = jest.fn().mockReturnValue(null);
-      await expect(service.onApplicationBootstrap()).rejects.toThrow(`Could not find channel with ID ${verifyChannelId}`);
+      await expect(service.onApplicationBootstrap()).rejects.toThrow(
+        `Could not find channel with ID ${verifyChannelId}`,
+      );
     });
 
     it('should fail boot if channel is not a text channel', async () => {
@@ -118,61 +137,94 @@ describe('PS2GameVerificationService', () => {
         isTextBased: jest.fn().mockReturnValue(false),
       });
 
-      await expect(service.onApplicationBootstrap()).rejects.toThrow(`Channel with ID ${verifyChannelId} is not a text channel`);
+      await expect(service.onApplicationBootstrap()).rejects.toThrow(
+        `Channel with ID ${verifyChannelId} is not a text channel`,
+      );
     });
   });
 
   describe('isValidRegistrationAttempt', () => {
     it('should return an error if the character is already registered', async () => {
-      ps2MembersRepository.find = jest.fn().mockResolvedValue([{
-        characterId: mockCharacterId,
-      }]);
+      ps2MembersRepository.find = jest.fn().mockResolvedValue([
+        {
+          characterId: mockCharacterId,
+        },
+      ]);
 
-      const response = await service.isValidRegistrationAttempt(mockPS2Character, mockDiscordUser);
+      const response = await service.isValidRegistrationAttempt(
+        mockPS2Character,
+        mockDiscordUser,
+      );
 
-      expect(response).toBe(`Character **"${mockPS2Character.name.first}"** has already been registered by user \`@${mockDiscordUser.displayName}\`. If you believe this to be in error, please contact the PS2 Leaders.`);
+      expect(response).toBe(
+        `Character **"${mockPS2Character.name.first}"** has already been registered by user \`@${mockDiscordUser.displayName}\`. If you believe this to be in error, please contact the PS2 Leaders.`,
+      );
     });
 
     it('should return an error if the discord user is already registered', async () => {
-      ps2MembersRepository.find = jest.fn()
+      ps2MembersRepository.find = jest
+        .fn()
         .mockResolvedValueOnce([])
         .mockResolvedValueOnce([{ discordId: '1337' }]);
 
-      const response = await service.isValidRegistrationAttempt(mockPS2Character, mockDiscordUser);
+      const response = await service.isValidRegistrationAttempt(
+        mockPS2Character,
+        mockDiscordUser,
+      );
 
-      expect(response).toBe('You have already registered a character. We don\'t allow multiple characters to be registered to the same Discord user, as there is little point to it. If you believe this to be in error, or you have registered the wrong character, please contact the PS2 Leaders.');
+      expect(response).toBe(
+        'You have already registered a character. We don\'t allow multiple characters to be registered to the same Discord user, as there is little point to it. If you believe this to be in error, or you have registered the wrong character, please contact the PS2 Leaders.',
+      );
     });
 
     it('should return an error if the discord user is already registered but the owner has left the server', async () => {
-      ps2MembersRepository.find = jest.fn()
+      ps2MembersRepository.find = jest
+        .fn()
         .mockResolvedValueOnce([{ discordId: '1337' }]);
 
       mockDiscordUser.guild.members.fetch = jest.fn().mockResolvedValue(null);
 
-      const response = await service.isValidRegistrationAttempt(mockPS2Character, mockDiscordUser);
+      const response = await service.isValidRegistrationAttempt(
+        mockPS2Character,
+        mockDiscordUser,
+      );
 
-      expect(response).toBe(`Character **"${mockPS2Character.name.first}"** has already been registered, but the user who registered it has left the server. If you believe this to be in error, please contact the PS2 Leaders.`);
+      expect(response).toBe(
+        `Character **"${mockPS2Character.name.first}"** has already been registered, but the user who registered it has left the server. If you believe this to be in error, please contact the PS2 Leaders.`,
+      );
     });
 
     it('should return an error if there\'s an ongoing registration attempt', async () => {
       ps2MembersRepository.find = jest.fn().mockResolvedValue([]);
-      ps2VerificationAttemptRepository.find = jest.fn().mockResolvedValue([{
-        guildMember: mockDiscordUser,
-        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-        // @ts-ignore yeah I'm not supplying a type compatible object here, fuck that
-        guildMessage: {},
-        characterId: '5',
-      }]);
+      ps2VerificationAttemptRepository.find = jest.fn().mockResolvedValue([
+        {
+          guildMember: mockDiscordUser,
+          // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+          // @ts-ignore yeah I'm not supplying a type compatible object here, fuck that
+          guildMessage: {},
+          characterId: '5',
+        },
+      ]);
 
-      const response = await service.isValidRegistrationAttempt(mockPS2Character, mockDiscordUser);
+      const response = await service.isValidRegistrationAttempt(
+        mockPS2Character,
+        mockDiscordUser,
+      );
 
-      expect(response).toBe(`Character **"${mockPS2Character.name.first}"** already has a pending registration. Please complete it before attempting again. Pinging <@${TestBootstrapper.mockConfig.discord.devUserId}> in case there's a problem.`);
+      expect(response).toBe(
+        `Character **"${mockPS2Character.name.first}"** already has a pending registration. Please complete it before attempting again. Pinging <@${TestBootstrapper.mockConfig.discord.devUserId}> in case there's a problem.`,
+      );
     });
     it('should return true if valid', async () => {
       ps2MembersRepository.find = jest.fn().mockResolvedValue([]);
       ps2VerificationAttemptRepository.find = jest.fn().mockResolvedValue([]);
 
-      expect(await service.isValidRegistrationAttempt(mockPS2Character, mockDiscordUser)).toBe(true);
+      expect(
+        await service.isValidRegistrationAttempt(
+          mockPS2Character,
+          mockDiscordUser,
+        ),
+      ).toBe(true);
     });
   });
 
@@ -181,22 +233,33 @@ describe('PS2GameVerificationService', () => {
       const deathEvent = {
         character_id: 'unmonitored_character',
         attacker_character_id: 'attacker_character',
-      } as any ;
+      } as any;
 
       await service.handleVerification(deathEvent);
 
-      expect(service['logger'].warn).toHaveBeenCalledWith('Received message somehow not related to monitored characters! unmonitored_character');
+      expect(service['logger'].warn).toHaveBeenCalledWith(
+        'Received message somehow not related to monitored characters! unmonitored_character',
+      );
     });
 
     it('should handle missing messages', async () => {
       service['messagesMap'] = new Map();
 
-      const handleFailedVerificationSpy = jest.spyOn(service as any, 'handleFailedVerification').mockReturnValue(true);
+      const handleFailedVerificationSpy = jest
+        .spyOn(service as any, 'handleFailedVerification')
+        .mockReturnValue(true);
 
       await service.handleVerification(mockDeathEvent);
 
-      expect(service['logger'].error).toHaveBeenCalledWith('Message was not found!');
-      expect(handleFailedVerificationSpy).toHaveBeenCalledWith(mockPS2Character, 'Discord message related to this request is missing! Please try again. If this keeps happening, please contact Maelstrome.', null, true);
+      expect(service['logger'].error).toHaveBeenCalledWith(
+        'Message was not found!',
+      );
+      expect(handleFailedVerificationSpy).toHaveBeenCalledWith(
+        mockPS2Character,
+        'Discord message related to this request is missing! Please try again. If this keeps happening, please contact Maelstrome.',
+        null,
+        true,
+      );
     });
 
     it('should handle non suicides', async () => {
@@ -205,16 +268,25 @@ describe('PS2GameVerificationService', () => {
 
       await service.handleVerification(deathEvent);
 
-      expect(editMessageSpy).toHaveBeenCalledWith(`## Verification status for \`${mockPS2Character.name.first}\`: ⏳__Pending__\n\n⚠️ Death for character "${mockPS2Character.name.first}" detected, but it wasn't a suicide. Type **/suicide** in the game chat in VR Training for the quickest way to do this.`, mockDiscordMessage);
+      expect(editMessageSpy).toHaveBeenCalledWith(
+        `## Verification status for \`${mockPS2Character.name.first}\`: ⏳__Pending__\n\n⚠️ Death for character "${mockPS2Character.name.first}" detected, but it wasn't a suicide. Type **/suicide** in the game chat in VR Training for the quickest way to do this.`,
+        mockDiscordMessage,
+      );
     });
 
     it('should handle successfully', async () => {
-      const handleSuccessfulVerificationSpy = jest.spyOn(service as any, 'handleSuccessfulVerification').mockReturnValue(true);
+      const handleSuccessfulVerificationSpy = jest
+        .spyOn(service as any, 'handleSuccessfulVerification')
+        .mockReturnValue(true);
 
       await service.handleVerification(mockDeathEvent);
 
-      expect(service['logger'].log).toHaveBeenCalledWith(`Death event for ${mockPS2Character.name.first} validated!`);
-      expect(handleSuccessfulVerificationSpy).toHaveBeenCalledWith(mockPS2Character);
+      expect(service['logger'].log).toHaveBeenCalledWith(
+        `Death event for ${mockPS2Character.name.first} validated!`,
+      );
+      expect(handleSuccessfulVerificationSpy).toHaveBeenCalledWith(
+        mockPS2Character,
+      );
     });
   });
 });

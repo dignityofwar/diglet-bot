@@ -4,7 +4,7 @@ import { Entity, Index, Property, Unique } from '@mikro-orm/core';
 interface JoinerLeaverEntityOptions {
   discordId: string;
   discordNickname?: string;
-  joinDate?: Date
+  joinDate?: Date;
   leaveDate?: Date;
   rejoinCount?: number;
 }
