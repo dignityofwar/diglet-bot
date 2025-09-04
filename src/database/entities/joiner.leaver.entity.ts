@@ -1,10 +1,10 @@
-import { BaseEntity } from "./base.entity";
-import { Entity, Index, Property, Unique } from "@mikro-orm/core";
+import { BaseEntity } from './base.entity';
+import { Entity, Index, Property, Unique } from '@mikro-orm/core';
 
 interface JoinerLeaverEntityOptions {
   discordId: string;
   discordNickname?: string;
-  joinDate?: Date;
+  joinDate?: Date
   leaveDate?: Date;
   rejoinCount?: number;
 }
@@ -14,19 +14,19 @@ export class JoinerLeaverEntity extends BaseEntity {
   @Property()
   @Unique()
   @Index()
-  discordId: string;
+    discordId: string;
 
   @Property()
-  discordNickname: string;
+    discordNickname: string;
 
   @Property()
-  joinDate: Date = new Date();
+    joinDate: Date = new Date();
 
   @Property()
-  leaveDate: Date | null = null;
+    leaveDate: Date | null = null;
 
   @Property()
-  rejoinCount: number = 0;
+    rejoinCount: number = 0;
 
   constructor(options: JoinerLeaverEntityOptions) {
     super();

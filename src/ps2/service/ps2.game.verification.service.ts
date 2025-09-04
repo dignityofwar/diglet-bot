@@ -1,17 +1,17 @@
-import { Injectable, Logger, OnApplicationBootstrap } from "@nestjs/common";
-import { CensusWebsocketService } from "./census.websocket.service";
-import { ConfigService } from "@nestjs/config";
-import { Channel, GuildMember, Message, TextChannel } from "discord.js";
-import { CensusCharacterWithOutfitInterface } from "../interfaces/CensusCharacterResponseInterface";
-import { Death } from "ps2census";
-import { EventConstants } from "../constants/EventConstants";
-import { PS2VerificationAttemptEntity } from "../../database/entities/ps2.verification.attempt.entity";
-import { InjectRepository } from "@mikro-orm/nestjs";
-import { EntityRepository } from "@mikro-orm/core";
-import { PS2MembersEntity } from "../../database/entities/ps2.members.entity";
-import { DiscordService } from "../../discord/discord.service";
-import EventEmitter from "events";
-import { getChannel } from "../../discord/discord.hacks";
+import { Injectable, Logger, OnApplicationBootstrap } from '@nestjs/common';
+import { CensusWebsocketService } from './census.websocket.service';
+import { ConfigService } from '@nestjs/config';
+import { Channel, GuildMember, Message, TextChannel } from 'discord.js';
+import { CensusCharacterWithOutfitInterface } from '../interfaces/CensusCharacterResponseInterface';
+import { Death } from 'ps2census';
+import { EventConstants } from '../constants/EventConstants';
+import { PS2VerificationAttemptEntity } from '../../database/entities/ps2.verification.attempt.entity';
+import { InjectRepository } from '@mikro-orm/nestjs';
+import { EntityRepository } from '@mikro-orm/core';
+import { PS2MembersEntity } from '../../database/entities/ps2.members.entity';
+import { DiscordService } from '../../discord/discord.service';
+import EventEmitter from 'events';
+import { getChannel } from '../../discord/discord.hacks';
 
 // This service exists to subscribe to the PS2 Census websocket service and listen for particular events concerning characters.
 // A long promise will be created, waiting for the character to do the actions performed.
@@ -22,10 +22,7 @@ import { getChannel } from "../../discord/discord.hacks";
 export class PS2GameVerificationService implements OnApplicationBootstrap {
   private readonly logger = new Logger(PS2GameVerificationService.name);
   private verificationChannel: Channel;
-  private monitoringCharacters: Map<
-    string,
-    CensusCharacterWithOutfitInterface
-  > = new Map();
+  private monitoringCharacters: Map<string, CensusCharacterWithOutfitInterface> = new Map();
   private guildMembersMap: Map<string, GuildMember> = new Map();
   private deadline = 1000 * 60 * 5; // 5 minutes
   private timer: NodeJS.Timeout;
@@ -38,54 +35,39 @@ export class PS2GameVerificationService implements OnApplicationBootstrap {
     private readonly config: ConfigService,
     private readonly censusWebsocketService: CensusWebsocketService,
     private readonly eventBus: EventEmitter,
-    @InjectRepository(PS2VerificationAttemptEntity)
-    private readonly ps2VerificationAttemptRepository: EntityRepository<PS2VerificationAttemptEntity>,
-    @InjectRepository(PS2MembersEntity)
-    private readonly ps2MembersRepository: EntityRepository<PS2MembersEntity>,
-  ) {}
+    @InjectRepository(PS2VerificationAttemptEntity) private readonly ps2VerificationAttemptRepository: EntityRepository<PS2VerificationAttemptEntity>,
+    @InjectRepository(PS2MembersEntity) private readonly ps2MembersRepository: EntityRepository<PS2MembersEntity>
+  ) {
+  }
 
   async onApplicationBootstrap() {
     // Store the Discord guild channel and ensure we can send messages to it
-    const verifyChannelId = this.config.get("discord.channels.ps2Verify");
+    const verifyChannelId = this.config.get('discord.channels.ps2Verify');
 
-    this.verificationChannel =
-      await this.discordService.getTextChannel(verifyChannelId);
+    this.verificationChannel = await this.discordService.getTextChannel(verifyChannelId);
     if (!this.verificationChannel) {
       throw new Error(`Could not find channel with ID ${verifyChannelId}`);
     }
     if (!this.verificationChannel.isTextBased()) {
-      throw new Error(
-        `Channel with ID ${verifyChannelId} is not a text channel`,
-      );
+      throw new Error(`Channel with ID ${verifyChannelId} is not a text channel`);
     }
 
     // We purposefully don't check if the verified role exists, as the bot could technically belong to multiple servers, and we'd have to start injecting the guild ID into the config service, which is a bit of a pain.
 
     await this.init();
 
-    this.eventBus.on(EventConstants.PS2_CENSUS_DEATH, (character) =>
-      this.handleVerification(character),
-    );
-    this.eventBus.on(EventConstants.PS2_CENSUS_SUBSCRIBED, () =>
-      this.handleSubscription(),
-    );
+    this.eventBus.on(EventConstants.PS2_CENSUS_DEATH, (character) => this.handleVerification(character));
+    this.eventBus.on(EventConstants.PS2_CENSUS_SUBSCRIBED, () => this.handleSubscription());
     this.eventBus.emit(EventConstants.PS2_VERIFICATION_SERVICE_READY);
   }
 
-  public async isValidRegistrationAttempt(
-    character: CensusCharacterWithOutfitInterface,
-    member: GuildMember,
-  ): Promise<string | true> {
-    this.logger.debug("Checking if registration attempt is valid");
+  public async isValidRegistrationAttempt(character: CensusCharacterWithOutfitInterface, member: GuildMember): Promise<string | true> {
+    this.logger.debug('Checking if registration attempt is valid');
 
-    const ps2Member = await this.ps2MembersRepository.find({
-      characterId: character.character_id,
-    });
+    const ps2Member = await this.ps2MembersRepository.find({ characterId: character.character_id });
     if (ps2Member.length > 0) {
       // Get the original Discord user
-      const originalDiscordMember = await member.guild.members.fetch(
-        ps2Member[0].discordId,
-      );
+      const originalDiscordMember = await member.guild.members.fetch(ps2Member[0].discordId);
 
       if (!originalDiscordMember) {
         return `Character **"${character.name.first}"** has already been registered, but the user who registered it has left the server. If you believe this to be in error, please contact the PS2 Leaders.`;
@@ -94,33 +76,23 @@ export class PS2GameVerificationService implements OnApplicationBootstrap {
       return `Character **"${character.name.first}"** has already been registered by user \`@${originalDiscordMember.displayName}\`. If you believe this to be in error, please contact the PS2 Leaders.`;
     }
 
-    const discordMember = await this.ps2MembersRepository.find({
-      discordId: member.id,
-    });
+    const discordMember = await this.ps2MembersRepository.find({ discordId: member.id });
     if (discordMember.length > 0) {
-      return "You have already registered a character. We don't allow multiple characters to be registered to the same Discord user, as there is little point to it. If you believe this to be in error, or you have registered the wrong character, please contact the PS2 Leaders.";
+      return 'You have already registered a character. We don\'t allow multiple characters to be registered to the same Discord user, as there is little point to it. If you believe this to be in error, or you have registered the wrong character, please contact the PS2 Leaders.';
     }
 
-    const ps2VerificationAttempt =
-      await this.ps2VerificationAttemptRepository.find({
-        characterId: character.character_id,
-      });
+    const ps2VerificationAttempt = await this.ps2VerificationAttemptRepository.find({ characterId: character.character_id });
     if (ps2VerificationAttempt.length > 0) {
-      return `Character **"${character.name.first}"** already has a pending registration. Please complete it before attempting again. Pinging <@${this.config.get("discord.devUserId")}> in case there's a problem.`;
+      return `Character **"${character.name.first}"** already has a pending registration. Please complete it before attempting again. Pinging <@${this.config.get('discord.devUserId')}> in case there's a problem.`;
     }
 
     return true;
   }
 
-  public async watch(
-    character: CensusCharacterWithOutfitInterface,
-    guildMember: GuildMember,
-  ) {
+  public async watch(character: CensusCharacterWithOutfitInterface, guildMember: GuildMember) {
     // Add context to the character for easier retrieval later
     character.monitoringStarted = new Date();
-    const deadline = new Date(
-      character.monitoringStarted.getTime() + this.deadline,
-    );
+    const deadline = new Date(character.monitoringStarted.getTime() + this.deadline);
     this.monitoringCharacters.set(character.character_id, character);
     this.logger.debug(`Added character ${character.name.first} to watch list`);
 
@@ -128,29 +100,23 @@ export class PS2GameVerificationService implements OnApplicationBootstrap {
     this.guildMembersMap.set(character.character_id, guildMember);
 
     // Save the attempt to the DB, so we can load it up should the bot be rebooted
-    const verificationAttemptEntity =
-      this.ps2VerificationAttemptRepository.create({
+    const verificationAttemptEntity = this.ps2VerificationAttemptRepository.create(
+      {
         characterId: character.character_id,
         characterName: character.name.first,
-      });
-    await this.ps2VerificationAttemptRepository
-      .getEntityManager()
-      .persistAndFlush(verificationAttemptEntity);
+      }
+    );
+    await this.ps2VerificationAttemptRepository.getEntityManager().persistAndFlush(verificationAttemptEntity);
 
     // Force the message to wait so the reply is sent first and messages are rendered in the proper order
     setTimeout(async () => {
-      const message = await this.sendMessage(
-        `Verification status for \`${character.name.first}\`: ⏳Setting up watcher for ${character.name.first} for verification...`,
-      );
-      const timeMessage = await this.sendMessage(
-        `⏳ Time remaining for \`${character.name.first}\`: **${this.calculateTimeRemaining(deadline)}**`,
-      );
+      const message = await this.sendMessage(`Verification status for \`${character.name.first}\`: ⏳Setting up watcher for ${character.name.first} for verification...`);
+      const timeMessage = await this.sendMessage(`⏳ Time remaining for \`${character.name.first}\`: **${this.calculateTimeRemaining(deadline)}**`);
 
       // Tell the websocket service to start monitoring the character for deaths
       this.censusWebsocketService.watchCharacter(character);
 
-      await this.editMessage(
-        `Greetings ${guildMember.nickname || guildMember.displayName}! Your character \`${character.name.first}\` has been detected in [DIG]. However, to ensure the character belongs to you, you now need follow the below steps:
+      await this.editMessage(`Greetings ${guildMember.nickname || guildMember.displayName}! Your character \`${character.name.first}\` has been detected in [DIG]. However, to ensure the character belongs to you, you now need follow the below steps:
         \n1. Redeploy.
         \n2. At the top of the redeploy screen, click on the continent name (e.g. Sanctuary).
         \n3. Click on World Map.
@@ -158,9 +124,7 @@ export class PS2GameVerificationService implements OnApplicationBootstrap {
         \n5. Wait a few seconds, then type **/suicide** in the in-game chat window.
         \nYour death won't be counted in your player's statistics.
         \nYou can also perform this on any continent, as long as it's not in Sanctuary, any Warpgate or Flotilla (on Oshur), but it will count towards your deaths outside of VR.
-        \n## Verification status for \`${character.name.first}\`: ⏳__Pending__`,
-        message,
-      );
+        \n## Verification status for \`${character.name.first}\`: ⏳__Pending__`, message);
 
       // Store the messages to reference for later so we can edit the message and also reply to it etc.
       this.messagesMap.set(character.character_id, message);
@@ -173,7 +137,7 @@ export class PS2GameVerificationService implements OnApplicationBootstrap {
   public async forceAdd(
     character: CensusCharacterWithOutfitInterface,
     targetMember: GuildMember,
-    createdByMember: GuildMember,
+    createdByMember: GuildMember
   ) {
     await this.applyDiscordChanges(character, targetMember);
 
@@ -183,15 +147,13 @@ export class PS2GameVerificationService implements OnApplicationBootstrap {
       characterName: character.name.first,
       manual: true,
       manualCreatedByDiscordId: createdByMember.id,
-      manualCreatedByDiscordName:
-        createdByMember.nickname || createdByMember.displayName,
+      manualCreatedByDiscordName: createdByMember.nickname || createdByMember.displayName,
     });
 
     await this.ps2MembersRepository.upsert(entity);
 
-    await this
-      .sendMessage(`🎉 <@${targetMember.id}> your in game character **${character.name.first}** has been manually verified by <@${createdByMember.id}>! Welcome to the [DIG] outfit!
-🔓 You can now see our private section <#${this.config.get("discord.channels.ps2Private")}>. Should you leave the outfit, you will automatically lose this access.
+    await this.sendMessage(`🎉 <@${targetMember.id}> your in game character **${character.name.first}** has been manually verified by <@${createdByMember.id}>! Welcome to the [DIG] outfit!
+🔓 You can now see our private section <#${this.config.get('discord.channels.ps2Private')}>. Should you leave the outfit, you will automatically lose this access.
 ️📝 Please note your Discord server nickname (not your username) has been automatically changed to match your character's name. You are free to change it again, but please ensure it is still a resemblance of your character name.
 ===================`);
 
@@ -201,25 +163,20 @@ export class PS2GameVerificationService implements OnApplicationBootstrap {
   public async forceRemove(
     character: CensusCharacterWithOutfitInterface,
     targetMember: GuildMember,
-    createdByMember: GuildMember,
+    createdByMember: GuildMember
   ) {
     await this.applyDiscordChanges(character, targetMember, true);
 
-    const entity = await this.ps2MembersRepository.findOne({
-      characterId: character.character_id,
-    });
+    const entity = await this.ps2MembersRepository.findOne({ characterId: character.character_id });
 
     if (!entity || !entity.id) {
-      await this.sendMessage(
-        `ERROR: Could not find members record for Discord ID ${targetMember.id}! Pinging <@${this.config.get("discord.devUserId")}>!`,
-      );
-      return "ERROR";
+      await this.sendMessage(`ERROR: Could not find members record for Discord ID ${targetMember.id}! Pinging <@${this.config.get('discord.devUserId')}>!`);
+      return 'ERROR';
     }
 
     await this.ps2MembersRepository.getEntityManager().removeAndFlush(entity);
 
-    await this
-      .sendMessage(`🗑️ <@${targetMember.id}> your verification status has been manually removed by <@${createdByMember.id}>! You will need to re-verify yourself should you wish to regain full membership.
+    await this.sendMessage(`🗑️ <@${targetMember.id}> your verification status has been manually removed by <@${createdByMember.id}>! You will need to re-verify yourself should you wish to regain full membership.
 ===================`);
 
     return true;
@@ -238,38 +195,29 @@ export class PS2GameVerificationService implements OnApplicationBootstrap {
   // noinspection FunctionWithMultipleLoopsJS
   private async init() {
     // Flush any pending verification attempts that were in progress
-    const verificationAttempts =
-      await this.ps2VerificationAttemptRepository.findAll();
+    const verificationAttempts = await this.ps2VerificationAttemptRepository.findAll();
     for (const verificationAttempt of verificationAttempts) {
-      await this.ps2VerificationAttemptRepository
-        .getEntityManager()
-        .removeAndFlush(verificationAttempt);
+      await this.ps2VerificationAttemptRepository.getEntityManager().removeAndFlush(verificationAttempt);
     }
 
     for (const verificationAttempt of verificationAttempts) {
-      await (this.verificationChannel as TextChannel).send(
-        `🗑️ Removed verification attempt for \`${verificationAttempt.characterName}\``,
-      );
+      await (this.verificationChannel as TextChannel).send(`🗑️ Removed verification attempt for \`${verificationAttempt.characterName}\``);
     }
 
     if (verificationAttempts.length > 0) {
-      await (this.verificationChannel as TextChannel).send(
-        `⚠️ Removed ${verificationAttempts.length} pending verification attempt(s) due to bot restart or crash. Any previous attempts must be restarted. Pinging <@${this.config.get("discord.devUserId")}>.`,
-      );
+      await (this.verificationChannel as TextChannel).send(`⚠️ Removed ${verificationAttempts.length} pending verification attempt(s) due to bot restart or crash. Any previous attempts must be restarted. Pinging <@${this.config.get('discord.devUserId')}>.`);
     }
   }
 
   private async sendMessage(message: string): Promise<Message<true>> {
     if (!this.verificationChannel.isTextBased()) {
-      throw new Error(
-        `Channel with ID ${this.verificationChannel.id} is not a text channel`,
-      );
+      throw new Error(`Channel with ID ${this.verificationChannel.id} is not a text channel`);
     }
     return await (this.verificationChannel as TextChannel).send(message);
   }
 
   private async handleSubscription() {
-    this.logger.log("Confirmed ESS stream is online and ready for events");
+    this.logger.log('Confirmed ESS stream is online and ready for events');
     if (this.timer) clearInterval(this.timer);
 
     this.timer = setInterval(() => {
@@ -278,38 +226,26 @@ export class PS2GameVerificationService implements OnApplicationBootstrap {
   }
 
   public async handleVerification(deathEvent: Death) {
-    this.logger.debug("Handling PS2 verification");
-    const character =
-      this.monitoringCharacters.get(deathEvent.character_id) ?? null;
+    this.logger.debug('Handling PS2 verification');
+    const character = this.monitoringCharacters.get(deathEvent.character_id) ?? null;
 
     if (!character?.character_id) {
-      this.logger.warn(
-        `Received message somehow not related to monitored characters! ${deathEvent.character_id}`,
-      );
+      this.logger.warn(`Received message somehow not related to monitored characters! ${deathEvent.character_id}`);
       return;
     }
 
     const message = this.messagesMap.get(character.character_id) ?? null;
 
     if (!message) {
-      this.logger.error("Message was not found!");
-      return await this.handleFailedVerification(
-        character,
-        "Discord message related to this request is missing! Please try again. If this keeps happening, please contact Maelstrome.",
-        null,
-        true,
-      );
+      this.logger.error('Message was not found!');
+      return await this.handleFailedVerification(character, 'Discord message related to this request is missing! Please try again. If this keeps happening, please contact Maelstrome.', null, true);
     }
 
     // Validate the death event was the same player suiciding with a VS frag grenade.
-    const isSuicide =
-      deathEvent.attacker_character_id === deathEvent.character_id;
+    const isSuicide = deathEvent.attacker_character_id === deathEvent.character_id;
 
     if (!isSuicide) {
-      await this.editMessage(
-        `## Verification status for \`${character.name.first}\`: ⏳__Pending__\n\n⚠️ Death for character "${character.name.first}" detected, but it wasn't a suicide. Type **/suicide** in the game chat in VR Training for the quickest way to do this.`,
-        message,
-      );
+      await this.editMessage(`## Verification status for \`${character.name.first}\`: ⏳__Pending__\n\n⚠️ Death for character "${character.name.first}" detected, but it wasn't a suicide. Type **/suicide** in the game chat in VR Training for the quickest way to do this.`, message);
       return;
     }
 
@@ -317,27 +253,18 @@ export class PS2GameVerificationService implements OnApplicationBootstrap {
     await this.handleSuccessfulVerification(character);
   }
 
-  private async handleFailedVerification(
-    character: CensusCharacterWithOutfitInterface,
-    failureReason: string,
-    guildMember?: GuildMember | null,
-    isError = false,
-    unwatch = true,
-  ) {
-    this.logger.debug("Handling failed verification");
+  private async handleFailedVerification(character: CensusCharacterWithOutfitInterface, failureReason: string, guildMember?: GuildMember | null, isError = false, unwatch = true) {
+    this.logger.debug('Handling failed verification');
 
     const message = this.messagesMap.get(character.character_id) ?? null;
 
     // Fucked
     if (!message) {
-      throw new Error("Message vanished, cannot proceed.");
+      throw new Error('Message vanished, cannot proceed.');
     }
 
     await getChannel(message).sendTyping();
-    await this.editMessage(
-      `## Verification status for \`${character.name.first}\`: ❌ __FAILED__\n\nReason: ${failureReason}`,
-      message,
-    );
+    await this.editMessage(`## Verification status for \`${character.name.first}\`: ❌ __FAILED__\n\nReason: ${failureReason}`, message);
 
     if (isError) {
       await getChannel(message).send(failureReason);
@@ -347,37 +274,28 @@ export class PS2GameVerificationService implements OnApplicationBootstrap {
       await this.unwatch(character);
 
       try {
-        const entity = await this.ps2VerificationAttemptRepository.find({
-          characterId: character.character_id,
-        });
-        await this.ps2VerificationAttemptRepository
-          .getEntityManager()
-          .removeAndFlush(entity);
-      } catch (err) {
+        const entity = await this.ps2VerificationAttemptRepository.find({ characterId: character.character_id });
+        await this.ps2VerificationAttemptRepository.getEntityManager().removeAndFlush(entity);
+      }
+      catch (err) {
         // Fucked
-        await getChannel(message).send(
-          `Failed to remove the verification attempt from the database. Error: "${err.message}". Pinging <@${this.config.get("discord.devUserId")}>!`,
-        );
+        await getChannel(message).send(`Failed to remove the verification attempt from the database. Error: "${err.message}". Pinging <@${this.config.get('discord.devUserId')}>!`);
         return;
       }
     }
 
     if (guildMember) {
-      await getChannel(message).send(
-        `😔 <@${guildMember.id}> your in game character "${character.name.first}" could not be verified! Please read the reason as to why above. Feel free to contact the PS2 Leaders for assistance.`,
-      );
+      await getChannel(message).send(`😔 <@${guildMember.id}> your in game character "${character.name.first}" could not be verified! Please read the reason as to why above. Feel free to contact the PS2 Leaders for assistance.`);
     }
   }
 
-  private async handleSuccessfulVerification(
-    character: CensusCharacterWithOutfitInterface,
-  ) {
-    this.logger.debug("Handling successful verification");
+  private async handleSuccessfulVerification(character: CensusCharacterWithOutfitInterface) {
+    this.logger.debug('Handling successful verification');
     const message = this.messagesMap.get(character.character_id) ?? null;
 
     // Fucked
     if (!message) {
-      throw new Error("Message vanished, cannot proceed");
+      throw new Error('Message vanished, cannot proceed');
     }
 
     await getChannel(message).sendTyping();
@@ -393,64 +311,38 @@ export class PS2GameVerificationService implements OnApplicationBootstrap {
         characterName: character.name.first,
       });
       await this.ps2MembersRepository.upsert(ps2MemberEntity);
-    } catch (err) {
-      const errorMessage = "Failed to save PS2 member to the database!";
-      this.logger.error(
-        `Failed to save PS2 member to the database! ${err.message}`,
-      );
-      return await this.handleFailedVerification(
-        character,
-        `${errorMessage} Pinging <@${this.config.get("discord.devUserId")}>! Error: ${err.message}`,
-        guildMember,
-        true,
-      );
+    }
+    catch (err) {
+      const errorMessage = 'Failed to save PS2 member to the database!';
+      this.logger.error(`Failed to save PS2 member to the database! ${err.message}`);
+      return await this.handleFailedVerification(character, `${errorMessage} Pinging <@${this.config.get('discord.devUserId')}>! Error: ${err.message}`, guildMember, true);
     }
 
     try {
-      const entity = await this.ps2VerificationAttemptRepository.find({
-        characterId: character.character_id,
-      });
-      await this.ps2VerificationAttemptRepository
-        .getEntityManager()
-        .removeAndFlush(entity);
-    } catch (err) {
-      const errorMessage =
-        "Failed to delete PS2 member verification attempt from the database!";
+      const entity = await this.ps2VerificationAttemptRepository.find({ characterId: character.character_id });
+      await this.ps2VerificationAttemptRepository.getEntityManager().removeAndFlush(entity);
+    }
+    catch (err) {
+      const errorMessage = 'Failed to delete PS2 member verification attempt from the database!';
       this.logger.error(errorMessage);
-      return await this.handleFailedVerification(
-        character,
-        `${errorMessage} Pinging <@${this.config.get("discord.devUserId")}>! Error: ${err.message}`,
-        guildMember,
-        true,
-      );
+      return await this.handleFailedVerification(character, `${errorMessage} Pinging <@${this.config.get('discord.devUserId')}>! Error: ${err.message}`, guildMember, true);
     }
 
-    await this.editMessage(
-      `## Verification status for \`${character.name.first}\`: ✅ __Successful__!`,
-      message,
-    );
+    await this.editMessage(`## Verification status for \`${character.name.first}\`: ✅ __Successful__!`, message);
 
     await this.unwatch(character);
-    await getChannel(message)
-      .send(`### 🎉 <@${guildMember.id}> your in game character **${character.name.first}** has been successfully verified! Welcome to the [DIG] outfit!
-🔓 You can now see our private section <#${this.config.get("discord.channels.ps2Private")}>. Should you leave the outfit, you will automatically lose this access.
+    await getChannel(message).send(`### 🎉 <@${guildMember.id}> your in game character **${character.name.first}** has been successfully verified! Welcome to the [DIG] outfit!
+🔓 You can now see our private section <#${this.config.get('discord.channels.ps2Private')}>. Should you leave the outfit, you will automatically lose this access.
 ️📝 Please note your Discord server nickname (not your username) has been automatically changed to match your character's name. You are free to change it again, but please ensure it is still a resemblance of your character name.
 ===================`);
 
     this.logger.log(`Successfully verified ${character.name.first}!`);
   }
 
-  private async applyDiscordChanges(
-    character: CensusCharacterWithOutfitInterface,
-    guildMember: GuildMember,
-    remove = false,
-  ) {
+  private async applyDiscordChanges(character: CensusCharacterWithOutfitInterface, guildMember: GuildMember, remove = false) {
     // Add the PS2/verified role to the Discord user
-    const verifiedRoleId = this.config.get("discord.roles.ps2Verified");
-    const verifyRole = await this.discordService.getRoleViaMember(
-      guildMember,
-      verifiedRoleId,
-    );
+    const verifiedRoleId = this.config.get('discord.roles.ps2Verified');
+    const verifyRole = await this.discordService.getRoleViaMember(guildMember, verifiedRoleId);
 
     if (!verifyRole) {
       throw new Error(`Could not find role with ID ${verifiedRoleId}`);
@@ -459,16 +351,13 @@ export class PS2GameVerificationService implements OnApplicationBootstrap {
     try {
       if (remove) {
         await guildMember?.roles.remove(verifyRole);
-      } else {
+      }
+      else {
         await guildMember?.roles.add(verifyRole);
       }
-    } catch (err) {
-      return await this.handleFailedVerification(
-        character,
-        `Unable to add/remove the PS2/Verified role to user! Error: "${err.message}". Pinging <@${this.config.get("discord.devUserId")}>!`,
-        guildMember,
-        true,
-      );
+    }
+    catch (err) {
+      return await this.handleFailedVerification(character, `Unable to add/remove the PS2/Verified role to user! Error: "${err.message}". Pinging <@${this.config.get('discord.devUserId')}>!`, guildMember, true);
     }
 
     // Edit their nickname to match their in game
@@ -476,10 +365,9 @@ export class PS2GameVerificationService implements OnApplicationBootstrap {
       if (!remove) {
         await guildMember?.setNickname(character.name.first);
       }
-    } catch (err) {
-      await this.sendMessage(
-        `Unable to set nickname for user \`${guildMember.nickname || guildMember.displayName}\`. If you're an admin or staff this won't work as the bot has no power over you!\nError:"${err.message}"\nPinging <@${this.config.get("discord.devUserId")}>!`,
-      );
+    }
+    catch (err) {
+      await this.sendMessage(`Unable to set nickname for user \`${guildMember.nickname || guildMember.displayName}\`. If you're an admin or staff this won't work as the bot has no power over you!\nError:"${err.message}"\nPinging <@${this.config.get('discord.devUserId')}>!`);
     }
   }
 
@@ -488,9 +376,7 @@ export class PS2GameVerificationService implements OnApplicationBootstrap {
 
     const now = new Date();
     this.monitoringCharacters.forEach(async (character) => {
-      const deadline = new Date(
-        character.monitoringStarted.getTime() + this.deadline,
-      );
+      const deadline = new Date(character.monitoringStarted.getTime() + this.deadline);
       const difference = deadline.getTime() - now.getTime();
       const guildMember = this.guildMembersMap.get(character.character_id);
       const timeMessage = this.timeMessagesMap.get(character.character_id);
@@ -499,23 +385,14 @@ export class PS2GameVerificationService implements OnApplicationBootstrap {
         this.logger.error(`Timing out ${character.name.first}'s verification!`);
 
         // Emit a fail event for the character
-        await this.handleFailedVerification(
-          character,
-          "Verification timed out! You need to perform this action within the deadline.",
-          guildMember,
-        );
+        await this.handleFailedVerification(character, 'Verification timed out! You need to perform this action within the deadline.', guildMember);
         return;
       }
       const timeRemaining = this.calculateTimeRemaining(deadline);
       if (timeMessage) {
-        await this.editMessage(
-          `⏳ Time remaining for \`${character.name.first}\`:  **${timeRemaining}**`,
-          timeMessage,
-        );
+        await this.editMessage(`⏳ Time remaining for \`${character.name.first}\`:  **${timeRemaining}**`, timeMessage);
       }
-      this.logger.debug(
-        `${character.name.first} still pending verification (${timeRemaining} remaining)`,
-      );
+      this.logger.debug(`${character.name.first} still pending verification (${timeRemaining} remaining)`);
     });
   }
 
@@ -524,33 +401,33 @@ export class PS2GameVerificationService implements OnApplicationBootstrap {
     if (message) {
       try {
         return await message.edit(content);
-      } catch (err) {
+      }
+      catch (err) {
         this.logger.error(`Failed to edit message! ${err.message}`);
-        await getChannel(message)
-          .send(`Failed to edit message! Content would have been:
+        await getChannel(message).send(`Failed to edit message! Content would have been:
         \n${content}
-        \nPinging<@${this.config.get("discord.devUserId")}>`);
+        \nPinging<@${this.config.get('discord.devUserId')}>`);
       }
     }
 
-    this.logger.error("Message was not found!");
+    this.logger.error('Message was not found!');
   }
 
   private async deleteMessage(message: Message) {
     if (message) {
       try {
         return await message.delete();
-      } catch (err) {
+      }
+      catch (err) {
         this.logger.error(`Failed to delete message! ${err.message}`);
-        await getChannel(message)
-          .send(`Failed to delete message! Error received: "${err.message}"
+        await getChannel(message).send(`Failed to delete message! Error received: "${err.message}"
         \nMessage details:
         \n ${JSON.stringify(message)}
-        \n Pinging <@${this.config.get("discord.devUserId")}>`);
+        \n Pinging <@${this.config.get('discord.devUserId')}>`);
       }
     }
 
-    this.logger.error("Message was not found!");
+    this.logger.error('Message was not found!');
   }
 
   private calculateTimeRemaining(deadline: Date) {

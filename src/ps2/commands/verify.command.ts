@@ -1,25 +1,17 @@
-import {
-  Command,
-  EventParams,
-  Handler,
-  InteractionEvent,
-} from "@discord-nestjs/core";
-import {
-  ApplicationCommandType,
-  ChatInputCommandInteraction,
-} from "discord.js";
-import { SlashCommandPipe } from "@discord-nestjs/common";
-import { Injectable, Logger } from "@nestjs/common";
-import { ConfigService } from "@nestjs/config";
-import { CensusCharacterWithOutfitInterface } from "../interfaces/CensusCharacterResponseInterface";
-import { CensusApiService } from "../service/census.api.service";
-import { PS2VerifyDto } from "../dto/PS2VerifyDto";
-import { PS2GameVerificationService } from "../service/ps2.game.verification.service";
+import { Command, EventParams, Handler, InteractionEvent } from '@discord-nestjs/core';
+import { ApplicationCommandType, ChatInputCommandInteraction } from 'discord.js';
+import { SlashCommandPipe } from '@discord-nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
+import { CensusCharacterWithOutfitInterface } from '../interfaces/CensusCharacterResponseInterface';
+import { CensusApiService } from '../service/census.api.service';
+import { PS2VerifyDto } from '../dto/PS2VerifyDto';
+import { PS2GameVerificationService } from '../service/ps2.game.verification.service';
 
 @Command({
-  name: "ps2-verify",
+  name: 'ps2-verify',
   type: ApplicationCommandType.ChatInput,
-  description: "Verify your character in the DIG Outfit",
+  description: 'Verify your character in the DIG Outfit',
 })
 @Injectable()
 export class PS2VerifyCommand {
@@ -36,11 +28,9 @@ export class PS2VerifyCommand {
     @InteractionEvent(SlashCommandPipe) dto: PS2VerifyDto,
     @EventParams() interaction: ChatInputCommandInteraction[],
   ): Promise<string> {
-    this.logger.debug(
-      `Received PS2VerifyCommand with character ${dto.character}`,
-    );
+    this.logger.debug(`Received PS2VerifyCommand with character ${dto.character}`);
     // Check if the command came from the correct channel ID
-    const verifyChannelId = this.config.get("discord.channels.ps2Verify");
+    const verifyChannelId = this.config.get('discord.channels.ps2Verify');
 
     // Check if channel is correct
     if (interaction[0].channelId !== verifyChannelId) {
@@ -52,33 +42,25 @@ export class PS2VerifyCommand {
     // Get the character from the Albion Online API
     try {
       character = await this.censusApiService.getCharacter(dto.character);
-    } catch (err) {
+    }
+    catch (err) {
       if (err instanceof Error) {
         return err.message;
       }
     }
 
-    const outfitId = this.config.get("ps2.outfitId");
+    const outfitId = this.config.get('ps2.outfitId');
 
     // Check if the character is in the PS2 Outfit
-    if (
-      !character.outfit_info ||
-      character.outfit_info?.outfit_id !== outfitId
-    ) {
+    if (!character.outfit_info || character.outfit_info?.outfit_id !== outfitId) {
       return `Your character **${character.name.first}** has not been detected in the [DIG] outfit. If you are in the outfit, please log out and in again, or wait 24 hours and try again as Census (the game's API) can be slow to update sometimes.`;
     }
 
     // Get the Discord guild member to be able to edit things about them
-    const guildMember = await interaction[0].guild?.members.fetch(
-      interaction[0].user.id,
-    );
+    const guildMember = await interaction[0].guild?.members.fetch(interaction[0].user.id);
 
     // Check first if the registration is valid
-    const isValid =
-      await this.ps2GameVerificationService.isValidRegistrationAttempt(
-        character,
-        guildMember,
-      );
+    const isValid = await this.ps2GameVerificationService.isValidRegistrationAttempt(character, guildMember);
 
     if (isValid !== true) {
       return isValid;
@@ -87,6 +69,6 @@ export class PS2VerifyCommand {
     this.ps2GameVerificationService.watch(character, guildMember);
 
     // Successful, but send nothing back as we send a separate message as the command may fail due to census being slow.
-    return "==================\nVerification started, if the bot hasn't responded within 30 seconds, please try again.";
+    return '==================\nVerification started, if the bot hasn\'t responded within 30 seconds, please try again.';
   }
 }

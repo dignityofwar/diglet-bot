@@ -1,11 +1,11 @@
-import axios from "axios";
-import AlbionAxiosFactory from "./albion.axios.factory";
-import { AlbionServer } from "../interfaces/albion.api.interfaces";
+import axios from 'axios';
+import AlbionAxiosFactory from './albion.axios.factory';
+import { AlbionServer } from '../interfaces/albion.api.interfaces';
 
 // Mocking the axios module
-jest.mock("axios");
+jest.mock('axios');
 
-describe("AlbionAxiosFactory", () => {
+describe('AlbionAxiosFactory', () => {
   let albionAxiosFactory: AlbionAxiosFactory;
   let mockedAxios: jest.Mocked<typeof axios>;
 
@@ -14,12 +14,12 @@ describe("AlbionAxiosFactory", () => {
     mockedAxios = axios as jest.Mocked<typeof axios>;
   });
 
-  it("should create an AxiosInstance with the correct configuration", () => {
+  it('should create an AxiosInstance with the correct configuration', () => {
     // Arrange
     const expectedConfig = {
-      baseURL: "https://gameinfo.albiononline.com/api/gameinfo",
+      baseURL: 'https://gameinfo.albiononline.com/api/gameinfo',
       headers: {
-        "Content-Type": "application/json",
+        'Content-Type': 'application/json',
       },
     };
 
@@ -27,12 +27,12 @@ describe("AlbionAxiosFactory", () => {
     expect(mockedAxios.create).toHaveBeenCalledWith(expectedConfig);
   });
 
-  it("should create an AxiosInstance with the correct configuration for Europe", () => {
+  it('should create an AxiosInstance with the correct configuration for Europe', () => {
     // Arrange
     const expectedConfig = {
-      baseURL: "https://gameinfo-ams.albiononline.com/api/gameinfo",
+      baseURL: 'https://gameinfo-ams.albiononline.com/api/gameinfo',
       headers: {
-        "Content-Type": "application/json",
+        'Content-Type': 'application/json',
       },
     };
 

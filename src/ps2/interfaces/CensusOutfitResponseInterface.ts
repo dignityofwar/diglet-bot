@@ -1,6 +1,6 @@
 export interface CensusOutfitResponseInterface {
-  outfit_list: CensusOutfitInterface[];
-  returned: number;
+  outfit_list: CensusOutfitInterface[]
+  returned: number
 }
 
 export interface CensusOutfitInterface {

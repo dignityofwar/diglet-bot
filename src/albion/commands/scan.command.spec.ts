@@ -1,12 +1,12 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { Test, TestingModule } from "@nestjs/testing";
-import { AlbionScanCommand } from "./scan.command";
-import { TestBootstrapper } from "../../test.bootstrapper";
-import { AlbionScanningService } from "../services/albion.scanning.service";
-import { ConfigService } from "@nestjs/config";
-import { ReflectMetadataProvider } from "@discord-nestjs/core";
+import { Test, TestingModule } from '@nestjs/testing';
+import { AlbionScanCommand } from './scan.command';
+import { TestBootstrapper } from '../../test.bootstrapper';
+import { AlbionScanningService } from '../services/albion.scanning.service';
+import { ConfigService } from '@nestjs/config';
+import { ReflectMetadataProvider } from '@discord-nestjs/core';
 
-describe("AlbionScanCommand", () => {
+describe('AlbionScanCommand', () => {
   let command: AlbionScanCommand;
   let mockDiscordInteraction: any;
   let mockDiscordUser: any;
@@ -14,8 +14,7 @@ describe("AlbionScanCommand", () => {
   // let albionScanningService: AlbionScanningService;
   // const dto = { dryRun: false }; // example payload
 
-  const expectedChannelId =
-    TestBootstrapper.mockConfig.discord.channels.albionRegistration;
+  const expectedChannelId = TestBootstrapper.mockConfig.discord.channels.albionRegistration;
 
   beforeEach(async () => {
     scanChannelId = TestBootstrapper.mockConfig.discord.channels.albionScans;
@@ -44,15 +43,12 @@ describe("AlbionScanCommand", () => {
 
     command = moduleRef.get<AlbionScanCommand>(AlbionScanCommand);
     // albionScanningService = moduleRef.get<AlbionScanningService>(AlbionScanningService);
-    mockDiscordInteraction = TestBootstrapper.getMockDiscordInteraction(
-      expectedChannelId,
-      mockDiscordUser,
-    );
+    mockDiscordInteraction = TestBootstrapper.getMockDiscordInteraction(expectedChannelId, mockDiscordUser);
     scanChannelId = TestBootstrapper.mockConfig.discord.channels.albionScans;
     mockDiscordInteraction[0].channelId = scanChannelId;
   });
 
-  it("should be defined", () => {
+  it('should be defined', () => {
     expect(command).toBeDefined();
   });
 
