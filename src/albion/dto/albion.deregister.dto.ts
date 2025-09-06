@@ -3,8 +3,7 @@ import { Param, ParamType } from '@discord-nestjs/core';
 export class AlbionDeregisterDto {
   @Param({
     name: 'character-name',
-    description:
-      'Name of the character in game',
+    description: 'Name of the character in game',
     required: false,
     minLength: 3,
     maxLength: 16,
@@ -12,12 +11,11 @@ export class AlbionDeregisterDto {
   })
     character?: string;
 
-   @Param({
-     name: 'discord-member',
-     description:
-      'Discord User to deregister.',
-     required: false,
-     type: ParamType.USER,
-   })
-     discordMember?: string;
+  @Param({
+    name: 'discord-member',
+    description: 'Discord User to deregister.',
+    required: false,
+    type: ParamType.USER,
+  })
+    discordMember?: string;
 }

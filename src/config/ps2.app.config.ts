@@ -62,8 +62,14 @@ const rolesToRankDevelopment: PS2RankMapInterface = {
     discordRoleId: '1142546013685559337',
   },
 };
-const rankMap = process.env.ENVIRONMENT === 'production' ? rolesToRankProduction : rolesToRankDevelopment;
-const pingRoles = [rankMap['@PS2/Officer'].discordRoleId, rankMap['@PS2/Leader'].discordRoleId];
+const rankMap =
+  process.env.ENVIRONMENT === 'production'
+    ? rolesToRankProduction
+    : rolesToRankDevelopment;
+const pingRoles = [
+  rankMap['@PS2/Officer'].discordRoleId,
+  rankMap['@PS2/Leader'].discordRoleId,
+];
 
 export default () => ({
   censusServiceId: process.env.PS2_CENSUS_SERVICE_ID,

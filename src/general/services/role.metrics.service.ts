@@ -9,9 +9,9 @@ import { generateDateInPast } from '../../helpers';
 import { DiscordService } from '../../discord/discord.service';
 
 export interface RoleList {
-  onboardedRole: Role
-  communityGameRoles: Collection<Snowflake, Role>
-  recGameRoles: Collection<Snowflake, Role>
+  onboardedRole: Role;
+  communityGameRoles: Collection<Snowflake, Role>;
+  recGameRoles: Collection<Snowflake, Role>;
 }
 
 @Injectable()
@@ -19,15 +19,14 @@ export class RoleMetricsService {
   private readonly logger = new Logger(RoleMetricsService.name);
 
   private readonly onboarded = 'Onboarded';
-  private readonly trackedCommunityGames = [
-    'Albion Online',
-    'Foxhole',
-  ];
+  private readonly trackedCommunityGames = ['Albion Online', 'Foxhole'];
   private readonly activeDayThreshold = 90; // 90 days
 
   constructor(
-    @InjectRepository(RoleMetricsEntity) private readonly roleMetricsRepository: EntityRepository<RoleMetricsEntity>,
-    @InjectRepository(ActivityEntity) private readonly activityRepository: EntityRepository<ActivityEntity>,
+    @InjectRepository(RoleMetricsEntity)
+    private readonly roleMetricsRepository: EntityRepository<RoleMetricsEntity>,
+    @InjectRepository(ActivityEntity)
+    private readonly activityRepository: EntityRepository<ActivityEntity>,
     private readonly discordService: DiscordService,
   ) {}
 
@@ -70,24 +69,28 @@ export class RoleMetricsService {
 
     // Sort the communityGames by the value
     stat.communityGames = Object.fromEntries(
-      Object.entries(stat.communityGames).sort(([, a], [, b]) => b - a)
+      Object.entries(stat.communityGames).sort(([, a], [, b]) => b - a),
     );
     stat.recGames = Object.fromEntries(
-      Object.entries(stat.recGames).sort(([, a], [, b]) => b - a)
+      Object.entries(stat.recGames).sort(([, a], [, b]) => b - a),
     );
 
     // Since the role metrics are stored as JSON objects, we will have to deconstruct them into legible strings.
     // Each communityGame and recGame is in the format of:
     // {"Albion Online": 5, "Foxhole": 10}
     // We will need to get the keys and values, and format them into a string
-    const communityGames = Object.entries(stat.communityGames).map(([key, value]) => {
-      const percentage = ((value / stat.onboarded) * 100).toFixed(1);
-      return `  - ${key}: **${value}** (${percentage}%)`;
-    }).join('\n');
-    const recGames = Object.entries(stat.recGames).map(([key, value]) => {
-      const percentage = ((value / stat.onboarded) * 100).toFixed(1);
-      return `  - ${key}: **${value}** (${percentage}%)`;
-    }).join('\n');
+    const communityGames = Object.entries(stat.communityGames)
+      .map(([key, value]) => {
+        const percentage = ((value / stat.onboarded) * 100).toFixed(1);
+        return `  - ${key}: **${value}** (${percentage}%)`;
+      })
+      .join('\n');
+    const recGames = Object.entries(stat.recGames)
+      .map(([key, value]) => {
+        const percentage = ((value / stat.onboarded) * 100).toFixed(1);
+        return `  - ${key}: **${value}** (${percentage}%)`;
+      })
+      .join('\n');
     const onboarded = stat.onboarded;
 
     // Format the report
@@ -115,27 +118,29 @@ ${recGames}
     }
 
     // Find the Onboarded role
-    const onboardedRole = roles.find(role => role.name === this.onboarded);
+    const onboardedRole = roles.find((role) => role.name === this.onboarded);
     if (!onboardedRole) {
       throw new Error('Onboarded role not found!');
     }
 
     // Find the tracked community game roles
-    const communityGameRoles = roles.filter(role => this.trackedCommunityGames.includes(role.name));
+    const communityGameRoles = roles.filter((role) =>
+      this.trackedCommunityGames.includes(role.name),
+    );
 
     if (communityGameRoles.size === 0) {
       throw new Error('Community game roles not found!');
     }
 
     // Find all roles with the 'Rec/' prefix
-    const recGameRoles = roles.filter(role => role.name.startsWith('Rec/'));
+    const recGameRoles = roles.filter((role) => role.name.startsWith('Rec/'));
     if (recGameRoles.size === 0) {
       throw new Error('Rec game roles not found!');
     }
 
     // Filter out any Rec/*/X roles, we don't want to count those.
     // Any roles that contain a second slash will be filtered out.
-    const filteredRecGameRoles = recGameRoles.filter(role => {
+    const filteredRecGameRoles = recGameRoles.filter((role) => {
       const name = role.name;
       const slashCount = (name.match(/\//g) || []).length;
       return slashCount === 1;
@@ -160,24 +165,32 @@ ${recGames}
     const activeMembers = await this.getActiveMembers();
 
     // Get the onboarded role counts
-    const onboardedRoleCount = members.filter(member =>
-      member.roles.cache.has(roles.onboardedRole.id) &&
+    const onboardedRoleCount = members.filter(
+      (member) =>
+        member.roles.cache.has(roles.onboardedRole.id) &&
         activeMembers.some(
-          activeMember => activeMember.discordId === member.id &&
-          activeMember.lastActivity > generateDateInPast(this.activeDayThreshold)
-        )).size;
+          (activeMember) =>
+            activeMember.discordId === member.id &&
+            activeMember.lastActivity >
+              generateDateInPast(this.activeDayThreshold),
+        ),
+    ).size;
 
     // Get the community game role counts, using the role name as a key
-    const communityGameRoleCounts = roles.communityGameRoles.map(role => {
+    const communityGameRoleCounts = roles.communityGameRoles.map((role) => {
       // Evalulate each member against:
       // 1. They have the role
       // 2. They are active using activeMembers and their discord id
-      const size = members.filter(member =>
-        member.roles.cache.has(role.id) &&
-        activeMembers.some(
-          activeMember => activeMember.discordId === member.id &&
-          activeMember.lastActivity > generateDateInPast(this.activeDayThreshold)
-        )).size;
+      const size = members.filter(
+        (member) =>
+          member.roles.cache.has(role.id) &&
+          activeMembers.some(
+            (activeMember) =>
+              activeMember.discordId === member.id &&
+              activeMember.lastActivity >
+                generateDateInPast(this.activeDayThreshold),
+          ),
+      ).size;
       return [role.name, size];
     });
     // Reduce the array to an object of key-value pairs
@@ -185,13 +198,17 @@ ${recGames}
     const communityGames = Object.fromEntries(communityGameRoleCounts);
 
     // Get the rec game role counts
-    const recGameRoleCounts = roles.recGameRoles.map(role => {
-      const size = members.filter(member =>
-        member.roles.cache.has(role.id) &&
-        activeMembers.some(
-          activeMember => activeMember.discordId === member.id &&
-          activeMember.lastActivity > generateDateInPast(this.activeDayThreshold)
-        )).size;
+    const recGameRoleCounts = roles.recGameRoles.map((role) => {
+      const size = members.filter(
+        (member) =>
+          member.roles.cache.has(role.id) &&
+          activeMembers.some(
+            (activeMember) =>
+              activeMember.discordId === member.id &&
+              activeMember.lastActivity >
+                generateDateInPast(this.activeDayThreshold),
+          ),
+      ).size;
       return [role.name, size];
     });
     // Reduce the array to an object of key-value pairs
@@ -203,9 +220,13 @@ ${recGames}
     createdAt.setHours(0, 0, 0, 0);
 
     // If there is already a record, delete it
-    const existingRecords = await this.roleMetricsRepository.find({ createdAt });
+    const existingRecords = await this.roleMetricsRepository.find({
+      createdAt,
+    });
     if (existingRecords) {
-      await this.roleMetricsRepository.getEntityManager().removeAndFlush(existingRecords);
+      await this.roleMetricsRepository
+        .getEntityManager()
+        .removeAndFlush(existingRecords);
     }
 
     // Create the role metrics entity
@@ -218,7 +239,9 @@ ${recGames}
     });
 
     // Persist the entity to the database
-    await this.roleMetricsRepository.getEntityManager().persistAndFlush(roleMetrics);
+    await this.roleMetricsRepository
+      .getEntityManager()
+      .persistAndFlush(roleMetrics);
 
     this.logger.log('Role metrics enumeration completed.');
   }
@@ -230,6 +253,8 @@ ${recGames}
     const activeMembers = await this.activityRepository.findAll();
     const activityDateCutoff = generateDateInPast(this.activeDayThreshold);
 
-    return activeMembers.filter((member => member.lastActivity > activityDateCutoff));
+    return activeMembers.filter(
+      (member) => member.lastActivity > activityDateCutoff,
+    );
   }
 }

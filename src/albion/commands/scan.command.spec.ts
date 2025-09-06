@@ -14,7 +14,8 @@ describe('AlbionScanCommand', () => {
   // let albionScanningService: AlbionScanningService;
   // const dto = { dryRun: false }; // example payload
 
-  const expectedChannelId = TestBootstrapper.mockConfig.discord.channels.albionRegistration;
+  const expectedChannelId =
+    TestBootstrapper.mockConfig.discord.channels.albionRegistration;
 
   beforeEach(async () => {
     scanChannelId = TestBootstrapper.mockConfig.discord.channels.albionScans;
@@ -43,7 +44,10 @@ describe('AlbionScanCommand', () => {
 
     command = moduleRef.get<AlbionScanCommand>(AlbionScanCommand);
     // albionScanningService = moduleRef.get<AlbionScanningService>(AlbionScanningService);
-    mockDiscordInteraction = TestBootstrapper.getMockDiscordInteraction(expectedChannelId, mockDiscordUser);
+    mockDiscordInteraction = TestBootstrapper.getMockDiscordInteraction(
+      expectedChannelId,
+      mockDiscordUser,
+    );
     scanChannelId = TestBootstrapper.mockConfig.discord.channels.albionScans;
     mockDiscordInteraction[0].channelId = scanChannelId;
   });

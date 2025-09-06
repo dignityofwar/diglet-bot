@@ -7,9 +7,7 @@ import { ConfigService } from '@nestjs/config';
 export class HealthcheckService {
   private readonly logger = new Logger(HealthcheckService.name);
 
-  constructor(
-    private readonly config: ConfigService,
-  ) {}
+  constructor(private readonly config: ConfigService) {}
 
   @Cron('*/1 * * * *')
   async check(): Promise<void> {
@@ -23,7 +21,9 @@ export class HealthcheckService {
     const healthcheckUUID = this.config.get('app.healthcheckUUID');
 
     if (!healthcheckUUID) {
-      this.logger.error('Healthcheck UUID is not set in the environment variables!');
+      this.logger.error(
+        'Healthcheck UUID is not set in the environment variables!',
+      );
       return;
     }
 

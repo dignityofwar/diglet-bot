@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { AlbionRegistrationsEntity } from '../../database/entities/albion.registrations.entity';
-import { AlbionPlayerInterface, AlbionServer } from '../interfaces/albion.api.interfaces';
+import { AlbionPlayerInterface } from '../interfaces/albion.api.interfaces';
 import { TestBootstrapper } from '../../test.bootstrapper';
 import { Test } from '@nestjs/testing';
 import { ConfigService } from '@nestjs/config';
@@ -12,7 +12,9 @@ import { DiscordService } from '../../discord/discord.service';
 import { AlbionDeregisterDto } from '../dto/albion.deregister.dto';
 import { Role } from 'discord.js';
 
-let mockAlbionRegistrationsRepository: jest.Mocked<EntityRepository<AlbionRegistrationsEntity>>;
+let mockAlbionRegistrationsRepository: jest.Mocked<
+  EntityRepository<AlbionRegistrationsEntity>
+>;
 
 let mockRegistration: AlbionRegistrationsEntity;
 let mockCharacter: AlbionPlayerInterface;
@@ -25,7 +27,7 @@ describe('AlbionDeregistrationService', () => {
   let configService: jest.Mocked<ConfigService>;
 
   beforeEach(async () => {
-    mockCharacter = TestBootstrapper.getMockAlbionCharacter(AlbionServer.EUROPE);
+    mockCharacter = TestBootstrapper.getMockAlbionCharacter();
 
     mockRegistration = {
       id: 123456789,
@@ -40,7 +42,8 @@ describe('AlbionDeregistrationService', () => {
       updatedAt: new Date(),
     } as AlbionRegistrationsEntity;
 
-    mockAlbionRegistrationsRepository = TestBootstrapper.getMockRepositoryInjected(mockRegistration) as any;
+    mockAlbionRegistrationsRepository =
+      TestBootstrapper.getMockRepositoryInjected(mockRegistration) as any;
     mockChannel = TestBootstrapper.getMockDiscordTextChannel();
     mockDiscordMember = TestBootstrapper.getMockDiscordUser();
 
@@ -70,7 +73,9 @@ describe('AlbionDeregistrationService', () => {
 
     TestBootstrapper.setupConfig(moduleRef);
 
-    service = moduleRef.get<AlbionDeregistrationService>(AlbionDeregistrationService);
+    service = moduleRef.get<AlbionDeregistrationService>(
+      AlbionDeregistrationService,
+    );
     discordService = moduleRef.get(DiscordService) as any;
     configService = moduleRef.get(ConfigService) as any;
 
@@ -95,7 +100,9 @@ describe('AlbionDeregistrationService', () => {
 
     beforeEach(() => {
       jest.clearAllMocks();
-      stripRegistrationSpy = jest.spyOn(service, 'stripRegistration').mockResolvedValue();
+      stripRegistrationSpy = jest
+        .spyOn(service, 'stripRegistration')
+        .mockResolvedValue();
       stripRolesSpy = jest.spyOn(service, 'stripRoles').mockResolvedValue();
       discordService.getGuildMember.mockResolvedValue(mockDiscordMember);
       mockAlbionRegistrationsRepository.findOne = jest
@@ -105,9 +112,9 @@ describe('AlbionDeregistrationService', () => {
 
     it('should throw if neither character nor discordMember provided', async () => {
       const dto: AlbionDeregisterDto = {};
-      await expect(service.deregister(mockChannel, dto))
-        .rejects
-        .toThrow('Either character or discordId must be provided for deregistration.');
+      await expect(service.deregister(mockChannel, dto)).rejects.toThrow(
+        'Either character or discordId must be provided for deregistration.',
+      );
       expect(stripRegistrationSpy).not.toHaveBeenCalled();
       expect(stripRolesSpy).not.toHaveBeenCalled();
       expect(mockChannel.send).not.toHaveBeenCalled();
@@ -115,18 +122,28 @@ describe('AlbionDeregistrationService', () => {
 
     it('should deregister via discordMember', async () => {
       const dto: AlbionDeregisterDto = { discordMember: mockDiscordMember.id };
-      mockAlbionRegistrationsRepository.findOne.mockResolvedValueOnce(mockRegistration);
+      mockAlbionRegistrationsRepository.findOne.mockResolvedValueOnce(
+        mockRegistration,
+      );
 
       await service.deregister(mockChannel, dto);
 
-      expect(mockAlbionRegistrationsRepository.findOne).toHaveBeenCalledWith({ discordId: dto.discordMember });
+      expect(mockAlbionRegistrationsRepository.findOne).toHaveBeenCalledWith({
+        discordId: dto.discordMember,
+      });
       expect(discordService.getGuildMember).toHaveBeenCalledWith(
         mockChannel.guild.id,
         mockRegistration.discordId,
-        true
+        true,
       );
-      expect(stripRegistrationSpy).toHaveBeenCalledWith(mockRegistration, mockChannel);
-      expect(stripRolesSpy).toHaveBeenCalledWith(mockDiscordMember, mockChannel);
+      expect(stripRegistrationSpy).toHaveBeenCalledWith(
+        mockRegistration,
+        mockChannel,
+      );
+      expect(stripRolesSpy).toHaveBeenCalledWith(
+        mockDiscordMember,
+        mockChannel,
+      );
     });
 
     it('should send not found message for discordMember path', async () => {
@@ -136,31 +153,43 @@ describe('AlbionDeregistrationService', () => {
       await service.deregister(mockChannel, dto);
 
       expect(mockChannel.send).toHaveBeenCalledWith(
-        `❌ No registration found for Discord User ID "${mockDiscordMember.id}"!`
+        `❌ No registration found for Discord User ID "${mockDiscordMember.id}"!`,
       );
       expect(stripRegistrationSpy).not.toHaveBeenCalled();
       expect(stripRolesSpy).not.toHaveBeenCalled();
     });
 
     it('should deregister via character and fetch member', async () => {
-      const dto: AlbionDeregisterDto = { character: mockRegistration.characterName };
-      mockAlbionRegistrationsRepository.findOne.mockImplementation(async (criteria: any) => {
-        if (criteria.characterName === mockRegistration.characterName) {
-          return mockRegistration;
-        }
-        return null;
-      });
+      const dto: AlbionDeregisterDto = {
+        character: mockRegistration.characterName,
+      };
+      mockAlbionRegistrationsRepository.findOne.mockImplementation(
+        async (criteria: any) => {
+          if (criteria.characterName === mockRegistration.characterName) {
+            return mockRegistration;
+          }
+          return null;
+        },
+      );
 
       await service.deregister(mockChannel, dto);
 
-      expect(mockAlbionRegistrationsRepository.findOne).toHaveBeenCalledWith({ characterName: mockRegistration.characterName });
+      expect(mockAlbionRegistrationsRepository.findOne).toHaveBeenCalledWith({
+        characterName: mockRegistration.characterName,
+      });
       expect(discordService.getGuildMember).toHaveBeenCalledWith(
         mockChannel.guild.id,
         mockRegistration.discordId,
-        true
+        true,
       );
-      expect(stripRegistrationSpy).toHaveBeenCalledWith(mockRegistration, mockChannel);
-      expect(stripRolesSpy).toHaveBeenCalledWith(mockDiscordMember, mockChannel);
+      expect(stripRegistrationSpy).toHaveBeenCalledWith(
+        mockRegistration,
+        mockChannel,
+      );
+      expect(stripRolesSpy).toHaveBeenCalledWith(
+        mockDiscordMember,
+        mockChannel,
+      );
     });
 
     it('should send not found message for character path', async () => {
@@ -170,23 +199,30 @@ describe('AlbionDeregistrationService', () => {
       await service.deregister(mockChannel, dto);
 
       expect(mockChannel.send).toHaveBeenCalledWith(
-        '❌ No registration found for character "MissingChar"!'
+        '❌ No registration found for character "MissingChar"!',
       );
       expect(stripRegistrationSpy).not.toHaveBeenCalled();
       expect(stripRolesSpy).not.toHaveBeenCalled();
     });
 
     it('should skip role stripping if member fetch fails (character path)', async () => {
-      const dto: AlbionDeregisterDto = { character: mockRegistration.characterName };
-      mockAlbionRegistrationsRepository.findOne.mockResolvedValueOnce(mockRegistration);
+      const dto: AlbionDeregisterDto = {
+        character: mockRegistration.characterName,
+      };
+      mockAlbionRegistrationsRepository.findOne.mockResolvedValueOnce(
+        mockRegistration,
+      );
       discordService.getGuildMember.mockRejectedValueOnce(new Error('Gone'));
 
       await service.deregister(mockChannel, dto);
 
-      expect(stripRegistrationSpy).toHaveBeenCalledWith(mockRegistration, mockChannel);
+      expect(stripRegistrationSpy).toHaveBeenCalledWith(
+        mockRegistration,
+        mockChannel,
+      );
       expect(stripRolesSpy).not.toHaveBeenCalled();
       expect(mockChannel.send).toHaveBeenCalledWith(
-        expect.stringContaining('⚠️ Discord Member with ID')
+        expect.stringContaining('⚠️ Discord Member with ID'),
       );
     });
   });
@@ -194,27 +230,33 @@ describe('AlbionDeregistrationService', () => {
   describe('stripRegistration', () => {
     it('should remove registration and confirm', async () => {
       const removeAndFlushSpy = jest
-        .spyOn(mockAlbionRegistrationsRepository.getEntityManager(), 'removeAndFlush')
+        .spyOn(
+          mockAlbionRegistrationsRepository.getEntityManager(),
+          'removeAndFlush',
+        )
         .mockResolvedValue();
 
       await service.stripRegistration(mockRegistration, mockChannel);
 
       expect(removeAndFlushSpy).toHaveBeenCalledWith(mockRegistration);
       expect(mockChannel.send).toHaveBeenCalledWith(
-        `Successfully deregistered Character ${mockRegistration.characterName}.`
+        `Successfully deregistered Character ${mockRegistration.characterName}.`,
       );
     });
 
     it('should report error on failure', async () => {
       const error = new Error('DB fail');
       jest
-        .spyOn(mockAlbionRegistrationsRepository.getEntityManager(), 'removeAndFlush')
+        .spyOn(
+          mockAlbionRegistrationsRepository.getEntityManager(),
+          'removeAndFlush',
+        )
         .mockRejectedValue(error);
 
       await service.stripRegistration(mockRegistration, mockChannel);
 
       expect(mockChannel.send).toHaveBeenCalledWith(
-        `ERROR: Failed to deregister character "${mockRegistration.characterName}" (${mockRegistration.characterId}) from registration database!\nError: "${error.message}". Pinging <@${TestBootstrapper.mockConfig.discord.devUserId}>!`
+        `ERROR: Failed to deregister character "${mockRegistration.characterName}" (${mockRegistration.characterId}) from registration database!\nError: "${error.message}". Pinging <@${TestBootstrapper.mockConfig.discord.devUserId}>!`,
       );
     });
   });
@@ -227,51 +269,65 @@ describe('AlbionDeregistrationService', () => {
 
     beforeEach(() => {
       jest.clearAllMocks();
-      discordService.getRoleViaMember.mockImplementation(async (_member: any, roleId: string) => {
-        // eslint-disable-next-line max-nested-callbacks
-        const found = mockRoles.find(r => r.id === roleId);
-        return {
-          ...found,
-          members: {
-            has: jest.fn().mockReturnValue(true),
-          },
-        } as any as Role;
-      });
+      discordService.getRoleViaMember.mockImplementation(
+        async (_member: any, roleId: string) => {
+          // eslint-disable-next-line max-nested-callbacks
+          const found = mockRoles.find((r) => r.id === roleId);
+          return {
+            ...found,
+            members: {
+              has: jest.fn().mockReturnValue(true),
+            },
+          } as any as Role;
+        },
+      );
     });
 
     it('should remove all mapped roles the member still has', async () => {
       await service.stripRoles(mockDiscordMember, mockChannel);
-      expect(mockDiscordMember.roles.remove).toHaveBeenCalledWith(mockRoles[0].id);
-      expect(mockDiscordMember.roles.remove).toHaveBeenCalledWith(mockRoles[1].id);
+      expect(mockDiscordMember.roles.remove).toHaveBeenCalledWith(
+        mockRoles[0].id,
+      );
+      expect(mockDiscordMember.roles.remove).toHaveBeenCalledWith(
+        mockRoles[1].id,
+      );
     });
 
     it('should skip roles not present on member', async () => {
-      discordService.getRoleViaMember.mockImplementation(async (_m: any, roleId: string) => {
-        // eslint-disable-next-line max-nested-callbacks
-        const found = mockRoles.find(r => r.id === roleId);
-        return {
-          ...found,
-          members: {
-            has: jest.fn().mockReturnValue(roleId === mockRoles[0].id),
-          },
-        } as any as Role;
-      });
+      discordService.getRoleViaMember.mockImplementation(
+        async (_m: any, roleId: string) => {
+          // eslint-disable-next-line max-nested-callbacks
+          const found = mockRoles.find((r) => r.id === roleId);
+          return {
+            ...found,
+            members: {
+              has: jest.fn().mockReturnValue(roleId === mockRoles[0].id),
+            },
+          } as any as Role;
+        },
+      );
 
       await service.stripRoles(mockDiscordMember, mockChannel);
 
-      expect(mockDiscordMember.roles.remove).toHaveBeenCalledWith(mockRoles[0].id);
-      expect(mockDiscordMember.roles.remove).not.toHaveBeenCalledWith(mockRoles[1].id);
+      expect(mockDiscordMember.roles.remove).toHaveBeenCalledWith(
+        mockRoles[0].id,
+      );
+      expect(mockDiscordMember.roles.remove).not.toHaveBeenCalledWith(
+        mockRoles[1].id,
+      );
     });
 
     it('should report an error if a role removal throws', async () => {
-      (mockDiscordMember.roles.remove as jest.Mock).mockImplementationOnce(() => {
-        throw new Error('Discord says no');
-      });
+      (mockDiscordMember.roles.remove as jest.Mock).mockImplementationOnce(
+        () => {
+          throw new Error('Discord says no');
+        },
+      );
 
       await service.stripRoles(mockDiscordMember, mockChannel);
 
       expect(mockChannel.send).toHaveBeenCalledWith(
-        `ERROR: Unable to remove role "${mockRoles[0].name}" from ${mockDiscordMember.user.username} (${mockDiscordMember.id}). Err: "Discord says no". Pinging <@${TestBootstrapper.mockConfig.discord.devUserId}>!`
+        `ERROR: Unable to remove role "${mockRoles[0].name}" from ${mockDiscordMember.user.username} (${mockDiscordMember.id}). Err: "Discord says no". Pinging <@${TestBootstrapper.mockConfig.discord.devUserId}>!`,
       );
     });
   });

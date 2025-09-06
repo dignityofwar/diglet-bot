@@ -5,10 +5,7 @@ import { DiscordService } from './discord.service';
 import { DiscordModule as DiscordJSModule } from '@discord-nestjs/core/dist/discord.module';
 
 @Module({
-  imports: [
-    ConfigModule,
-    DiscordJSModule.forFeature(),
-  ],
+  imports: [ConfigModule, DiscordJSModule.forFeature()],
   providers: [DiscordService],
   exports: [DiscordService],
 })

@@ -68,7 +68,9 @@ describe('PS2CronService', () => {
 
   it('init should throw an error if channel does not exist', async () => {
     discordService.getTextChannel = jest.fn().mockReturnValue(null);
-    await expect(service.onApplicationBootstrap()).rejects.toThrow(`Could not find channel with ID ${scanChannelId}`);
+    await expect(service.onApplicationBootstrap()).rejects.toThrow(
+      `Could not find channel with ID ${scanChannelId}`,
+    );
   });
 
   it('init should throw an error channel is not a text channel', async () => {
@@ -76,7 +78,9 @@ describe('PS2CronService', () => {
       isTextBased: jest.fn().mockReturnValue(false),
     });
 
-    await expect(service.onApplicationBootstrap()).rejects.toThrow(`Channel with ID ${scanChannelId} is not a text channel`);
+    await expect(service.onApplicationBootstrap()).rejects.toThrow(
+      `Channel with ID ${scanChannelId} is not a text channel`,
+    );
   });
 
   it('should upon being called send two messages to the channel', async () => {

@@ -5,8 +5,7 @@ export class AlbionScanDto {
   @Choice(AlbionServer)
   @Param({
     name: 'server',
-    description:
-      'Which server to scan for? Americas or Europe?',
+    description: 'Which server to scan for? Americas or Europe?',
     required: true,
   })
     server: AlbionServer;

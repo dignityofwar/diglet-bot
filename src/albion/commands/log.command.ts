@@ -1,5 +1,8 @@
 import { Command, EventParams, Handler } from '@discord-nestjs/core';
-import { ApplicationCommandType, ChatInputCommandInteraction } from 'discord.js';
+import {
+  ApplicationCommandType,
+  ChatInputCommandInteraction,
+} from 'discord.js';
 import { Injectable, Logger } from '@nestjs/common';
 
 @Command({
@@ -31,7 +34,11 @@ The log is good,
 The log is hard,
 The log is girthy, the log is big.
 The log will log our logs with speed.`);
-    (await interaction[0].channel.send(images[Math.floor(Math.random() * images.length)])).react('🪵');
+    (
+      await interaction[0].channel.send(
+        images[Math.floor(Math.random() * images.length)],
+      )
+    ).react('🪵');
 
     return '';
   }

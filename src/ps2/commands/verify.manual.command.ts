@@ -1,5 +1,13 @@
-import { Command, EventParams, Handler, InteractionEvent } from '@discord-nestjs/core';
-import { ApplicationCommandType, ChatInputCommandInteraction } from 'discord.js';
+import {
+  Command,
+  EventParams,
+  Handler,
+  InteractionEvent,
+} from '@discord-nestjs/core';
+import {
+  ApplicationCommandType,
+  ChatInputCommandInteraction,
+} from 'discord.js';
 import { SlashCommandPipe } from '@discord-nestjs/common';
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
@@ -28,7 +36,9 @@ export class PS2VerifyManualCommand {
     @InteractionEvent(SlashCommandPipe) dto: PS2VerifyManualDto,
     @EventParams() interaction: ChatInputCommandInteraction[],
   ): Promise<string> {
-    this.logger.debug(`Received onPS2VerifyManualCommand with character ${dto.character}`);
+    this.logger.debug(
+      `Received onPS2VerifyManualCommand with character ${dto.character}`,
+    );
     // Check if the command came from the correct channel ID
     const verifyChannelId = this.config.get('discord.channels.ps2Verify');
 
@@ -38,8 +48,12 @@ export class PS2VerifyManualCommand {
     }
 
     // Get the target and createdBy Discord guild members to be able to edit things about them
-    const targetMember = await interaction[0].guild?.members.fetch(dto.discordId);
-    const createdByMember = await interaction[0].guild?.members.fetch(interaction[0].user.id);
+    const targetMember = await interaction[0].guild?.members.fetch(
+      dto.discordId,
+    );
+    const createdByMember = await interaction[0].guild?.members.fetch(
+      interaction[0].user.id,
+    );
 
     if (!targetMember) {
       return `The Discord user <@${dto.discordId}> could not be found.`;
@@ -59,25 +73,40 @@ export class PS2VerifyManualCommand {
 
     // If a force remove, skip all the extra checks
     if (dto.remove) {
-      await this.ps2GameVerificationService.forceRemove(character, targetMember, createdByMember);
+      await this.ps2GameVerificationService.forceRemove(
+        character,
+        targetMember,
+        createdByMember,
+      );
       return 'Member manually unverified.';
     }
 
     const outfitId = this.config.get('ps2.outfitId');
 
     // Check if the character is in the PS2 Outfit
-    if (!character.outfit_info || character.outfit_info?.outfit_id !== outfitId) {
+    if (
+      !character.outfit_info ||
+      character.outfit_info?.outfit_id !== outfitId
+    ) {
       return `The character **${character.name.first}** has not been detected in the [DIG]. Please try again.`;
     }
 
     // Check first if the registration is valid
-    const isValid = await this.ps2GameVerificationService.isValidRegistrationAttempt(character, targetMember);
+    const isValid =
+      await this.ps2GameVerificationService.isValidRegistrationAttempt(
+        character,
+        targetMember,
+      );
 
     if (isValid !== true) {
       return isValid;
     }
 
-    await this.ps2GameVerificationService.forceAdd(character, targetMember, createdByMember);
+    await this.ps2GameVerificationService.forceAdd(
+      character,
+      targetMember,
+      createdByMember,
+    );
 
     // Successful, but send nothing back as we send a separate message as the command may fail due to census being slow.
     return 'Member manually verified.';

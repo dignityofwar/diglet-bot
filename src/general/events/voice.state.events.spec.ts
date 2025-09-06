@@ -27,7 +27,10 @@ describe('VoiceStateEvents', () => {
     mockUser = TestBootstrapper.getMockDiscordUser();
     mockVoiceChannel = TestBootstrapper.getMockDiscordVoiceChannel();
     mockOldState = TestBootstrapper.getMockDiscordVoiceState(mockUser, null);
-    mockNewState = TestBootstrapper.getMockDiscordVoiceState(mockUser, mockVoiceChannel);
+    mockNewState = TestBootstrapper.getMockDiscordVoiceState(
+      mockUser,
+      mockVoiceChannel,
+    );
   });
 
   afterEach(() => {
@@ -37,12 +40,16 @@ describe('VoiceStateEvents', () => {
   describe('onVoiceStateUpdate', () => {
     it('should handle a user joining a voice channel', async () => {
       await voiceStateEvents.onVoiceStateUpdate(mockOldState, mockNewState);
-      expect(databaseService.updateActivity).toHaveBeenCalledWith(mockNewState.member);
+      expect(databaseService.updateActivity).toHaveBeenCalledWith(
+        mockNewState.member,
+      );
     });
 
     it('should handle a user leaving a voice channel', async () => {
       await voiceStateEvents.onVoiceStateUpdate(mockNewState, mockOldState);
-      expect(databaseService.updateActivity).toHaveBeenCalledWith(mockOldState.member);
+      expect(databaseService.updateActivity).toHaveBeenCalledWith(
+        mockOldState.member,
+      );
     });
 
     it('should not handle non-channel changes like mute or deafen', async () => {

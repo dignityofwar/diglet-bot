@@ -1,12 +1,10 @@
 // eslint-disable-next-line no-shadow
 export enum AlbionServer {
-  AMERICAS = 'Americas',
   EUROPE = 'Europe',
 }
 
 // eslint-disable-next-line no-shadow
 export enum AlbionApiEndpoint {
-  ALBION_AMERICAS = 'https://gameinfo.albiononline.com/api/gameinfo',
   ALBION_EUROPE = 'https://gameinfo-ams.albiononline.com/api/gameinfo',
 }
 
@@ -64,7 +62,7 @@ interface AlbionSearchGuildInterface {
   AllianceId: string;
   AllianceName: string;
   KillFame: null; // Seems to always be null
-  DeathFame: number
+  DeathFame: number;
 }
 
 export interface AlbionPlayerInterface extends AlbionPlayerDetailsInterface {
@@ -83,19 +81,19 @@ export interface AlbionPlayerInterface extends AlbionPlayerDetailsInterface {
     };
     Crafting: AlbionAreaStatisticsInterface;
     CrystalLeague: number;
-    FishingFame: number
-    FarmingFame: number
-    Timestamp: string
-  }
+    FishingFame: number;
+    FarmingFame: number;
+    Timestamp: string;
+  };
 }
 
 export interface AlbionPlayersResponseInterface {
-  data: AlbionPlayerInterface
+  data: AlbionPlayerInterface;
 }
 
 export interface AlbionSearchResponseInterface {
   data: {
     guilds: AlbionSearchGuildInterface[];
-    players: AlbionSearchPlayerInterface[]
-  }
+    players: AlbionSearchPlayerInterface[];
+  };
 }

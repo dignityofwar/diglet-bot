@@ -5,7 +5,10 @@ import {
   CensusCharacterWithOutfitInterface,
 } from '../interfaces/CensusCharacterResponseInterface';
 import { ConfigService } from '@nestjs/config';
-import { CensusOutfitInterface, CensusOutfitResponseInterface } from '../interfaces/CensusOutfitResponseInterface';
+import {
+  CensusOutfitInterface,
+  CensusOutfitResponseInterface,
+} from '../interfaces/CensusOutfitResponseInterface';
 import { CensusNotFoundResponse } from '../interfaces/CensusNotFoundResponse';
 import { CensusRetriesError } from '../interfaces/CensusRetriesError';
 import { CensusServerError } from '../interfaces/CensusServerError';
@@ -49,12 +52,16 @@ export class CensusApiService implements OnModuleInit {
       // Census does not use http error codes like any sane API, so we have to check for this manually.
       if (response.data.error) {
         // noinspection ExceptionCaughtLocallyJS
-        throw new CensusServerError(`Census responded with an error: "${response.data.error}"`);
+        throw new CensusServerError(
+          `Census responded with an error: "${response.data.error}"`,
+        );
       }
 
       if (response.data.errorMessage) {
         // noinspection ExceptionCaughtLocallyJS
-        throw new CensusServerError(`Census responded with an error: "${response.data.errorMessage}"`);
+        throw new CensusServerError(
+          `Census responded with an error: "${response.data.errorMessage}"`,
+        );
       }
 
       return response.data;
@@ -66,26 +73,41 @@ export class CensusApiService implements OnModuleInit {
         throw new CensusRetriesError(error);
       }
 
-      this.logger.warn(`Request failed (attempt ${tries}/${CensusApiService.RETRY_ATTEMPTS}). Retrying in ${CensusApiService.RETRY_DELAY_MS} ms...`);
+      this.logger.warn(
+        `Request failed (attempt ${tries}/${CensusApiService.RETRY_ATTEMPTS}). Retrying in ${CensusApiService.RETRY_DELAY_MS} ms...`,
+      );
 
-      await new Promise(resolve => setTimeout(resolve, CensusApiService.RETRY_DELAY_MS));
+      await new Promise((resolve) =>
+        setTimeout(resolve, CensusApiService.RETRY_DELAY_MS),
+      );
       return this.sendRequest(url, tries);
     }
   }
 
-  async getCharacter(characterName: string): Promise<CensusCharacterWithOutfitInterface> {
+  async getCharacter(
+    characterName: string,
+  ): Promise<CensusCharacterWithOutfitInterface> {
     const url = `character?name.first_lower=${characterName.toLowerCase()}&c:join=outfit_member^inject_at:outfit_info`;
 
-    const response: CensusCharacterResponseInterface = await this.sendRequest(url);
+    const response: CensusCharacterResponseInterface =
+      await this.sendRequest(url);
 
-    if (response.returned === 0 || !response.character_list || response.character_list.length === 0) {
-      throw new CensusNotFoundResponse(`Character \`${characterName}\` does not exist. Please ensure you have spelt it correctly.`);
+    if (
+      response.returned === 0 ||
+      !response.character_list ||
+      response.character_list.length === 0
+    ) {
+      throw new CensusNotFoundResponse(
+        `Character \`${characterName}\` does not exist. Please ensure you have spelt it correctly.`,
+      );
     }
 
     return response.character_list[0];
   }
 
-  async getCharacterById(characterId: string): Promise<CensusCharacterWithOutfitInterface | null> {
+  async getCharacterById(
+    characterId: string,
+  ): Promise<CensusCharacterWithOutfitInterface | null> {
     const url = `character?character_id=${characterId}&c:join=outfit_member^inject_at:outfit_info`;
 
     let response: CensusCharacterResponseInterface;
@@ -94,11 +116,19 @@ export class CensusApiService implements OnModuleInit {
       response = await this.sendRequest(url);
     }
     catch (err) {
-      throw new CensusServerError(`Census Errored when fetching character with ID **${characterId}**. Err: ${err.message}`);
+      throw new CensusServerError(
+        `Census Errored when fetching character with ID **${characterId}**. Err: ${err.message}`,
+      );
     }
 
-    if (response.returned === 0 || !response.character_list || response.character_list.length === 0) {
-      throw new CensusNotFoundResponse(`Character with ID **${characterId}** does not exist.`);
+    if (
+      response.returned === 0 ||
+      !response.character_list ||
+      response.character_list.length === 0
+    ) {
+      throw new CensusNotFoundResponse(
+        `Character with ID **${characterId}** does not exist.`,
+      );
     }
 
     return response.character_list[0];
@@ -113,11 +143,19 @@ export class CensusApiService implements OnModuleInit {
       response = await this.sendRequest(url);
     }
     catch (err) {
-      throw new CensusServerError(`Census Errored when fetching outfit with ID **${outfitId}**. Err: ${err.message}`);
+      throw new CensusServerError(
+        `Census Errored when fetching outfit with ID **${outfitId}**. Err: ${err.message}`,
+      );
     }
 
-    if (response.returned === 0 || !response.outfit_list || response.outfit_list.length === 0) {
-      throw new CensusNotFoundResponse(`Outfit with ID **${outfitId}** does not exist.`);
+    if (
+      response.returned === 0 ||
+      !response.outfit_list ||
+      response.outfit_list.length === 0
+    ) {
+      throw new CensusNotFoundResponse(
+        `Outfit with ID **${outfitId}** does not exist.`,
+      );
     }
 
     return response.outfit_list[0];
