@@ -1,8 +1,8 @@
-import { Injectable, Logger } from '@nestjs/common';
-import { GuildMember } from 'discord.js';
-import { ActivityEntity } from '../entities/activity.entity';
-import { InjectRepository } from '@mikro-orm/nestjs';
-import { EntityRepository } from '@mikro-orm/core';
+import { Injectable, Logger } from "@nestjs/common";
+import { GuildMember } from "discord.js";
+import { ActivityEntity } from "../entities/activity.entity";
+import { InjectRepository } from "@mikro-orm/nestjs";
+import { EntityRepository } from "@mikro-orm/core";
 
 @Injectable()
 export class DatabaseService {
@@ -36,8 +36,7 @@ export class DatabaseService {
     try {
       await this.activityRepository.getEntityManager().persistAndFlush(entity);
       this.logger.verbose(`Updated activity for ${member.id}`);
-    }
-    catch (err) {
+    } catch (err) {
       console.error(err);
       this.logger.error(
         `Error updating activity for ${member.id}: ${err.message}`,

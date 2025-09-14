@@ -1,11 +1,11 @@
-import { Injectable, Logger } from '@nestjs/common';
-import { InjectRepository } from '@mikro-orm/nestjs';
-import { EntityRepository } from '@mikro-orm/core';
-import { Events, GuildMember, Message } from 'discord.js';
-import { JoinerLeaverEntity } from '../../database/entities/joiner.leaver.entity';
-import { On } from '@discord-nestjs/core';
-import { JoinerLeaverStatisticsEntity } from '../../database/entities/joiner.leaver.statistics.entity';
-import { DiscordService } from '../../discord/discord.service';
+import { Injectable, Logger } from "@nestjs/common";
+import { InjectRepository } from "@mikro-orm/nestjs";
+import { EntityRepository } from "@mikro-orm/core";
+import { Events, GuildMember, Message } from "discord.js";
+import { JoinerLeaverEntity } from "../../database/entities/joiner.leaver.entity";
+import { On } from "@discord-nestjs/core";
+import { JoinerLeaverStatisticsEntity } from "../../database/entities/joiner.leaver.statistics.entity";
+import { DiscordService } from "../../discord/discord.service";
 
 @Injectable()
 export class JoinerLeaverService {
@@ -75,8 +75,7 @@ export class JoinerLeaverService {
       this.logger.log(
         `Recorded leaver ${guildMember.user.tag} (${guildMember.id})`,
       );
-    }
-    else {
+    } else {
       this.logger.error(
         `Attempted to record leaver ${guildMember.user.tag} (${guildMember.id}) but they were not found in the database.`,
       );
@@ -84,7 +83,7 @@ export class JoinerLeaverService {
   }
 
   async startEnumeration(message: Message): Promise<void> {
-    this.logger.log('Starting joiner leaver enumeration');
+    this.logger.log("Starting joiner leaver enumeration");
 
     let stats: JoinerLeaverStatisticsEntity;
 
@@ -105,13 +104,12 @@ export class JoinerLeaverService {
       });
 
       if (!stats) {
-        const error = 'No joiner leaver statistics found!';
+        const error = "No joiner leaver statistics found!";
         this.logger.error(error);
         await channel.send(error);
         return;
       }
-    }
-    catch (err) {
+    } catch (err) {
       const error = `Error enumerating joiner leaver records. Error: ${err.message}`;
       this.logger.error(error);
       await channel.send(error);
@@ -194,7 +192,7 @@ Stats as of April 5th 2025
       .getEntityManager()
       .persistAndFlush(entity);
 
-    this.logger.log('Enumerated joiner leavers');
+    this.logger.log("Enumerated joiner leavers");
   }
 
   calculateAvgTimeToLeave(joinerLeaverRecords: JoinerLeaverEntity[]): string {
@@ -223,7 +221,7 @@ Stats as of April 5th 2025
     );
 
     if (leavers === 0) {
-      return 'N/A';
+      return "N/A";
     }
 
     return `${avgTimeToLeaveDays}d ${avgTimeToLeaveHours}h ${avgTimeToLeaveMinutes}m`;

@@ -3,25 +3,25 @@ import {
   EventParams,
   Handler,
   InteractionEvent,
-} from '@discord-nestjs/core';
+} from "@discord-nestjs/core";
 import {
   ApplicationCommandType,
   ChatInputCommandInteraction,
   GuildMember,
   Message,
   MessageFlags,
-} from 'discord.js';
-import { SlashCommandPipe } from '@discord-nestjs/common';
-import { AlbionRegisterDto } from '../dto/albion.register.dto';
-import { Injectable, Logger } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
-import { AlbionRegistrationService } from '../services/albion.registration.service';
-import { getChannel } from '../../discord/discord.hacks';
+} from "discord.js";
+import { SlashCommandPipe } from "@discord-nestjs/common";
+import { AlbionRegisterDto } from "../dto/albion.register.dto";
+import { Injectable, Logger } from "@nestjs/common";
+import { ConfigService } from "@nestjs/config";
+import { AlbionRegistrationService } from "../services/albion.registration.service";
+import { getChannel } from "../../discord/discord.hacks";
 
 @Command({
-  name: 'albion-register',
+  name: "albion-register",
   type: ApplicationCommandType.ChatInput,
-  description: 'Register to the DIG Albion Online Guilds!',
+  description: "Register to the DIG Albion Online Guilds!",
 })
 @Injectable()
 export class AlbionRegisterCommand {
@@ -41,7 +41,7 @@ export class AlbionRegisterCommand {
   ): Promise<string> {
     // Check if the command came from the correct channel ID
     const registrationChannelId = this.config.get(
-      'discord.channels.albionRegistration',
+      "discord.channels.albionRegistration",
     );
 
     // Check if channel is correct
@@ -53,7 +53,7 @@ export class AlbionRegisterCommand {
 
     // Create placeholder message
     const message = await interaction[0].channel.send(
-      '🔍 Running registration process...',
+      "🔍 Running registration process...",
     );
 
     this.registrationCommandProxy(
@@ -65,7 +65,7 @@ export class AlbionRegisterCommand {
     );
 
     // Successful! Success message now within handleRegistration.
-    return 'Registration request sent!';
+    return "Registration request sent!";
   }
 
   // This is here so we can respond in the command immediately so the command doesn't "fail", and then handle the registration in the background
@@ -83,8 +83,7 @@ export class AlbionRegisterCommand {
         discordMemberGuildId,
         discordChannelId,
       );
-    }
-    catch (err) {
+    } catch (err) {
       await getChannel(message).send(`⛔️ **ERROR:** ${err.message}`);
       this.logger.error(err.message);
     }
@@ -107,8 +106,7 @@ export class AlbionRegisterCommand {
         if (lastMessage) {
           await lastMessage.delete();
         }
-      }
-      catch (error) {
+      } catch (error) {
         this.logger.error(
           `Failed to delete last alliance reminder message: ${error.message}`,
         );
@@ -116,8 +114,8 @@ export class AlbionRegisterCommand {
     }
 
     const messageContent =
-      '# This is for DIG _Guild_ registrations only.\n' +
-      'For alliance, see here: https://discord.com/channels/90078410642034688/1375362179834052688/1375362497460178975';
+      "# This is for DIG _Guild_ registrations only.\n" +
+      "For alliance, see here: https://discord.com/channels/90078410642034688/1375362179834052688/1375362497460178975";
     const newMessage = await channel.send({
       content: messageContent,
       flags: MessageFlags.SuppressEmbeds,

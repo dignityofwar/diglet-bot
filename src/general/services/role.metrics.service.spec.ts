@@ -1,16 +1,16 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { Test, TestingModule } from '@nestjs/testing';
-import { DiscordService } from '../../discord/discord.service';
-import { Logger } from '@nestjs/common';
-import { TestBootstrapper } from '../../test.bootstrapper';
-import { RoleList, RoleMetricsService } from './role.metrics.service';
-import { getRepositoryToken } from '@mikro-orm/nestjs';
-import { ActivityEntity } from '../../database/entities/activity.entity';
-import { RoleMetricsEntity } from '../../database/entities/role.metrics.entity';
-import { generateDateInPast } from '../../helpers';
-import { Collection, Role, Snowflake } from 'discord.js';
+import { Test, TestingModule } from "@nestjs/testing";
+import { DiscordService } from "../../discord/discord.service";
+import { Logger } from "@nestjs/common";
+import { TestBootstrapper } from "../../test.bootstrapper";
+import { RoleList, RoleMetricsService } from "./role.metrics.service";
+import { getRepositoryToken } from "@mikro-orm/nestjs";
+import { ActivityEntity } from "../../database/entities/activity.entity";
+import { RoleMetricsEntity } from "../../database/entities/role.metrics.entity";
+import { generateDateInPast } from "../../helpers";
+import { Collection, Role, Snowflake } from "discord.js";
 
-describe('RoleMetricsService', () => {
+describe("RoleMetricsService", () => {
   let roleMetricsService: RoleMetricsService;
   let discordService: DiscordService;
 
@@ -22,18 +22,18 @@ describe('RoleMetricsService', () => {
   let mockStatusMessage: any;
 
   const mockActivityEntity = {
-    discordId: '123456',
-    discordNickname: 'testuser',
+    discordId: "123456",
+    discordNickname: "testuser",
     lastActivity: new Date(),
   } as ActivityEntity;
   const mockRoleMetricsEntity = {
     onboarded: 3,
     communityGames: {
-      'Albion Online': 2,
+      "Albion Online": 2,
       Foxhole: 1,
     },
     recGames: {
-      'Rec/BestGameEver': 3,
+      "Rec/BestGameEver": 3,
     },
     // Automatically generated properties
     createdAt: new Date(),
@@ -42,45 +42,45 @@ describe('RoleMetricsService', () => {
   } as RoleMetricsEntity;
   const mockActiveMembers = [
     {
-      discordId: '123',
-      discordNickname: 'testuser',
+      discordId: "123",
+      discordNickname: "testuser",
       lastActivity: generateDateInPast(4),
     } as ActivityEntity,
     {
-      discordId: '234',
-      discordNickname: 'anotheruser',
+      discordId: "234",
+      discordNickname: "anotheruser",
       lastActivity: generateDateInPast(2),
     } as ActivityEntity,
     {
-      discordId: '345',
-      discordNickname: 'anotheruser2',
+      discordId: "345",
+      discordNickname: "anotheruser2",
       lastActivity: generateDateInPast(2),
     } as ActivityEntity,
     // Add inactive members
     {
-      discordId: '345678',
-      discordNickname: 'inactiveuser',
+      discordId: "345678",
+      discordNickname: "inactiveuser",
       lastActivity: generateDateInPast(92),
     } as ActivityEntity,
   ];
   const mockRoleList: RoleList = {
     onboardedRole: {
       id: TestBootstrapper.mockOnboardedRoleId,
-      name: 'Onboarded',
+      name: "Onboarded",
     } as Role,
     communityGameRoles: new Collection<Snowflake, Role>([
       [
         TestBootstrapper.mockAlbionOnlineId,
         {
           id: TestBootstrapper.mockAlbionOnlineId,
-          name: 'Albion Online',
+          name: "Albion Online",
         } as Role,
       ],
       [
         TestBootstrapper.mockFoxholeId,
         {
           id: TestBootstrapper.mockFoxholeId,
-          name: 'Foxhole',
+          name: "Foxhole",
         } as Role,
       ],
     ]),
@@ -89,14 +89,14 @@ describe('RoleMetricsService', () => {
         TestBootstrapper.mockRecPS2LeaderId,
         {
           id: TestBootstrapper.mockRecPS2LeaderId,
-          name: 'Rec/PS2/Leader',
+          name: "Rec/PS2/Leader",
         } as Role,
       ],
       [
         TestBootstrapper.mockRecBestGameEverId,
         {
           id: TestBootstrapper.mockRecBestGameEverId,
-          name: 'Rec/BestGameEver',
+          name: "Rec/BestGameEver",
         } as Role,
       ],
     ]),
@@ -143,13 +143,13 @@ describe('RoleMetricsService', () => {
     mockChannel = TestBootstrapper.getMockDiscordTextChannel();
     mockChannel.send = jest.fn().mockResolvedValue(mockStatusMessage);
 
-    jest.spyOn(roleMetricsService['logger'], 'error');
-    jest.spyOn(roleMetricsService['logger'], 'warn');
-    jest.spyOn(roleMetricsService['logger'], 'log');
-    jest.spyOn(roleMetricsService['logger'], 'debug');
+    jest.spyOn(roleMetricsService["logger"], "error");
+    jest.spyOn(roleMetricsService["logger"], "warn");
+    jest.spyOn(roleMetricsService["logger"], "log");
+    jest.spyOn(roleMetricsService["logger"], "debug");
   });
 
-  describe('startEnumeration', () => {
+  describe("startEnumeration", () => {
     const mockReport = `## Role Metrics Report:
 Stats as of April 5th 2025. All statistics state members who have the role AND are active <90d.
 - Onboarded: **112**
@@ -173,14 +173,14 @@ Stats as of April 5th 2025. All statistics state members who have the role AND a
       const mockRoleMetricsEntityExtras = mockRoleMetricsEntity;
       mockRoleMetricsEntityExtras.onboarded = 112;
       mockRoleMetricsEntityExtras.communityGames = {
-        'Albion Online': 90,
+        "Albion Online": 90,
         Foxhole: 10,
-        'Some Game': 50,
+        "Some Game": 50,
       };
       mockRoleMetricsEntityExtras.recGames = {
-        'Rec/BestGameEver': 90,
-        'Rec/WorstGameEver': 5,
-        'Rec/Mediocre Game': 32,
+        "Rec/BestGameEver": 90,
+        "Rec/WorstGameEver": 5,
+        "Rec/Mediocre Game": 32,
       };
 
       mockRoleMetricsRepository.findOne = jest
@@ -188,83 +188,83 @@ Stats as of April 5th 2025. All statistics state members who have the role AND a
         .mockResolvedValue(mockRoleMetricsEntityExtras);
     });
 
-    it('should error if guild is not found', async () => {
+    it("should error if guild is not found", async () => {
       mockStatusMessage.channel.guild = null;
       roleMetricsService.enumerateRoleIds = jest.fn();
 
       await roleMetricsService.startEnumeration(mockStatusMessage);
 
       expect(mockStatusMessage.channel.send).toHaveBeenCalledWith(
-        'Guild not found!',
+        "Guild not found!",
       );
-      expect(roleMetricsService['logger'].error).toHaveBeenCalledWith(
-        'Guild not found!',
+      expect(roleMetricsService["logger"].error).toHaveBeenCalledWith(
+        "Guild not found!",
       );
       expect(roleMetricsService.enumerateRoleIds).not.toHaveBeenCalled();
     });
 
-    it('should call enumerateRoleIds', async () => {
+    it("should call enumerateRoleIds", async () => {
       await roleMetricsService.startEnumeration(mockStatusMessage);
 
       expect(roleMetricsService.enumerateRoleIds).toHaveBeenCalled();
     });
 
-    it('should call enumerateRoleMetrics', async () => {
+    it("should call enumerateRoleMetrics", async () => {
       await roleMetricsService.startEnumeration(mockStatusMessage);
 
       expect(roleMetricsService.enumerateRoleMetrics).toHaveBeenCalled();
     });
 
-    it('should handle errors during enumeration', async () => {
+    it("should handle errors during enumeration", async () => {
       roleMetricsService.enumerateRoleIds = jest
         .fn()
-        .mockRejectedValue(new Error('Enumeration error'));
+        .mockRejectedValue(new Error("Enumeration error"));
 
       await roleMetricsService.startEnumeration(mockStatusMessage);
 
       expect(mockStatusMessage.channel.send).toHaveBeenCalledWith(
-        'Error enumerating role metrics. Error: Enumeration error',
+        "Error enumerating role metrics. Error: Enumeration error",
       );
-      expect(roleMetricsService['logger'].error).toHaveBeenCalledWith(
-        'Error enumerating role metrics. Error: Enumeration error',
+      expect(roleMetricsService["logger"].error).toHaveBeenCalledWith(
+        "Error enumerating role metrics. Error: Enumeration error",
       );
     });
 
-    it('should error if there are no records', async () => {
+    it("should error if there are no records", async () => {
       mockRoleMetricsRepository.findOne = jest.fn().mockResolvedValue([]);
 
       await roleMetricsService.startEnumeration(mockStatusMessage);
 
       expect(mockStatusMessage.channel.send).toHaveBeenCalledWith(
-        'No role metrics found!',
+        "No role metrics found!",
       );
-      expect(roleMetricsService['logger'].error).toHaveBeenCalledWith(
-        'No role metrics found!',
+      expect(roleMetricsService["logger"].error).toHaveBeenCalledWith(
+        "No role metrics found!",
       );
     });
 
-    it('should generate a report', async () => {
+    it("should generate a report", async () => {
       await roleMetricsService.startEnumeration(mockStatusMessage);
 
       expect(mockStatusMessage.channel.send).toHaveBeenCalledWith(mockReport);
 
-      expect(roleMetricsService['logger'].log).toHaveBeenCalledWith(
-        'Starting role metrics enumeration',
+      expect(roleMetricsService["logger"].log).toHaveBeenCalledWith(
+        "Starting role metrics enumeration",
       );
-      expect(roleMetricsService['logger'].log).toHaveBeenCalledWith(
-        'Role metrics enumeration completed.',
+      expect(roleMetricsService["logger"].log).toHaveBeenCalledWith(
+        "Role metrics enumeration completed.",
       );
     });
   });
 
-  describe('enumerateRoleIds', () => {
+  describe("enumerateRoleIds", () => {
     beforeEach(() => {
       discordService.getAllRolesFromGuild = jest
         .fn()
         .mockResolvedValue(TestBootstrapper.getMockGuildRoleListCollection());
     });
 
-    it('should throw error if no roles were found from discord', async () => {
+    it("should throw error if no roles were found from discord", async () => {
       discordService.getAllRolesFromGuild = jest
         .fn()
         .mockResolvedValue(new Collection<Snowflake, Role>());
@@ -272,17 +272,17 @@ Stats as of April 5th 2025. All statistics state members who have the role AND a
       // Expect this to throw an exception
       await expect(
         roleMetricsService.enumerateRoleIds(mockGuild),
-      ).rejects.toThrow('Roles not found!');
+      ).rejects.toThrow("Roles not found!");
     });
 
-    it('should throw error if the onboarded role was not found', async () => {
+    it("should throw error if the onboarded role was not found", async () => {
       discordService.getAllRolesFromGuild = jest.fn().mockResolvedValue(
         new Collection<Snowflake, Role>([
           [
             TestBootstrapper.mockRecPS2LeaderId,
             {
               id: TestBootstrapper.mockRecPS2LeaderId,
-              name: 'Rec/PS2/Leader',
+              name: "Rec/PS2/Leader",
             } as Role,
           ],
         ]),
@@ -291,17 +291,17 @@ Stats as of April 5th 2025. All statistics state members who have the role AND a
       // Expect this to throw an exception
       await expect(
         roleMetricsService.enumerateRoleIds(mockGuild),
-      ).rejects.toThrow('Onboarded role not found!');
+      ).rejects.toThrow("Onboarded role not found!");
     });
 
-    it('should throw if no community game roles were found', async () => {
+    it("should throw if no community game roles were found", async () => {
       discordService.getAllRolesFromGuild = jest.fn().mockResolvedValue(
         new Collection<Snowflake, Role>([
           [
             TestBootstrapper.mockOnboardedRoleId,
             {
               id: TestBootstrapper.mockOnboardedRoleId,
-              name: 'Onboarded',
+              name: "Onboarded",
             } as Role,
           ],
         ]),
@@ -310,24 +310,24 @@ Stats as of April 5th 2025. All statistics state members who have the role AND a
       // Expect this to throw an exception
       await expect(
         roleMetricsService.enumerateRoleIds(mockGuild),
-      ).rejects.toThrow('Community game roles not found!');
+      ).rejects.toThrow("Community game roles not found!");
     });
 
-    it('should throw if no rec game roles were found', async () => {
+    it("should throw if no rec game roles were found", async () => {
       discordService.getAllRolesFromGuild = jest.fn().mockResolvedValue(
         new Collection<Snowflake, Role>([
           [
             TestBootstrapper.mockOnboardedRoleId,
             {
               id: TestBootstrapper.mockOnboardedRoleId,
-              name: 'Onboarded',
+              name: "Onboarded",
             } as Role,
           ],
           [
             TestBootstrapper.mockAlbionOnlineId,
             {
               id: TestBootstrapper.mockAlbionOnlineId,
-              name: 'Albion Online',
+              name: "Albion Online",
             } as Role,
           ],
         ]),
@@ -336,10 +336,10 @@ Stats as of April 5th 2025. All statistics state members who have the role AND a
       // Expect this to throw an exception
       await expect(
         roleMetricsService.enumerateRoleIds(mockGuild),
-      ).rejects.toThrow('Rec game roles not found!');
+      ).rejects.toThrow("Rec game roles not found!");
     });
 
-    it('should return the onboarded role', async () => {
+    it("should return the onboarded role", async () => {
       const roles = await roleMetricsService.enumerateRoleIds(mockGuild);
 
       // Expect that the role Id "123456789012345678" (Onboarded) is included in the roles
@@ -348,7 +348,7 @@ Stats as of April 5th 2025. All statistics state members who have the role AND a
       );
     });
 
-    it('should filter out ignored rec game roles', async () => {
+    it("should filter out ignored rec game roles", async () => {
       const roles = await roleMetricsService.enumerateRoleIds(mockGuild);
 
       // Expect that the role Id "345678901234567890" (Rec/PS2/Leader) is not included in the Rec roles
@@ -357,7 +357,7 @@ Stats as of April 5th 2025. All statistics state members who have the role AND a
       ).toBeUndefined();
     });
 
-    it('should return correct community game roles', async () => {
+    it("should return correct community game roles", async () => {
       const roles = await roleMetricsService.enumerateRoleIds(mockGuild);
 
       // Expect that the role Id "123456789012345678" (Albion Online) is included in the roles
@@ -376,7 +376,7 @@ Stats as of April 5th 2025. All statistics state members who have the role AND a
       );
     });
 
-    it('should return the correct rec game roles', async () => {
+    it("should return the correct rec game roles", async () => {
       const roles = await roleMetricsService.enumerateRoleIds(mockGuild);
 
       // Expect that the role Id "345678901234567890" (Rec/PS2/Leader) is NOT included in the roles
@@ -396,7 +396,7 @@ Stats as of April 5th 2025. All statistics state members who have the role AND a
     });
   });
 
-  describe('enumerateRoleMetrics', () => {
+  describe("enumerateRoleMetrics", () => {
     beforeEach(() => {
       roleMetricsService.getActiveMembers = jest
         .fn()
@@ -406,21 +406,21 @@ Stats as of April 5th 2025. All statistics state members who have the role AND a
       // We map here as well the membership of each member, as it's not stored anywhere other than on the Discord server itself, so we have to configure the users here.
       const mockMemberCollection = new Collection();
       const activeMemberRoleMappings = {
-        '123': {
+        "123": {
           [TestBootstrapper.mockOnboardedRoleId]: true,
           [TestBootstrapper.mockAlbionOnlineId]: true,
           [TestBootstrapper.mockFoxholeId]: true,
           [TestBootstrapper.mockRecPS2LeaderId]: true,
           [TestBootstrapper.mockRecBestGameEverId]: true,
         },
-        '234': {
+        "234": {
           [TestBootstrapper.mockOnboardedRoleId]: true,
           [TestBootstrapper.mockAlbionOnlineId]: true,
           [TestBootstrapper.mockFoxholeId]: false,
           [TestBootstrapper.mockRecPS2LeaderId]: false,
           [TestBootstrapper.mockRecBestGameEverId]: true,
         },
-        '345': {
+        "345": {
           [TestBootstrapper.mockOnboardedRoleId]: true,
           [TestBootstrapper.mockAlbionOnlineId]: false,
           [TestBootstrapper.mockFoxholeId]: false,
@@ -428,7 +428,7 @@ Stats as of April 5th 2025. All statistics state members who have the role AND a
           [TestBootstrapper.mockRecBestGameEverId]: true,
         },
         // These should NOT be counted as the user is inactive
-        '345678': {
+        "345678": {
           [TestBootstrapper.mockOnboardedRoleId]: true,
           [TestBootstrapper.mockAlbionOnlineId]: true,
           [TestBootstrapper.mockFoxholeId]: true,
@@ -458,16 +458,16 @@ Stats as of April 5th 2025. All statistics state members who have the role AND a
         .mockResolvedValue(mockMemberCollection);
     });
 
-    it('should error if no members were found on Discord', async () => {
+    it("should error if no members were found on Discord", async () => {
       mockGuild.members.fetch = jest.fn().mockResolvedValue(null);
 
       // Expect this to throw an exception
       await expect(
         roleMetricsService.enumerateRoleMetrics(mockRoleList, mockGuild),
-      ).rejects.toThrow('Discord Guild Members not found!');
+      ).rejects.toThrow("Discord Guild Members not found!");
     });
 
-    it('should properly record the role metrics', async () => {
+    it("should properly record the role metrics", async () => {
       await roleMetricsService.enumerateRoleMetrics(mockRoleList, mockGuild);
 
       expect(
@@ -476,25 +476,25 @@ Stats as of April 5th 2025. All statistics state members who have the role AND a
         expect.objectContaining({
           onboarded: 3, // NOT 4
           communityGames: {
-            'Albion Online': 2,
+            "Albion Online": 2,
             Foxhole: 1,
           },
           recGames: {
-            'Rec/BestGameEver': 3,
-            'Rec/PS2/Leader': 1,
+            "Rec/BestGameEver": 3,
+            "Rec/PS2/Leader": 1,
           },
         }),
       );
 
-      expect(roleMetricsService['logger'].log).toHaveBeenCalledWith(
-        'Starting role metrics enumeration...',
+      expect(roleMetricsService["logger"].log).toHaveBeenCalledWith(
+        "Starting role metrics enumeration...",
       );
-      expect(roleMetricsService['logger'].log).toHaveBeenCalledWith(
-        'Role metrics enumeration completed.',
+      expect(roleMetricsService["logger"].log).toHaveBeenCalledWith(
+        "Role metrics enumeration completed.",
       );
     });
 
-    it('should delete the previous role metrics', async () => {
+    it("should delete the previous role metrics", async () => {
       const date = new Date();
       date.setHours(0, 0, 0, 0);
 
@@ -513,14 +513,14 @@ Stats as of April 5th 2025. All statistics state members who have the role AND a
     });
   });
 
-  describe('getActiveMembers', () => {
+  describe("getActiveMembers", () => {
     beforeEach(() => {
       mockActivityRepository.findAll = jest
         .fn()
         .mockResolvedValue(mockActiveMembers);
     });
 
-    it('should pull in active members from the database', async () => {
+    it("should pull in active members from the database", async () => {
       const result = await roleMetricsService.getActiveMembers();
 
       expect(result.length).toEqual(3);

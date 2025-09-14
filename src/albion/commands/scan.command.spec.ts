@@ -1,12 +1,12 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { Test, TestingModule } from '@nestjs/testing';
-import { AlbionScanCommand } from './scan.command';
-import { TestBootstrapper } from '../../test.bootstrapper';
-import { AlbionScanningService } from '../services/albion.scanning.service';
-import { ConfigService } from '@nestjs/config';
-import { ReflectMetadataProvider } from '@discord-nestjs/core';
+import { Test, TestingModule } from "@nestjs/testing";
+import { AlbionScanCommand } from "./scan.command";
+import { TestBootstrapper } from "../../test.bootstrapper";
+import { AlbionScanningService } from "../services/albion.scanning.service";
+import { ConfigService } from "@nestjs/config";
+import { ReflectMetadataProvider } from "@discord-nestjs/core";
 
-describe('AlbionScanCommand', () => {
+describe("AlbionScanCommand", () => {
   let command: AlbionScanCommand;
   let mockDiscordInteraction: any;
   let mockDiscordUser: any;
@@ -52,7 +52,7 @@ describe('AlbionScanCommand', () => {
     mockDiscordInteraction[0].channelId = scanChannelId;
   });
 
-  it('should be defined', () => {
+  it("should be defined", () => {
     expect(command).toBeDefined();
   });
 

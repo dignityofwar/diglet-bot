@@ -1,8 +1,8 @@
-import { Injectable, Logger, OnApplicationBootstrap } from '@nestjs/common';
-import { TextChannel } from 'discord.js';
-import { ConfigService } from '@nestjs/config';
-import { DiscordService } from '../../discord/discord.service';
-import { PurgeService } from './purge.service';
+import { Injectable, Logger, OnApplicationBootstrap } from "@nestjs/common";
+import { TextChannel } from "discord.js";
+import { ConfigService } from "@nestjs/config";
+import { DiscordService } from "../../discord/discord.service";
+import { PurgeService } from "./purge.service";
 
 @Injectable()
 export class PurgeCronService implements OnApplicationBootstrap {
@@ -16,9 +16,9 @@ export class PurgeCronService implements OnApplicationBootstrap {
   ) {}
 
   async onApplicationBootstrap(): Promise<void> {
-    this.logger.log('Initializing Purge Cron Service');
+    this.logger.log("Initializing Purge Cron Service");
 
-    const channelId = this.config.get('discord.channels.thanosSnaps');
+    const channelId = this.config.get("discord.channels.thanosSnaps");
 
     // Check if the channel exists
     this.channel = await this.discordService.getTextChannel(channelId);
@@ -33,8 +33,8 @@ export class PurgeCronService implements OnApplicationBootstrap {
 
   // @Cron('0 18 * * *')
   async runPurge(): Promise<void> {
-    this.logger.log('Running Purge Cron');
-    const message = await this.channel.send('Starting daily purge scan...');
+    this.logger.log("Running Purge Cron");
+    const message = await this.channel.send("Starting daily purge scan...");
     await this.purgeService.startPurge(message, false);
   }
 }

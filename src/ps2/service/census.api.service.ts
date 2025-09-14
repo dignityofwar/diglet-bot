@@ -1,17 +1,17 @@
-import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
-import CensusAxiosFactory from '../factories/census.axios.factory';
+import { Injectable, Logger, OnModuleInit } from "@nestjs/common";
+import CensusAxiosFactory from "../factories/census.axios.factory";
 import {
   CensusCharacterResponseInterface,
   CensusCharacterWithOutfitInterface,
-} from '../interfaces/CensusCharacterResponseInterface';
-import { ConfigService } from '@nestjs/config';
+} from "../interfaces/CensusCharacterResponseInterface";
+import { ConfigService } from "@nestjs/config";
 import {
   CensusOutfitInterface,
   CensusOutfitResponseInterface,
-} from '../interfaces/CensusOutfitResponseInterface';
-import { CensusNotFoundResponse } from '../interfaces/CensusNotFoundResponse';
-import { CensusRetriesError } from '../interfaces/CensusRetriesError';
-import { CensusServerError } from '../interfaces/CensusServerError';
+} from "../interfaces/CensusOutfitResponseInterface";
+import { CensusNotFoundResponse } from "../interfaces/CensusNotFoundResponse";
+import { CensusRetriesError } from "../interfaces/CensusRetriesError";
+import { CensusServerError } from "../interfaces/CensusServerError";
 
 @Injectable()
 export class CensusApiService implements OnModuleInit {
@@ -24,16 +24,16 @@ export class CensusApiService implements OnModuleInit {
     private readonly config: ConfigService,
   ) {}
 
-  async onModuleInit(character = 'Maelstrome26') {
+  async onModuleInit(character = "Maelstrome26") {
     // Check if our service ID is valid
-    if (!this.config.get('ps2.censusServiceId')) {
-      throw new Error('PS2_CENSUS_SERVICE_ID is not defined.');
+    if (!this.config.get("ps2.censusServiceId")) {
+      throw new Error("PS2_CENSUS_SERVICE_ID is not defined.");
     }
 
     // Check if our service key is valid by doing a request to Census via Axios
-    this.logger.debug('Attempting to reach Census...');
+    this.logger.debug("Attempting to reach Census...");
     await this.getCharacter(character);
-    this.logger.debug('Census responded!');
+    this.logger.debug("Census responded!");
   }
 
   public async sendRequest<T>(url: string, tries = 0): Promise<T> {
@@ -45,7 +45,7 @@ export class CensusApiService implements OnModuleInit {
 
       if (!response.data) {
         // noinspection ExceptionCaughtLocallyJS
-        throw new Error('No data was received from Census!');
+        throw new Error("No data was received from Census!");
       }
 
       // If Census returns an "error" key, it means the request was unsuccessful.
@@ -65,8 +65,7 @@ export class CensusApiService implements OnModuleInit {
       }
 
       return response.data;
-    }
-    catch (err) {
+    } catch (err) {
       if (tries === CensusApiService.RETRY_ATTEMPTS) {
         const error = `Failed to perform request to Census after ${CensusApiService.RETRY_ATTEMPTS} retries. Final error: "${err.message}"`;
         this.logger.error(error);
@@ -114,8 +113,7 @@ export class CensusApiService implements OnModuleInit {
 
     try {
       response = await this.sendRequest(url);
-    }
-    catch (err) {
+    } catch (err) {
       throw new CensusServerError(
         `Census Errored when fetching character with ID **${characterId}**. Err: ${err.message}`,
       );
@@ -135,14 +133,13 @@ export class CensusApiService implements OnModuleInit {
   }
 
   async getOutfit(outfitId: string): Promise<CensusOutfitInterface | null> {
-    const url = `outfit/${this.config.get('ps2.outfitId')}?c:resolve=rank`;
+    const url = `outfit/${this.config.get("ps2.outfitId")}?c:resolve=rank`;
 
     let response: CensusOutfitResponseInterface;
 
     try {
       response = await this.sendRequest(url);
-    }
-    catch (err) {
+    } catch (err) {
       throw new CensusServerError(
         `Census Errored when fetching outfit with ID **${outfitId}**. Err: ${err.message}`,
       );

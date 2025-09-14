@@ -1,13 +1,13 @@
-import { Injectable, Logger } from '@nestjs/common';
-import { InjectRepository } from '@mikro-orm/nestjs';
-import { PS2MembersEntity } from '../../database/entities/ps2.members.entity';
-import { EntityRepository } from '@mikro-orm/core';
-import { CensusApiService } from './census.api.service';
-import { GuildMember, Message } from 'discord.js';
-import { CensusCharacterWithOutfitInterface } from '../interfaces/CensusCharacterResponseInterface';
-import { ConfigService } from '@nestjs/config';
-import { PS2RankMapInterface } from '../../config/ps2.app.config';
-import { getChannel } from '../../discord/discord.hacks';
+import { Injectable, Logger } from "@nestjs/common";
+import { InjectRepository } from "@mikro-orm/nestjs";
+import { PS2MembersEntity } from "../../database/entities/ps2.members.entity";
+import { EntityRepository } from "@mikro-orm/core";
+import { CensusApiService } from "./census.api.service";
+import { GuildMember, Message } from "discord.js";
+import { CensusCharacterWithOutfitInterface } from "../interfaces/CensusCharacterResponseInterface";
+import { ConfigService } from "@nestjs/config";
+import { PS2RankMapInterface } from "../../config/ps2.app.config";
+import { getChannel } from "../../discord/discord.hacks";
 
 export interface ChangesInterface {
   character: CensusCharacterWithOutfitInterface;
@@ -32,7 +32,7 @@ export class PS2GameScanningService {
   ) {}
 
   reset() {
-    this.logger.log('Resetting maps...');
+    this.logger.log("Resetting maps...");
     this.charactersMap.clear();
     this.changesMap.clear();
     this.suggestionsMap.clear();
@@ -52,8 +52,7 @@ export class PS2GameScanningService {
       characterPromises.push(async () => {
         try {
           return await this.censusService.getCharacterById(member.characterId);
-        }
-        catch (err) {
+        } catch (err) {
           // If an error was thrown, return null for the character. Report the error though to the channel.
           // The null is then filtered out at the promise.all stage.
           // Later, the validateMembership function will check if the character data is absent and skip it if it doesn't exist.
@@ -82,7 +81,7 @@ export class PS2GameScanningService {
 
   // Main execution
   async startScan(message: Message, dryRun = false) {
-    await message.edit('Starting scan...');
+    await message.edit("Starting scan...");
 
     // Pull the list of verified members from the database and check if they're still in the outfit
     // If they're not, remove the verified role from them and any other PS2 Roles
@@ -95,7 +94,7 @@ export class PS2GameScanningService {
       await this.gatherCharacters(outfitMembers, message);
 
     if (characters.length === 0) {
-      await message.edit('## ❌ No characters were gathered from Census!');
+      await message.edit("## ❌ No characters were gathered from Census!");
       return this.reset();
     }
 
@@ -113,18 +112,16 @@ export class PS2GameScanningService {
         `Checking ${length} characters for role inconsistencies...`,
       );
       await this.checkForSuggestions(outfitMembers, message);
-    }
-    catch (err) {
-      await message.edit('## ❌ An error occurred while scanning!');
+    } catch (err) {
+      await message.edit("## ❌ An error occurred while scanning!");
       await getChannel(message).send(`Error: ${err.message}`);
       return this.reset();
     }
 
     if (this.changesMap.size === 0) {
-      await getChannel(message).send('✅ No automatic changes were performed.');
-      this.logger.log('No changes were made.');
-    }
-    else {
+      await getChannel(message).send("✅ No automatic changes were performed.");
+      this.logger.log("No changes were made.");
+    } else {
       await getChannel(message).send(
         `## 📝 ${this.changesMap.size} change(s) made`,
       );
@@ -132,17 +129,16 @@ export class PS2GameScanningService {
     }
 
     for (const change of this.changesMap.values()) {
-      const fakeMessage = await getChannel(message).send('dummy'); // Send a fake message first, so it doesn't ping people
+      const fakeMessage = await getChannel(message).send("dummy"); // Send a fake message first, so it doesn't ping people
       await fakeMessage.edit(change.change);
     }
 
     if (this.suggestionsMap.size === 0) {
       await getChannel(message).send(
-        '✅ There are currently no inconsistencies between ranks and roles.',
+        "✅ There are currently no inconsistencies between ranks and roles.",
       );
-      this.logger.log('No suggestions were made.');
-    }
-    else {
+      this.logger.log("No suggestions were made.");
+    } else {
       await getChannel(message).send(
         `## 👀 ${this.suggestionsCount} manual correction(s) to make`,
       );
@@ -153,15 +149,15 @@ export class PS2GameScanningService {
 
     for (const change of this.suggestionsMap.values()) {
       for (const suggestion of change) {
-        const fakeMessage = await getChannel(message).send('dummy'); // Send a fake message first, so it doesn't ping people
+        const fakeMessage = await getChannel(message).send("dummy"); // Send a fake message first, so it doesn't ping people
         await fakeMessage.edit(suggestion.change);
       }
     }
 
     if (this.suggestionsCount > 0 && !dryRun) {
-      const pingRoles = this.config.get('ps2.pingRoles');
+      const pingRoles = this.config.get("ps2.pingRoles");
       await getChannel(message).send(
-        `🔔 <@&${pingRoles.join('>, <@&')}> Please review the above suggestions and make any necessary changes manually. To check again without pinging Leaders and Officers, run the \`/ps2-scan\` command with the \`dry-run\` flag set to \`true\`.`,
+        `🔔 <@&${pingRoles.join(">, <@&")}> Please review the above suggestions and make any necessary changes manually. To check again without pinging Leaders and Officers, run the \`/ps2-scan\` command with the \`dry-run\` flag set to \`true\`.`,
       );
     }
 
@@ -193,7 +189,7 @@ export class PS2GameScanningService {
         const error = `Character data for **${member.characterName}** (${member.characterId}) did not exist when attempting to verify their membership. Skipping.`;
         this.logger.error(error);
         await getChannel(message).send(
-          `❌ ${error} Pinging <@${this.config.get('discord.devUserId')}>!`,
+          `❌ ${error} Pinging <@${this.config.get("discord.devUserId")}>!`,
         );
         continue;
       }
@@ -204,10 +200,10 @@ export class PS2GameScanningService {
           user: member.discordId,
           force: true,
         });
-      }
-      catch {
+      } catch (err) {
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
         this.logger.log(
-          `${dryRun ? '[DRY RUN] ' : ''}User ${character.name.first} has left the server!`,
+          `${dryRun ? "[DRY RUN] " : ""}User ${character.name.first} has left the server!`,
         );
         await this.removeDiscordLeaver(member, character, dryRun);
         continue;
@@ -216,10 +212,10 @@ export class PS2GameScanningService {
       // Remove them if they have no outfit at all or have left our outfit.
       if (
         !character.outfit_info ||
-        character.outfit_info?.outfit_id !== this.config.get('ps2.outfitId')
+        character.outfit_info?.outfit_id !== this.config.get("ps2.outfitId")
       ) {
         this.logger.log(
-          `${dryRun ? '[DRY RUN] ' : ''}User ${member.characterId} has left the outfit, but remains on the server!`,
+          `${dryRun ? "[DRY RUN] " : ""}User ${member.characterId} has left the outfit, but remains on the server!`,
         );
         await this.removeOutfitLeaver(
           member,
@@ -268,7 +264,7 @@ export class PS2GameScanningService {
     }
 
     // They remain on the Discord, so now they need their roles stripping.
-    const rankMaps: PS2RankMapInterface = this.config.get('ps2.rankMap');
+    const rankMaps: PS2RankMapInterface = this.config.get("ps2.rankMap");
 
     // Remove all private roles from the user
     for (const rank of Object.values(rankMaps)) {
@@ -283,10 +279,9 @@ export class PS2GameScanningService {
 
       try {
         await discordMember.roles.remove(rank.discordRoleId);
-      }
-      catch (err) {
+      } catch (err) {
         await getChannel(message).send(
-          `ERROR: Unable to remove role "${role.name}" from ${character.name.first} (${character.character_id}).\nError: "${err.message}".\nPinging <@${this.config.get('discord.devUserId')}>!`,
+          `ERROR: Unable to remove role "${role.name}" from ${character.name.first} (${character.character_id}).\nError: "${err.message}".\nPinging <@${this.config.get("discord.devUserId")}>!`,
         );
       }
     }
@@ -306,11 +301,11 @@ export class PS2GameScanningService {
   ) {
     // Check if there are any characters in the outfit that have invalid discord permissions
 
-    const rankMap: PS2RankMapInterface = this.config.get('ps2.rankMap');
+    const rankMap: PS2RankMapInterface = this.config.get("ps2.rankMap");
 
     // Get the ranks from Census for the names
     const outfit = await this.censusService.getOutfit(
-      this.config.get('ps2.outfitId'),
+      this.config.get("ps2.outfitId"),
     );
 
     for (const member of outfitMembers) {

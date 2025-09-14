@@ -1,18 +1,18 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { Test } from '@nestjs/testing';
-import { AlbionApiService } from './albion.api.service';
-import AlbionAxiosFactory from '../factories/albion.axios.factory';
-import { ConfigService } from '@nestjs/config';
-import { TestBootstrapper } from '../../test.bootstrapper';
+import { Test } from "@nestjs/testing";
+import { AlbionApiService } from "./albion.api.service";
+import AlbionAxiosFactory from "../factories/albion.axios.factory";
+import { ConfigService } from "@nestjs/config";
+import { TestBootstrapper } from "../../test.bootstrapper";
 import {
   AlbionApiEndpoint,
   AlbionPlayerInterface,
   AlbionPlayersResponseInterface,
-} from '../interfaces/albion.api.interfaces';
+} from "../interfaces/albion.api.interfaces";
 
 const mockGuildId = TestBootstrapper.mockConfig.albion.guildId;
 
-describe('AlbionApiService', () => {
+describe("AlbionApiService", () => {
   let service: AlbionApiService;
 
   beforeEach(async () => {
@@ -27,11 +27,11 @@ describe('AlbionApiService', () => {
     jest.resetAllMocks();
   });
 
-  it('is defined', () => {
+  it("is defined", () => {
     expect(service).toBeDefined();
   });
 
-  it('should return an error if no player exists', async () => {
+  it("should return an error if no player exists", async () => {
     const searchResponse = {
       data: {
         guilds: [],
@@ -40,7 +40,7 @@ describe('AlbionApiService', () => {
     };
 
     jest
-      .spyOn(AlbionAxiosFactory.prototype, 'createAlbionApiEuropeClient')
+      .spyOn(AlbionAxiosFactory.prototype, "createAlbionApiEuropeClient")
       .mockReturnValue({
         defaults: {
           baseURL: AlbionApiEndpoint.ALBION_EUROPE,
@@ -48,15 +48,15 @@ describe('AlbionApiService', () => {
         get: jest.fn().mockResolvedValue(searchResponse),
       } as any);
 
-    await expect(service.getCharacter('who.dis')).rejects.toThrow(
-      'Character **who.dis** does not seem to exist on Albion. Please ensure: \n1. You\'ve supplied your **exact** character name (case sensitive).\n2. Your character is older than 48 hours.',
+    await expect(service.getCharacter("who.dis")).rejects.toThrow(
+      "Character **who.dis** does not seem to exist on Albion. Please ensure: \n1. You've supplied your **exact** character name (case sensitive).\n2. Your character is older than 48 hours.",
     );
   });
 
-  it('should return a character based on exact match amongst partial matches', async () => {
+  it("should return a character based on exact match amongst partial matches", async () => {
     const properResult = {
-      Id: 'hd8zVXIjRc6lnb_1FYIgpw',
-      Name: 'Maelstrome',
+      Id: "hd8zVXIjRc6lnb_1FYIgpw",
+      Name: "Maelstrome",
     };
     const searchResponse = {
       data: {
@@ -64,15 +64,15 @@ describe('AlbionApiService', () => {
         players: [
           properResult,
           {
-            Id: 'tOuPzciNRAKEZLEbnkXjJw',
-            Name: 'Maelstrome26',
+            Id: "tOuPzciNRAKEZLEbnkXjJw",
+            Name: "Maelstrome26",
           },
         ],
       },
     };
 
     jest
-      .spyOn(AlbionAxiosFactory.prototype, 'createAlbionApiEuropeClient')
+      .spyOn(AlbionAxiosFactory.prototype, "createAlbionApiEuropeClient")
       .mockReturnValue({
         defaults: {
           baseURL: AlbionApiEndpoint.ALBION_EUROPE,
@@ -85,23 +85,23 @@ describe('AlbionApiService', () => {
           }),
       } as any);
 
-    await expect(service.getCharacter('Maelstrome')).resolves.toStrictEqual(
+    await expect(service.getCharacter("Maelstrome")).resolves.toStrictEqual(
       properResult,
     );
   });
 
-  it('should return a character based on an ID', async () => {
-    const id = 'hd8zVXIjRc6lnb_1FYIgpw';
+  it("should return a character based on an ID", async () => {
+    const id = "hd8zVXIjRc6lnb_1FYIgpw";
     const properResult = {
       Id: id,
-      Name: 'Maelstrome',
+      Name: "Maelstrome",
     };
     const response = {
       data: properResult,
     };
 
     jest
-      .spyOn(AlbionAxiosFactory.prototype, 'createAlbionApiEuropeClient')
+      .spyOn(AlbionAxiosFactory.prototype, "createAlbionApiEuropeClient")
       .mockReturnValue({
         defaults: {
           baseURL: AlbionApiEndpoint.ALBION_EUROPE,
@@ -114,11 +114,11 @@ describe('AlbionApiService', () => {
     );
   });
 
-  it('should throw an error when the API returns a different character ID than expected', async () => {
-    const id = 'hd8zVXIjRc6lnb_1FYIgpw';
+  it("should throw an error when the API returns a different character ID than expected", async () => {
+    const id = "hd8zVXIjRc6lnb_1FYIgpw";
     const properResult = {
       Id: id,
-      Name: 'Maelstrome',
+      Name: "Maelstrome",
     };
     const searchResponse = {
       data: {
@@ -128,7 +128,7 @@ describe('AlbionApiService', () => {
     };
 
     jest
-      .spyOn(AlbionAxiosFactory.prototype, 'createAlbionApiEuropeClient')
+      .spyOn(AlbionAxiosFactory.prototype, "createAlbionApiEuropeClient")
       .mockReturnValue({
         defaults: {
           baseURL: AlbionApiEndpoint.ALBION_EUROPE,
@@ -137,22 +137,22 @@ describe('AlbionApiService', () => {
           .fn()
           .mockResolvedValueOnce(searchResponse)
           .mockResolvedValueOnce({
-            data: { Id: '1234567', Name: 'Maelstrome' },
+            data: { Id: "1234567", Name: "Maelstrome" },
           }),
       } as any);
 
-    await expect(service.getCharacter('Maelstrome')).rejects.toThrow(
+    await expect(service.getCharacter("Maelstrome")).rejects.toThrow(
       `Character ID \`${id}\` does not match API response consistently. Pinging <@${TestBootstrapper.mockConfig.discord.devUserId}>!`,
     );
   });
 
-  it('should handle a character having duplicates, as long as only one of them is in the guild', async () => {
-    const characterName = 'NightRaven2511';
+  it("should handle a character having duplicates, as long as only one of them is in the guild", async () => {
+    const characterName = "NightRaven2511";
     const properResult = {
-      Id: '2obpVpJrRfqa26SIXdXK4A',
+      Id: "2obpVpJrRfqa26SIXdXK4A",
       Name: characterName,
       GuildId: mockGuildId,
-      GuildName: 'DIG - Dignity of War',
+      GuildName: "DIG - Dignity of War",
     };
 
     const searchResponse = {
@@ -160,10 +160,10 @@ describe('AlbionApiService', () => {
         guilds: [],
         players: [
           {
-            Id: 'xNyVq16xTCKyPKCPqboe4w',
+            Id: "xNyVq16xTCKyPKCPqboe4w",
             Name: characterName,
-            GuildId: '',
-            GuildName: '',
+            GuildId: "",
+            GuildName: "",
           },
           properResult,
         ],
@@ -171,7 +171,7 @@ describe('AlbionApiService', () => {
     };
 
     jest
-      .spyOn(AlbionAxiosFactory.prototype, 'createAlbionApiEuropeClient')
+      .spyOn(AlbionAxiosFactory.prototype, "createAlbionApiEuropeClient")
       .mockReturnValue({
         defaults: {
           baseURL: AlbionApiEndpoint.ALBION_EUROPE,
@@ -186,13 +186,13 @@ describe('AlbionApiService', () => {
       properResult,
     );
   });
-  it('should throw error when multiple characters are found and none are in the guild', async () => {
-    const characterName = 'NightRaven2511';
+  it("should throw error when multiple characters are found and none are in the guild", async () => {
+    const characterName = "NightRaven2511";
     const properResult = {
-      Id: '2obpVpJrRfqa26SIXdXK4A',
+      Id: "2obpVpJrRfqa26SIXdXK4A",
       Name: characterName,
-      GuildId: '',
-      GuildName: '',
+      GuildId: "",
+      GuildName: "",
     };
 
     const searchResponse = {
@@ -200,10 +200,10 @@ describe('AlbionApiService', () => {
         guilds: [],
         players: [
           {
-            Id: 'xNyVq16xTCKyPKCPqboe4w',
+            Id: "xNyVq16xTCKyPKCPqboe4w",
             Name: characterName,
-            GuildId: '',
-            GuildName: '',
+            GuildId: "",
+            GuildName: "",
           },
           properResult,
         ],
@@ -211,7 +211,7 @@ describe('AlbionApiService', () => {
     };
 
     jest
-      .spyOn(AlbionAxiosFactory.prototype, 'createAlbionApiEuropeClient')
+      .spyOn(AlbionAxiosFactory.prototype, "createAlbionApiEuropeClient")
       .mockReturnValue({
         defaults: {
           baseURL: AlbionApiEndpoint.ALBION_EUROPE,
@@ -226,19 +226,19 @@ describe('AlbionApiService', () => {
       `multiple characters for **${characterName}** were found, none of them are a guild member.`,
     );
   });
-  it('should throw error when multiple characters of the same name in the guild', async () => {
-    const characterName = 'NightRaven2511';
+  it("should throw error when multiple characters of the same name in the guild", async () => {
+    const characterName = "NightRaven2511";
     const properResult = {
-      Id: '2obpVpJrRfqa26SIXdXK4A',
+      Id: "2obpVpJrRfqa26SIXdXK4A",
       Name: characterName,
       GuildId: mockGuildId,
-      GuildName: 'DIG - Dignity of War',
+      GuildName: "DIG - Dignity of War",
     };
     const duplicate = {
-      Id: '33rfgegdDGDgfgffdfHHH',
+      Id: "33rfgegdDGDgfgffdfHHH",
       Name: characterName,
       GuildId: mockGuildId,
-      GuildName: 'DIG - Dignity of War',
+      GuildName: "DIG - Dignity of War",
     };
 
     const searchResponse = {
@@ -246,10 +246,10 @@ describe('AlbionApiService', () => {
         guilds: [],
         players: [
           {
-            Id: 'xNyVq16xTCKyPKCPqboe4w',
+            Id: "xNyVq16xTCKyPKCPqboe4w",
             Name: characterName,
-            GuildId: '',
-            GuildName: '',
+            GuildId: "",
+            GuildName: "",
           },
           properResult,
           duplicate,
@@ -258,7 +258,7 @@ describe('AlbionApiService', () => {
     };
 
     jest
-      .spyOn(AlbionAxiosFactory.prototype, 'createAlbionApiEuropeClient')
+      .spyOn(AlbionAxiosFactory.prototype, "createAlbionApiEuropeClient")
       .mockReturnValue({
         defaults: {
           baseURL: AlbionApiEndpoint.ALBION_EUROPE,
@@ -271,31 +271,31 @@ describe('AlbionApiService', () => {
     );
   });
 
-  it('should return a character with all uppercase letters', async () => {
+  it("should return a character with all uppercase letters", async () => {
     const searchResponse = {
       data: {
         guilds: [],
         players: [
           {
-            Id: 'jTFos2u5QQ6OjhYV9C6DMw',
-            Name: 'R4L2E1',
-            GuildId: 'btPZRoLvTUqLC7URnDRgSQ',
-            GuildName: 'DIG - Dignity of War',
+            Id: "jTFos2u5QQ6OjhYV9C6DMw",
+            Name: "R4L2E1",
+            GuildId: "btPZRoLvTUqLC7URnDRgSQ",
+            GuildName: "DIG - Dignity of War",
           },
         ],
       },
     };
     const playerResponse = {
       data: {
-        Id: 'jTFos2u5QQ6OjhYV9C6DMw',
-        Name: 'R4L2E1',
-        GuildId: 'btPZRoLvTUqLC7URnDRgSQ',
-        GuildName: 'DIG - Dignity of War',
+        Id: "jTFos2u5QQ6OjhYV9C6DMw",
+        Name: "R4L2E1",
+        GuildId: "btPZRoLvTUqLC7URnDRgSQ",
+        GuildName: "DIG - Dignity of War",
       },
     };
 
     jest
-      .spyOn(AlbionAxiosFactory.prototype, 'createAlbionApiEuropeClient')
+      .spyOn(AlbionAxiosFactory.prototype, "createAlbionApiEuropeClient")
       .mockReturnValue({
         defaults: {
           baseURL: AlbionApiEndpoint.ALBION_EUROPE,
@@ -306,36 +306,36 @@ describe('AlbionApiService', () => {
           .mockResolvedValueOnce(playerResponse),
       } as any);
 
-    const result = await service.getCharacter('R4L2E1');
-    expect(result.Name).toBe('R4L2E1');
+    const result = await service.getCharacter("R4L2E1");
+    expect(result.Name).toBe("R4L2E1");
   });
 
-  it('should get all guild members', async () => {
-    const guildId = 'complicatedGuildId';
+  it("should get all guild members", async () => {
+    const guildId = "complicatedGuildId";
     const mockMembers: AlbionPlayerInterface[] = [
       {
         Id: Math.random().toString(36).substring(2, 10),
         Name: Math.random().toString(36).substring(2, 10),
-        GuildId: 'btPZRoLvTUqLC7URnDRgSQ',
-        GuildName: 'DIG - Dignity of War',
+        GuildId: "btPZRoLvTUqLC7URnDRgSQ",
+        GuildName: "DIG - Dignity of War",
       },
       {
         Id: Math.random().toString(36).substring(2, 10),
         Name: Math.random().toString(36).substring(2, 10),
-        GuildId: 'btPZRoLvTUqLC7URnDRgSQ',
-        GuildName: 'DIG - Dignity of War',
+        GuildId: "btPZRoLvTUqLC7URnDRgSQ",
+        GuildName: "DIG - Dignity of War",
       },
       {
         Id: Math.random().toString(36).substring(2, 10),
         Name: Math.random().toString(36).substring(2, 10),
-        GuildId: 'btPZRoLvTUqLC7URnDRgSQ',
-        GuildName: 'DIG - Dignity of War',
+        GuildId: "btPZRoLvTUqLC7URnDRgSQ",
+        GuildName: "DIG - Dignity of War",
       },
       {
         Id: Math.random().toString(36).substring(2, 10),
         Name: Math.random().toString(36).substring(2, 10),
-        GuildId: 'btPZRoLvTUqLC7URnDRgSQ',
-        GuildName: 'DIG - Dignity of War',
+        GuildId: "btPZRoLvTUqLC7URnDRgSQ",
+        GuildName: "DIG - Dignity of War",
       },
     ] as any[];
     const mockResponse: AlbionPlayersResponseInterface = {
@@ -349,7 +349,7 @@ describe('AlbionApiService', () => {
     } as any;
 
     jest
-      .spyOn(AlbionAxiosFactory.prototype, 'createAlbionApiEuropeClient')
+      .spyOn(AlbionAxiosFactory.prototype, "createAlbionApiEuropeClient")
       .mockReturnValue(mockRequest);
 
     const receivedMembers = await service.getAllGuildMembers(guildId);

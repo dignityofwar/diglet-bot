@@ -1,11 +1,11 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { Test } from '@nestjs/testing';
-import { ConfigService } from '@nestjs/config';
-import { DiscordService } from './discord.service';
-import { TestBootstrapper } from '../test.bootstrapper';
-import { getChannel } from './discord.hacks';
+import { Test } from "@nestjs/testing";
+import { ConfigService } from "@nestjs/config";
+import { DiscordService } from "./discord.service";
+import { TestBootstrapper } from "../test.bootstrapper";
+import { getChannel } from "./discord.hacks";
 
-describe('DiscordService', () => {
+describe("DiscordService", () => {
   let service: DiscordService;
   let mockDiscordClient: any;
 
@@ -17,7 +17,7 @@ describe('DiscordService', () => {
         DiscordService,
         ConfigService,
         {
-          provide: '__inject_discord_client__',
+          provide: "__inject_discord_client__",
           useValue: mockDiscordClient, // use mock instance
         },
       ],
@@ -26,39 +26,39 @@ describe('DiscordService', () => {
 
     service = moduleRef.get<DiscordService>(DiscordService);
 
-    jest.spyOn(service['logger'], 'error');
-    jest.spyOn(service['logger'], 'warn');
-    jest.spyOn(service['logger'], 'log');
-    jest.spyOn(service['logger'], 'debug');
+    jest.spyOn(service["logger"], "error");
+    jest.spyOn(service["logger"], "warn");
+    jest.spyOn(service["logger"], "log");
+    jest.spyOn(service["logger"], "debug");
   });
 
   afterEach(() => {
     jest.clearAllMocks();
   });
 
-  it('is defined', () => {
+  it("is defined", () => {
     expect(service).toBeDefined();
   });
 
-  describe('getGuild', () => {
-    it('should call get method of guilds.cache of discordClient with correct guildIdUS', async () => {
-      const guildId = '123456789';
+  describe("getGuild", () => {
+    it("should call get method of guilds.cache of discordClient with correct guildIdUS", async () => {
+      const guildId = "123456789";
       const result = await service.getGuild(guildId);
-      expect(result.id).toBe('123456789');
+      expect(result.id).toBe("123456789");
     });
 
-    it('should throw an error when the request failed', async () => {
-      const guildId = '343432353343';
+    it("should throw an error when the request failed", async () => {
+      const guildId = "343432353343";
       mockDiscordClient.guilds.cache.get = jest.fn().mockImplementation(() => {
-        throw new Error('Discord says no');
+        throw new Error("Discord says no");
       });
       await expect(service.getGuild(guildId)).rejects.toThrow(
         `Failed to fetch guild with ID ${guildId}. Err: Discord says no`,
       );
     });
 
-    it('should throw an error when the guild ID doesn\'t exist', async () => {
-      const guildId = 'guildId123456';
+    it("should throw an error when the guild ID doesn't exist", async () => {
+      const guildId = "guildId123456";
       mockDiscordClient.guilds.cache.get = jest
         .fn()
         .mockImplementation(() => undefined);
@@ -68,9 +68,9 @@ describe('DiscordService', () => {
     });
   });
 
-  describe('getChannel', () => {
-    it('should fetch the channel with correct id', async () => {
-      const channelId = '45645674574567657567';
+  describe("getChannel", () => {
+    it("should fetch the channel with correct id", async () => {
+      const channelId = "45645674574567657567";
       const mockChannel = {}; // The expect returned channel data.
       mockDiscordClient.channels.fetch.mockResolvedValueOnce(mockChannel);
 
@@ -80,9 +80,9 @@ describe('DiscordService', () => {
       expect(mockDiscordClient.channels.fetch).toHaveBeenCalledWith(channelId);
     });
 
-    it('should throw an error when the fetching attempt fails', async () => {
-      const channelId = '567567567456345345465';
-      const mockError = new Error('Channel not found');
+    it("should throw an error when the fetching attempt fails", async () => {
+      const channelId = "567567567456345345465";
+      const mockError = new Error("Channel not found");
       mockDiscordClient.channels.fetch.mockRejectedValueOnce(mockError);
 
       await expect(service.getTextChannel(channelId)).rejects.toThrow(
@@ -92,10 +92,10 @@ describe('DiscordService', () => {
     });
   });
 
-  describe('getGuildMember', () => {
-    it('should fetch the guild member with correct guild and member id', async () => {
-      const guildId = '123456';
-      const memberId = '64321';
+  describe("getGuildMember", () => {
+    it("should fetch the guild member with correct guild and member id", async () => {
+      const guildId = "123456";
+      const memberId = "64321";
       const mockMember = TestBootstrapper.getMockDiscordUser(); // The expected returned member data.
 
       const mockGuild = TestBootstrapper.getMockGuild(guildId);
@@ -114,9 +114,9 @@ describe('DiscordService', () => {
       });
     });
 
-    it('should force fetch guild member', async () => {
-      const guildId = '123456';
-      const memberId = '64321';
+    it("should force fetch guild member", async () => {
+      const guildId = "123456";
+      const memberId = "64321";
       const mockMember = TestBootstrapper.getMockDiscordUser(); // The expected returned member data.
 
       const mockGuild = TestBootstrapper.getMockGuild(guildId);
@@ -135,9 +135,9 @@ describe('DiscordService', () => {
       });
     });
 
-    it('should throw with a warning log when the member is blank', async () => {
-      const guildId = '123456';
-      const memberId = '64321';
+    it("should throw with a warning log when the member is blank", async () => {
+      const guildId = "123456";
+      const memberId = "64321";
       const mockGuild = TestBootstrapper.getMockGuild(guildId);
       mockGuild.members.fetch = jest.fn().mockImplementation(() => null);
 
@@ -147,7 +147,7 @@ describe('DiscordService', () => {
       await expect(service.getGuildMember(guildId, memberId)).rejects.toThrow(
         errorMsg,
       );
-      expect(service['logger'].warn).toHaveBeenCalledWith(errorMsg);
+      expect(service["logger"].warn).toHaveBeenCalledWith(errorMsg);
       expect(service.getGuild).toHaveBeenCalledWith(guildId);
       expect(mockGuild.members.fetch).toHaveBeenCalledWith({
         force: false,
@@ -155,23 +155,23 @@ describe('DiscordService', () => {
       });
     });
 
-    it('should throw an error when Discord call errors', async () => {
-      const guildId = '123456';
-      const memberId = '64321';
+    it("should throw an error when Discord call errors", async () => {
+      const guildId = "123456";
+      const memberId = "64321";
       const mockGuild = TestBootstrapper.getMockGuild(guildId);
       mockGuild.members.fetch = jest.fn().mockImplementation(() => null);
 
       service.getGuild = jest.fn().mockResolvedValue(mockGuild);
 
       mockGuild.members.fetch = jest.fn().mockImplementation(() => {
-        throw new Error('Discord went boom');
+        throw new Error("Discord went boom");
       });
 
       const errorMsg = `Failed to fetch member with ID ${memberId}. Err: Discord went boom`;
       await expect(service.getGuildMember(guildId, memberId)).rejects.toThrow(
         errorMsg,
       );
-      expect(service['logger'].error).toHaveBeenCalledWith(
+      expect(service["logger"].error).toHaveBeenCalledWith(
         errorMsg,
         expect.any(Error),
       );
@@ -183,11 +183,11 @@ describe('DiscordService', () => {
     });
   });
 
-  describe('getMemberRole', () => {
-    it('should fetch the specified role for the guild member', async () => {
-      const mockGuild = TestBootstrapper.getMockGuild('23454546464564');
+  describe("getMemberRole", () => {
+    it("should fetch the specified role for the guild member", async () => {
+      const mockGuild = TestBootstrapper.getMockGuild("23454546464564");
       const guildMember = TestBootstrapper.getMockDiscordUser();
-      const roleId = '67687989897867786';
+      const roleId = "67687989897867786";
       const mockRole = TestBootstrapper.getMockDiscordRole(roleId);
 
       // Mock the fetch implementation
@@ -202,11 +202,11 @@ describe('DiscordService', () => {
       expect(mockGuild.roles.fetch).toHaveBeenCalledWith(roleId);
     });
 
-    it('should log an error and throw an exception when the fetch fails', async () => {
-      const mockGuild = TestBootstrapper.getMockGuild('23454546464564');
+    it("should log an error and throw an exception when the fetch fails", async () => {
+      const mockGuild = TestBootstrapper.getMockGuild("23454546464564");
       const guildMember = TestBootstrapper.getMockDiscordUser();
-      const roleId = '34546576987976';
-      const fetchError = new Error('Test error');
+      const roleId = "34546576987976";
+      const fetchError = new Error("Test error");
       mockGuild.roles.fetch = jest.fn().mockRejectedValueOnce(fetchError);
 
       // Mock the get method of guilds cache
@@ -220,10 +220,10 @@ describe('DiscordService', () => {
       expect(mockGuild.roles.fetch).toHaveBeenCalledWith(roleId);
     });
 
-    it('should throw an exception if the role was not found', async () => {
-      const mockGuild = TestBootstrapper.getMockGuild('23454546464564');
+    it("should throw an exception if the role was not found", async () => {
+      const mockGuild = TestBootstrapper.getMockGuild("23454546464564");
       const guildMember = TestBootstrapper.getMockDiscordUser();
-      const roleId = '34546576987976';
+      const roleId = "34546576987976";
       mockGuild.roles.fetch.mockResolvedValueOnce(null);
 
       // Mock the get method of guilds cache
@@ -236,11 +236,11 @@ describe('DiscordService', () => {
     });
   });
 
-  describe('kickMember', () => {
-    it('should kick the guild member when requested', async () => {
+  describe("kickMember", () => {
+    it("should kick the guild member when requested", async () => {
       const guildMember = TestBootstrapper.getMockDiscordUser();
       const message = TestBootstrapper.getMockDiscordMessage();
-      const reason = 'Test reason';
+      const reason = "Test reason";
 
       guildMember.kick = jest.fn().mockResolvedValue(guildMember);
 
@@ -250,10 +250,10 @@ describe('DiscordService', () => {
       expect(guildMember.kick).toHaveBeenCalledWith(reason);
     });
 
-    it('should send a message and log an error when kicking fails', async () => {
+    it("should send a message and log an error when kicking fails", async () => {
       const guildMember = TestBootstrapper.getMockDiscordUser();
       const message = TestBootstrapper.getMockDiscordMessage();
-      const kickError = new Error('Test error');
+      const kickError = new Error("Test error");
 
       guildMember.kick = jest.fn().mockRejectedValueOnce(kickError);
 
@@ -265,8 +265,8 @@ describe('DiscordService', () => {
     });
   });
 
-  describe('deleteMessage', () => {
-    it('should delete the message successfully', async () => {
+  describe("deleteMessage", () => {
+    it("should delete the message successfully", async () => {
       const message = TestBootstrapper.getMockDiscordMessage();
 
       // Setup mocking before calling the function
@@ -278,9 +278,9 @@ describe('DiscordService', () => {
       expect(result).toBe(true);
       expect(message.delete).toHaveBeenCalled();
     });
-    it('should log an error when message deletion fails', async () => {
+    it("should log an error when message deletion fails", async () => {
       const message = TestBootstrapper.getMockDiscordMessage();
-      const deleteError = new Error('Test delete error');
+      const deleteError = new Error("Test delete error");
 
       message.delete = jest.fn().mockRejectedValueOnce(deleteError);
 
@@ -288,8 +288,8 @@ describe('DiscordService', () => {
     });
   });
 
-  describe('batchSend', () => {
-    it('should send messages in batches of 10', async () => {
+  describe("batchSend", () => {
+    it("should send messages in batches of 10", async () => {
       const originMessage = TestBootstrapper.getMockDiscordMessage();
       const messages = Array.from({ length: 25 }, (_, i) => `Message ${i + 1}`);
       getChannel(originMessage).send = jest.fn().mockResolvedValue(true);
@@ -298,17 +298,17 @@ describe('DiscordService', () => {
 
       expect(getChannel(originMessage).send).toHaveBeenCalledTimes(3);
       expect(getChannel(originMessage).send).toHaveBeenCalledWith(
-        expect.stringContaining('Message 10'),
+        expect.stringContaining("Message 10"),
       );
       expect(getChannel(originMessage).send).toHaveBeenCalledWith(
-        expect.stringContaining('Message 20'),
+        expect.stringContaining("Message 20"),
       );
       expect(getChannel(originMessage).send).toHaveBeenCalledWith(
-        expect.stringContaining('Message 25'),
+        expect.stringContaining("Message 25"),
       );
     });
 
-    it('should send all messages if less than 10', async () => {
+    it("should send all messages if less than 10", async () => {
       const originMessage = TestBootstrapper.getMockDiscordMessage();
       const messages = Array.from({ length: 5 }, (_, i) => `Message ${i + 1}`);
       getChannel(originMessage).send = jest.fn().mockResolvedValue(true);
@@ -317,15 +317,15 @@ describe('DiscordService', () => {
 
       expect(getChannel(originMessage).send).toHaveBeenCalledTimes(1);
       expect(getChannel(originMessage).send).toHaveBeenCalledWith(
-        expect.stringContaining('Message 5'),
+        expect.stringContaining("Message 5"),
       );
     });
   });
 
-  describe('sendDM', () => {
-    it('should send a DM to a member successfully', async () => {
+  describe("sendDM", () => {
+    it("should send a DM to a member successfully", async () => {
       const member = TestBootstrapper.getMockDiscordUser();
-      const message = 'Hello, member!';
+      const message = "Hello, member!";
       member.send = jest.fn().mockResolvedValue(true);
 
       await service.sendDM(member, message);
@@ -333,33 +333,33 @@ describe('DiscordService', () => {
       expect(member.send).toHaveBeenCalledWith(message);
     });
 
-    it('should log an error if sending DM fails', async () => {
+    it("should log an error if sending DM fails", async () => {
       const member = TestBootstrapper.getMockDiscordUser();
-      const message = 'Hello, member!';
-      const error = new Error('Failed to send DM');
+      const message = "Hello, member!";
+      const error = new Error("Failed to send DM");
       member.send = jest.fn().mockRejectedValue(error);
 
       await service.sendDM(member, message);
 
       expect(member.send).toHaveBeenCalledWith(message);
-      expect(service['logger'].error).toHaveBeenCalledWith(
+      expect(service["logger"].error).toHaveBeenCalledWith(
         `Failed to send DM to member ${member.id}`,
         error,
       );
     });
   });
 
-  describe('getAllRolesFromGuild', () => {
+  describe("getAllRolesFromGuild", () => {
     let mockGuild: any;
 
     beforeEach(() => {
-      mockGuild = TestBootstrapper.getMockGuild('123456789012345678');
+      mockGuild = TestBootstrapper.getMockGuild("123456789012345678");
       mockGuild.roles.fetch = jest
         .fn()
         .mockResolvedValue(TestBootstrapper.getMockGuildRoleListCollection());
     });
 
-    it('should fetch all roles from the guild', async () => {
+    it("should fetch all roles from the guild", async () => {
       const result = await service.getAllRolesFromGuild(mockGuild);
 
       expect(mockGuild.roles.cache.clear).toHaveBeenCalled();
@@ -370,10 +370,10 @@ describe('DiscordService', () => {
       );
     });
 
-    it('should throw on Discord error', async () => {
+    it("should throw on Discord error", async () => {
       mockGuild.roles.fetch = jest
         .fn()
-        .mockRejectedValue(new Error('Discord error'));
+        .mockRejectedValue(new Error("Discord error"));
 
       await expect(service.getAllRolesFromGuild(mockGuild)).rejects.toThrow(
         `Failed to fetch roles from guild ${mockGuild.id}. Error: Discord error`,

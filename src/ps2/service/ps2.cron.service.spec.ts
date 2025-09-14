@@ -1,12 +1,12 @@
-import { PS2CronService } from './ps2.cron.service';
-import { DiscordService } from '../../discord/discord.service';
-import { PS2GameScanningService } from './ps2.game.scanning.service';
-import { ConfigService } from '@nestjs/config';
-import { Test, TestingModule } from '@nestjs/testing';
-import { ReflectMetadataProvider } from '@discord-nestjs/core';
-import { TestBootstrapper } from '../../test.bootstrapper';
+import { PS2CronService } from "./ps2.cron.service";
+import { DiscordService } from "../../discord/discord.service";
+import { PS2GameScanningService } from "./ps2.game.scanning.service";
+import { ConfigService } from "@nestjs/config";
+import { Test, TestingModule } from "@nestjs/testing";
+import { ReflectMetadataProvider } from "@discord-nestjs/core";
+import { TestBootstrapper } from "../../test.bootstrapper";
 
-jest.mock('discord.js', () => {
+jest.mock("discord.js", () => {
   return {
     TextChannel: jest.fn().mockImplementation(() => ({
       send: jest.fn().mockResolvedValue({}),
@@ -16,7 +16,7 @@ jest.mock('discord.js', () => {
   };
 });
 
-describe('PS2CronService', () => {
+describe("PS2CronService", () => {
   let service: PS2CronService;
   let discordService: DiscordService;
   const scanChannelId = TestBootstrapper.mockConfig.discord.channels.ps2Scans;
@@ -55,25 +55,25 @@ describe('PS2CronService', () => {
     service = moduleRef.get<PS2CronService>(PS2CronService);
   });
 
-  it('should be defined', async () => {
+  it("should be defined", async () => {
     expect(service).toBeDefined();
   });
 
-  it('should initialize without errors', async () => {
+  it("should initialize without errors", async () => {
     discordService.getTextChannel = jest.fn().mockReturnValue({
       isTextBased: jest.fn().mockReturnValue(true),
     });
     await expect(service.onApplicationBootstrap()).resolves.not.toThrow();
   });
 
-  it('init should throw an error if channel does not exist', async () => {
+  it("init should throw an error if channel does not exist", async () => {
     discordService.getTextChannel = jest.fn().mockReturnValue(null);
     await expect(service.onApplicationBootstrap()).rejects.toThrow(
       `Could not find channel with ID ${scanChannelId}`,
     );
   });
 
-  it('init should throw an error channel is not a text channel', async () => {
+  it("init should throw an error channel is not a text channel", async () => {
     discordService.getTextChannel = jest.fn().mockReturnValue({
       isTextBased: jest.fn().mockReturnValue(false),
     });
@@ -83,7 +83,7 @@ describe('PS2CronService', () => {
     );
   });
 
-  it('should upon being called send two messages to the channel', async () => {
+  it("should upon being called send two messages to the channel", async () => {
     discordService.getTextChannel = jest.fn().mockReturnValue({
       isTextBased: jest.fn().mockReturnValue(true),
       send: jest.fn().mockResolvedValue(true),

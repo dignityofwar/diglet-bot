@@ -1,11 +1,11 @@
-import { Injectable, Logger } from '@nestjs/common';
-import { InjectRepository } from '@mikro-orm/nestjs';
-import { EntityRepository } from '@mikro-orm/core';
-import { ActivityEntity } from '../../database/entities/activity.entity';
-import { ActivityStatisticsEntity } from '../../database/entities/activity.statistics.entity';
-import { Message } from 'discord.js';
-import { getChannel } from '../../discord/discord.hacks';
-import { friendlyDate } from '../../helpers';
+import { Injectable, Logger } from "@nestjs/common";
+import { InjectRepository } from "@mikro-orm/nestjs";
+import { EntityRepository } from "@mikro-orm/core";
+import { ActivityEntity } from "../../database/entities/activity.entity";
+import { ActivityStatisticsEntity } from "../../database/entities/activity.statistics.entity";
+import { Message } from "discord.js";
+import { getChannel } from "../../discord/discord.hacks";
+import { friendlyDate } from "../../helpers";
 
 @Injectable()
 export class ActivityService {
@@ -31,8 +31,7 @@ export class ActivityService {
       this.logger.log(
         `Removed activity record for leaver ${activityRecord.discordNickname} (${activityRecord.discordId})`,
       );
-    }
-    catch (err) {
+    } catch (err) {
       const error = `Error removing activity record for leaver ${activityRecord.discordNickname} (${activityRecord.discordId}). Error: ${err.message}`;
       this.logger.error(error);
       throw new Error(error);
@@ -41,12 +40,12 @@ export class ActivityService {
 
   async startEnumeration(message: Message): Promise<void> {
     try {
-      this.logger.log('Starting activity enumeration');
+      this.logger.log("Starting activity enumeration");
       let stats: ActivityStatisticsEntity;
 
       try {
         await this.enumerateActivity();
-        this.logger.log('Activity enumeration completed');
+        this.logger.log("Activity enumeration completed");
 
         // Get today's record
         // Create a date and set it to be midnight of the day it was run
@@ -60,10 +59,9 @@ export class ActivityService {
 
         if (!stats) {
           // noinspection ExceptionCaughtLocallyJS
-          throw new Error('No activity statistics found!');
+          throw new Error("No activity statistics found!");
         }
-      }
-      catch (err) {
+      } catch (err) {
         const error = `Error enumerating activity records. Error: ${err.message}`;
         this.logger.error(error);
         await getChannel(message).send(error);
@@ -91,9 +89,8 @@ export class ActivityService {
       this.logger.log(report);
       await getChannel(message).send(report);
 
-      this.logger.log('Activity enumeration completed');
-    }
-    catch (err) {
+      this.logger.log("Activity enumeration completed");
+    } catch (err) {
       const error = `Error starting activity enumeration. Error: ${err.message}`;
       this.logger.error(error);
       await getChannel(message).send(error);
@@ -103,8 +100,7 @@ export class ActivityService {
   async getActivityRecords(): Promise<ActivityEntity[]> {
     try {
       return await this.activityRepository.findAll();
-    }
-    catch (err) {
+    } catch (err) {
       const error = `Error fetching activity records. Error: ${err.message}`;
       this.logger.error(error);
       throw new Error(error);
@@ -164,8 +160,7 @@ export class ActivityService {
       await this.activityStatisticsRepository
         .getEntityManager()
         .persistAndFlush(activityStatistics);
-    }
-    catch (err) {
+    } catch (err) {
       const error = `Error enumerating activity records. Error: ${err.message}`;
       this.logger.error(error);
       throw new Error(error);

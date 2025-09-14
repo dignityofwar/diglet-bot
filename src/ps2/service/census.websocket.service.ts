@@ -3,13 +3,13 @@ import {
   OnModuleInit,
   Logger,
   OnModuleDestroy,
-} from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
-import { CensusCharacterWithOutfitInterface } from '../interfaces/CensusCharacterResponseInterface';
-import { CensusClient } from 'ps2census';
-import { EventSubscription } from 'ps2census/dist/types/client/types';
-import { EventConstants } from '../constants/EventConstants';
-import EventEmitter from 'events';
+} from "@nestjs/common";
+import { ConfigService } from "@nestjs/config";
+import { CensusCharacterWithOutfitInterface } from "../interfaces/CensusCharacterResponseInterface";
+import { CensusClient } from "ps2census";
+import { EventSubscription } from "ps2census/dist/types/client/types";
+import { EventConstants } from "../constants/EventConstants";
+import EventEmitter from "events";
 
 @Injectable()
 export class CensusWebsocketService implements OnModuleInit, OnModuleDestroy {
@@ -20,8 +20,8 @@ export class CensusWebsocketService implements OnModuleInit, OnModuleDestroy {
     characters: this.monitoringCharacters.map(
       (character) => character.character_id,
     ),
-    worlds: ['10'],
-    eventNames: ['Death'],
+    worlds: ["10"],
+    eventNames: ["Death"],
     logicalAndCharactersWithWorlds: true,
   };
 
@@ -31,7 +31,7 @@ export class CensusWebsocketService implements OnModuleInit, OnModuleDestroy {
   ) {}
 
   onModuleInit() {
-    this.eventBus.on('ps2.verification.service.ready', () => this.subscribe());
+    this.eventBus.on("ps2.verification.service.ready", () => this.subscribe());
   }
   onModuleDestroy() {
     this.client.destroy();
@@ -40,28 +40,28 @@ export class CensusWebsocketService implements OnModuleInit, OnModuleDestroy {
   private subscribe() {
     // Connect to the external WebSocket service.
     const client = new CensusClient(
-      this.config.get('ps2.censusServiceId'),
-      'ps2',
+      this.config.get("ps2.censusServiceId"),
+      "ps2",
       {
         streamManager: {
           subscription: this.subscription,
-          endpoint: 'wss://push.nanite-systems.net/streaming',
+          endpoint: "wss://push.nanite-systems.net/streaming",
         },
       },
     );
 
-    client.on('subscribed', () => {
-      this.logger.log('Subscribed to NS ESS WebSocket service!');
+    client.on("subscribed", () => {
+      this.logger.log("Subscribed to NS ESS WebSocket service!");
       this.logger.debug(JSON.stringify(this.subscription));
       this.eventBus.emit(EventConstants.PS2_CENSUS_SUBSCRIBED, {});
     });
-    client.on('death', (event) =>
+    client.on("death", (event) =>
       this.eventBus.emit(EventConstants.PS2_CENSUS_DEATH, event),
     );
-    client.on('error', (error) => {
+    client.on("error", (error) => {
       this.logger.warn(error);
     });
-    client.on('error', (error) => {
+    client.on("error", (error) => {
       this.logger.error(error);
     });
     client.watch();

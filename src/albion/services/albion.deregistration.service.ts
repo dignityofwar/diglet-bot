@@ -1,12 +1,12 @@
-import { Injectable, Logger } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
-import { InjectRepository } from '@mikro-orm/nestjs';
-import { AlbionRegistrationsEntity } from '../../database/entities/albion.registrations.entity';
-import { EntityRepository } from '@mikro-orm/core';
-import { GuildMember, GuildTextBasedChannel } from 'discord.js';
-import { AlbionRoleMapInterface } from '../../config/albion.app.config';
-import { DiscordService } from '../../discord/discord.service';
-import { AlbionDeregisterDto } from '../dto/albion.deregister.dto';
+import { Injectable, Logger } from "@nestjs/common";
+import { ConfigService } from "@nestjs/config";
+import { InjectRepository } from "@mikro-orm/nestjs";
+import { AlbionRegistrationsEntity } from "../../database/entities/albion.registrations.entity";
+import { EntityRepository } from "@mikro-orm/core";
+import { GuildMember, GuildTextBasedChannel } from "discord.js";
+import { AlbionRoleMapInterface } from "../../config/albion.app.config";
+import { DiscordService } from "../../discord/discord.service";
+import { AlbionDeregisterDto } from "../dto/albion.deregister.dto";
 
 @Injectable()
 export class AlbionDeregistrationService {
@@ -27,7 +27,7 @@ export class AlbionDeregistrationService {
     // If neither were supplied, throw
     if (!dto.character && !dto.discordMember) {
       throw new Error(
-        'Either character or discordId must be provided for deregistration.',
+        "Either character or discordId must be provided for deregistration.",
       );
     }
 
@@ -66,8 +66,8 @@ export class AlbionDeregistrationService {
         registration.discordId,
         true,
       );
-    }
-    catch {
+    } catch (err) {
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       // No discord member means they've left the server.
       this.logger.warn(
         `User ${registration.characterName} has left the Discord server, no actions will be taken for Discord roles.`,
@@ -98,10 +98,9 @@ export class AlbionDeregistrationService {
       await responseChannel.send(
         `Successfully deregistered Character ${registration.characterName}.`,
       );
-    }
-    catch (err) {
+    } catch (err) {
       await responseChannel.send(
-        `ERROR: Failed to deregister character "${registration.characterName}" (${registration.characterId}) from registration database!\nError: "${err.message}". Pinging <@${this.config.get('discord.devUserId')}>!`,
+        `ERROR: Failed to deregister character "${registration.characterName}" (${registration.characterId}) from registration database!\nError: "${err.message}". Pinging <@${this.config.get("discord.devUserId")}>!`,
       );
     }
   }
@@ -111,7 +110,7 @@ export class AlbionDeregistrationService {
     responseChannel: GuildTextBasedChannel,
   ): Promise<void> {
     // List all the albion roles to remove.
-    const roleMaps: AlbionRoleMapInterface = this.config.get('albion.roleMap');
+    const roleMaps: AlbionRoleMapInterface = this.config.get("albion.roleMap");
 
     // Strip their roles if they still remain on the server
     for (const roleMap of Object.values(roleMaps)) {
@@ -129,10 +128,9 @@ export class AlbionDeregistrationService {
 
       try {
         await discordMember.roles.remove(roleMap.discordRoleId);
-      }
-      catch (err) {
+      } catch (err) {
         await responseChannel.send(
-          `ERROR: Unable to remove role "${role.name}" from ${discordMember.user.username} (${discordMember.id}). Err: "${err.message}". Pinging <@${this.config.get('discord.devUserId')}>!`,
+          `ERROR: Unable to remove role "${role.name}" from ${discordMember.user.username} (${discordMember.id}). Err: "${err.message}". Pinging <@${this.config.get("discord.devUserId")}>!`,
         );
       }
     }
