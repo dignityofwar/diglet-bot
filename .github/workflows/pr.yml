@@ -45,7 +45,7 @@ jobs:
         run: pnpm test:ci
 
       - name: SonarCloud Scan
-        uses: SonarSource/sonarqube-scan-action@v5.3.1
+        uses: SonarSource/sonarqube-scan-action@v5.3.2
         env:
           SONAR_TOKEN: ${{ secrets.SONARCLOUD_TOKEN }}
   build-docker:
