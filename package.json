@@ -40,7 +40,7 @@
     "@nestjs/config": "4.0.2",
     "@nestjs/core": "11.1.6",
     "@nestjs/schedule": "^6.0.0",
-    "@sentry/node": "^9.0.0",
+    "@sentry/node": "^10.15.0",
     "@sentry/profiling-node": "^9.0.0",
     "axios": "^1.7.2",
     "discord.js": "^14.18.0",
