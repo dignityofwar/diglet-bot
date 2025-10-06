@@ -1,10 +1,9 @@
-import { Injectable, Logger, OnApplicationBootstrap } from '@nestjs/common';
-import { Cron } from '@nestjs/schedule';
-import { TextChannel } from 'discord.js';
-import { ConfigService } from '@nestjs/config';
-import { DiscordService } from '../../discord/discord.service';
-import { AlbionScanningService } from './albion.scanning.service';
-import { AlbionServer } from '../interfaces/albion.api.interfaces';
+import { Injectable, Logger, OnApplicationBootstrap } from "@nestjs/common";
+import { Cron } from "@nestjs/schedule";
+import { TextChannel } from "discord.js";
+import { ConfigService } from "@nestjs/config";
+import { DiscordService } from "../../discord/discord.service";
+import { AlbionScanningService } from "./albion.scanning.service";
 
 @Injectable()
 export class AlbionCronService implements OnApplicationBootstrap {
@@ -14,13 +13,13 @@ export class AlbionCronService implements OnApplicationBootstrap {
   constructor(
     private readonly discordService: DiscordService,
     private readonly config: ConfigService,
-    private readonly albionScanningService: AlbionScanningService
+    private readonly albionScanningService: AlbionScanningService,
   ) {}
 
   async onApplicationBootstrap(): Promise<void> {
-    this.logger.log('Initializing Albion Cron Service');
+    this.logger.log("Initializing Albion Cron Service");
 
-    const channelId = this.config.get('discord.channels.albionScans');
+    const channelId = this.config.get("discord.channels.albionScans");
 
     // Check if the channel exists
     this.channel = await this.discordService.getTextChannel(channelId);
@@ -33,12 +32,12 @@ export class AlbionCronService implements OnApplicationBootstrap {
     }
   }
 
-  @Cron('0 19 * * *')
-  async runAlbionScansEU(): Promise<void> {
-    this.logger.log('Running Albion Scans EU Cron');
+  @Cron("0 19 * * *")
+  async runAlbionScans(): Promise<void> {
+    this.logger.log("Running Albion Scans Cron");
 
-    const message = await this.channel.send('Starting EU Scans');
+    const message = await this.channel.send("Starting Albion Scans");
 
-    await this.albionScanningService.startScan(message, false, AlbionServer.EUROPE);
+    await this.albionScanningService.startScan(message, false);
   }
 }

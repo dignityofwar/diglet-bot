@@ -1,5 +1,5 @@
-import { Entity, Index, Property, Unique } from '@mikro-orm/core';
-import { BaseEntity } from './base.entity';
+import { Entity, Index, Property, Unique } from "@mikro-orm/core";
+import { BaseEntity } from "./base.entity";
 
 export interface AlbionRegistrationsEntityInterface {
   discordId: string;
@@ -13,53 +13,53 @@ export interface AlbionRegistrationsEntityInterface {
 
 @Entity()
 @Unique({
-  name: 'unique_guild_character',
-  properties: ['guildId', 'characterId'], // Allows only one character per guild
+  name: "unique_guild_character",
+  properties: ["guildId", "characterId"], // Allows only one character per guild
 })
 @Unique({
-  name: 'unique_guild_discord',
-  properties: ['guildId', 'discordId'], // Allows only one character per guild
+  name: "unique_guild_discord",
+  properties: ["guildId", "discordId"], // Allows only one character per guild
 })
 export class AlbionRegistrationsEntity extends BaseEntity {
   @Property({
     nullable: false,
   })
   @Index()
-    discordId: string;
+  discordId: string;
 
   @Property({
     nullable: false,
   })
   @Index()
-    characterId: string;
+  characterId: string;
 
   @Property({
     nullable: false,
   })
-    characterName: string;
+  characterName: string;
 
   @Property({
     nullable: false,
   })
-    guildId: AlbionRegistrationsEntityInterface['guildId'];
+  guildId: AlbionRegistrationsEntityInterface["guildId"];
 
   @Property({
     nullable: false,
     default: false,
   })
-    manual = false;
+  manual = false;
 
   @Property({
     nullable: true,
     default: null,
   })
-    manualCreatedByDiscordId: null | string = null;
+  manualCreatedByDiscordId: null | string = null;
 
   @Property({
     nullable: true,
     default: null,
   })
-    manualCreatedByDiscordName: null | string = null;
+  manualCreatedByDiscordName: null | string = null;
 
   constructor(options: AlbionRegistrationsEntityInterface) {
     super();
