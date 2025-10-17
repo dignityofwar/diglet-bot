@@ -1,5 +1,5 @@
-import { Entity, Index, Property, Unique } from '@mikro-orm/core';
-import { BaseEntity } from './base.entity';
+import { Entity, Index, Property, Unique } from "@mikro-orm/core";
+import { BaseEntity } from "./base.entity";
 
 export interface PS2MembersEntityInterface {
   discordId: string;
@@ -17,30 +17,30 @@ export class PS2MembersEntity extends BaseEntity {
   })
   @Unique()
   @Index()
-    discordId: string;
+  discordId: string;
 
   @Property()
   @Unique()
   @Index()
-    characterId: string;
+  characterId: string;
 
   @Property()
-    characterName: string;
+  characterName: string;
 
   @Property()
-    manual = false;
+  manual = false;
 
   @Property({
     nullable: true,
     default: null,
   })
-    manualCreatedByDiscordId: null | string = null;
+  manualCreatedByDiscordId: null | string = null;
 
   @Property({
     nullable: true,
     default: null,
   })
-    manualCreatedByDiscordName: null | string = null;
+  manualCreatedByDiscordName: null | string = null;
 
   constructor(options: PS2MembersEntityInterface) {
     super();
