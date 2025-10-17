@@ -9,9 +9,9 @@ import { DiscordModule } from '../discord/discord.module';
 import { AlbionScanningService } from './services/albion.scanning.service';
 import { AlbionScanCommand } from './commands/scan.command';
 import { AlbionCronService } from './services/albion.cron.service';
-import { AlbionReportsService } from './services/albion.reports.service';
+// import { AlbionReportsService } from './services/albion.reports.service';
 import { AlbionUtilities } from './utilities/albion.utilities';
-import { AlbionReportsCommand } from './commands/reports.command';
+// import { AlbionReportsCommand } from './commands/reports.command';
 import { AlbionLogCommand } from './commands/log.command';
 import { AlbionDeregisterCommand } from './commands/deregistration.command';
 import { AlbionDeregistrationService } from './services/albion.deregistration.service';
@@ -31,8 +31,8 @@ import { AlbionDeregistrationService } from './services/albion.deregistration.se
     AlbionLogCommand,
     AlbionRegisterCommand,
     AlbionRegistrationService,
-    AlbionReportsCommand,
-    AlbionReportsService,
+    // AlbionReportsCommand,
+    // AlbionReportsService,
     AlbionScanCommand,
     AlbionScanningService,
     AlbionUtilities,

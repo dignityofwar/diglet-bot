@@ -56,13 +56,11 @@ export class AlbionRegistrationService implements OnApplicationBootstrap {
     discordMemberId: string,
     discordGuildId: string
   ): Promise<RegistrationData> {
-    const serverName = 'Europe';
-
     return {
       discordMember: await this.discordService.getGuildMember(discordGuildId, discordMemberId),
       character: await this.albionApiService.getCharacter(characterName, server),
       server,
-      serverName,
+      serverName: 'Europe',
       serverEmoji: '🇪🇺',
       guildId: this.config.get('albion.guildId'),
       guildName: 'Dignity Of War',
