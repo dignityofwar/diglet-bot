@@ -11,7 +11,7 @@ import {
   AlbionServer,
 } from '../interfaces/albion.api.interfaces';
 
-const mockGuildId = TestBootstrapper.mockConfig.albion.guildIdUS;
+const mockGuildId = TestBootstrapper.mockConfig.albion.guildId;
 
 describe('AlbionApiService', () => {
   let service: AlbionApiService;
@@ -43,16 +43,16 @@ describe('AlbionApiService', () => {
       },
     };
 
-    jest.spyOn(AlbionAxiosFactory.prototype, 'createAlbionApiAmericasClient').mockReturnValue({
+    jest.spyOn(AlbionAxiosFactory.prototype, 'createAlbionApiEuropeClient').mockReturnValue({
       defaults: {
-        baseURL: AlbionApiEndpoint.ALBION_AMERICAS,
+        baseURL: AlbionApiEndpoint.ALBION_EUROPE,
       },
       get: jest.fn().mockResolvedValue(searchResponse),
     } as any);
 
-    await expect(service.getCharacter('who.dis', AlbionServer.AMERICAS))
+    await expect(service.getCharacter('who.dis', AlbionServer.EUROPE))
       .rejects
-      .toThrow('Character **who.dis** does not seem to exist on the Americas server. Please ensure: \n1. You\'ve supplied your **exact** character name (case sensitive).\n2. You\'ve chosen the correct Albion server.\n3. Your character is older than 48 hours.');
+      .toThrow('Character **who.dis** does not seem to exist on the Europe server. Please ensure: \n1. You\'ve supplied your **exact** character name (case sensitive).\n2. You\'ve chosen the correct Albion server.\n3. Your character is older than 48 hours.');
   });
 
   it('should return a character based on exact match amongst partial matches', async () => {
@@ -73,16 +73,16 @@ describe('AlbionApiService', () => {
       },
     };
 
-    jest.spyOn(AlbionAxiosFactory.prototype, 'createAlbionApiAmericasClient').mockReturnValue({
+    jest.spyOn(AlbionAxiosFactory.prototype, 'createAlbionApiEuropeClient').mockReturnValue({
       defaults: {
-        baseURL: AlbionApiEndpoint.ALBION_AMERICAS,
+        baseURL: AlbionApiEndpoint.ALBION_EUROPE,
       },
       get: jest.fn().mockResolvedValueOnce(searchResponse).mockResolvedValueOnce({
         data: properResult,
       }),
     } as any);
 
-    await expect(service.getCharacter('Maelstrome', AlbionServer.AMERICAS))
+    await expect(service.getCharacter('Maelstrome', AlbionServer.EUROPE))
       .resolves
       .toStrictEqual(properResult);
   });
@@ -97,14 +97,14 @@ describe('AlbionApiService', () => {
       data: properResult,
     };
 
-    jest.spyOn(AlbionAxiosFactory.prototype, 'createAlbionApiAmericasClient').mockReturnValue({
+    jest.spyOn(AlbionAxiosFactory.prototype, 'createAlbionApiEuropeClient').mockReturnValue({
       defaults: {
-        baseURL: AlbionApiEndpoint.ALBION_AMERICAS,
+        baseURL: AlbionApiEndpoint.ALBION_EUROPE,
       },
       get: jest.fn().mockResolvedValueOnce(response),
     } as any);
 
-    await expect(service.getCharacterById(id, AlbionServer.AMERICAS))
+    await expect(service.getCharacterById(id, AlbionServer.EUROPE))
       .resolves
       .toStrictEqual(properResult);
   });
@@ -122,16 +122,16 @@ describe('AlbionApiService', () => {
       },
     };
 
-    jest.spyOn(AlbionAxiosFactory.prototype, 'createAlbionApiAmericasClient').mockReturnValue({
+    jest.spyOn(AlbionAxiosFactory.prototype, 'createAlbionApiEuropeClient').mockReturnValue({
       defaults: {
-        baseURL: AlbionApiEndpoint.ALBION_AMERICAS,
+        baseURL: AlbionApiEndpoint.ALBION_EUROPE,
       },
       get: jest.fn().mockResolvedValueOnce(searchResponse).mockResolvedValueOnce({
         data: { Id: '1234567', Name: 'Maelstrome' },
       }),
     } as any);
 
-    await expect(service.getCharacter('Maelstrome', AlbionServer.AMERICAS))
+    await expect(service.getCharacter('Maelstrome', AlbionServer.EUROPE))
       .rejects
       .toThrow(`Character ID \`${id}\` does not match API response consistently. Pinging <@${TestBootstrapper.mockConfig.discord.devUserId}>!`);
   });
@@ -160,16 +160,16 @@ describe('AlbionApiService', () => {
       },
     };
 
-    jest.spyOn(AlbionAxiosFactory.prototype, 'createAlbionApiAmericasClient').mockReturnValue({
+    jest.spyOn(AlbionAxiosFactory.prototype, 'createAlbionApiEuropeClient').mockReturnValue({
       defaults: {
-        baseURL: AlbionApiEndpoint.ALBION_AMERICAS,
+        baseURL: AlbionApiEndpoint.ALBION_EUROPE,
       },
       get: jest.fn()
         .mockResolvedValueOnce(searchResponse)
         .mockResolvedValueOnce({ data: properResult }),
     } as any);
 
-    await expect(service.getCharacter(characterName, AlbionServer.AMERICAS))
+    await expect(service.getCharacter(characterName, AlbionServer.EUROPE))
       .resolves
       .toStrictEqual(properResult);
   });
@@ -197,16 +197,16 @@ describe('AlbionApiService', () => {
       },
     };
 
-    jest.spyOn(AlbionAxiosFactory.prototype, 'createAlbionApiAmericasClient').mockReturnValue({
+    jest.spyOn(AlbionAxiosFactory.prototype, 'createAlbionApiEuropeClient').mockReturnValue({
       defaults: {
-        baseURL: AlbionApiEndpoint.ALBION_AMERICAS,
+        baseURL: AlbionApiEndpoint.ALBION_EUROPE,
       },
       get: jest.fn()
         .mockResolvedValueOnce(searchResponse)
         .mockResolvedValueOnce({ data: properResult }),
     } as any);
 
-    await expect(service.getCharacter(characterName, AlbionServer.AMERICAS))
+    await expect(service.getCharacter(characterName, AlbionServer.EUROPE))
       .rejects
       .toThrow(`multiple characters for **${characterName}** were found, none of them are a guild member.`);
   });
@@ -241,15 +241,15 @@ describe('AlbionApiService', () => {
       },
     };
 
-    jest.spyOn(AlbionAxiosFactory.prototype, 'createAlbionApiAmericasClient').mockReturnValue({
+    jest.spyOn(AlbionAxiosFactory.prototype, 'createAlbionApiEuropeClient').mockReturnValue({
       defaults: {
-        baseURL: AlbionApiEndpoint.ALBION_AMERICAS,
+        baseURL: AlbionApiEndpoint.ALBION_EUROPE,
       },
       get: jest.fn()
         .mockResolvedValueOnce(searchResponse),
     } as any);
 
-    await expect(service.getCharacter(characterName, AlbionServer.AMERICAS))
+    await expect(service.getCharacter(characterName, AlbionServer.EUROPE))
       .rejects
       .toThrow(`multiple characters for **NightRaven2511** were found within the DIG guild. This is an unsupported use case for this registration system. Pinging <@${TestBootstrapper.mockConfig.discord.devUserId}>!`);
   });
@@ -277,16 +277,16 @@ describe('AlbionApiService', () => {
       },
     };
 
-    jest.spyOn(AlbionAxiosFactory.prototype, 'createAlbionApiAmericasClient').mockReturnValue({
+    jest.spyOn(AlbionAxiosFactory.prototype, 'createAlbionApiEuropeClient').mockReturnValue({
       defaults: {
-        baseURL: AlbionApiEndpoint.ALBION_AMERICAS,
+        baseURL: AlbionApiEndpoint.ALBION_EUROPE,
       },
       get: jest.fn()
         .mockResolvedValueOnce(searchResponse)
         .mockResolvedValueOnce(playerResponse),
     } as any);
 
-    const result = await service.getCharacter('R4L2E1', AlbionServer.AMERICAS);
+    const result = await service.getCharacter('R4L2E1', AlbionServer.EUROPE);
     expect(result.Name).toBe('R4L2E1');
   });
 
@@ -321,14 +321,14 @@ describe('AlbionApiService', () => {
     const mockResponse: AlbionPlayersResponseInterface = { data: mockMembers } as any;
     const mockRequest = {
       defaults: {
-        baseURL: AlbionApiEndpoint.ALBION_AMERICAS,
+        baseURL: AlbionApiEndpoint.ALBION_EUROPE,
       },
       get: jest.fn().mockResolvedValue(mockResponse),
     } as any;
 
-    jest.spyOn(AlbionAxiosFactory.prototype, 'createAlbionApiAmericasClient').mockReturnValue(mockRequest);
+    jest.spyOn(AlbionAxiosFactory.prototype, 'createAlbionApiEuropeClient').mockReturnValue(mockRequest);
 
-    const receivedMembers = await service.getAllGuildMembers(guildId, AlbionServer.AMERICAS);
+    const receivedMembers = await service.getAllGuildMembers(guildId, AlbionServer.EUROPE);
 
     expect(receivedMembers).toEqual(mockMembers);
     expect(mockRequest.get).toHaveBeenCalledWith(`/guilds/${guildId}/members`);

@@ -12,7 +12,7 @@ export class AlbionUtilities {
 
   getHighestAlbionRole(
     discordMember: GuildMember,
-    server: AlbionServer = AlbionServer.AMERICAS
+    server: AlbionServer = AlbionServer.EUROPE
   ): AlbionRoleMapInterface | null {
     const roleMap: AlbionRoleMapInterface[] = this.config.get('albion.roleMap');
 

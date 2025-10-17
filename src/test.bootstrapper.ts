@@ -307,12 +307,12 @@ export class TestBootstrapper {
   }
 
   static getMockAlbionCharacter(
-    server: AlbionServer = AlbionServer.AMERICAS
+    server: AlbionServer = AlbionServer.EUROPE
   ) {
     return {
       Id: 'clhoV9OdRm-5BuYQYZBT_Q',
-      Name: `Maelstrome26${server === AlbionServer.AMERICAS ? 'US' : 'EU'}`,
-      GuildId: server === AlbionServer.AMERICAS ? this.mockConfig.albion.guildIdUS : this.mockConfig.albion.guildId,
+      Name: `Maelstrome26${server === AlbionServer.EUROPE ? 'US' : 'EU'}`,
+      GuildId: this.mockConfig.albion.guildId,
     } as any;
   }
 
@@ -364,13 +364,9 @@ export class TestBootstrapper {
 
   static readonly mockConfig = {
     albion: {
-      guildIdUS: '44545423435',
       guildId: '6567576868',
-      guildLeaderRoleUS: { discordRoleId: guildLeaderRoleUS },
       guildLeaderRole: { discordRoleId: guildLeaderRole },
-      guildOfficerRoleUS: { discordRoleId: guildOfficerRoleUS },
       guildOfficerRole: { discordRoleId: guildOfficerRole },
-      pingLeaderRolesUS: [guildLeaderRoleUS, guildOfficerRoleUS],
       pingLeaderRoles: [guildLeaderRole, guildOfficerRole],
       roleMap: [
         {
@@ -393,9 +389,7 @@ export class TestBootstrapper {
       devUserId: '474839309484',
       channels: {
         albionRegistration: '396474759683473',
-        albionUSRoles: '487573839485',
         albionRoles: '657687978899',
-        albionUSAnnouncements: '4845759049437495',
         albionAnnouncements: '6655756786797',
         albionScans: '4858696849494',
         ps2Verify: '558787980890809',
@@ -404,13 +398,9 @@ export class TestBootstrapper {
         ps2Scans: '8558496070888',
       },
       roles: {
-        albionUSMember: '454647566868675',
         albionMember: '623445457656789',
-        albionUSRegistered: '4657676767676',
         albionRegistered: '67845345346565',
-        albionUSAnnouncements: '4566987855434',
         albionAnnouncements: '6879876745643543',
-        pingLeaderRolesUS: [guildLeaderRoleUS, guildOfficerRoleUS],
         pingLeaderRoles: [guildLeaderRole, guildOfficerRole],
         ps2Verified: '059769706045',
       },

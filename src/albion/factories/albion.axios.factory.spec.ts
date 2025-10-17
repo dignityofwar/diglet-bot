@@ -17,13 +17,13 @@ describe('AlbionAxiosFactory', () => {
   it('should create an AxiosInstance with the correct configuration', () => {
     // Arrange
     const expectedConfig = {
-      baseURL: 'https://gameinfo.albiononline.com/api/gameinfo',
+      baseURL: 'https://gameinfo-ams.albiononline.com/api/gameinfo',
       headers: {
         'Content-Type': 'application/json',
       },
     };
 
-    albionAxiosFactory.createApiClient(AlbionServer.AMERICAS);
+    albionAxiosFactory.createApiClient(AlbionServer.EUROPE);
     expect(mockedAxios.create).toHaveBeenCalledWith(expectedConfig);
   });
 
