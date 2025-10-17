@@ -21,10 +21,14 @@ export class AlbionUtilities {
     roleMap.forEach((role) => {
       const hasRole = discordMember.roles.cache.has(role.discordRoleId);
 
-      if (!hasRole) return;
+      if (!hasRole) {
+        return;
+      }
 
       // If the role is not for the server we're looking for, skip it
-      if (role.server !== server) return;
+      if (role.server !== server) {
+        return;
+      }
 
       if (!highestPriorityRole || role.priority < highestPriorityRole.priority) {
         highestPriorityRole = role;

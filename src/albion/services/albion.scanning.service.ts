@@ -70,14 +70,18 @@ export class AlbionScanningService {
 
     try {
       await message.edit(`# ${emoji} Task: [2/4] Checking ${length} characters for membership status...`);
-      if (await this.removeLeavers(characters, message, dryRun, server)) actionRequired = true;
+      if (await this.removeLeavers(characters, message, dryRun, server)) {
+        actionRequired = true;
+      }
 
       // Check if members have roles they shouldn't have
       await message.edit(`# ${emoji} Task: [3/4] Performing reverse role scan...`);
       await this.reverseRoleScan(message, dryRun, server);
 
       await message.edit(`# ${emoji} Task: [4/4] Checking for role inconsistencies...`);
-      if (await this.roleInconsistencies(message, dryRun, server)) actionRequired = true;
+      if (await this.roleInconsistencies(message, dryRun, server)) {
+        actionRequired = true;
+      }
     }
     catch (err) {
       await message.edit(`## ${emoji} ❌ An error occurred while scanning!`);

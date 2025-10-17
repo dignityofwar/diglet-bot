@@ -9,9 +9,7 @@ import { PS2MembersEntity } from './database/entities/ps2.members.entity';
 import { PS2RankMapInterface } from './config/ps2.app.config';
 import { Collection, Role, Snowflake } from 'discord.js';
 
-const guildLeaderRoleUS = '44546543371337';
 const guildLeaderRole = '64354579789809089';
-const guildOfficerRoleUS = '465544343342364';
 const guildOfficerRole = '66343435879886';
 
 const ps2RankMap: PS2RankMapInterface = {
