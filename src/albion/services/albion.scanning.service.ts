@@ -37,10 +37,10 @@ export class AlbionScanningService {
   async startScan(
     message: Message,
     dryRun = false,
-    server: AlbionServer = AlbionServer.AMERICAS
+    server: AlbionServer = AlbionServer.EUROPE
   ) {
     const emoji = this.serverEmoji(server);
-    const guildId = server === AlbionServer.AMERICAS ? this.config.get('albion.guildIdUS') : this.config.get('albion.guildId');
+    const guildId = this.config.get('albion.guildId');
 
     await message.edit(`# ${emoji} Starting scan...`);
 
@@ -70,17 +70,21 @@ export class AlbionScanningService {
 
     try {
       await message.edit(`# ${emoji} Task: [2/4] Checking ${length} characters for membership status...`);
-      if (await this.removeLeavers(characters, message, dryRun, server)) actionRequired = true;
+      if (await this.removeLeavers(characters, message, dryRun, server)) {
+        actionRequired = true;
+      }
 
       // Check if members have roles they shouldn't have
       await message.edit(`# ${emoji} Task: [3/4] Performing reverse role scan...`);
       await this.reverseRoleScan(message, dryRun, server);
 
       await message.edit(`# ${emoji} Task: [4/4] Checking for role inconsistencies...`);
-      if (await this.roleInconsistencies(message, dryRun, server)) actionRequired = true;
+      if (await this.roleInconsistencies(message, dryRun, server)) {
+        actionRequired = true;
+      }
     }
     catch (err) {
-      await message.edit('## 🇺🇸 ❌ An error occurred while scanning!');
+      await message.edit(`## ${emoji} ❌ An error occurred while scanning!`);
       await getChannel(message).send(`Error: ${err.message}`);
     }
 
@@ -88,7 +92,7 @@ export class AlbionScanningService {
     await getChannel(message).send(`## ${emoji} Scan complete!`);
     // If any of the tasks flagged for action, tell them now.
     if (actionRequired && !dryRun) {
-      const configKey = server === AlbionServer.AMERICAS ? 'albion.pingLeaderRolesUS' : 'albion.pingLeaderRoles';
+      const configKey = 'albion.pingLeaderRoles';
       const scanPingRoles = this.config.get(configKey);
       const text = `🔔 <@&${scanPingRoles.join('>, <@&')}> Please review the above actions marked with (‼️) and make any necessary changes manually. To scan again without pinging, run the \`/albion-scan\` command with the \`dry-run\` flag set to \`true\`.`;
       await getChannel(message).send(text);
@@ -102,7 +106,7 @@ export class AlbionScanningService {
     guildMembers: AlbionRegistrationsEntity[],
     message: Message,
     tries = 0,
-    server: AlbionServer = AlbionServer.AMERICAS
+    server: AlbionServer = AlbionServer.EUROPE
   ) {
     const emoji = this.serverEmoji(server);
     const characterPromises: Promise<AlbionPlayerInterface>[] = [];
@@ -135,10 +139,10 @@ export class AlbionScanningService {
     characters: AlbionPlayerInterface[],
     message: Message,
     dryRun = false,
-    server: AlbionServer = AlbionServer.AMERICAS
+    server: AlbionServer = AlbionServer.EUROPE
   ): Promise<boolean> {
     const emoji = this.serverEmoji(server);
-    const guildId = server === AlbionServer.AMERICAS ? this.config.get('albion.guildIdUS') : this.config.get('albion.guildId');
+    const guildId = this.config.get('albion.guildId');
     // Save all the characters to a map we can easily pick out later via character ID
     const charactersMap = new Map<string, AlbionPlayerInterface>();
     const leavers: string[] = [];
@@ -254,9 +258,9 @@ export class AlbionScanningService {
   async reverseRoleScan(
     message: Message,
     dryRun = false,
-    server: AlbionServer = AlbionServer.AMERICAS
+    server: AlbionServer = AlbionServer.EUROPE
   ) {
-    const guildId = server === AlbionServer.AMERICAS ? this.config.get('albion.guildIdUS') : this.config.get('albion.guildId');
+    const guildId = this.config.get('albion.guildId');
     const emoji = this.serverEmoji(server);
 
     // Get the list of roles via the Role Map
@@ -376,11 +380,11 @@ export class AlbionScanningService {
   async roleInconsistencies(
     message: Message,
     dryRun = false,
-    server: AlbionServer = AlbionServer.AMERICAS
+    server: AlbionServer = AlbionServer.EUROPE
   ): Promise<boolean> {
     const suggestions: string[] = [];
     const emoji = this.serverEmoji(server);
-    const guildId = server === AlbionServer.AMERICAS ? this.config.get('albion.guildIdUS') : this.config.get('albion.guildId');
+    const guildId = this.config.get('albion.guildId');
     let actionRequired = false;
 
     // Refresh GuildMembers as some may have been booted / left
@@ -446,7 +450,7 @@ export class AlbionScanningService {
 
   async checkRoleInconsistencies(
     discordMember: GuildMember,
-    server: AlbionServer = AlbionServer.AMERICAS
+    server: AlbionServer = AlbionServer.EUROPE
   ): Promise<RoleInconsistencyResult[]> {
     const serverEmoji = this.serverEmoji(server);
     // If the user is excluded from role inconsistency checks, skip them
@@ -456,7 +460,7 @@ export class AlbionScanningService {
     }
 
     const inconsistencies: RoleInconsistencyResult[] = [];
-    const highestPriorityRole = this.albionUtilities.getHighestAlbionRole(discordMember, server);
+    const highestPriorityRole = this.albionUtilities.getHighestAlbionRole(discordMember);
     const roleMap: AlbionRoleMapInterface[] = this.config.get('albion.roleMap');
 
     // If no roles were found, they must have at least registered and initiate
@@ -544,6 +548,6 @@ export class AlbionScanningService {
   }
 
   serverEmoji(server: AlbionServer) {
-    return server === AlbionServer.AMERICAS ? '🇺🇸' : '🇪🇺';
+    return server === AlbionServer.EUROPE ? '🇪🇺' : '???';
   }
 }

@@ -10,25 +10,11 @@ export interface AlbionRoleMapInterface {
 
 const rolesToRankProduction: AlbionRoleMapInterface[] = [
   {
-    name: '@ALB/US/Guildmaster',
-    discordRoleId: '1039565956885786784',
-    priority: 1,
-    keep: true,
-    server: AlbionServer.AMERICAS,
-  },
-  {
     name: '@ALB/Archmage',
     discordRoleId: '1218115619732455474',
     priority: 1,
     keep: true,
     server: AlbionServer.EUROPE,
-  },
-  {
-    name: '@ALB/US/Master',
-    discordRoleId: '1039566101593456694',
-    priority: 2,
-    keep: false,
-    server: AlbionServer.AMERICAS,
   },
   {
     name: '@ALB/Magister',
@@ -38,25 +24,11 @@ const rolesToRankProduction: AlbionRoleMapInterface[] = [
     server: AlbionServer.EUROPE,
   },
   {
-    name: '@ALB/US/General',
-    discordRoleId: '1039565571970310276',
-    priority: 3,
-    keep: false,
-    server: AlbionServer.AMERICAS,
-  },
-  {
     name: '@ALB/Warcaster',
     discordRoleId: '1218115480426905641',
     priority: 3,
     keep: false,
     server: AlbionServer.EUROPE,
-  },
-  {
-    name: '@ALB/US/Captain',
-    discordRoleId: '1039565777650581575',
-    priority: 4,
-    keep: false,
-    server: AlbionServer.AMERICAS,
   },
   {
     name: '@ALB/Adept',
@@ -66,13 +38,6 @@ const rolesToRankProduction: AlbionRoleMapInterface[] = [
     server: AlbionServer.EUROPE,
   },
   {
-    name: '@ALB/US/Squire',
-    discordRoleId: '1039565554563960852',
-    priority: 5,
-    keep: true,
-    server: AlbionServer.AMERICAS,
-  },
-  {
     name: '@ALB/Graduate',
     discordRoleId: '1218115340009996339',
     priority: 5,
@@ -80,25 +45,11 @@ const rolesToRankProduction: AlbionRoleMapInterface[] = [
     server: AlbionServer.EUROPE,
   },
   {
-    name: '@ALB/US/Initiate',
-    discordRoleId: '1076193105868501112',
-    priority: 6,
-    keep: false,
-    server: AlbionServer.AMERICAS,
-  },
-  {
     name: '@ALB/Disciple',
     discordRoleId: '1218115269419995166',
     priority: 6,
     keep: false,
     server: AlbionServer.EUROPE,
-  },
-  {
-    name: '@ALB/US/Registered',
-    discordRoleId: '1155987035472023702',
-    priority: 7,
-    keep: true,
-    server: AlbionServer.AMERICAS,
   },
   {
     name: '@ALB/Registered',
@@ -110,25 +61,11 @@ const rolesToRankProduction: AlbionRoleMapInterface[] = [
 ];
 const rolesToRankDevelopment: AlbionRoleMapInterface[] = [
   {
-    name: '@ALB/US/Guildmaster',
-    discordRoleId: '1158467537550454895',
-    priority: 1,
-    keep: true,
-    server: AlbionServer.AMERICAS,
-  },
-  {
     name: '@ALB/Archmage',
     discordRoleId: '1232802066414571631',
     priority: 1,
     keep: true,
     server: AlbionServer.EUROPE,
-  },
-  {
-    name: '@ALB/US/Master',
-    discordRoleId: '1158467574678429696',
-    priority: 2,
-    keep: false,
-    server: AlbionServer.AMERICAS,
   },
   {
     name: '@ALB/Magister',
@@ -138,25 +75,11 @@ const rolesToRankDevelopment: AlbionRoleMapInterface[] = [
     server: AlbionServer.EUROPE,
   },
   {
-    name: '@ALB/US/General',
-    discordRoleId: '1158467600687300699',
-    priority: 3,
-    keep: false,
-    server: AlbionServer.AMERICAS,
-  },
-  {
     name: '@ALB/Warcaster',
     discordRoleId: '1232802165861384305',
     priority: 3,
     keep: false,
     server: AlbionServer.EUROPE,
-  },
-  {
-    name: '@ALB/US/Captain',
-    discordRoleId: '1158467651165761626',
-    priority: 4,
-    keep: false,
-    server: AlbionServer.AMERICAS,
   },
   {
     name: '@ALB/Adept',
@@ -166,13 +89,6 @@ const rolesToRankDevelopment: AlbionRoleMapInterface[] = [
     server: AlbionServer.EUROPE,
   },
   {
-    name: '@ALB/US/Squire',
-    discordRoleId: '1158467840496635914',
-    priority: 5,
-    keep: true,
-    server: AlbionServer.AMERICAS,
-  },
-  {
     name: '@ALB/Graduate',
     discordRoleId: '1232802285734727772',
     priority: 5,
@@ -180,25 +96,11 @@ const rolesToRankDevelopment: AlbionRoleMapInterface[] = [
     server: AlbionServer.EUROPE,
   },
   {
-    name: '@ALB/US/Initiate',
-    discordRoleId: '1139909152701947944',
-    priority: 6,
-    keep: false,
-    server: AlbionServer.AMERICAS,
-  },
-  {
     name: '@ALB/Disciple',
     discordRoleId: '1232802355733336196',
     priority: 6,
     keep: false,
     server: AlbionServer.EUROPE,
-  },
-  {
-    name: '@ALB/US/Registered',
-    discordRoleId: '1155987100928323594',
-    priority: 7,
-    keep: true,
-    server: AlbionServer.AMERICAS,
   },
   {
     name: '@ALB/Registered',
@@ -210,18 +112,13 @@ const rolesToRankDevelopment: AlbionRoleMapInterface[] = [
 ];
 const roleMap = process.env.ENVIRONMENT === 'production' ? rolesToRankProduction : rolesToRankDevelopment;
 const findRole = (roleName: string) => roleMap.filter((role) => role.name === roleName)[0];
-const pingLeaderRolesUS = [findRole('@ALB/US/Guildmaster').discordRoleId, findRole('@ALB/US/Master').discordRoleId];
 const pingLeaderRoles = [findRole('@ALB/Archmage').discordRoleId, findRole('@ALB/Magister').discordRoleId];
 
 export default () => ({
-  guildIdUS: 'btPZRoLvTUqLC7URnDRgSQ',
   guildId: '0_zTfLfASD2Wtw6Tc-yckA',
   roleMap,
-  pingLeaderRolesUS,
   pingLeaderRoles,
   scanExcludedUsers: [], // Discord IDs
-  guildLeaderRoleUS: findRole('@ALB/US/Guildmaster'),
   guildLeaderRole: findRole('@ALB/Archmage'),
-  guildOfficerRoleUS: findRole('@ALB/US/Master'),
   guildOfficerRole: findRole('@ALB/Magister'),
 });

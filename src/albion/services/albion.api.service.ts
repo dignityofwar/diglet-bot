@@ -46,18 +46,16 @@ export class AlbionApiService {
       return player.Name === characterName;
     });
 
-    const serverName = server === AlbionServer.AMERICAS ? 'Americas' : 'Europe';
-
     // If there were no players found
     if (foundPlayer.length === 0) {
-      this.throwError(`Character **${characterName}** does not seem to exist on the ${serverName} server. Please ensure: 
+      this.throwError(`Character **${characterName}** does not seem to exist on the Europe server. Please ensure: 
 1. You've supplied your **exact** character name (case sensitive).
 2. You've chosen the correct Albion server.
 3. Your character is older than 48 hours.`);
     }
 
     if (foundPlayer.length > 1) {
-      const guildId = server === AlbionServer.AMERICAS ? this.config.get('albion.guildIdUS') : this.config.get('albion.guildId');
+      const guildId = this.config.get('albion.guildId');
       // If there are multiple players found, we need to loop them to check if any of them are in the guild, and return that character
       const foundPlayerInGuild = foundPlayer.filter((player) => {
         return player.GuildId === guildId;

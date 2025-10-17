@@ -2,7 +2,6 @@ import { AlbionRoleMapInterface } from '../../config/albion.app.config';
 import { GuildMember } from 'discord.js';
 import { ConfigService } from '@nestjs/config';
 import { Injectable } from '@nestjs/common';
-import { AlbionServer } from '../interfaces/albion.api.interfaces';
 
 @Injectable()
 export class AlbionUtilities {
@@ -12,7 +11,6 @@ export class AlbionUtilities {
 
   getHighestAlbionRole(
     discordMember: GuildMember,
-    server: AlbionServer = AlbionServer.AMERICAS
   ): AlbionRoleMapInterface | null {
     const roleMap: AlbionRoleMapInterface[] = this.config.get('albion.roleMap');
 
@@ -21,10 +19,9 @@ export class AlbionUtilities {
     roleMap.forEach((role) => {
       const hasRole = discordMember.roles.cache.has(role.discordRoleId);
 
-      if (!hasRole) return;
-
-      // If the role is not for the server we're looking for, skip it
-      if (role.server !== server) return;
+      if (!hasRole) {
+        return;
+      }
 
       if (!highestPriorityRole || role.priority < highestPriorityRole.priority) {
         highestPriorityRole = role;
