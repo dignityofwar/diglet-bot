@@ -2,7 +2,6 @@ import { AlbionRoleMapInterface } from '../../config/albion.app.config';
 import { GuildMember } from 'discord.js';
 import { ConfigService } from '@nestjs/config';
 import { Injectable } from '@nestjs/common';
-import { AlbionServer } from '../interfaces/albion.api.interfaces';
 
 @Injectable()
 export class AlbionUtilities {
