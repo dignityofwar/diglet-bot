@@ -309,7 +309,7 @@ export class TestBootstrapper {
   ) {
     return {
       Id: 'clhoV9OdRm-5BuYQYZBT_Q',
-      Name: `Maelstrome26${server === AlbionServer.EUROPE ? 'US' : 'EU'}`,
+      Name: `Maelstrome26${server === AlbionServer.EUROPE ? 'EU' : 'US'}`,
       GuildId: this.mockConfig.albion.guildId,
     } as any;
   }
