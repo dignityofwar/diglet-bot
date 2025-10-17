@@ -12,7 +12,6 @@ export class AlbionUtilities {
 
   getHighestAlbionRole(
     discordMember: GuildMember,
-    server: AlbionServer = AlbionServer.EUROPE
   ): AlbionRoleMapInterface | null {
     const roleMap: AlbionRoleMapInterface[] = this.config.get('albion.roleMap');
 
@@ -22,11 +21,6 @@ export class AlbionUtilities {
       const hasRole = discordMember.roles.cache.has(role.discordRoleId);
 
       if (!hasRole) {
-        return;
-      }
-
-      // If the role is not for the server we're looking for, skip it
-      if (role.server !== server) {
         return;
       }
 

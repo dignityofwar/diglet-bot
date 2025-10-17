@@ -460,7 +460,7 @@ export class AlbionScanningService {
     }
 
     const inconsistencies: RoleInconsistencyResult[] = [];
-    const highestPriorityRole = this.albionUtilities.getHighestAlbionRole(discordMember, server);
+    const highestPriorityRole = this.albionUtilities.getHighestAlbionRole(discordMember);
     const roleMap: AlbionRoleMapInterface[] = this.config.get('albion.roleMap');
 
     // If no roles were found, they must have at least registered and initiate
