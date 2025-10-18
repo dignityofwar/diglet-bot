@@ -24,7 +24,7 @@ const rolesToRankProduction: AlbionRoleMapInterface[] = [
     server: AlbionServer.EUROPE,
   },
   {
-    name: '@ALB/Warcaster',
+    name: '@ALB/EldritchMager',
     discordRoleId: '1218115480426905641',
     priority: 3,
     keep: false,
@@ -75,7 +75,7 @@ const rolesToRankDevelopment: AlbionRoleMapInterface[] = [
     server: AlbionServer.EUROPE,
   },
   {
-    name: '@ALB/Warcaster',
+    name: '@ALB/EldritchMage',
     discordRoleId: '1232802165861384305',
     priority: 3,
     keep: false,
