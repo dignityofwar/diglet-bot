@@ -1,10 +1,10 @@
+import { ConfigService } from '@nestjs/config';
+import { ConfigModule } from './config/config.module';
 import { DiscordModule } from '@discord-nestjs/core';
 import { Module } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
 import { GatewayIntentBits, Partials } from 'discord.js';
 import { GeneralModule } from './general/general.module';
 import { AlbionModule } from './albion/albion.module';
-import { ConfigModule } from './config/config.module';
 import { DatabaseModule } from './database/database.module';
 import { Ps2Module } from './ps2/ps2.module';
 import { ScheduleModule } from '@nestjs/schedule';

@@ -28,8 +28,8 @@ The engines are enforced via `package.json`, you'll know if it's wrong as no com
 
 ## Setup
 1. `pnpm install`. **NOTE** on WSL, see WSL compatability section.
-2. Create a copy of `.env.example` file, name it `.env` and add your bot token into it (grab it from the Discord Developers site).
-3. Run `start.sh`.
+2. Create a copy of `digletbot.env.example` file, name it `digletbot.env` and add your bot token into it (grab it from the Discord Developers site).
+3. Run `./start.sh`.
 4. Invite the bot to your server.
 
 ## MikroORM & Database
