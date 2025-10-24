@@ -9,9 +9,7 @@ import Ps2Config from './ps2.app.config';
   imports: [
     NestConfigModule.forRoot({
       isGlobal: true,
-      envFilePath: `.env${
-        process.env.NODE_ENV ? `.${process.env.NODE_ENV}` : ''
-      }`,
+      envFilePath: 'digletbot.env',
       load: [
         () => ({ albion: AlbionAppConfig() }),
         () => ({ app: AppConfig() }),
