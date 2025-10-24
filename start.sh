@@ -11,6 +11,7 @@ fi
 docker compose up -d
 
 # Now need to build the app as the migrations depend upon the MirkoORM config file being built into JS
+pnpm install
 pnpm build
 pnpm migration:up
 
