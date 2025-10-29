@@ -1,7 +1,7 @@
 name: Trigger Deployment Webhook
 
 on:
-  workflow_dispatch:
+  workflow_call:
 
 jobs:
   send-webhook:
