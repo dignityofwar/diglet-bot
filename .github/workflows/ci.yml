@@ -36,3 +36,9 @@ jobs:
       version: ${{ needs.release.outputs.version }}
     uses: ./.github/workflows/docker-build-push.yml
     secrets: inherit
+
+  trigger-deploy:
+    name: Trigger deployment
+    needs: publish
+    uses: ./.github/workflows/deploy.yml
+    secrets: inherit
