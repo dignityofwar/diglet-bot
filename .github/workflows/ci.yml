@@ -42,3 +42,9 @@ jobs:
     needs: publish
     uses: ./.github/workflows/deploy.yml
     secrets: inherit
+
+  trigger-deploy:
+    name: Trigger deployment
+    needs: publish
+    uses: ./.github/workflows/deploy.yml
+    secrets: inherit
