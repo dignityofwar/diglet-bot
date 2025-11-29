@@ -197,7 +197,7 @@ export class AlbionRegistrationService implements OnApplicationBootstrap {
 
     this.throwError(`Sorry <@${data.discordMember.id}>, the character **${data.character.Name}** has not been detected in the ${data.serverEmoji} **${data.guildName}** Guild.
 \n- ➡️ **Please ensure you have spelt your character __exactly__ correct as it appears in-game**. It is case sensitive.
-- ⏳ **Please wait __~30 minutes__ and try again**.`);
+- ⏳ **Play the game for about an hour, then try again.**`);
   }
 
   private async registerCharacter(data: RegistrationData, channel: TextChannel) {
