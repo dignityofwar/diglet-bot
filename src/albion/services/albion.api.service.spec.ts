@@ -52,7 +52,7 @@ describe('AlbionApiService', () => {
 
     await expect(service.getCharacter('who.dis', AlbionServer.EUROPE))
       .rejects
-      .toThrow('Character **who.dis** does not seem to exist on the Europe server. Please ensure: \n1. You\'ve supplied your **exact** character name (case sensitive).\n2. You\'ve chosen the correct Albion server.\n3. Your character is older than 48 hours.');
+      .toThrow('Character **who.dis** does not seem to exist on the Europe server. Please ensure: \n1. You\'ve supplied your **exact** character name (case sensitive).\n2. Your character is older than 48 hours.');
   });
 
   it('should return a character based on exact match amongst partial matches', async () => {

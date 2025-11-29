@@ -50,8 +50,7 @@ export class AlbionApiService {
     if (foundPlayer.length === 0) {
       this.throwError(`Character **${characterName}** does not seem to exist on the Europe server. Please ensure: 
 1. You've supplied your **exact** character name (case sensitive).
-2. You've chosen the correct Albion server.
-3. Your character is older than 48 hours.`);
+2. Your character is older than 48 hours.`);
     }
 
     if (foundPlayer.length > 1) {

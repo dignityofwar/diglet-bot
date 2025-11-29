@@ -219,8 +219,7 @@ describe('AlbionRegistrationService', () => {
         // \n||Data source: [Gameinfo link](${endpoint}) \nCharacter info: \`${JSON.stringify(mockCharacterInfo)}\`||`);
 
         await expect(service.validate(mockRegistrationDataEU)).rejects.toThrow(`Sorry <@${mockDiscordUser.id}>, the character **${mockCharacter.Name}** has not been detected in the 🇪🇺 **Dignity Of War** Guild.
-\n- ➡️ **Please ensure you have spelt your character __exactly__ correct as it appears in-game**. It is case sensitive.
-- ⏳ **Please wait __~30 minutes__ and try again**.`);
+\n- ➡️ **Please ensure you have spelt your character __exactly__ correct as it appears in-game**. It is case sensitive.\n- ⏳ **Play the game for about an hour, then try again.**`);
       });
     });
 
