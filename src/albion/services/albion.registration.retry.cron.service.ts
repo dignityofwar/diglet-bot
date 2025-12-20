@@ -70,6 +70,7 @@ export class AlbionRegistrationRetryCronService implements OnApplicationBootstra
   }
 
   private async processAttempt(attempt: AlbionRegistrationQueueEntity): Promise<void> {
+    this.logger.log(`Processing registration attempt for Discord ID ${attempt.discordId} (character ${attempt.characterName})`);
     const now = new Date();
 
     if (attempt.expiresAt <= now) {
@@ -160,6 +161,7 @@ export class AlbionRegistrationRetryCronService implements OnApplicationBootstra
   }
 
   private async expireAttempt(attempt: AlbionRegistrationQueueEntity): Promise<void> {
+    this.logger.log(`Expiring Albion registration attempt for Discord ID ${attempt.discordId} (character ${attempt.characterName})`);
     attempt.status = AlbionRegistrationQueueStatus.EXPIRED;
     await this.albionRegistrationQueueRepository.getEntityManager().flush();
 
