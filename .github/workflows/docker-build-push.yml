@@ -20,7 +20,7 @@ jobs:
           fetch-depth: 2
           submodules: true
 
-      - uses: actions/cache@v4
+      - uses: actions/cache@v5
         name: Pull pnpm cache
         with:
           path: node_modules
