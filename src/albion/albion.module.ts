@@ -9,20 +9,14 @@ import { DiscordModule } from '../discord/discord.module';
 import { AlbionScanningService } from './services/albion.scanning.service';
 import { AlbionScanCommand } from './commands/scan.command';
 import { AlbionCronService } from './services/albion.cron.service';
-// import { AlbionReportsService } from './services/albion.reports.service';
 import { AlbionUtilities } from './utilities/albion.utilities';
-// import { AlbionReportsCommand } from './commands/reports.command';
 import { AlbionLogCommand } from './commands/log.command';
 import { AlbionDeregisterCommand } from './commands/deregistration.command';
 import { AlbionDeregistrationService } from './services/albion.deregistration.service';
+import { AlbionRegistrationRetryCronService } from './services/albion.registration.retry.cron.service';
 
 @Module({
-  imports: [
-    ConfigModule,
-    DatabaseModule,
-    DiscordJSModule.forFeature(),
-    DiscordModule,
-  ],
+  imports: [ConfigModule, DatabaseModule, DiscordJSModule.forFeature(), DiscordModule],
   providers: [
     AlbionApiService,
     AlbionCronService,
@@ -30,6 +24,7 @@ import { AlbionDeregistrationService } from './services/albion.deregistration.se
     AlbionDeregistrationService,
     AlbionLogCommand,
     AlbionRegisterCommand,
+    AlbionRegistrationRetryCronService,
     AlbionRegistrationService,
     // AlbionReportsCommand,
     // AlbionReportsService,

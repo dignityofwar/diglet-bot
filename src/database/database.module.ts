@@ -9,6 +9,7 @@ import { ActivityStatisticsEntity } from './entities/activity.statistics.entity'
 import { JoinerLeaverEntity } from './entities/joiner.leaver.entity';
 import { JoinerLeaverStatisticsEntity } from './entities/joiner.leaver.statistics.entity';
 import { RoleMetricsEntity } from './entities/role.metrics.entity';
+import { AlbionRegistrationQueueEntity } from './entities/albion.registration.queue.entity';
 
 @Module({
   imports: [
@@ -18,6 +19,7 @@ import { RoleMetricsEntity } from './entities/role.metrics.entity';
         ActivityEntity,
         ActivityStatisticsEntity,
         AlbionRegistrationsEntity,
+        AlbionRegistrationQueueEntity,
         JoinerLeaverEntity,
         JoinerLeaverStatisticsEntity,
         PS2MembersEntity,
