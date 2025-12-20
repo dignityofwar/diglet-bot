@@ -3,7 +3,7 @@ FROM node:24.12.0
 ARG VERSION
 ENV VERSION=${VERSION}
 
-RUN npm install --ignore-scripts -g pnpm@10.25.0
+RUN corepack enable
 
 # Many things are ignored, check .dockerignore
 COPY . /app
