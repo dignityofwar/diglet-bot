@@ -58,25 +58,6 @@ export class AlbionRegistrationService implements OnApplicationBootstrap {
     // We purposefully don't check if the verified role exists, as the bot could technically belong to multiple servers, and we'd have to start injecting the guild ID into the config service, which is a bit of a pain.
   }
 
-  // Gets all the required information to begin the process using as little inputs as possible.
-  async getInfo(
-    characterName: string,
-    server: AlbionServer,
-    discordMemberId: string,
-    discordGuildId: string,
-  ): Promise<RegistrationData> {
-    return {
-      discordMember: await this.discordService.getGuildMember(discordGuildId, discordMemberId),
-      character: await this.albionApiService.getCharacter(characterName, server),
-      server,
-      serverName: 'Europe',
-      serverEmoji: '🇪🇺',
-      guildId: this.config.get('albion.guildId'),
-      guildName: 'Dignity Of War',
-      guildPingable: '@ALB/Archmage',
-    };
-  }
-
   async validate(data: RegistrationData): Promise<void> {
     this.logger.debug(`Checking if registration attempt for "${data.character.Name}" is valid`);
 
@@ -131,7 +112,18 @@ export class AlbionRegistrationService implements OnApplicationBootstrap {
     }
 
     try {
-      const data = await this.getInfo(characterName, server, discordMemberId, discordGuildId);
+      const charData = await this.albionApiService.getCharacter(characterName, server);
+
+      const data: RegistrationData = {
+        character: charData,
+        discordMember: await this.discordService.getGuildMember(discordGuildId, discordMemberId),
+        server,
+        serverName: AlbionServer.EUROPE,
+        serverEmoji: '🇪🇺',
+        guildId: this.config.get('albion.guildId'),
+        guildName: 'Dignity Of War',
+        guildPingable: '@ALB/Archmage',
+      };
 
       this.logger.debug(
         `Handling Albion character "${data.character.Name}" registration for "${data.discordMember.displayName}" on server "${data.server}"`,
@@ -223,8 +215,13 @@ export class AlbionRegistrationService implements OnApplicationBootstrap {
   }
 
   private async checkIfInGuild(data: RegistrationData) {
-    // If in guild, good!
-    if (data.character.GuildId === data.guildId) {
+    const membership = await this.albionApiService.checkCharacterGuildMembership(
+      data.character.Name,
+      data.server,
+      data.guildId,
+    );
+
+    if (membership) {
       return;
     }
 

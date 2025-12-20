@@ -423,4 +423,66 @@ describe('AlbionApiService', () => {
         .toStrictEqual('JRlDBmqHS86m764x-jc96g');
     });
   });
+
+  describe('checkCharacterGuildMembership', () => {
+    it('should return true when direct character lookup indicates membership', async () => {
+      const characterName = 'Maelstrome';
+      const server = AlbionServer.EUROPE;
+      const guildId = mockGuildId;
+
+      const char = { Id: '1', Name: characterName, GuildId: guildId } as any;
+
+      jest.spyOn(service, 'getCharacter').mockResolvedValue(char);
+      jest.spyOn(service, 'getAllGuildMembers').mockResolvedValue([] as any);
+
+      await expect(service.checkCharacterGuildMembership(characterName, server, guildId))
+        .resolves
+        .toBe(true);
+    });
+
+    it('should return true when guild member list indicates membership even if character lookup says not in guild', async () => {
+      const characterName = 'Maelstrome';
+      const server = AlbionServer.EUROPE;
+      const guildId = mockGuildId;
+
+      const char = { Id: '1', Name: characterName, GuildId: 'other' } as any;
+      const members = [{ Id: 'm1', Name: characterName, GuildId: guildId }] as any;
+
+      jest.spyOn(service, 'getCharacter').mockResolvedValue(char);
+      jest.spyOn(service, 'getAllGuildMembers').mockResolvedValue(members);
+
+      await expect(service.checkCharacterGuildMembership(characterName, server, guildId))
+        .resolves
+        .toBe(true);
+    });
+
+    it('should return false when both sources indicate not in guild', async () => {
+      const characterName = 'Maelstrome';
+      const server = AlbionServer.EUROPE;
+      const guildId = mockGuildId;
+
+      const char = { Id: '1', Name: characterName, GuildId: 'other' } as any;
+      const members = [{ Id: 'm1', Name: 'OtherGuy', GuildId: guildId }] as any;
+
+      jest.spyOn(service, 'getCharacter').mockResolvedValue(char);
+      jest.spyOn(service, 'getAllGuildMembers').mockResolvedValue(members);
+
+      await expect(service.checkCharacterGuildMembership(characterName, server, guildId))
+        .resolves
+        .toBe(false);
+    });
+
+    it('should return false when both checks fail', async () => {
+      const characterName = 'Maelstrome';
+      const server = AlbionServer.EUROPE;
+      const guildId = mockGuildId;
+
+      jest.spyOn(service, 'getCharacter').mockRejectedValue(new Error('character down'));
+      jest.spyOn(service, 'getAllGuildMembers').mockRejectedValue(new Error('members down'));
+
+      await expect(service.checkCharacterGuildMembership(characterName, server, guildId))
+        .resolves
+        .toBe(false);
+    });
+  });
 });

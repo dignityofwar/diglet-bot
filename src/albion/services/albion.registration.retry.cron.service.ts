@@ -75,21 +75,23 @@ export class AlbionRegistrationRetryCronService implements OnApplicationBootstra
       return;
     }
 
-    // First, check the actual guild member list. If they are not present, do nothing (avoid spamming registration flow).
+    // First, check whether the character is in the guild using the same logic as registration.
     try {
       const guildId = this.configService.get('albion.guildId');
-      const members = await this.albionApiService.getAllGuildMembers(guildId, attempt.server);
-      const inGuild = members.some((m) => m?.Name === attempt.characterName);
+      const inGuild = await this.albionApiService.checkCharacterGuildMembership(
+        attempt.characterName,
+        attempt.server,
+        guildId,
+      );
 
       if (!inGuild) {
         attempt.attemptCount += 1;
-        attempt.lastError = 'Character not found in guild member list yet.';
+        attempt.lastError = 'Character not found in guild yet.';
         await this.albionRegistrationQueueRepository.getEntityManager().flush();
         return;
       }
     }
     catch (err) {
-      // If the guild-member list fetch failed, don't hard-fail the attempt. Record and try again next hour.
       attempt.attemptCount += 1;
       attempt.lastError = `Failed to fetch guild members: ${err?.message ?? String(err)}`;
       await this.albionRegistrationQueueRepository.getEntityManager().flush();

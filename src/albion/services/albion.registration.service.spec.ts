@@ -109,6 +109,8 @@ describe('AlbionRegistrationService', () => {
           provide: AlbionApiService,
           useValue: {
             getCharacter: jest.fn().mockImplementation(() => mockCharacter),
+            getCharacterGuildInfo: jest.fn(),
+            checkCharacterGuildMembership: jest.fn().mockResolvedValue(true),
           },
         },
         {
@@ -151,6 +153,8 @@ describe('AlbionRegistrationService', () => {
     expect(service).toBeDefined();
   });
 
+  // getInfo removed: registration data is constructed inside handleRegistration.
+
   describe('Bootstrap', () => {
     it('should throw an error if the channel could not be found', async () => {
       discordService.getTextChannel = jest.fn().mockReturnValue(null);
@@ -168,31 +172,6 @@ describe('AlbionRegistrationService', () => {
       await expect(service.onApplicationBootstrap()).rejects.toThrow(
         `Channel with ID ${mockRegistrationChannelId} is not a text channel`,
       );
-    });
-  });
-
-  describe('getInfo', () => {
-    beforeEach(() => {
-      discordService.getGuildMember = jest.fn().mockResolvedValue(mockDiscordUser);
-      albionApiService.getCharacter = jest.fn().mockResolvedValue(mockCharacter);
-    });
-
-    it('should return the correct information for the EU server', async () => {
-      const result = await service.getInfo(
-        mockCharacter.Name,
-        AlbionServer.EUROPE,
-        TestBootstrapper.getMockDiscordUser().id,
-        'foo1234',
-      );
-      // There's some weird deep string / object crap going on so we have to compare properties
-      expect(result.discordMember).toMatchObject(mockDiscordUser);
-      expect(result.character).toMatchObject(mockCharacter);
-      expect(result.server).toBe(AlbionServer.EUROPE);
-      expect(result.serverName).toBe('Europe');
-      expect(result.serverEmoji).toBe('🇪🇺');
-      expect(result.guildId).toBe(TestBootstrapper.mockConfig.albion.guildId);
-      expect(result.guildName).toBe('Dignity Of War');
-      expect(result.guildPingable).toBe('@ALB/Archmage');
     });
   });
 
@@ -308,6 +287,7 @@ describe('AlbionRegistrationService', () => {
       it('should enqueue and throw with pending message if character is not in EU guild', async () => {
         mockCharacter.GuildId = 'utter nonsense';
         mockAlbionRegistrationQueueRepository.findOne = jest.fn().mockResolvedValue(null);
+        (albionApiService as any).checkCharacterGuildMembership = jest.fn().mockResolvedValue(false);
 
         const before = Date.now();
 
@@ -406,7 +386,8 @@ describe('AlbionRegistrationService', () => {
 
     it('should properly handle validation errors', async () => {
       const errorMsg = 'Character is not in the guild!';
-      service.getInfo = jest.fn().mockResolvedValue(mockRegistrationDataEU);
+      albionApiService.getCharacter = jest.fn().mockResolvedValue(mockCharacter);
+      discordService.getGuildMember = jest.fn().mockResolvedValue(mockDiscordUser);
       service.validate = jest.fn().mockImplementation(() => {
         throw new Error(errorMsg);
       });
@@ -425,7 +406,8 @@ describe('AlbionRegistrationService', () => {
     });
 
     it('should add the correct number of roles', async () => {
-      service.getInfo = jest.fn().mockResolvedValue(mockRegistrationDataEU);
+      albionApiService.getCharacter = jest.fn().mockResolvedValue(mockCharacter);
+      discordService.getGuildMember = jest.fn().mockResolvedValue(mockDiscordUser);
       service.validate = jest.fn().mockResolvedValue(undefined);
       mockRegistrationDataEU.discordMember.roles.add = jest.fn().mockReturnValue(true);
 
@@ -453,7 +435,8 @@ describe('AlbionRegistrationService', () => {
     });
 
     it('should handle discord role adding errors', async () => {
-      service.getInfo = jest.fn().mockResolvedValue(mockRegistrationDataEU);
+      albionApiService.getCharacter = jest.fn().mockResolvedValue(mockCharacter);
+      discordService.getGuildMember = jest.fn().mockResolvedValue(mockDiscordUser);
       service.validate = jest.fn().mockResolvedValue(undefined);
       mockDiscordUser.roles.add = jest
         .fn()
@@ -476,7 +459,8 @@ describe('AlbionRegistrationService', () => {
     });
 
     it('should throw upon database error', async () => {
-      service.getInfo = jest.fn().mockResolvedValue(mockRegistrationDataEU);
+      albionApiService.getCharacter = jest.fn().mockResolvedValue(mockCharacter);
+      discordService.getGuildMember = jest.fn().mockResolvedValue(mockDiscordUser);
       service.validate = jest.fn().mockResolvedValue(undefined);
       discordService.getRoleViaMember = jest.fn().mockReturnValue({
         id: mockAlbionMemberRoleId,
@@ -499,7 +483,8 @@ describe('AlbionRegistrationService', () => {
     });
 
     it('should handle discord nickname permission errors by sending a message only', async () => {
-      service.getInfo = jest.fn().mockResolvedValue(mockRegistrationDataEU);
+      albionApiService.getCharacter = jest.fn().mockResolvedValue(mockCharacter);
+      discordService.getGuildMember = jest.fn().mockResolvedValue(mockDiscordUser);
       service.validate = jest.fn().mockResolvedValue(undefined);
       discordService.getRoleViaMember = jest.fn().mockReturnValue({
         id: mockAlbionMemberRoleId,
@@ -529,7 +514,8 @@ describe('AlbionRegistrationService', () => {
 
     // Successful paths
     it('should handle successful EU registration and return a message to the user', async () => {
-      service.getInfo = jest.fn().mockResolvedValue(mockRegistrationDataEU);
+      albionApiService.getCharacter = jest.fn().mockResolvedValue(mockCharacter);
+      discordService.getGuildMember = jest.fn().mockResolvedValue(mockDiscordUser);
       service.validate = jest.fn().mockImplementation(() => true);
       discordService.getRoleViaMember = jest.fn().mockReturnValue({
         id: mockAlbionMemberRoleId,
@@ -565,7 +551,8 @@ CC <@&${mockEULeaderRoleId}>, <@&${mockEUOfficerRoleId}>`,
     });
 
     it('should not create a queue attempt when registration is successful', async () => {
-      service.getInfo = jest.fn().mockResolvedValue(mockRegistrationDataEU);
+      albionApiService.getCharacter = jest.fn().mockResolvedValue(mockCharacter);
+      discordService.getGuildMember = jest.fn().mockResolvedValue(mockDiscordUser);
       service.validate = jest.fn().mockResolvedValue(undefined);
       service['registerCharacter'] = jest.fn().mockResolvedValue(undefined);
 

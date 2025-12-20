@@ -3,7 +3,8 @@ import AlbionAxiosFactory from '../factories/albion.axios.factory';
 import {
   AlbionPlayerInterface,
   AlbionPlayersResponseInterface,
-  AlbionSearchResponseInterface, AlbionServer,
+  AlbionSearchResponseInterface,
+  AlbionServer,
 } from '../interfaces/albion.api.interfaces';
 import { ConfigService } from '@nestjs/config';
 
@@ -87,6 +88,31 @@ export class AlbionApiService {
     }
 
     return members;
+  }
+
+  /**
+   * Checks whether a character is in a given guild using both:
+   * 1) Direct character lookup
+   * 2) Guild member list
+   *
+   * Returns true if either source confirms membership.
+   * Returns false otherwise (including when both sources fail).
+   */
+  async checkCharacterGuildMembership(
+    characterName: string,
+    server: AlbionServer,
+    guildId: string,
+  ): Promise<boolean> {
+    const getCharacter = this.getCharacter(characterName, server).catch(() => undefined);
+    const getGuildMembers = this.getAllGuildMembers(guildId, server).catch(() => undefined);
+
+    const [character, guildMembers] = await Promise.all([getCharacter, getGuildMembers]);
+
+    if (character?.GuildId === guildId) {
+      return true;
+    }
+
+    return guildMembers?.some((m) => m?.Name === characterName) ?? false;
   }
 
   private throwError(error: string) {
