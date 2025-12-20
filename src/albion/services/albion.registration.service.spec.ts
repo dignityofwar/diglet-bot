@@ -25,7 +25,13 @@ describe('AlbionRegistrationService', () => {
   let albionApiService: AlbionApiService;
 
   let mockAlbionRegistrationsRepository: EntityRepository<AlbionRegistrationsEntity>;
-  let mockAlbionRegistrationQueueRepository: EntityRepository<AlbionRegistrationQueueEntity>;
+  let mockAlbionRegistrationQueueRepository: {
+    create: jest.Mock
+    upsert: jest.Mock
+    findOne: jest.Mock
+    flush: jest.Mock
+    getEntityManager?: jest.Mock
+  };
   let mockCharacter: AlbionPlayerInterface;
   let mockDiscordUser: any;
   let mockRegistrationDataEU: RegistrationData;
@@ -46,8 +52,13 @@ describe('AlbionRegistrationService', () => {
     } as any;
 
     mockAlbionRegistrationsRepository = TestBootstrapper.getMockEntityRepo();
+
     mockAlbionRegistrationQueueRepository = {
       ...TestBootstrapper.getMockEntityRepo(),
+      // Make these explicit jest.fn()s so we can assert on .mock.calls without casting.
+      create: jest.fn(),
+      upsert: jest.fn(),
+      findOne: jest.fn(),
       flush: jest.fn().mockResolvedValue(true),
     } as any;
 
@@ -262,32 +273,7 @@ describe('AlbionRegistrationService', () => {
       });
     });
 
-    describe('checkIfInGuild', () => {
-      it('should enqueue and throw with pending message if character is not in EU guild', async () => {
-        mockCharacter.GuildId = 'utter nonsense';
-        mockAlbionRegistrationQueueRepository.findOne = jest.fn().mockResolvedValue(null);
-
-        const before = Date.now();
-
-        await expect(
-          service.validate(mockRegistrationDataEU),
-        ).rejects.toThrow(
-          `Sorry <@${mockDiscordUser.id}>, the character **${mockCharacter.Name}** has not been detected in the 🇪🇺 **Dignity Of War** Guild.\n\n- ➡️ **Please ensure you have spelt your character __exactly__ correct as it appears in-game**. If you have mis-spelt it, please run the command again with the correct spelling.\n- ⏳ We will automatically retry your registration attempt once per hour over the next 72 hours. Sometimes our data source lags, so please be patient. **If you are not a member of DIG, this WILL fail regardless.**`,
-        );
-
-        expect(mockAlbionRegistrationQueueRepository.upsert).toHaveBeenCalledTimes(1);
-        expect(mockAlbionRegistrationQueueRepository.create).toHaveBeenCalledTimes(1);
-
-        const createArg = (mockAlbionRegistrationQueueRepository.create as jest.Mock).mock.calls[0][0];
-        expect(createArg).toBeTruthy();
-
-        const expiresAt = createArg.expiresAt as Date;
-
-        expect(expiresAt).toBeInstanceOf(Date);
-        expect(expiresAt.getTime()).toBeGreaterThanOrEqual(before + 72 * 60 * 60 * 1000 - 10_000);
-        expect(expiresAt.getTime()).toBeLessThanOrEqual(before + 72 * 60 * 60 * 1000 + 10_000);
-      });
-
+    describe('checkForQueueAttempt', () => {
       it('should throw with registration attempt already queued if an existing attempt exists', async () => {
         mockCharacter.GuildId = 'utter nonsense';
 
@@ -309,9 +295,37 @@ describe('AlbionRegistrationService', () => {
           `Sorry <@${mockDiscordUser.id}>, your registration attempt is **already queued**. Your request will be retried over the next 72 hours. Re-attempting registration is pointless at this time. Please be patient.`,
         );
 
-        // Should not create or upsert a new entry.
+        // Since queue-check happens before checkIfInGuild, we should not enqueue.
         expect(mockAlbionRegistrationQueueRepository.create).not.toHaveBeenCalled();
         expect(mockAlbionRegistrationQueueRepository.upsert).not.toHaveBeenCalled();
+      });
+    });
+
+    describe('checkIfInGuild', () => {
+      it('should enqueue and throw with pending message if character is not in EU guild', async () => {
+        mockCharacter.GuildId = 'utter nonsense';
+        mockAlbionRegistrationQueueRepository.findOne = jest.fn().mockResolvedValue(null);
+
+        const before = Date.now();
+
+        await expect(
+          service.validate(mockRegistrationDataEU),
+        ).rejects.toThrow(
+          `Sorry <@${mockDiscordUser.id}>, the character **${mockCharacter.Name}** has not been detected in the 🇪🇺 **Dignity Of War** Guild.\n\n- ➡️ **Please ensure you have spelt your character __exactly__ correct as it appears in-game**. If you have mis-spelt it, please run the command again with the correct spelling.\n- ⏳ We will automatically retry your registration attempt once per hour over the next 72 hours. Sometimes our data source lags, so please be patient. **If you are not a member of DIG, this WILL fail regardless.**`,
+        );
+
+        expect(mockAlbionRegistrationQueueRepository.upsert).toHaveBeenCalledTimes(1);
+        expect(mockAlbionRegistrationQueueRepository.create).toHaveBeenCalledTimes(1);
+
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+        const createArg = mockAlbionRegistrationQueueRepository.create.mock.calls[0][0];
+        expect(createArg).toBeTruthy();
+
+        const expiresAt = createArg.expiresAt as Date;
+
+        expect(expiresAt).toBeInstanceOf(Date);
+        expect(expiresAt.getTime()).toBeGreaterThanOrEqual(before + 72 * 60 * 60 * 1000 - 10_000);
+        expect(expiresAt.getTime()).toBeLessThanOrEqual(before + 72 * 60 * 60 * 1000 + 10_000);
       });
     });
 
@@ -341,9 +355,8 @@ describe('AlbionRegistrationService', () => {
           'foo1234',
           mockChannel.id,
         ),
-      ).rejects.toThrow(errorMsg);
-      expect(service['logger'].error).toHaveBeenCalledWith(
-        `Registration failed for character "${mockRegistrationDataEU.character.Name}"! Err: ${errorMsg}`,
+      ).rejects.toThrow(
+        `Registration failed for character "${mockRegistrationDataEU.character.Name}"! Err: ${errorMsg}. Pinging <@${mockDevUserId}>!`,
       );
     });
 
@@ -383,10 +396,8 @@ describe('AlbionRegistrationService', () => {
           'foo1234',
           mockChannel.id,
         ),
-      ).rejects.toThrow(errorMsg);
-
-      expect(service['logger'].error).toHaveBeenCalledWith(
-        `Registration failed for character "${mockRegistrationDataEU.character.Name}"! Err: ${errorMsg}`,
+      ).rejects.toThrow(
+        `Registration failed for character "${mockRegistrationDataEU.character.Name}"! Err: ${errorMsg}. Pinging <@${mockDevUserId}>!`,
       );
     });
 
@@ -405,10 +416,8 @@ describe('AlbionRegistrationService', () => {
           'foo1234',
           mockChannel.id,
         ),
-      ).rejects.toThrow(errorMsg);
-
-      expect(service['logger'].error).toHaveBeenCalledWith(
-        `Registration failed for character "${mockRegistrationDataEU.character.Name}"! Err: ${errorMsg}`,
+      ).rejects.toThrow(
+        `Registration failed for character "${mockRegistrationDataEU.character.Name}"! Err: ${errorMsg}. Pinging <@${mockDevUserId}>!`,
       );
     });
 

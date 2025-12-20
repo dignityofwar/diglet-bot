@@ -87,10 +87,28 @@ export class AlbionRegistrationService implements OnApplicationBootstrap {
     // No try catch on purpose!
     await this.checkAlreadyRegistered(data);
 
-    // 3. Check if the character is in the correct guild
+    // 3. Check if there is already a queued attempt
+    await this.checkForQueueAttempt(data);
+
+    // 4. Check if the character is in the correct guild
     await this.checkIfInGuild(data);
 
     this.logger.debug(`Registration attempt for "${data.character.Name}" is valid!`);
+  }
+
+  private async checkForQueueAttempt(data: RegistrationData): Promise<void> {
+    const existing = await this.albionRegistrationQueueRepository.findOne({
+      guildId: data.guildId,
+      discordId: String(data.discordMember.user.id),
+      status: AlbionRegistrationQueueStatus.PENDING,
+    });
+
+    // If already queued, inform the user and exit early.
+    if (existing) {
+      this.throwError(
+        `Sorry <@${data.discordMember.id}>, your registration attempt is **already queued**. Your request will be retried over the next 72 hours. Re-attempting registration is pointless at this time. Please be patient.`,
+      );
+    }
   }
 
   // This is the actual registration process, handling the validation and registration of the character.
@@ -137,14 +155,11 @@ export class AlbionRegistrationService implements OnApplicationBootstrap {
         }
       }
       catch (err) {
-        this.logger.warn(
-          `Unable to update queued registration status for ${discordMemberId}: ${err.message}`,
-        );
+        this.throwError(`Unable to update queued registration status for ${discordMemberId}: ${err.message}. Pinging <@${this.config.get('discord.devUserId')}>!`);
       }
     }
     catch (err) {
-      this.logger.error(`Registration failed for character "${characterName}"! Err: ${err.message}`);
-      throw err;
+      this.throwError(`Registration failed for character "${characterName}"! Err: ${err.message}. Pinging <@${this.config.get('discord.devUserId')}>!`);
     }
   }
 
@@ -227,22 +242,10 @@ export class AlbionRegistrationService implements OnApplicationBootstrap {
       return;
     }
 
-    // Enqueue (or refresh) a retryable attempt.
+    // Enqueue a retryable attempt.
     const now = new Date();
     const expiresAt = new Date(now);
     expiresAt.setHours(expiresAt.getHours() + 72);
-
-    const existing = await this.albionRegistrationQueueRepository.findOne({
-      guildId: data.guildId,
-      discordId: String(data.discordMember.user.id),
-    });
-
-    // If already queued, inform the user and exit early.
-    if (existing) {
-      this.throwError(
-        `Sorry <@${data.discordMember.id}>, your registration attempt is **already queued**. Your request will be retried over the next 72 hours. Re-attempting registration is pointless at this time. Please be patient.`,
-      );
-    }
 
     const entity = this.albionRegistrationQueueRepository.create({
       guildId: data.guildId,
