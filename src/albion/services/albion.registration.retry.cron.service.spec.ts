@@ -359,4 +359,25 @@ describe('AlbionRegistrationRetryCronService', () => {
       'is not a text channel for Albion retry cron',
     );
   });
+
+  it('should log an error when retry notification cannot be sent', async () => {
+    const attempt = new AlbionRegistrationQueueEntity({
+      guildId: 'g1',
+      discordGuildId: 'dg1',
+      discordChannelId: 'dc1',
+      discordId: 'u1',
+      characterName: 'Char',
+      server: AlbionServer.EUROPE,
+      expiresAt: new Date(Date.now() - 1000),
+    });
+
+    queueRepo.find.mockResolvedValue([attempt]);
+
+    // expireAttempt() calls notify(), which calls notificationChannel.send(). Force that to fail.
+    (notificationChannel.send as jest.Mock).mockRejectedValueOnce(new Error('send failed'));
+
+    await service.retryAlbionRegistrations();
+
+    expect(service['logger'].error).toHaveBeenCalledWith('Failed to send retry summary: send failed');
+  });
 });

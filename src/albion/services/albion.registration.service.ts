@@ -142,21 +142,7 @@ export class AlbionRegistrationService implements OnApplicationBootstrap {
       // If we got here, we can safely register the character
       await this.registerCharacter(data, channel);
 
-      // If queued previously, mark as succeeded so it doesn't keep retrying
-      try {
-        const queued = await this.albionRegistrationQueueRepository.findOne({
-          guildId: data.guildId,
-          discordId: discordMemberId,
-        });
-        if (queued) {
-          queued.status = AlbionRegistrationQueueStatus.SUCCEEDED;
-          queued.lastError = null;
-          await this.albionRegistrationQueueRepository.getEntityManager().flush();
-        }
-      }
-      catch (err) {
-        this.throwError(`Unable to update queued registration status for ${discordMemberId}: ${err.message}. Pinging <@${this.config.get('discord.devUserId')}>!`);
-      }
+      // Note: queued registration status updates are managed by AlbionRegistrationRetryCronService.
     }
     catch (err) {
       this.throwError(`Registration failed for character "${characterName}"! Err: ${err.message}. Pinging <@${this.config.get('discord.devUserId')}>!`);
@@ -262,7 +248,7 @@ export class AlbionRegistrationService implements OnApplicationBootstrap {
     await this.albionRegistrationQueueRepository.upsert(entity);
 
     this.throwError(
-      `Sorry <@${data.discordMember.id}>, the character **${data.character.Name}** has not been detected in the ${data.serverEmoji} **${data.guildName}** Guild.\n\n- ➡️ **Please ensure you have spelt your character __exactly__ correct as it appears in-game**. If you have mis-spelt it, please run the command again with the correct spelling.\n- ⏳ We will automatically retry your registration attempt once per hour over the next 72 hours. Sometimes our data source lags, so please be patient. **If you are not a member of DIG, this WILL fail regardless.**`,
+      `Sorry <@${data.discordMember.id}>, the character **${data.character.Name}** has not been detected in the ${data.serverEmoji} **${data.guildName}** Guild.\n\n- ➡️ **Please ensure you have spelt your character __exactly__ correct as it appears in-game**. If you have mis-spelt it, please run the command again with the correct spelling.\n- ⏳ **We will automatically retry your registration attempt at the top of the hour for the next 72 hours**. Sometimes our data source lags, so please be patient. **If you are not a member of DIG, this WILL fail regardless.**`,
     );
   }
 

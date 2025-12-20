@@ -314,7 +314,7 @@ describe('AlbionRegistrationService', () => {
         await expect(
           service.validate(mockRegistrationDataEU),
         ).rejects.toThrow(
-          `Sorry <@${mockDiscordUser.id}>, the character **${mockCharacter.Name}** has not been detected in the 🇪🇺 **Dignity Of War** Guild.\n\n- ➡️ **Please ensure you have spelt your character __exactly__ correct as it appears in-game**. If you have mis-spelt it, please run the command again with the correct spelling.\n- ⏳ We will automatically retry your registration attempt once per hour over the next 72 hours. Sometimes our data source lags, so please be patient. **If you are not a member of DIG, this WILL fail regardless.**`,
+          `Sorry <@${mockDiscordUser.id}>, the character **${mockCharacter.Name}** has not been detected in the 🇪🇺 **Dignity Of War** Guild.\n\n- ➡️ **Please ensure you have spelt your character __exactly__ correct as it appears in-game**. If you have mis-spelt it, please run the command again with the correct spelling.\n- ⏳ **We will automatically retry your registration attempt at the top of the hour for the next 72 hours**. Sometimes our data source lags, so please be patient. **If you are not a member of DIG, this WILL fail regardless.**`,
         );
 
         expect(mockAlbionRegistrationQueueRepository.upsert).toHaveBeenCalledTimes(1);
@@ -562,6 +562,25 @@ describe('AlbionRegistrationService', () => {
 CC <@&${mockEULeaderRoleId}>, <@&${mockEUOfficerRoleId}>`,
         flags: 4,
       });
+    });
+
+    it('should not create a queue attempt when registration is successful', async () => {
+      service.getInfo = jest.fn().mockResolvedValue(mockRegistrationDataEU);
+      service.validate = jest.fn().mockResolvedValue(undefined);
+      service['registerCharacter'] = jest.fn().mockResolvedValue(undefined);
+
+      await expect(
+        service.handleRegistration(
+          mockRegistrationDataEU.character.Name,
+          mockRegistrationDataEU.server,
+          mockRegistrationDataEU.discordMember.id,
+          mockRegistrationDataEU.discordMember.guild.id,
+          mockChannel.id,
+        ),
+      ).resolves.toBe(undefined);
+
+      expect(mockAlbionRegistrationQueueRepository.create).not.toHaveBeenCalled();
+      expect(mockAlbionRegistrationQueueRepository.upsert).not.toHaveBeenCalled();
     });
   });
 });
