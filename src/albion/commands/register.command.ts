@@ -81,7 +81,7 @@ export class AlbionRegisterCommand {
     // Delete the placeholder
     await message.delete();
 
-    await this.sendAllianceRegistrationReminder(message);
+    // await this.sendAllianceRegistrationReminder(message);
   }
 
   async sendAllianceRegistrationReminder(
