@@ -86,10 +86,10 @@ export class AlbionRegistrationService implements OnApplicationBootstrap {
 
     // If already queued, inform the user and exit early.
     if (existing) {
-      const discordTime = `<t:${Math.floor(existing.createdAt.getTime() / 1000)}:f>`;
+      const expiresDiscordTime = `<t:${Math.floor(existing.expiresAt.getTime() / 1000)}:f>`;
 
       this.throwError(
-        `<@${data.discordMember.id}> your registration attempt is **already queued**. Your request will be retried hourly until ${discordTime}. Re-attempting registration is pointless at this time. Please be patient.`,
+        `<@${data.discordMember.id}> your registration attempt is **already queued**. Your request will be retried hourly until ${expiresDiscordTime}. Re-attempting registration is pointless at this time. Please be patient.`,
       );
     }
   }
@@ -246,10 +246,10 @@ export class AlbionRegistrationService implements OnApplicationBootstrap {
     });
     await this.albionRegistrationQueueRepository.upsert(entity);
 
-    const discordTime = `<t:${Math.floor(expiresAt.getTime() / 1000)}:f>`;
+    const expiresDiscordTime = `<t:${Math.floor(expiresAt.getTime() / 1000)}:f>`;
 
     this.throwError(
-      `<@${data.discordMember.id}> the character **${data.character.Name}** has not been detected in the ${data.serverEmoji} **${data.guildName}** Guild.\n\n ➡️ **Please ensure you have spelt your character __exactly__ correct as it appears in-game**. If you have mis-spelt it, please run the command again with the correct spelling.\n\n## ⏳ We will automatically retry your registration attempt hourly until ${discordTime}.\n Sometimes our data source is slow to update, so please be patient. **If you are not a member of DIG, this WILL fail regardless.**`,
+      `<@${data.discordMember.id}> the character **${data.character.Name}** has not been detected in the ${data.serverEmoji} **${data.guildName}** Guild.\n\n ➡️ **Please ensure you have spelt your character __exactly__ correct as it appears in-game**. If you have mis-spelt it, please run the command again with the correct spelling.\n\n## ⏳ We will automatically retry your registration attempt hourly until ${expiresDiscordTime}.\n Sometimes our data source is slow to update, so please be patient. **If you are not a member of DIG, this WILL fail regardless.**`,
     );
   }
 

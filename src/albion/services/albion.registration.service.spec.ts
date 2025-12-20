@@ -276,8 +276,7 @@ describe('AlbionRegistrationService', () => {
 
         mockAlbionRegistrationQueueRepository.findOne = jest.fn().mockResolvedValue(existingAttempt);
 
-        // Message uses the queued attempt's createdAt as the retry-until time.
-        const expectedDiscordTime = `<t:${Math.floor(createdAt.getTime() / 1000)}:f>`;
+        const expectedDiscordTime = `<t:${Math.floor(existingAttempt.expiresAt.getTime() / 1000)}:f>`;
 
         await expect(service.validate(mockRegistrationDataEU)).rejects.toThrow(
           `<@${mockDiscordUser.id}> your registration attempt is **already queued**. Your request will be retried hourly until ${expectedDiscordTime}. Re-attempting registration is pointless at this time. Please be patient.`,
@@ -307,13 +306,23 @@ describe('AlbionRegistrationService', () => {
 
         expect(thrown).toBeInstanceOf(Error);
 
+        // We want to assert the full user-facing message. The only dynamic portion is the Discord timestamp.
         const message = (thrown as Error).message;
-        expect(message).toContain(
-          `<@${mockDiscordUser.id}> the character **${mockCharacter.Name}** has not been detected in the 🇪🇺 **Dignity Of War** Guild.`,
-        );
-        expect(message).toContain('We will automatically retry your registration attempt hourly until');
-        expect(message).toContain('Sometimes our data source is slow to update');
-        expect(message).toMatch(/until <t:\d+:f>/);
+        const match = message.match(/until <t:(\d+):f>/);
+        expect(match).toBeTruthy();
+
+        const unixSeconds = Number(match?.[1]);
+        expect(Number.isFinite(unixSeconds)).toBe(true);
+
+        const expectedDiscordTime = `<t:${unixSeconds}:f>`;
+
+        const expectedMessage =
+          `<@${mockDiscordUser.id}> the character **${mockCharacter.Name}** has not been detected in the 🇪🇺 **Dignity Of War** Guild.\n\n` +
+          ' ➡️ **Please ensure you have spelt your character __exactly__ correct as it appears in-game**. If you have mis-spelt it, please run the command again with the correct spelling.\n\n' +
+          `## ⏳ We will automatically retry your registration attempt hourly until ${expectedDiscordTime}.\n` +
+          ' Sometimes our data source is slow to update, so please be patient. **If you are not a member of DIG, this WILL fail regardless.**';
+
+        expect(message).toBe(expectedMessage);
 
         expect(mockAlbionRegistrationQueueRepository.upsert).toHaveBeenCalledTimes(1);
         expect(mockAlbionRegistrationQueueRepository.create).toHaveBeenCalledTimes(1);
