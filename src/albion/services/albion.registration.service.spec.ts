@@ -60,6 +60,9 @@ describe('AlbionRegistrationService', () => {
       upsert: jest.fn(),
       findOne: jest.fn(),
       flush: jest.fn().mockResolvedValue(true),
+      getEntityManager: jest.fn().mockReturnValue({
+        flush: jest.fn().mockResolvedValue(true),
+      }),
     } as any;
 
     mockCharacter = TestBootstrapper.getMockAlbionCharacter(AlbionServer.EUROPE) as any;
