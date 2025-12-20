@@ -29,6 +29,9 @@ export class AlbionRegistrationService implements OnApplicationBootstrap {
 
   private verificationChannel: Channel;
 
+  // Track configured IDs so we don't have to thread registrationContext through the call chain.
+  private verificationChannelId: string;
+
   constructor(
     private readonly discordService: DiscordService,
     private readonly config: ConfigService,
@@ -42,6 +45,7 @@ export class AlbionRegistrationService implements OnApplicationBootstrap {
   async onApplicationBootstrap() {
     // Store the Discord guild channel and ensure we can send messages to it
     const verifyChannelId = this.config.get('discord.channels.albionRegistration');
+    this.verificationChannelId = String(verifyChannelId);
 
     this.verificationChannel = await this.discordService.getTextChannel(verifyChannelId);
     if (!this.verificationChannel) {
@@ -73,10 +77,7 @@ export class AlbionRegistrationService implements OnApplicationBootstrap {
     };
   }
 
-  async validate(
-    data: RegistrationData,
-    registrationContext?: { discordChannelId: string; discordGuildId: string },
-  ): Promise<void> {
+  async validate(data: RegistrationData): Promise<void> {
     this.logger.debug(`Checking if registration attempt for "${data.character.Name}" is valid`);
 
     // 1. Check if the roles to apply exist
@@ -87,7 +88,7 @@ export class AlbionRegistrationService implements OnApplicationBootstrap {
     await this.checkAlreadyRegistered(data);
 
     // 3. Check if the character is in the correct guild
-    await this.checkIfInGuild(data, registrationContext);
+    await this.checkIfInGuild(data);
 
     this.logger.debug(`Registration attempt for "${data.character.Name}" is valid!`);
   }
@@ -111,7 +112,6 @@ export class AlbionRegistrationService implements OnApplicationBootstrap {
       this.throwError(errorMessage);
     }
 
-    // Any failures here will be caught then mention the user with the error.
     try {
       const data = await this.getInfo(characterName, server, discordMemberId, discordGuildId);
 
@@ -119,7 +119,7 @@ export class AlbionRegistrationService implements OnApplicationBootstrap {
         `Handling Albion character "${data.character.Name}" registration for "${data.discordMember.displayName}" on server "${data.server}"`,
       );
 
-      await this.validate(data, { discordChannelId, discordGuildId });
+      await this.validate(data);
 
       // If we got here, we can safely register the character
       await this.registerCharacter(data, channel);
@@ -221,20 +221,10 @@ export class AlbionRegistrationService implements OnApplicationBootstrap {
     );
   }
 
-  private async checkIfInGuild(
-    data: RegistrationData,
-    registrationContext?: { discordChannelId: string; discordGuildId: string },
-  ) {
+  private async checkIfInGuild(data: RegistrationData) {
     // If in guild, good!
     if (data.character.GuildId === data.guildId) {
       return;
-    }
-
-    // If we don't have context (shouldn't happen), fall back to old behavior.
-    if (!registrationContext?.discordChannelId || !registrationContext?.discordGuildId) {
-      this.throwError(
-        `Sorry <@${data.discordMember.id}>, the character **${data.character.Name}** has not been detected in the ${data.serverEmoji} **${data.guildName}** Guild.\n\n- ➡️ **Please ensure you have spelt your character __exactly__ correct as it appears in-game**. It is case sensitive.\n- ⏳ **Play the game for about an hour, then try again.**`,
-      );
     }
 
     // Enqueue (or refresh) a retryable attempt.
@@ -242,62 +232,34 @@ export class AlbionRegistrationService implements OnApplicationBootstrap {
     const expiresAt = new Date(now);
     expiresAt.setHours(expiresAt.getHours() + 72);
 
-    try {
-      const existing = await this.albionRegistrationQueueRepository.findOne({
-        guildId: data.guildId,
-        discordId: String(data.discordMember.user.id),
-      });
+    const existing = await this.albionRegistrationQueueRepository.findOne({
+      guildId: data.guildId,
+      discordId: String(data.discordMember.user.id),
+    });
 
-      if (existing) {
-        existing.characterName = data.character.Name;
-        existing.server = data.server;
-        existing.discordChannelId = registrationContext.discordChannelId;
-        existing.discordGuildId = registrationContext.discordGuildId;
-        existing.status = AlbionRegistrationQueueStatus.PENDING;
-        existing.expiresAt = expiresAt;
-        existing.lastError = 'Character not detected in guild yet.';
-        await this.albionRegistrationQueueRepository.getEntityManager().flush();
-      }
-      else {
-        const entity = this.albionRegistrationQueueRepository.create({
-          guildId: data.guildId,
-          discordGuildId: registrationContext.discordGuildId,
-          discordChannelId: registrationContext.discordChannelId,
-          discordId: String(data.discordMember.user.id),
-          characterName: data.character.Name,
-          server: data.server,
-          attemptCount: 0,
-          expiresAt,
-          status: AlbionRegistrationQueueStatus.PENDING,
-          lastError: 'Character not detected in guild yet.',
-        });
-        await this.albionRegistrationQueueRepository.upsert(entity);
-      }
-
-      // Notify the user in the channel where they invoked the command.
-      try {
-        const channel = await this.discordService.getTextChannel(registrationContext.discordChannelId);
-        if (channel?.isTextBased()) {
-          await channel.send(
-            `<@${data.discordMember.id}> your registration is now in a queue, and it will be re-attempted every hour for the next 72 hours. The game database we have access to lags behind quite often. You will be notified that your registration is successful (if not, you'll be told so you can try again).`,
-          );
-        }
-      }
-      catch (err) {
-        this.logger.warn(
-          `Failed to send queued-registration notice for ${data.discordMember.id}: ${err.message}`,
-        );
-      }
-    }
-    catch (err) {
-      this.logger.error(
-        `Failed to enqueue Albion registration retry for ${data.discordMember.id}: ${err.message}`,
+    // If already queued, inform the user and exit early.
+    if (existing) {
+      this.throwError(
+        `Sorry <@${data.discordMember.id}>, your registration attempt is **already queued**. Your request will be retried over the next 72 hours. Re-attempting registration is pointless at this time. Please be patient.`,
       );
-      // If we can't enqueue, don't hide the original error.
     }
+
+    const entity = this.albionRegistrationQueueRepository.create({
+      guildId: data.guildId,
+      discordGuildId: data.discordMember.guild.id,
+      discordChannelId: this.verificationChannelId,
+      discordId: String(data.discordMember.user.id),
+      characterName: data.character.Name,
+      server: data.server,
+      attemptCount: 0,
+      expiresAt,
+      status: AlbionRegistrationQueueStatus.PENDING,
+      lastError: 'Character not detected in guild yet.',
+    });
+    await this.albionRegistrationQueueRepository.upsert(entity);
 
     this.throwError(
-      `Sorry <@${data.discordMember.id}>, the character **${data.character.Name}** has not been detected in the ${data.serverEmoji} **${data.guildName}** Guild.\n\n- ➡️ **Please ensure you have spelt your character __exactly__ correct as it appears in-game**. If you have mis-spelt it, please run the command again with the correct spelling.\n- ⏳ We will automatically retry your registration attempt once per hour over the next 72 hours. Sometimes our data source lags, so please be patient. **If you are not a member of DIG, this WILL fail regardless.**\n\nIf _after_ 72 hours this has not worked, we will ping you and \`${data.guildPingable}\` to re-attempt or assist.`,
+      `Sorry <@${data.discordMember.id}>, the character **${data.character.Name}** has not been detected in the ${data.serverEmoji} **${data.guildName}** Guild.\n\n- ➡️ **Please ensure you have spelt your character __exactly__ correct as it appears in-game**. If you have mis-spelt it, please run the command again with the correct spelling.\n- ⏳ We will automatically retry your registration attempt once per hour over the next 72 hours. Sometimes our data source lags, so please be patient. **If you are not a member of DIG, this WILL fail regardless.**`,
     );
   }
 

@@ -10,7 +10,10 @@ import { AlbionRegistrationsEntity } from '../../database/entities/albion.regist
 import { AlbionPlayerInterface, AlbionServer } from '../interfaces/albion.api.interfaces';
 import { TestBootstrapper } from '../../test.bootstrapper';
 import { AlbionApiService } from './albion.api.service';
-import { AlbionRegistrationQueueEntity } from '../../database/entities/albion.registration.queue.entity';
+import {
+  AlbionRegistrationQueueEntity,
+  AlbionRegistrationQueueStatus,
+} from '../../database/entities/albion.registration.queue.entity';
 
 const mockRegistrationChannelId = TestBootstrapper.mockConfig.discord.channels.albionRegistration;
 const mockAlbionMemberRoleId = TestBootstrapper.mockConfig.discord.roles.albionMember;
@@ -26,10 +29,22 @@ describe('AlbionRegistrationService', () => {
   let mockCharacter: AlbionPlayerInterface;
   let mockDiscordUser: any;
   let mockRegistrationDataEU: RegistrationData;
+
+  // The registration channel is also the command channel in tests.
+  let commandChannel: any;
+
   let mockChannel: any;
   let contactMessage: string;
 
   beforeEach(async () => {
+    // Shared command/registration channel mock
+    commandChannel = {
+      ...TestBootstrapper.getMockDiscordTextChannel(),
+      id: mockRegistrationChannelId,
+      isTextBased: jest.fn().mockReturnValue(true),
+      send: jest.fn().mockResolvedValue(true),
+    } as any;
+
     mockAlbionRegistrationsRepository = TestBootstrapper.getMockEntityRepo();
     mockAlbionRegistrationQueueRepository = {
       ...TestBootstrapper.getMockEntityRepo(),
@@ -58,9 +73,14 @@ describe('AlbionRegistrationService', () => {
         {
           provide: DiscordService,
           useValue: {
-            getTextChannel: jest
-              .fn()
-              .mockResolvedValue(TestBootstrapper.getMockDiscordTextChannel()),
+            getTextChannel: jest.fn().mockImplementation((channelId: string) => {
+              // For these tests, all command interactions happen in the registration channel.
+              if (String(channelId) === String(mockRegistrationChannelId)) {
+                return commandChannel;
+              }
+              // Fallback for any other channel lookups.
+              return TestBootstrapper.getMockDiscordTextChannel();
+            }),
             getMemberRole: jest.fn(),
             getGuildMember: jest.fn().mockResolvedValue(TestBootstrapper.getMockDiscordUser()),
           },
@@ -250,18 +270,12 @@ describe('AlbionRegistrationService', () => {
         const before = Date.now();
 
         await expect(
-          service.validate(mockRegistrationDataEU, {
-            discordChannelId: mockChannel.id,
-            discordGuildId: 'foo1234',
-          }),
+          service.validate(mockRegistrationDataEU),
         ).rejects.toThrow(
-          `Sorry <@${mockDiscordUser.id}>, the character **${mockCharacter.Name}** has not been detected in the 🇪🇺 **Dignity Of War** Guild.\n\n- ➡️ **Please ensure you have spelt your character __exactly__ correct as it appears in-game**. If you have mis-spelt it, please run the command again with the correct spelling.\n- ⏳ We will automatically retry your registration attempt once per hour over the next 72 hours. Sometimes our data source lags, so please be patient. **If you are not a member of DIG, this WILL fail regardless.**\n\nIf _after_ 72 hours this has not worked, we will ping you and \`@ALB/Archmage\` to re-attempt or assist.`,
+          `Sorry <@${mockDiscordUser.id}>, the character **${mockCharacter.Name}** has not been detected in the 🇪🇺 **Dignity Of War** Guild.\n\n- ➡️ **Please ensure you have spelt your character __exactly__ correct as it appears in-game**. If you have mis-spelt it, please run the command again with the correct spelling.\n- ⏳ We will automatically retry your registration attempt once per hour over the next 72 hours. Sometimes our data source lags, so please be patient. **If you are not a member of DIG, this WILL fail regardless.**`,
         );
 
         expect(mockAlbionRegistrationQueueRepository.upsert).toHaveBeenCalledTimes(1);
-
-        // Our mock repository's create() returns undefined by default, so we validate the expiresAt value
-        // from the object passed into create().
         expect(mockAlbionRegistrationQueueRepository.create).toHaveBeenCalledTimes(1);
 
         const createArg = (mockAlbionRegistrationQueueRepository.create as jest.Mock).mock.calls[0][0];
@@ -274,26 +288,30 @@ describe('AlbionRegistrationService', () => {
         expect(expiresAt.getTime()).toBeLessThanOrEqual(before + 72 * 60 * 60 * 1000 + 10_000);
       });
 
-      it('should send a queued-registration notice message to the requesting user', async () => {
+      it('should throw with registration attempt already queued if an existing attempt exists', async () => {
         mockCharacter.GuildId = 'utter nonsense';
-        mockAlbionRegistrationQueueRepository.findOne = jest.fn().mockResolvedValue(null);
 
-        const mockCommandChannel: any = TestBootstrapper.getMockDiscordTextChannel();
-        mockCommandChannel.isTextBased = jest.fn().mockReturnValue(true);
-        mockCommandChannel.send = jest.fn().mockResolvedValue(true);
+        const existingAttempt: any = {
+          guildId: mockRegistrationDataEU.guildId,
+          discordId: String(mockDiscordUser.id),
+          characterName: 'OldChar',
+          server: AlbionServer.EUROPE,
+          discordChannelId: 'oldChannel',
+          discordGuildId: 'oldGuild',
+          status: AlbionRegistrationQueueStatus.PENDING,
+          expiresAt: new Date(Date.now() - 1000),
+          lastError: 'old error',
+        };
 
-        discordService.getTextChannel = jest.fn().mockResolvedValue(mockCommandChannel);
+        mockAlbionRegistrationQueueRepository.findOne = jest.fn().mockResolvedValue(existingAttempt);
 
-        await expect(
-          service.validate(mockRegistrationDataEU, {
-            discordChannelId: mockCommandChannel.id,
-            discordGuildId: 'foo1234',
-          }),
-        ).rejects.toThrow();
-
-        expect(mockCommandChannel.send).toHaveBeenCalledWith(
-          `<@${mockDiscordUser.id}> your registration is now in a queue, and it will be re-attempted every hour for the next 72 hours. The game database we have access to lags behind quite often. You will be notified that your registration is successful (if not, you'll be told so you can try again).`,
+        await expect(service.validate(mockRegistrationDataEU)).rejects.toThrow(
+          `Sorry <@${mockDiscordUser.id}>, your registration attempt is **already queued**. Your request will be retried over the next 72 hours. Re-attempting registration is pointless at this time. Please be patient.`,
         );
+
+        // Should not create or upsert a new entry.
+        expect(mockAlbionRegistrationQueueRepository.create).not.toHaveBeenCalled();
+        expect(mockAlbionRegistrationQueueRepository.upsert).not.toHaveBeenCalled();
       });
     });
 
