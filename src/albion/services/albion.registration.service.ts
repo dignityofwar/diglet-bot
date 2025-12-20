@@ -2,23 +2,25 @@ import { Injectable, Logger, OnApplicationBootstrap } from '@nestjs/common';
 import { DiscordService } from '../../discord/discord.service';
 import { ConfigService } from '@nestjs/config';
 import { InjectRepository } from '@mikro-orm/nestjs';
-import {
-  AlbionRegistrationsEntity,
-} from '../../database/entities/albion.registrations.entity';
+import { AlbionRegistrationsEntity } from '../../database/entities/albion.registrations.entity';
 import { EntityRepository } from '@mikro-orm/core';
 import { Channel, GuildMember, MessageFlags, TextChannel } from 'discord.js';
 import { AlbionPlayerInterface, AlbionServer } from '../interfaces/albion.api.interfaces';
 import { AlbionApiService } from './albion.api.service';
+import {
+  AlbionRegistrationQueueEntity,
+  AlbionRegistrationQueueStatus,
+} from '../../database/entities/albion.registration.queue.entity';
 
 export interface RegistrationData {
-  discordMember: GuildMember,
-  character: AlbionPlayerInterface,
-  server: AlbionServer,
-  serverName: string,
-  serverEmoji: string,
-  guildId: string;
-  guildName: string;
-  guildPingable: string;
+  discordMember: GuildMember
+  character: AlbionPlayerInterface
+  server: AlbionServer
+  serverName: string
+  serverEmoji: string
+  guildId: string
+  guildName: string
+  guildPingable: string
 }
 
 @Injectable()
@@ -27,16 +29,23 @@ export class AlbionRegistrationService implements OnApplicationBootstrap {
 
   private verificationChannel: Channel;
 
+  // Track configured IDs so we don't have to thread registrationContext through the call chain.
+  private verificationChannelId: string;
+
   constructor(
     private readonly discordService: DiscordService,
     private readonly config: ConfigService,
     private readonly albionApiService: AlbionApiService,
-    @InjectRepository(AlbionRegistrationsEntity) private readonly albionRegistrationsRepository: EntityRepository<AlbionRegistrationsEntity>,
+    @InjectRepository(AlbionRegistrationsEntity)
+    private readonly albionRegistrationsRepository: EntityRepository<AlbionRegistrationsEntity>,
+    @InjectRepository(AlbionRegistrationQueueEntity)
+    private readonly albionRegistrationQueueRepository: EntityRepository<AlbionRegistrationQueueEntity>,
   ) {}
 
   async onApplicationBootstrap() {
     // Store the Discord guild channel and ensure we can send messages to it
     const verifyChannelId = this.config.get('discord.channels.albionRegistration');
+    this.verificationChannelId = String(verifyChannelId);
 
     this.verificationChannel = await this.discordService.getTextChannel(verifyChannelId);
     if (!this.verificationChannel) {
@@ -49,25 +58,6 @@ export class AlbionRegistrationService implements OnApplicationBootstrap {
     // We purposefully don't check if the verified role exists, as the bot could technically belong to multiple servers, and we'd have to start injecting the guild ID into the config service, which is a bit of a pain.
   }
 
-  // Gets all the required information to begin the process using as little inputs as possible.
-  async getInfo(
-    characterName: string,
-    server: AlbionServer,
-    discordMemberId: string,
-    discordGuildId: string
-  ): Promise<RegistrationData> {
-    return {
-      discordMember: await this.discordService.getGuildMember(discordGuildId, discordMemberId),
-      character: await this.albionApiService.getCharacter(characterName, server),
-      server,
-      serverName: 'Europe',
-      serverEmoji: '🇪🇺',
-      guildId: this.config.get('albion.guildId'),
-      guildName: 'Dignity Of War',
-      guildPingable: '@ALB/Archmage',
-    };
-  }
-
   async validate(data: RegistrationData): Promise<void> {
     this.logger.debug(`Checking if registration attempt for "${data.character.Name}" is valid`);
 
@@ -78,10 +68,28 @@ export class AlbionRegistrationService implements OnApplicationBootstrap {
     // No try catch on purpose!
     await this.checkAlreadyRegistered(data);
 
-    // 3. Check if the character is in the correct guild
+    // 3. Check if there is already a queued attempt
+    await this.checkForQueueAttempt(data);
+
+    // 4. Check if the character is in the correct guild
     await this.checkIfInGuild(data);
 
     this.logger.debug(`Registration attempt for "${data.character.Name}" is valid!`);
+  }
+
+  private async checkForQueueAttempt(data: RegistrationData): Promise<void> {
+    const existing = await this.albionRegistrationQueueRepository.findOne({
+      guildId: data.guildId,
+      discordId: String(data.discordMember.user.id),
+      status: AlbionRegistrationQueueStatus.PENDING,
+    });
+
+    // If already queued, inform the user and exit early.
+    if (existing) {
+      this.throwError(
+        `Sorry <@${data.discordMember.id}>, your registration attempt is **already queued**. Your request will be retried over the next 72 hours. Re-attempting registration is pointless at this time. Please be patient.`,
+      );
+    }
   }
 
   // This is the actual registration process, handling the validation and registration of the character.
@@ -92,7 +100,7 @@ export class AlbionRegistrationService implements OnApplicationBootstrap {
     server: AlbionServer,
     discordMemberId: string,
     discordGuildId: string,
-    discordChannelId: string
+    discordChannelId: string,
   ) {
     let channel: TextChannel;
     try {
@@ -103,20 +111,33 @@ export class AlbionRegistrationService implements OnApplicationBootstrap {
       this.throwError(errorMessage);
     }
 
-    // Any failures here will be caught then mention the user with the error.
     try {
-      const data = await this.getInfo(characterName, server, discordMemberId, discordGuildId);
+      const charData = await this.albionApiService.getCharacter(characterName, server);
 
-      this.logger.debug(`Handling Albion character "${data.character.Name}" registration for "${data.discordMember.displayName}" on server "${data.server}"`);
+      const data: RegistrationData = {
+        character: charData,
+        discordMember: await this.discordService.getGuildMember(discordGuildId, discordMemberId),
+        server,
+        serverName: AlbionServer.EUROPE,
+        serverEmoji: '🇪🇺',
+        guildId: this.config.get('albion.guildId'),
+        guildName: 'Dignity Of War',
+        guildPingable: '@ALB/Archmage',
+      };
+
+      this.logger.debug(
+        `Handling Albion character "${data.character.Name}" registration for "${data.discordMember.displayName}" on server "${data.server}"`,
+      );
 
       await this.validate(data);
 
       // If we got here, we can safely register the character
       await this.registerCharacter(data, channel);
+
+      // Note: queued registration status updates are managed by AlbionRegistrationRetryCronService.
     }
     catch (err) {
-      this.logger.error(`Registration failed for character "${characterName}"! Err: ${err.message}`);
-      throw err;
+      this.throwError(`Registration failed for character "${characterName}"! Err: ${err.message}. Pinging <@${this.config.get('discord.devUserId')}>!`);
     }
   }
 
@@ -138,7 +159,9 @@ export class AlbionRegistrationService implements OnApplicationBootstrap {
       }
     }
     catch (err) {
-      this.throwError(`Required Role(s) do not exist! Pinging <@${this.config.get('discord.devUserId')}>! Err: ${err.message}`);
+      this.throwError(
+        `Required Role(s) do not exist! Pinging <@${this.config.get('discord.devUserId')}>! Err: ${err.message}`,
+      );
     }
   }
 
@@ -161,7 +184,9 @@ export class AlbionRegistrationService implements OnApplicationBootstrap {
     }
 
     if (foundByDiscord?.discordId) {
-      this.throwError(`Sorry <@${data.discordMember.id}>, you have already registered a character named **${foundByDiscord.characterName}** for the ${data.serverEmoji} ${data.guildName} Guild. We don't allow multiple character registrations to the same Discord user.\n\n${contactMessage}`);
+      this.throwError(
+        `Sorry <@${data.discordMember.id}>, you have already registered a character named **${foundByDiscord.characterName}** for the ${data.serverEmoji} ${data.guildName} Guild. We don't allow multiple character registrations to the same Discord user.\n\n${contactMessage}`,
+      );
     }
 
     // Get the original Discord user, if possible
@@ -169,35 +194,59 @@ export class AlbionRegistrationService implements OnApplicationBootstrap {
     try {
       originalDiscordMember = await this.discordService.getGuildMember(
         data.discordMember.guild.id,
-        foundByCharacter.discordId
+        foundByCharacter.discordId,
       );
     }
     catch (err) {
-      this.logger.warn(`Unable to find original Discord user for character "${data.character.Name}"! Err: ${err.message}`);
+      this.logger.warn(
+        `Unable to find original Discord user for character "${data.character.Name}"! Err: ${err.message}`,
+      );
     }
 
     // If the person who originally registered the character has left the server
     if (!originalDiscordMember?.user?.id) {
-      this.throwError(`Sorry <@${data.discordMember.id}>, character **${data.character.Name}** has already been registered for the ${data.serverEmoji} ${data.guildName} Guild, but the user who registered it has left the server.\n\n${contactMessage}`);
+      this.throwError(
+        `Sorry <@${data.discordMember.id}>, character **${data.character.Name}** has already been registered for the ${data.serverEmoji} ${data.guildName} Guild, but the user who registered it has left the server.\n\n${contactMessage}`,
+      );
     }
-    this.throwError(`Sorry <@${data.discordMember.id}>, character **${data.character.Name}** has already been registered for the ${data.serverEmoji} ${data.guildName} Guild by Discord user \`@${originalDiscordMember.displayName}\`.\n\n${contactMessage}`);
+    this.throwError(
+      `Sorry <@${data.discordMember.id}>, character **${data.character.Name}** has already been registered for the ${data.serverEmoji} ${data.guildName} Guild by Discord user \`@${originalDiscordMember.displayName}\`.\n\n${contactMessage}`,
+    );
   }
 
   private async checkIfInGuild(data: RegistrationData) {
-    // If in guild, good!
-    if (data.character.GuildId === data.guildId) {
+    const membership = await this.albionApiService.checkCharacterGuildMembership(
+      data.character.Name,
+      data.server,
+      data.guildId,
+    );
+
+    if (membership) {
       return;
     }
 
-    // Pending mechanism
-    //     this.throwError(`Sorry <@${data.discordMember.id}>, the character **${data.character.Name}** has not been detected in the ${data.serverEmoji} **${data.guildName}** Guild.
-    // \n- ➡️ **Please ensure you have spelt your character __exactly__ correct as it appears in-game**. If you have mis-spelt it, please run the command again with the correct spelling.
-    // - ⏳ We will automatically retry your registration attempt at the top of the hour over the next 24 hours. Sometimes our data source lags, so please be patient. **If you are not a member of DIG, this WILL fail regardless!!!**
-    // \nIf _after_ 24 hours this has not worked, please contact \`${data.guildPingable}\` in <#1039269706605002912> for assistance.
+    // Enqueue a retryable attempt.
+    const now = new Date();
+    const expiresAt = new Date(now);
+    expiresAt.setHours(expiresAt.getHours() + 72);
 
-    this.throwError(`Sorry <@${data.discordMember.id}>, the character **${data.character.Name}** has not been detected in the ${data.serverEmoji} **${data.guildName}** Guild.
-\n- ➡️ **Please ensure you have spelt your character __exactly__ correct as it appears in-game**. It is case sensitive.
-- ⏳ **Play the game for about an hour, then try again.**`);
+    const entity = this.albionRegistrationQueueRepository.create({
+      guildId: data.guildId,
+      discordGuildId: data.discordMember.guild.id,
+      discordChannelId: this.verificationChannelId,
+      discordId: String(data.discordMember.user.id),
+      characterName: data.character.Name,
+      server: data.server,
+      attemptCount: 0,
+      expiresAt,
+      status: AlbionRegistrationQueueStatus.PENDING,
+      lastError: 'Character not detected in guild yet.',
+    });
+    await this.albionRegistrationQueueRepository.upsert(entity);
+
+    this.throwError(
+      `Sorry <@${data.discordMember.id}>, the character **${data.character.Name}** has not been detected in the ${data.serverEmoji} **${data.guildName}** Guild.\n\n- ➡️ **Please ensure you have spelt your character __exactly__ correct as it appears in-game**. If you have mis-spelt it, please run the command again with the correct spelling.\n- ⏳ **We will automatically retry your registration attempt at the top of the hour for the next 72 hours**. Sometimes our data source lags, so please be patient. **If you are not a member of DIG, this WILL fail regardless.**`,
+    );
   }
 
   private async registerCharacter(data: RegistrationData, channel: TextChannel) {
@@ -207,21 +256,20 @@ export class AlbionRegistrationService implements OnApplicationBootstrap {
     const announcementRole = this.config.get('discord.roles.albionAnnouncements');
 
     try {
-      await data.discordMember.roles.add(await this.discordService.getRoleViaMember(
-        data.discordMember,
-        memberRole
-      ));
-      await data.discordMember.roles.add(await this.discordService.getRoleViaMember(
-        data.discordMember,
-        registeredRole
-      ));
-      await data.discordMember.roles.add(await this.discordService.getRoleViaMember(
-        data.discordMember,
-        announcementRole
-      ));
+      await data.discordMember.roles.add(
+        await this.discordService.getRoleViaMember(data.discordMember, memberRole),
+      );
+      await data.discordMember.roles.add(
+        await this.discordService.getRoleViaMember(data.discordMember, registeredRole),
+      );
+      await data.discordMember.roles.add(
+        await this.discordService.getRoleViaMember(data.discordMember, announcementRole),
+      );
     }
     catch (err) {
-      this.throwError(`Unable to add roles to "${data.discordMember.displayName}"! Pinging <@${this.config.get('discord.devUserId')}>!\nErr: ${err.message}`);
+      this.throwError(
+        `Unable to add roles to "${data.discordMember.displayName}"! Pinging <@${this.config.get('discord.devUserId')}>!\nErr: ${err.message}`,
+      );
     }
 
     try {
@@ -235,7 +283,9 @@ export class AlbionRegistrationService implements OnApplicationBootstrap {
       await this.albionRegistrationsRepository.upsert(entity);
     }
     catch (err) {
-      this.throwError(`Unable to add you to the database! Pinging <@${this.config.get('discord.devUserId')}>! Err: ${err.message}`);
+      this.throwError(
+        `Unable to add you to the database! Pinging <@${this.config.get('discord.devUserId')}>! Err: ${err.message}`,
+      );
     }
 
     // Edit their nickname to match their ingame
@@ -248,7 +298,9 @@ export class AlbionRegistrationService implements OnApplicationBootstrap {
       this.logger.error(errorMessage);
     }
 
-    this.logger.log(`Registration for ${data.character.Name} was successful, returning success response.`);
+    this.logger.log(
+      `Registration for ${data.character.Name} was successful, returning success response.`,
+    );
 
     const rolesChannel = this.config.get('discord.channels.albionRoles');
     const announcementChannel = this.config.get('discord.channels.albionAnnouncements');
