@@ -65,7 +65,7 @@ jobs:
           skip-push:  'true'
 
       - name: SonarCloud Scan with version attached
-        uses: SonarSource/sonarqube-scan-action@v6.0.0
+        uses: SonarSource/sonarqube-scan-action@v7.0.0
         env:
           SONAR_TOKEN: ${{ secrets.SONARCLOUD_TOKEN }}
           SONAR_SCANNER_OPTS: -Dsonar.projectVersion=${{ steps.version.outputs.newTag }}
