@@ -143,6 +143,7 @@ describe('AlbionRegistrationRetryCronService', () => {
       'u1',
       'dg1',
       'dc1',
+      { queueValidation: false },
     );
 
     // Persist attempt updates:

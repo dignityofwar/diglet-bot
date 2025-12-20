@@ -278,7 +278,7 @@ describe('AlbionRegistrationService', () => {
 
         const expectedDiscordTime = `<t:${Math.floor(existingAttempt.expiresAt.getTime() / 1000)}:f>`;
 
-        await expect(service.validate(mockRegistrationDataEU)).rejects.toThrow(
+        await expect(service.validate(mockRegistrationDataEU, { queueValidation: true })).rejects.toThrow(
           `<@${mockDiscordUser.id}> your registration attempt is **already queued**. Your request will be retried hourly until ${expectedDiscordTime}. Re-attempting registration is pointless at this time. Please be patient.`,
         );
 
@@ -313,7 +313,7 @@ describe('AlbionRegistrationService', () => {
 
         let thrown: Error | undefined;
         try {
-          await service.validate(mockRegistrationDataEU);
+          await service.validate(mockRegistrationDataEU, { queueValidation: true });
         }
         catch (err) {
           thrown = err as Error;
@@ -365,7 +365,7 @@ describe('AlbionRegistrationService', () => {
 
           mockAlbionRegistrationQueueRepository.findOne = jest.fn().mockResolvedValue(existingAttempt);
 
-          await expect(service.validate(mockRegistrationDataEU)).rejects.toThrow(
+          await expect(service.validate(mockRegistrationDataEU, { queueValidation: true })).rejects.toThrow(
             `You are not allowed to attempt to register another person's character. Reporting this to <@${mockDevUserId}>!`,
           );
 
@@ -375,6 +375,30 @@ describe('AlbionRegistrationService', () => {
         });
       });
 
+      it('should skip queue checks when queueValidation is false', async () => {
+        mockCharacter.GuildId = 'utter nonsense';
+
+        const existingAttempt: any = {
+          guildId: mockRegistrationDataEU.guildId,
+          discordId: String(mockDiscordUser.id),
+          characterName: mockCharacter.Name,
+          server: AlbionServer.EUROPE,
+          discordChannelId: 'oldChannel',
+          discordGuildId: 'oldGuild',
+          status: AlbionRegistrationQueueStatus.PENDING,
+          expiresAt: new Date(Date.now() + 1000 * 60 * 60),
+          attemptCount: 0,
+          lastError: 'old error',
+        };
+
+        // If validate() incorrectly runs queue checks, it will hit the "already queued" throw.
+        mockAlbionRegistrationQueueRepository.findOne = jest.fn().mockResolvedValue(existingAttempt);
+        (albionApiService as any).checkCharacterGuildMembership = jest.fn().mockResolvedValue(true);
+
+        await expect(service.validate(mockRegistrationDataEU, { queueValidation: false })).resolves.toBe(
+          undefined,
+        );
+      });
     });
 
     describe('registerCharacter', () => {

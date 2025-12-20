@@ -104,12 +104,14 @@ export class AlbionRegistrationRetryCronService implements OnApplicationBootstra
 
       await this.albionRegistrationQueueRepository.getEntityManager().flush();
 
+      // This is a scheduled attempt, so we must not re-run the normal registration validation that checks for existing queued attempts.
       await this.albionRegistrationService.handleRegistration(
         attempt.characterName,
         attempt.server,
         attempt.discordId,
         attempt.discordGuildId,
         attempt.discordChannelId,
+        { queueValidation: false },
       );
 
       attempt.status = AlbionRegistrationQueueStatus.SUCCEEDED;
