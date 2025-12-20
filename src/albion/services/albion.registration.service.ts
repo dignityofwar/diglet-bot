@@ -68,23 +68,93 @@ export class AlbionRegistrationService implements OnApplicationBootstrap {
     // No try catch on purpose!
     await this.checkAlreadyRegistered(data);
 
-    // 3. Check if there is already a queued attempt
+    // 3. Prevent other users from attempting to register a character that someone else has already queued.
+    await this.checkCharacterQueueOwnership(data);
+
+    // 4. If an attempt already exists for this Discord user and they changed the character name,
+    // re-queue their existing attempt and exit early with a message.
+    await this.requeueChangedCharacterName(data);
+
+    // 5. Check if there is already a queued attempt
     await this.checkForQueueAttempt(data);
 
-    // 4. Check if the character is in the correct guild
+    // 6. Check if the character is in the correct guild
     await this.checkIfInGuild(data);
 
     this.logger.debug(`Registration attempt for "${data.character.Name}" is valid!`);
   }
 
-  private async checkForQueueAttempt(data: RegistrationData): Promise<void> {
+  private async checkCharacterQueueOwnership(data: RegistrationData): Promise<void> {
+    const existing = await this.albionRegistrationQueueRepository.findOne({
+      guildId: data.guildId,
+      characterName: data.character.Name,
+      status: AlbionRegistrationQueueStatus.PENDING,
+    });
+
+    if (!existing) {
+      return;
+    }
+
+    // Same user re-attempting is allowed; everything else is suspicious.
+    if (String(existing.discordId) === String(data.discordMember.user.id)) {
+      return;
+    }
+
+    const devUserId = this.config.get('discord.devUserId');
+
+    this.throwError(
+      `You are not allowed to attempt to register another person's character. Reporting this to <@${devUserId}>!`,
+    );
+  }
+
+  private async requeueChangedCharacterName(data: RegistrationData): Promise<void> {
     const existing = await this.albionRegistrationQueueRepository.findOne({
       guildId: data.guildId,
       discordId: String(data.discordMember.user.id),
       status: AlbionRegistrationQueueStatus.PENDING,
     });
 
-    // If already queued, inform the user and exit early.
+    if (!existing) {
+      return;
+    }
+
+    // Same character name means the user is just spamming the command - leave it to checkForQueueAttempt.
+    if (existing.characterName === data.character.Name) {
+      return;
+    }
+
+    // User retried with a different character name: update the existing attempt and tell them.
+    const now = new Date();
+    const expiresAt = new Date(now);
+    expiresAt.setHours(expiresAt.getHours() + 72);
+
+    const previousName = existing.characterName;
+
+    existing.characterName = data.character.Name;
+    existing.server = data.server;
+    existing.discordGuildId = data.discordMember.guild.id;
+    existing.discordChannelId = this.verificationChannelId;
+    existing.attemptCount = 0;
+    existing.lastError = 'Character name updated by user.';
+    existing.expiresAt = expiresAt;
+
+    await this.albionRegistrationQueueRepository.getEntityManager().flush();
+
+    const expiresDiscordTime = `<t:${Math.floor(expiresAt.getTime() / 1000)}:f>`;
+
+    this.throwError(
+      `<@${data.discordMember.id}> I've updated your queued registration attempt from **${previousName}** to **${data.character.Name}**.\n\n## ⏳ We will automatically retry your registration attempt hourly until ${expiresDiscordTime}.`,
+    );
+  }
+
+  private async checkForQueueAttempt(data: RegistrationData): Promise<void> {
+    const existing = await this.albionRegistrationQueueRepository.findOne({
+      guildId: data.guildId,
+      characterName: data.character.Name,
+      status: AlbionRegistrationQueueStatus.PENDING,
+    });
+
+    // If already queued for this character (and implicitly this user), inform the user and exit early.
     if (existing) {
       const expiresDiscordTime = `<t:${Math.floor(existing.expiresAt.getTime() / 1000)}:f>`;
 
