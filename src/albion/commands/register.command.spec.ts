@@ -100,11 +100,11 @@ describe('AlbionRegisterCommand', () => {
         mockDiscordInteraction[0].channelId
       );
       expect(mockDiscordMessage.delete).toHaveBeenCalled();
-//       expect(mockDiscordMessage.channel.send).toHaveBeenLastCalledWith({
-//         content: '# This is for DIG _Guild_ registrations only.\n' +
-// 'For alliance, see here: https://discord.com/channels/90078410642034688/1375362179834052688/1375362497460178975',
-//         flags: 4,
-//       });
+      //       expect(mockDiscordMessage.channel.send).toHaveBeenLastCalledWith({
+      //         content: '# This is for DIG _Guild_ registrations only.\n' +
+      // 'For alliance, see here: https://discord.com/channels/90078410642034688/1375362179834052688/1375362497460178975',
+      //         flags: 4,
+      //       });
     });
 
     it('should handle errors from the registration service', async () => {

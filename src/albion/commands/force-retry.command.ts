@@ -1,4 +1,4 @@
-import { Command, Handler, InteractionEvent } from '@discord-nestjs/core';
+import { Command, EventParams, Handler } from '@discord-nestjs/core';
 import { ApplicationCommandType, ChatInputCommandInteraction, MessageFlags } from 'discord.js';
 import { Injectable, Logger } from '@nestjs/common';
 import { AlbionRegistrationRetryCronService } from '../services/albion.registration.retry.cron.service';
@@ -19,7 +19,16 @@ export class AlbionForceRetryCommand {
   ) {}
 
   @Handler()
-  async onAlbionForceRetry(@InteractionEvent() interaction: ChatInputCommandInteraction[]): Promise<void> {
+  async onAlbionForceRetry(
+    @EventParams() interaction: ChatInputCommandInteraction[],
+  ): Promise<void> {
+    // Defensive: avoid hard-crashing if discord-nestjs injection is misconfigured.
+    if (!interaction?.[0]) {
+      this.logger.error('AlbionForceRetryCommand invoked without an interaction payload');
+      return;
+    }
+
+    // Check if the command came from the correct channel ID
     const registrationChannelId = this.config.get('discord.channels.albionRegistration');
 
     // Respond quickly to avoid Discord interaction timeout.

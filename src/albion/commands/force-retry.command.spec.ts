@@ -55,6 +55,12 @@ describe('AlbionForceRetryCommand', () => {
     jest.clearAllMocks();
   });
 
+  it('should early-return when interaction payload is missing', async () => {
+    await command.onAlbionForceRetry(undefined as any);
+
+    expect(cron.retryAlbionRegistrations).not.toHaveBeenCalled();
+  });
+
   it('should call retryAlbionRegistrations and report success', async () => {
     const interaction = createInteraction();
 
