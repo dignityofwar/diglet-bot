@@ -35,7 +35,7 @@ export class CensusWebsocketService implements OnModuleInit, OnModuleDestroy {
     const client = new CensusClient(this.config.get('ps2.censusServiceId'), 'ps2', {
       streamManager: {
         subscription: this.subscription,
-        endpoint: 'wss://push.nanite-systems.net/streaming',
+        endpoint: 'wss://push.planetside2.com/streaming',
       },
     });
 
