@@ -108,6 +108,8 @@ describe('AlbionRegistrationRetryCronService', () => {
 
     await service.retryAlbionRegistrations();
 
+    expect(service['logger'].log).toHaveBeenCalledWith('Starting Albion registration retry cron job...');
+    expect(service['logger'].log).toHaveBeenCalledWith('Nothing to do.');
     expect(albionRegistrationService.handleRegistration).not.toHaveBeenCalled();
   });
 
@@ -131,6 +133,12 @@ describe('AlbionRegistrationRetryCronService', () => {
     const flushMock = em.flush as jest.Mock;
 
     await service.retryAlbionRegistrations();
+
+    expect(service['logger'].log).toHaveBeenCalledWith('Starting Albion registration retry cron job...');
+    expect(service['logger'].log).toHaveBeenCalledWith('Processing 1 queued Albion registration attempt(s)');
+    expect(service['logger'].log).toHaveBeenCalledWith(
+      'Processing registration attempt for Discord ID u1 (character Char)',
+    );
 
     const expectedDiscordTime = `<t:${Math.floor(expiresAt.getTime() / 1000)}:f>`;
     const expectedSummary =
@@ -177,6 +185,12 @@ describe('AlbionRegistrationRetryCronService', () => {
 
     await service.retryAlbionRegistrations();
 
+    expect(service['logger'].log).toHaveBeenCalledWith('Starting Albion registration retry cron job...');
+    expect(service['logger'].log).toHaveBeenCalledWith('Processing 1 queued Albion registration attempt(s)');
+    expect(service['logger'].log).toHaveBeenCalledWith(
+      'Processing registration attempt for Discord ID u1 (character Char)',
+    );
+
     expect(albionRegistrationService.handleRegistration).not.toHaveBeenCalled();
     expect(attempt.status).toBe(AlbionRegistrationQueueStatus.PENDING);
     expect(attempt.lastError).toContain('Character not found in guild yet');
@@ -220,6 +234,12 @@ describe('AlbionRegistrationRetryCronService', () => {
     queueRepo.find.mockResolvedValue([attempt]);
 
     await service.retryAlbionRegistrations();
+
+    expect(service['logger'].log).toHaveBeenCalledWith('Starting Albion registration retry cron job...');
+    expect(service['logger'].log).toHaveBeenCalledWith('Processing 1 queued Albion registration attempt(s)');
+    expect(service['logger'].log).toHaveBeenCalledWith(
+      expect.stringContaining('Expiring Albion registration attempt for Discord ID u1 (character Char)'),
+    );
 
     expect(attempt.status).toBe(AlbionRegistrationQueueStatus.EXPIRED);
     expect(service['notificationChannel'].send).toHaveBeenCalledWith(
