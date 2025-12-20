@@ -2,6 +2,7 @@
 import { Test } from '@nestjs/testing';
 import { AlbionForceRetryCommand } from './force-retry.command';
 import { AlbionRegistrationRetryCronService } from '../services/albion.registration.retry.cron.service';
+import { ConfigService } from '@nestjs/config';
 
 const createInteraction = () => {
   const interaction: any = {
@@ -16,6 +17,18 @@ describe('AlbionForceRetryCommand', () => {
   let command: AlbionForceRetryCommand;
   let cron: { retryAlbionRegistrations: jest.Mock };
 
+  const config: Pick<ConfigService, 'get'> = {
+    get: jest.fn().mockImplementation((key: string) => {
+      if (key === 'discord.channels.albionRegistration') {
+        return '123';
+      }
+      if (key === 'discord.devUserId') {
+        return '999';
+      }
+      return undefined;
+    }),
+  };
+
   beforeEach(async () => {
     cron = {
       retryAlbionRegistrations: jest.fn().mockResolvedValue(undefined),
@@ -28,6 +41,10 @@ describe('AlbionForceRetryCommand', () => {
           provide: AlbionRegistrationRetryCronService,
           useValue: cron,
         },
+        {
+          provide: ConfigService,
+          useValue: config,
+        },
       ],
     }).compile();
 
@@ -35,7 +52,7 @@ describe('AlbionForceRetryCommand', () => {
   });
 
   afterEach(() => {
-    jest.resetAllMocks();
+    jest.clearAllMocks();
   });
 
   it('should call retryAlbionRegistrations and report success', async () => {
@@ -44,34 +61,31 @@ describe('AlbionForceRetryCommand', () => {
     await command.onAlbionForceRetry([interaction]);
 
     expect(interaction.reply).toHaveBeenCalledWith(
-      expect.objectContaining({ content: '⏳ Running Albion registration retry now...' }),
+      expect.objectContaining({
+        content: '⏳ Running Albion registration retry now (see <#123>)...',
+      }),
     );
     expect(cron.retryAlbionRegistrations).toHaveBeenCalledTimes(1);
-    expect(interaction.editReply).toHaveBeenCalledWith('✅ Albion registration retry run complete.');
+    expect(interaction.editReply).toHaveBeenCalledWith(
+      '✅ Albion registration retry run complete. <#123>',
+    );
   });
 
   it('should report failure when retryAlbionRegistrations throws', async () => {
-    cron.retryAlbionRegistrations = jest.fn().mockRejectedValue(new Error('boom'));
-
-    const moduleRef = await Test.createTestingModule({
-      providers: [
-        AlbionForceRetryCommand,
-        {
-          provide: AlbionRegistrationRetryCronService,
-          useValue: cron,
-        },
-      ],
-    }).compile();
-
-    command = moduleRef.get(AlbionForceRetryCommand);
+    cron.retryAlbionRegistrations.mockRejectedValueOnce(new Error('boom'));
 
     const interaction = createInteraction();
 
     await command.onAlbionForceRetry([interaction]);
 
-    expect(interaction.reply).toHaveBeenCalled();
+    expect(interaction.reply).toHaveBeenCalledWith(
+      expect.objectContaining({
+        content: '⏳ Running Albion registration retry now (see <#123>)...',
+      }),
+    );
     expect(cron.retryAlbionRegistrations).toHaveBeenCalledTimes(1);
-    expect(interaction.editReply).toHaveBeenCalledWith('⛔️ Albion registration retry run failed. Check logs.');
+    expect(interaction.editReply).toHaveBeenCalledWith(
+      '⛔️ Albion registration retry run failed. Pinging <@999>!',
+    );
   });
 });
-

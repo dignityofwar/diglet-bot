@@ -2,6 +2,7 @@ import { Command, Handler, InteractionEvent } from '@discord-nestjs/core';
 import { ApplicationCommandType, ChatInputCommandInteraction, MessageFlags } from 'discord.js';
 import { Injectable, Logger } from '@nestjs/common';
 import { AlbionRegistrationRetryCronService } from '../services/albion.registration.retry.cron.service';
+import { ConfigService } from '@nestjs/config';
 
 @Command({
   name: 'albion-force-retry',
@@ -12,24 +13,28 @@ import { AlbionRegistrationRetryCronService } from '../services/albion.registrat
 export class AlbionForceRetryCommand {
   private readonly logger = new Logger(AlbionForceRetryCommand.name);
 
-  constructor(private readonly albionRetryCron: AlbionRegistrationRetryCronService) {}
+  constructor(
+    private readonly albionRetryCron: AlbionRegistrationRetryCronService,
+    private readonly config: ConfigService,
+  ) {}
 
   @Handler()
   async onAlbionForceRetry(@InteractionEvent() interaction: ChatInputCommandInteraction[]): Promise<void> {
+    const registrationChannelId = this.config.get('discord.channels.albionRegistration');
+
     // Respond quickly to avoid Discord interaction timeout.
     await interaction[0].reply({
-      content: '⏳ Running Albion registration retry now...',
+      content: `⏳ Running Albion registration retry now (see <#${registrationChannelId}>)...`,
       flags: MessageFlags.Ephemeral,
     });
 
     try {
       await this.albionRetryCron.retryAlbionRegistrations();
-      await interaction[0].editReply('✅ Albion registration retry run complete.');
+      await interaction[0].editReply(`✅ Albion registration retry run complete. <#${registrationChannelId}>`);
     }
     catch (err) {
       this.logger.error(err?.message ?? String(err));
-      await interaction[0].editReply('⛔️ Albion registration retry run failed. Check logs.');
+      await interaction[0].editReply(`⛔️ Albion registration retry run failed. Pinging <@${this.config.get('discord.devUserId')}>!`);
     }
   }
 }
-
