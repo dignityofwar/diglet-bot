@@ -24,8 +24,8 @@ export interface AlbionRegistrationQueueEntityInterface {
 
 @Entity()
 @Unique({
-  name: 'unique_albion_registration_queue_guild_discord',
-  properties: ['guildId', 'discordId'],
+  name: 'unique_albion_registration_queue_guild_discord_status',
+  properties: ['guildId', 'discordId', 'status'],
 })
 export class AlbionRegistrationQueueEntity extends BaseEntity {
   @Property({ nullable: false })
