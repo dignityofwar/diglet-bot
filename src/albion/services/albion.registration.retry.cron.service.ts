@@ -138,7 +138,14 @@ export class AlbionRegistrationRetryCronService implements OnApplicationBootstra
 
   private async postRetrySummary(attempts: AlbionRegistrationQueueEntity[]): Promise<void> {
     try {
-      const characters = attempts.map((a) => `- **${a.characterName}**`).join('\n');
+      const characters = attempts
+        .map((a) => {
+          const unixSeconds = Math.floor(a.expiresAt.getTime() / 1000);
+          const discordTime = `<t:${unixSeconds}:f>`;
+          return `- **${a.characterName}** (expires ${discordTime})`;
+        })
+        .join('\n');
+
       await this.notificationChannel.send(
         `Albion registration queue retry attempt: checking ${attempts.length} character(s):\n\n${characters}`,
       );

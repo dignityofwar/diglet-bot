@@ -112,6 +112,7 @@ describe('AlbionRegistrationRetryCronService', () => {
   });
 
   it('should mark attempt succeeded when registration succeeds', async () => {
+    const expiresAt = new Date(Date.now() + 1000 * 60 * 60);
     const attempt = new AlbionRegistrationQueueEntity({
       guildId: 'g1',
       discordGuildId: 'dg1',
@@ -119,7 +120,7 @@ describe('AlbionRegistrationRetryCronService', () => {
       discordId: 'u1',
       characterName: 'Char',
       server: AlbionServer.EUROPE,
-      expiresAt: new Date(Date.now() + 1000 * 60 * 60),
+      expiresAt,
     });
 
     queueRepo.find.mockResolvedValue([attempt]);
@@ -131,8 +132,9 @@ describe('AlbionRegistrationRetryCronService', () => {
 
     await service.retryAlbionRegistrations();
 
+    const expectedDiscordTime = `<t:${Math.floor(expiresAt.getTime() / 1000)}:f>`;
     const expectedSummary =
-      'Albion registration queue retry attempt: checking 1 character(s):\n\n- **Char**';
+      `Albion registration queue retry attempt: checking 1 character(s):\n\n- **Char** (expires ${expectedDiscordTime})`;
     expect(notificationChannel.send).toHaveBeenCalledWith(expectedSummary);
 
     expect(albionRegistrationService.handleRegistration).toHaveBeenCalledWith(
@@ -225,6 +227,7 @@ describe('AlbionRegistrationRetryCronService', () => {
   });
 
   it('should post a retry summary with a list of characters', async () => {
+    const expiresAt1 = new Date(Date.now() + 1000 * 60 * 60);
     const attempt1 = new AlbionRegistrationQueueEntity({
       guildId: 'g1',
       discordGuildId: 'dg1',
@@ -232,9 +235,10 @@ describe('AlbionRegistrationRetryCronService', () => {
       discordId: 'u1',
       characterName: 'Char1',
       server: AlbionServer.EUROPE,
-      expiresAt: new Date(Date.now() + 1000 * 60 * 60),
+      expiresAt: expiresAt1,
     });
 
+    const expiresAt2 = new Date(Date.now() + 1000 * 60 * 60 * 2);
     const attempt2 = new AlbionRegistrationQueueEntity({
       guildId: 'g1',
       discordGuildId: 'dg1',
@@ -242,7 +246,7 @@ describe('AlbionRegistrationRetryCronService', () => {
       discordId: 'u2',
       characterName: 'Char2',
       server: AlbionServer.EUROPE,
-      expiresAt: new Date(Date.now() + 1000 * 60 * 60),
+      expiresAt: expiresAt2,
     });
 
     queueRepo.find.mockResolvedValue([attempt1, attempt2]);
@@ -250,8 +254,11 @@ describe('AlbionRegistrationRetryCronService', () => {
 
     await service.retryAlbionRegistrations();
 
+    const expectedDiscordTime1 = `<t:${Math.floor(expiresAt1.getTime() / 1000)}:f>`;
+    const expectedDiscordTime2 = `<t:${Math.floor(expiresAt2.getTime() / 1000)}:f>`;
+
     expect(notificationChannel.send).toHaveBeenCalledWith(
-      'Albion registration queue retry attempt: checking 2 character(s):\n\n- **Char1**\n- **Char2**',
+      `Albion registration queue retry attempt: checking 2 character(s):\n\n- **Char1** (expires ${expectedDiscordTime1})\n- **Char2** (expires ${expectedDiscordTime2})`,
     );
   });
 
