@@ -8,7 +8,7 @@ jobs:
     outputs:
       store-path: ${{ steps.pnpm-cache.outputs.STORE_PATH }}
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
         with:
           fetch-depth: 0
           submodules: true
@@ -24,7 +24,7 @@ jobs:
           version: 9.15.9
           run_install: false
 
-      - uses: actions/cache@v4
+      - uses: actions/cache@v5
         name: Setup pnpm cache
         with:
           path: node_modules
@@ -45,19 +45,19 @@ jobs:
         run: pnpm test:ci
 
       - name: SonarCloud Scan
-        uses: SonarSource/sonarqube-scan-action@v6.0.0
+        uses: SonarSource/sonarqube-scan-action@v7.0.0
         env:
           SONAR_TOKEN: ${{ secrets.SONARCLOUD_TOKEN }}
   build-docker:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
         with:
           fetch-depth: 2
           submodules: true
 
-      - uses: actions/cache@v4
+      - uses: actions/cache@v5
         name: Pull pnpm cache
         with:
           path: node_modules
