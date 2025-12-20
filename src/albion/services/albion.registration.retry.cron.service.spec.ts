@@ -163,7 +163,7 @@ describe('AlbionRegistrationRetryCronService', () => {
     expect(attempt.attemptCount).toBe(1);
   });
 
-  it("should keep attempt pending when there's no detection in the registration attempt", async () => {
+  it('should keep attempt pending when there\'s no detection in the registration attempt', async () => {
     const attempt = new AlbionRegistrationQueueEntity({
       guildId: 'g1',
       discordGuildId: 'dg1',
