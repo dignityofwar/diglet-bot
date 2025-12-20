@@ -23,6 +23,10 @@ export interface RegistrationData {
   guildPingable: string
 }
 
+type RegistrationOptions = {
+  queueValidation?: boolean
+}
+
 @Injectable()
 export class AlbionRegistrationService implements OnApplicationBootstrap {
   private readonly logger = new Logger(AlbionRegistrationService.name);
@@ -58,7 +62,7 @@ export class AlbionRegistrationService implements OnApplicationBootstrap {
     // We purposefully don't check if the verified role exists, as the bot could technically belong to multiple servers, and we'd have to start injecting the guild ID into the config service, which is a bit of a pain.
   }
 
-  async validate(data: RegistrationData): Promise<void> {
+  async validate(data: RegistrationData, options?: RegistrationOptions): Promise<void> {
     this.logger.debug(`Checking if registration attempt for "${data.character.Name}" is valid`);
 
     // 1. Check if the roles to apply exist
@@ -68,15 +72,18 @@ export class AlbionRegistrationService implements OnApplicationBootstrap {
     // No try catch on purpose!
     await this.checkAlreadyRegistered(data);
 
-    // 3. Prevent other users from attempting to register a character that someone else has already queued.
-    await this.checkCharacterQueueOwnership(data);
+    // When processing queued attempts (retry cron), we intentionally skip the queue-related checks.
+    if (options?.queueValidation !== false) {
+      // 3. Prevent other users from attempting to register a character that someone else has already queued.
+      await this.checkCharacterQueueOwnership(data);
 
-    // 4. If an attempt already exists for this Discord user and they changed the character name,
-    // re-queue their existing attempt and exit early with a message.
-    await this.requeueChangedCharacterName(data);
+      // 4. If an attempt already exists for this Discord user and they changed the character name,
+      // re-queue their existing attempt and exit early with a message.
+      await this.requeueChangedCharacterName(data);
 
-    // 5. Check if there is already a queued attempt
-    await this.checkForQueueAttempt(data);
+      // 5. Check if there is already a queued attempt
+      await this.checkForQueueAttempt(data);
+    }
 
     // 6. Check if the character is in the correct guild
     await this.checkIfInGuild(data);
@@ -173,6 +180,7 @@ export class AlbionRegistrationService implements OnApplicationBootstrap {
     discordMemberId: string,
     discordGuildId: string,
     discordChannelId: string,
+    options?: RegistrationOptions,
   ) {
     let channel: TextChannel;
     try {
@@ -181,6 +189,14 @@ export class AlbionRegistrationService implements OnApplicationBootstrap {
     catch (err) {
       const errorMessage = `Failed to get channel with ID ${discordChannelId}! Err: ${err.message}. Pinging <@${this.config.get('discord.devUserId')}>!`;
       this.throwError(errorMessage);
+    }
+
+    // If queueValidation is not explicitly disabled, make sure it's set
+    if (!options) {
+      options = { queueValidation: true };
+    }
+    else if (options.queueValidation === undefined) {
+      options.queueValidation = true;
     }
 
     try {
@@ -201,7 +217,7 @@ export class AlbionRegistrationService implements OnApplicationBootstrap {
         `Handling Albion character "${data.character.Name}" registration for "${data.discordMember.displayName}" on server "${data.server}"`,
       );
 
-      await this.validate(data);
+      await this.validate(data, options);
 
       // If we got here, we can safely register the character
       await this.registerCharacter(data, channel);
