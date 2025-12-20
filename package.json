@@ -3,7 +3,6 @@
   "version": "2.20.0",
   "private": true,
   "license": "UNLICENSED",
-  "packageManager": "^pnpm@9.14.4",
   "scripts": {
     "dev": "nest start --watch",
     "build": "nest build",
