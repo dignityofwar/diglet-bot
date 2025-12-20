@@ -21,6 +21,47 @@ describe('AlbionRegistrationRetryCronService', () => {
   let albionApiService: any;
   let notificationChannel: any;
 
+  const setupModule = async (overrides?: {
+    discordService?: any
+    configService?: any
+    registrationService?: any
+    apiService?: any
+    repo?: any
+  }) => {
+    const moduleRef = await Test.createTestingModule({
+      providers: [
+        AlbionRegistrationRetryCronService,
+        {
+          provide: DiscordService,
+          useValue: overrides?.discordService ?? {
+            getTextChannel: jest.fn().mockResolvedValue(notificationChannel),
+          },
+        },
+        {
+          provide: ConfigService,
+          useValue: overrides?.configService ?? {
+            get: jest.fn(),
+          },
+        },
+        {
+          provide: AlbionRegistrationService,
+          useValue: overrides?.registrationService ?? albionRegistrationService,
+        },
+        {
+          provide: AlbionApiService,
+          useValue: overrides?.apiService ?? albionApiService,
+        },
+        {
+          provide: getRepositoryToken(AlbionRegistrationQueueEntity),
+          useValue: overrides?.repo ?? queueRepo,
+        },
+      ],
+    }).compile();
+
+    TestBootstrapper.setupConfig(moduleRef);
+    return moduleRef;
+  };
+
   beforeEach(async () => {
     // The cron service calls channel.isTextBased() and then channel.send(...)
     notificationChannel = {
@@ -44,43 +85,16 @@ describe('AlbionRegistrationRetryCronService', () => {
       getAllGuildMembers: jest.fn().mockResolvedValue([]),
     };
 
-    const moduleRef = await Test.createTestingModule({
-      providers: [
-        AlbionRegistrationRetryCronService,
-        {
-          provide: DiscordService,
-          useValue: {
-            getTextChannel: jest.fn().mockResolvedValue(notificationChannel),
-          },
-        },
-        {
-          provide: ConfigService,
-          useValue: {
-            get: jest.fn(),
-          },
-        },
-        {
-          provide: AlbionRegistrationService,
-          useValue: albionRegistrationService,
-        },
-        {
-          provide: AlbionApiService,
-          useValue: albionApiService,
-        },
-        {
-          provide: getRepositoryToken(AlbionRegistrationQueueEntity),
-          useValue: queueRepo,
-        },
-      ],
-    }).compile();
-
-    TestBootstrapper.setupConfig(moduleRef);
+    const moduleRef = await setupModule();
 
     service = moduleRef.get(AlbionRegistrationRetryCronService);
 
     jest.spyOn(service['logger'], 'log');
     jest.spyOn(service['logger'], 'error');
     jest.spyOn(service['logger'], 'warn');
+
+    // Ensure send can be asserted / forced to fail.
+    notificationChannel.send = jest.fn().mockResolvedValue(true);
 
     await service.onApplicationBootstrap();
   });
@@ -247,5 +261,102 @@ describe('AlbionRegistrationRetryCronService', () => {
 
     expect(albionRegistrationService.handleRegistration).not.toHaveBeenCalled();
     expect(attempt.status).toBe(AlbionRegistrationQueueStatus.PENDING);
+  });
+
+  it('should increment attemptCount when getAllGuildMembers throws', async () => {
+    const attempt = new AlbionRegistrationQueueEntity({
+      guildId: 'g1',
+      discordGuildId: 'dg1',
+      discordChannelId: 'dc1',
+      discordId: 'u1',
+      characterName: 'Char',
+      server: AlbionServer.EUROPE,
+      expiresAt: new Date(Date.now() + 1000 * 60 * 60),
+    });
+
+    queueRepo.find.mockResolvedValue([attempt]);
+    albionApiService.getAllGuildMembers.mockRejectedValue(new Error('bad response'));
+
+    await service.retryAlbionRegistrations();
+
+    expect(attempt.attemptCount).toBe(1);
+    expect(attempt.lastError).toContain('Failed to fetch guild members');
+    expect(albionRegistrationService.handleRegistration).not.toHaveBeenCalled();
+  });
+
+  it('should mark attempt failed and notify when handleRegistration errors with a non-retryable response', async () => {
+    const attempt = new AlbionRegistrationQueueEntity({
+      guildId: 'g1',
+      discordGuildId: 'dg1',
+      discordChannelId: 'dc1',
+      discordId: 'u1',
+      characterName: 'Char',
+      server: AlbionServer.EUROPE,
+      expiresAt: new Date(Date.now() + 1000 * 60 * 60),
+    });
+
+    queueRepo.find.mockResolvedValue([attempt]);
+    albionApiService.getAllGuildMembers.mockResolvedValue([{ Name: 'Char' }]);
+    albionRegistrationService.handleRegistration.mockRejectedValue(new Error('some hard failure'));
+
+    await service.retryAlbionRegistrations();
+
+    expect(attempt.status).toBe(AlbionRegistrationQueueStatus.FAILED);
+    expect(notificationChannel.send).toHaveBeenCalledWith(
+      expect.stringContaining('Albion registration retry failed for <@u1>'),
+    );
+  });
+
+  it('should log an error when retry summary cannot be sent', async () => {
+    const attempt = new AlbionRegistrationQueueEntity({
+      guildId: 'g1',
+      discordGuildId: 'dg1',
+      discordChannelId: 'dc1',
+      discordId: 'u1',
+      characterName: 'Char',
+      server: AlbionServer.EUROPE,
+      expiresAt: new Date(Date.now() + 1000 * 60 * 60),
+    });
+
+    queueRepo.find.mockResolvedValue([attempt]);
+    albionApiService.getAllGuildMembers.mockResolvedValue([]);
+
+    (notificationChannel.send as jest.Mock).mockRejectedValueOnce(new Error('discord down'));
+
+    await service.retryAlbionRegistrations();
+
+    expect(service['logger'].error).toHaveBeenCalledWith('Failed to send retry summary: discord down');
+  });
+
+  it('should throw on bootstrap if notification channel cannot be loaded', async () => {
+    const moduleRef = await setupModule({
+      discordService: {
+        getTextChannel: jest.fn().mockResolvedValue(null),
+      },
+    });
+
+    const localService = moduleRef.get(AlbionRegistrationRetryCronService);
+
+    await expect(localService.onApplicationBootstrap()).rejects.toThrow(
+      'Could not find channel with ID',
+    );
+  });
+
+  it('should throw on bootstrap if notification channel is not text-based', async () => {
+    const nonTextChannel: any = {
+      isTextBased: jest.fn().mockReturnValue(false),
+    };
+
+    const moduleRef = await setupModule({
+      discordService: {
+        getTextChannel: jest.fn().mockResolvedValue(nonTextChannel),
+      },
+    });
+
+    const localService = moduleRef.get(AlbionRegistrationRetryCronService);
+
+    await expect(localService.onApplicationBootstrap()).rejects.toThrow(
+      'is not a text channel for Albion retry cron',
+    );
   });
 });

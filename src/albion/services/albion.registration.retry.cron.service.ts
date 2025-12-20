@@ -30,26 +30,15 @@ export class AlbionRegistrationRetryCronService implements OnApplicationBootstra
   async onApplicationBootstrap(): Promise<void> {
     const channelId = this.configService.get('discord.channels.albionRegistration');
 
-    try {
-      const channel = await this.discordService.getTextChannel(channelId);
-      if (!channel) {
-        this.logger.error(
-          `Could not find channel with ID ${channelId}. Retry cron will still run but cannot notify.`,
-        );
-        return;
-      }
-      if (!channel.isTextBased()) {
-        this.logger.error(
-          `Channel with ID ${channelId} is not a text channel. Retry cron will still run but cannot notify.`,
-        );
-        return;
-      }
+    const channel = await this.discordService.getTextChannel(channelId);
+    if (!channel) {
+      throw new Error(`Could not find channel with ID ${channelId} for Albion retry cron.`);
+    }
+    if (!channel.isTextBased()) {
+      throw new Error(`Channel with ID ${channelId} is not a text channel for Albion retry cron.`);
+    }
 
-      this.notificationChannel = channel;
-    }
-    catch (err) {
-      this.logger.error(`Failed to fetch notification channel for retry cron: ${err.message}`);
-    }
+    this.notificationChannel = channel;
   }
 
   @Cron('0 * * * *')
@@ -147,10 +136,6 @@ export class AlbionRegistrationRetryCronService implements OnApplicationBootstra
 
   private async postRetrySummary(attempts: AlbionRegistrationQueueEntity[]): Promise<void> {
     try {
-      if (!this.notificationChannel) {
-        return;
-      }
-
       const characters = attempts.map((a) => `- **${a.characterName}**`).join('\n');
       await this.notificationChannel.send(
         `Albion registration queue retry attempt: checking ${attempts.length} character(s):\n\n${characters}`,
@@ -172,11 +157,6 @@ export class AlbionRegistrationRetryCronService implements OnApplicationBootstra
 
   private async notify(content: string): Promise<void> {
     try {
-      if (!this.notificationChannel) {
-        this.logger.warn(`Unable to notify channel (not initialized). Content: ${content}`);
-        return;
-      }
-
       await this.notificationChannel.send(content);
     }
     catch (err) {
