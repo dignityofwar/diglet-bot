@@ -262,7 +262,7 @@ export class AlbionRegistrationService implements OnApplicationBootstrap {
     await this.albionRegistrationQueueRepository.upsert(entity);
 
     this.throwError(
-      `Sorry <@${data.discordMember.id}>, the character **${data.character.Name}** has not been detected in the ${data.serverEmoji} **${data.guildName}** Guild.\n\n- ➡️ **Please ensure you have spelt your character __exactly__ correct as it appears in-game**. If you have mis-spelt it, please run the command again with the correct spelling.\n- ⏳ We will automatically retry your registration attempt once per hour over the next 72 hours. Sometimes our data source lags, so please be patient. **If you are not a member of DIG, this WILL fail regardless.**`,
+      `Sorry <@${data.discordMember.id}>, the character **${data.character.Name}** has not been detected in the ${data.serverEmoji} **${data.guildName}** Guild.\n\n- ➡️ **Please ensure you have spelt your character __exactly__ correct as it appears in-game**. If you have mis-spelt it, please run the command again with the correct spelling.\n- ⏳ We will automatically retry your registration attempt at the top of each hour over the next 72 hours. Sometimes our data source lags, so please be patient. **If you are not a member of DIG, this WILL fail regardless.**`,
     );
   }
 
