@@ -126,9 +126,13 @@ describe('AlbionRegistrationRetryCronService', () => {
     albionApiService.checkCharacterGuildMembership.mockResolvedValue(true);
     albionRegistrationService.handleRegistration.mockResolvedValue(undefined);
 
+    const em = queueRepo.getEntityManager();
+    const flushMock = em.flush as jest.Mock;
+
     await service.retryAlbionRegistrations();
 
-    const expectedSummary = 'Albion registration queue retry attempt: checking 1 character(s):\n\n- **Char**';
+    const expectedSummary =
+      'Albion registration queue retry attempt: checking 1 character(s):\n\n- **Char**';
     expect(notificationChannel.send).toHaveBeenCalledWith(expectedSummary);
 
     expect(albionRegistrationService.handleRegistration).toHaveBeenCalledWith(
@@ -138,6 +142,19 @@ describe('AlbionRegistrationRetryCronService', () => {
       'dg1',
       'dc1',
     );
+
+    // Persist attempt updates:
+    //  - flush once before attempting registration (attemptCount / lastError)
+    //  - flush once after marking the attempt SUCCEEDED
+    expect(flushMock).toHaveBeenCalledTimes(2);
+
+    const flushCallOrder = flushMock.mock.invocationCallOrder;
+    const handleCallOrder = (albionRegistrationService.handleRegistration as jest.Mock)
+      .mock.invocationCallOrder;
+
+    expect(flushCallOrder[0]).toBeLessThan(handleCallOrder[0]);
+    expect(flushCallOrder[1]).toBeGreaterThan(handleCallOrder[0]);
+
     expect(attempt.status).toBe(AlbionRegistrationQueueStatus.SUCCEEDED);
   });
 
