@@ -259,6 +259,8 @@ describe('AlbionRegistrationService', () => {
       it('should throw with registration attempt already queued if an existing attempt exists', async () => {
         mockCharacter.GuildId = 'utter nonsense';
 
+        const createdAt = new Date('2025-01-01T00:00:00.000Z');
+
         const existingAttempt: any = {
           guildId: mockRegistrationDataEU.guildId,
           discordId: String(mockDiscordUser.id),
@@ -267,14 +269,18 @@ describe('AlbionRegistrationService', () => {
           discordChannelId: 'oldChannel',
           discordGuildId: 'oldGuild',
           status: AlbionRegistrationQueueStatus.PENDING,
+          createdAt,
           expiresAt: new Date(Date.now() - 1000),
           lastError: 'old error',
         };
 
         mockAlbionRegistrationQueueRepository.findOne = jest.fn().mockResolvedValue(existingAttempt);
 
+        // Message uses the queued attempt's createdAt as the retry-until time.
+        const expectedDiscordTime = `<t:${Math.floor(createdAt.getTime() / 1000)}:f>`;
+
         await expect(service.validate(mockRegistrationDataEU)).rejects.toThrow(
-          `Sorry <@${mockDiscordUser.id}>, your registration attempt is **already queued**. Your request will be retried over the next 72 hours. Re-attempting registration is pointless at this time. Please be patient.`,
+          `<@${mockDiscordUser.id}> your registration attempt is **already queued**. Your request will be retried hourly until ${expectedDiscordTime}. Re-attempting registration is pointless at this time. Please be patient.`,
         );
 
         // Since queue-check happens before checkIfInGuild, we should not enqueue.
@@ -291,11 +297,23 @@ describe('AlbionRegistrationService', () => {
 
         const before = Date.now();
 
-        await expect(
-          service.validate(mockRegistrationDataEU),
-        ).rejects.toThrow(
-          `Sorry <@${mockDiscordUser.id}>, the character **${mockCharacter.Name}** has not been detected in the 🇪🇺 **Dignity Of War** Guild.\n\n- ➡️ **Please ensure you have spelt your character __exactly__ correct as it appears in-game**. If you have mis-spelt it, please run the command again with the correct spelling.\n- ⏳ **We will automatically retry your registration attempt at the top of the hour for the next 72 hours**. Sometimes our data source lags, so please be patient. **If you are not a member of DIG, this WILL fail regardless.**`,
+        let thrown: Error | undefined;
+        try {
+          await service.validate(mockRegistrationDataEU);
+        }
+        catch (err) {
+          thrown = err as Error;
+        }
+
+        expect(thrown).toBeInstanceOf(Error);
+
+        const message = (thrown as Error).message;
+        expect(message).toContain(
+          `<@${mockDiscordUser.id}> the character **${mockCharacter.Name}** has not been detected in the 🇪🇺 **Dignity Of War** Guild.`,
         );
+        expect(message).toContain('We will automatically retry your registration attempt hourly until');
+        expect(message).toContain('Sometimes our data source is slow to update');
+        expect(message).toMatch(/until <t:\d+:f>/);
 
         expect(mockAlbionRegistrationQueueRepository.upsert).toHaveBeenCalledTimes(1);
         expect(mockAlbionRegistrationQueueRepository.create).toHaveBeenCalledTimes(1);
