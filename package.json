@@ -39,7 +39,7 @@
     "@mikro-orm/sql-highlighter": "^1.0.1",
     "@nestjs/common": "11.1.10",
     "@nestjs/config": "4.0.2",
-    "@nestjs/core": "11.1.10",
+    "@nestjs/core": "11.1.11",
     "@nestjs/schedule": "^6.0.0",
     "@sentry/node": "^10.0.0",
     "@sentry/profiling-node": "^10.0.0",
