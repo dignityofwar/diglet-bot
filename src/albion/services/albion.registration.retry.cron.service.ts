@@ -16,7 +16,8 @@ import { AlbionApiService } from './albion.api.service';
 export class AlbionRegistrationRetryCronService implements OnApplicationBootstrap {
   private readonly logger = new Logger(AlbionRegistrationRetryCronService.name);
 
-  private notificationChannel: TextChannel;
+  private registrationChannel: TextChannel;
+  private registrationQueueChannel: TextChannel;
 
   constructor(
     private readonly discordService: DiscordService,
@@ -28,17 +29,27 @@ export class AlbionRegistrationRetryCronService implements OnApplicationBootstra
   ) {}
 
   async onApplicationBootstrap(): Promise<void> {
-    const channelId = this.configService.get('discord.channels.albionRegistration');
+    const registrationChannelId = this.configService.get('discord.channels.albionRegistration');
+    const registrationQueueChannelId = this.configService.get('discord.channels.albionRegistrationQueue');
 
-    const channel = await this.discordService.getTextChannel(channelId);
-    if (!channel) {
-      throw new Error(`Could not find channel with ID ${channelId} for Albion retry cron.`);
+    const registrationChannel = await this.discordService.getTextChannel(registrationChannelId);
+    if (!registrationChannel) {
+      throw new Error(`Could not find registration channel with ID ${registrationChannelId} for Albion retry cron.`);
     }
-    if (!channel.isTextBased()) {
-      throw new Error(`Channel with ID ${channelId} is not a text channel for Albion retry cron.`);
+    if (!registrationChannel.isTextBased()) {
+      throw new Error(`Registration channel with ID ${registrationChannelId} is not a text channel for Albion retry cron.`);
     }
 
-    this.notificationChannel = channel;
+    const registrationQueueChannel = await this.discordService.getTextChannel(registrationQueueChannelId);
+    if (!registrationQueueChannel) {
+      throw new Error(`Could not find queue channel with ID ${registrationQueueChannelId} for Albion retry cron.`);
+    }
+    if (!registrationQueueChannel.isTextBased()) {
+      throw new Error(`Queue channel with ID ${registrationQueueChannelId} is not a text channel for Albion retry cron.`);
+    }
+
+    this.registrationChannel = registrationChannel;
+    this.registrationQueueChannel = registrationQueueChannel;
   }
 
   @Cron('0 * * * *')
@@ -81,7 +92,7 @@ export class AlbionRegistrationRetryCronService implements OnApplicationBootstra
       attempt.status = AlbionRegistrationQueueStatus.FAILED;
       attempt.lastError = 'User is no longer in the Discord guild.';
       await this.albionRegistrationQueueRepository.getEntityManager().flush();
-      await this.notify(
+      await this.registrationQueueSend(
         `Registration attempt for character **${attempt.characterName}** has failed because the Discord member has left the server.`,
       );
       return;
@@ -144,46 +155,50 @@ export class AlbionRegistrationRetryCronService implements OnApplicationBootstra
       attempt.status = AlbionRegistrationQueueStatus.FAILED;
       await this.albionRegistrationQueueRepository.getEntityManager().flush();
 
-      await this.notify(
+      await this.registrationSend(
         `⚠️ Albion registration retry failed for <@${attempt.discordId}> (character **${attempt.characterName}**).\n\nReason: ${message}\n\nPlease try again or contact \`@ALB/Archmage\`.`,
       );
     }
   }
 
   private async postRetrySummary(attempts: AlbionRegistrationQueueEntity[]): Promise<void> {
-    try {
-      const characters = attempts
-        .map((a) => {
-          const unixSeconds = Math.floor(a.expiresAt.getTime() / 1000);
-          const discordTime = `<t:${unixSeconds}:f>`;
-          return `- **${a.characterName}** (expires ${discordTime})`;
-        })
-        .join('\n');
+    const characters = attempts
+      .map((a) => {
+        const unixSeconds = Math.floor(a.expiresAt.getTime() / 1000);
+        const discordTime = `<t:${unixSeconds}:f>`;
+        return `- **${a.characterName}** (expires ${discordTime})`;
+      })
+      .join('\n');
 
-      await this.notificationChannel.send(
-        `Albion registration queue retry attempt: checking ${attempts.length} character(s):\n\n${characters}`,
-      );
-    }
-    catch (err) {
-      this.logger.error(`Failed to send retry summary: ${err.message}`);
-    }
+    await this.registrationQueueSend(
+      `Albion registration queue retry attempt: checking ${attempts.length} character(s):\n\n${characters}`,
+    );
   }
 
   private async expireAttempt(attempt: AlbionRegistrationQueueEntity): Promise<void> {
     attempt.status = AlbionRegistrationQueueStatus.EXPIRED;
     await this.albionRegistrationQueueRepository.getEntityManager().flush();
 
-    await this.notify(
+    await this.registrationSend(
       `⏰ <@${attempt.discordId}> your registration attempt timed out. You are either truly not in the guild, or there is another problem. If you are in the guild, you are recommended to play the game for at least 1 hour, then retry registration. If you are not in the guild, then... why are you trying? :P`,
     );
   }
 
-  private async notify(content: string): Promise<void> {
+  private async registrationSend(content: string): Promise<void> {
     try {
-      await this.notificationChannel.send(content);
+      await this.registrationChannel.send(content);
     }
     catch (err) {
-      this.logger.error(`Failed to send retry notification: ${err.message}`);
+      this.logger.error(`Failed to send message to registration channel: ${err.message}`);
+    }
+  }
+
+  private async registrationQueueSend(content: string): Promise<void> {
+    try {
+      await this.registrationQueueChannel.send(content);
+    }
+    catch (err) {
+      this.logger.error(`Failed to send message to registration queue channel: ${err.message}`);
     }
   }
 }

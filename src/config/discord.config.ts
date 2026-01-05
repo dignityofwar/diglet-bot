@@ -3,6 +3,7 @@ export default () => ({
   guildId: process.env.GUILD_ID_WITH_COMMANDS,
   channels: {
     albionRegistration: process.env.CHANNEL_ALBION_REGISTRATION,
+    albionRegistrationQueue: process.env.CHANNEL_ALBION_REGISTRATION_QUEUE,
     albionUSRoles: process.env.CHANNEL_ALBION_US_ROLES,
     albionRoles: process.env.CHANNEL_ALBION_EU_ROLES,
     albionUSAnnouncements: process.env.CHANNEL_ALBION_US_ANNOUNCEMENTS,
