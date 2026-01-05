@@ -16,11 +16,12 @@ Always reference these instructions first and fallback to search or bash command
 - Verify versions: `node --version` (should be v24.12.0) and `pnpm --version` (should be 10.26.2)
 
 ### Bootstrap, Build, and Test
-- `pnpm install` -- takes ~26 seconds. Dependencies installation.
-- `cp digletbot.env.example digletbot.env` -- create environment configuration file.
-- `docker compose up -d` -- start MariaDB database (~4 seconds for initial pull, <1 second afterwards).
-- `pnpm build` -- takes ~6 seconds. NEVER CANCEL. Set timeout to 30+ seconds for safety.
-- `pnpm migration:up` -- run database migrations, takes ~6 seconds. NEVER CANCEL. Set timeout to 30+ seconds.
+- `pnpm install` -- takes ~6-26 seconds. Dependencies installation.
+- `cp digletbot.env.example digletbot.env` -- create environment configuration file for Docker.
+- `ln -s digletbot.env .env` -- create symlink for dotenv (used by MikroORM migrations).
+- `docker compose up -d` -- start MariaDB database (~5 seconds for initial pull, <1 second afterwards).
+- `pnpm build` -- takes ~2-6 seconds. NEVER CANCEL. Set timeout to 30+ seconds for safety.
+- `pnpm migration:up` -- run database migrations, takes ~2-6 seconds. NEVER CANCEL. Set timeout to 30+ seconds.
 - `pnpm test` -- takes ~108 seconds (1 min 48 sec). NEVER CANCEL. Set timeout to 180+ seconds.
 - `pnpm test:ci` -- takes ~100 seconds (1 min 40 sec). NEVER CANCEL. Set timeout to 180+ seconds.
 - `pnpm test:wsl` -- WSL compatibility version, takes ~104 seconds. NEVER CANCEL. Set timeout to 180+ seconds.
