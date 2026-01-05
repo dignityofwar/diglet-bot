@@ -15,6 +15,8 @@ import { AlbionApiService } from './albion.api.service';
 
 describe('AlbionRegistrationRetryCronService', () => {
   let service: AlbionRegistrationRetryCronService;
+  let discordService: DiscordService;
+  let configService: ConfigService;
 
   let queueRepo: any;
   let albionRegistrationService: any;
@@ -58,6 +60,16 @@ describe('AlbionRegistrationRetryCronService', () => {
       ],
     }).compile();
 
+    discordService = moduleRef.get(DiscordService);
+    discordService.getGuildMember = jest.fn().mockResolvedValue(TestBootstrapper.getMockDiscordUser());
+    configService = moduleRef.get(ConfigService);
+    configService = moduleRef.get(ConfigService);
+    (configService.get as jest.Mock).mockImplementation((key: string) => {
+      if (key === 'discord.guildId') {
+        return TestBootstrapper.mockConfig.discord.guildId;
+      }
+      return undefined;
+    });
     TestBootstrapper.setupConfig(moduleRef);
     return moduleRef;
   };
@@ -206,6 +218,32 @@ describe('AlbionRegistrationRetryCronService', () => {
     expect(attempt.attemptCount).toBe(1);
   });
 
+  it('should fail attempt when discord member has left', async () => {
+    const attempt = new AlbionRegistrationQueueEntity({
+      guildId: 'g1',
+      discordGuildId: 'dg1',
+      discordChannelId: 'dc1',
+      discordId: 'u1',
+      characterName: 'Char',
+      server: AlbionServer.EUROPE,
+      expiresAt: new Date(Date.now() + 1000 * 60 * 60),
+    });
+
+    queueRepo.find.mockResolvedValue([attempt]);
+    const expectedExpire = `<t:${Math.floor(attempt.expiresAt.getTime() / 1000)}:f>`;
+    discordService.getGuildMember = jest.fn().mockResolvedValue(null);
+
+    await service.retryAlbionRegistrations();
+
+    expect(attempt.status).toBe(AlbionRegistrationQueueStatus.FAILED);
+    expect(notificationChannel.send).toHaveBeenCalledWith(
+      `Albion registration queue retry attempt: checking 1 character(s):\n\n- **Char** (expires ${expectedExpire})`,
+    );
+    expect(notificationChannel.send).toHaveBeenCalledWith(
+      'Registration attempt for character **Char** has failed because the Discord member has left the server.',
+    );
+  });
+
   it('should expire attempt and notify when expiresAt has passed', async () => {
     const attempt = new AlbionRegistrationQueueEntity({
       guildId: 'g1',
@@ -222,7 +260,7 @@ describe('AlbionRegistrationRetryCronService', () => {
     await service.retryAlbionRegistrations();
 
     expect(attempt.status).toBe(AlbionRegistrationQueueStatus.EXPIRED);
-    expect(service['notificationChannel'].send).toHaveBeenCalledWith(
+    expect(notificationChannel.send).toHaveBeenCalledWith(
       '⏰ <@u1> your registration attempt timed out. You are either truly not in the guild, or there is another problem. If you are in the guild, you are recommended to play the game for at least 1 hour, then retry registration. If you are not in the guild, then... why are you trying? :P',
     );
   });
