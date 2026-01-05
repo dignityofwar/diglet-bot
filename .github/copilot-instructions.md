@@ -50,7 +50,7 @@ Always reference these instructions first and fallback to search or bash command
 - Default digletbot.env uses `DB_HOST=localhost` and `DB_PORT=3307` for connecting from host to Docker container.
 - The Docker container exposes MariaDB on host port 3307 (mapped from container port 3306).
 - For Docker internal networking (container-to-container), use `DB_HOST=digletbot-db` and `DB_PORT=3306`.
-- On WSL or direct connections, `DB_HOST=127.0.0.1` with `DB_PORT=3307` should work.
+- On WSL, use `DB_HOST=127.0.0.1` with `DB_PORT=3307` (localhost may not resolve correctly on WSL).
 - Database credentials: root/password.
 - Migration failures typically require building first: `pnpm build` then `pnpm migration:up`.
 
