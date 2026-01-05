@@ -1,6 +1,7 @@
 node_modules
 .idea
 digletbot.env
+.env
 dist
 yarn-error.log
 coverage
