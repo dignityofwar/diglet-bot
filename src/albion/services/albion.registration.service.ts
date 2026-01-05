@@ -225,7 +225,7 @@ export class AlbionRegistrationService implements OnApplicationBootstrap {
       // Note: queued registration status updates are managed by AlbionRegistrationRetryCronService.
     }
     catch (err) {
-      this.throwError(`Registration failed for character "${characterName}"! Err: ${err.message}. Pinging <@${this.config.get('discord.devUserId')}>!`);
+      this.throwError(`Registration failed for character "${characterName}"!\nReason: ${err.message}`);
     }
   }
 
