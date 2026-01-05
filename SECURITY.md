@@ -12,4 +12,4 @@ currently being supported with security updates.
 
 ## Reporting a Vulnerability
 
-Please DM me on Discord: `maelstrome`
+Please DM me on Discord: `maelstrome`.

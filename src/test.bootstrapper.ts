@@ -384,9 +384,11 @@ export class TestBootstrapper {
       ],
     },
     discord: {
+      guildId: '657687978899',
       devUserId: '474839309484',
       channels: {
         albionRegistration: '396474759683473',
+        albionRegistrationQueue: '657687978899',
         albionRoles: '657687978899',
         albionAnnouncements: '6655756786797',
         albionScans: '4858696849494',
