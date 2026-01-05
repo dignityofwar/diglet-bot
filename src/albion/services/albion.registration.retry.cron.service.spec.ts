@@ -435,4 +435,108 @@ describe('AlbionRegistrationRetryCronService', () => {
 
     expect(service['logger'].error).toHaveBeenCalledWith('Failed to send message to registration queue channel: send failed');
   });
+
+  it('should throw if registration channel does not exist', async () => {
+    const moduleRef = await Test.createTestingModule({
+      providers: [
+        AlbionRegistrationRetryCronService,
+        {
+          provide: DiscordService,
+          useValue: {
+            getTextChannel: jest.fn().mockImplementation(async (channelId: string) => {
+              if (String(channelId) === String(TestBootstrapper.mockConfig.discord.channels.albionRegistration)) {
+                return null;
+              }
+              if (
+                String(channelId) ===
+                String(TestBootstrapper.mockConfig.discord.channels.albionRegistrationQueue)
+              ) {
+                return registrationQueueChannel;
+              }
+              return null;
+            }),
+            getGuildMember: jest.fn(),
+          },
+        },
+        {
+          provide: ConfigService,
+          useValue: {
+            get: jest.fn(),
+          },
+        },
+        {
+          provide: AlbionRegistrationService,
+          useValue: albionRegistrationService,
+        },
+        {
+          provide: AlbionApiService,
+          useValue: albionApiService,
+        },
+        {
+          provide: getRepositoryToken(AlbionRegistrationQueueEntity),
+          useValue: queueRepo,
+        },
+      ],
+    }).compile();
+
+    TestBootstrapper.setupConfig(moduleRef);
+
+    const localService = moduleRef.get(AlbionRegistrationRetryCronService);
+
+    await expect(localService.onApplicationBootstrap()).rejects.toThrow(
+      `Could not find registration channel with ID ${TestBootstrapper.mockConfig.discord.channels.albionRegistration} for Albion retry cron.`,
+    );
+  });
+
+  it('should throw if registration queue channel does not exist', async () => {
+    const moduleRef = await Test.createTestingModule({
+      providers: [
+        AlbionRegistrationRetryCronService,
+        {
+          provide: DiscordService,
+          useValue: {
+            getTextChannel: jest.fn().mockImplementation(async (channelId: string) => {
+              if (String(channelId) === String(TestBootstrapper.mockConfig.discord.channels.albionRegistration)) {
+                return registrationChannel;
+              }
+              if (
+                String(channelId) ===
+                String(TestBootstrapper.mockConfig.discord.channels.albionRegistrationQueue)
+              ) {
+                return null;
+              }
+              return null;
+            }),
+            getGuildMember: jest.fn(),
+          },
+        },
+        {
+          provide: ConfigService,
+          useValue: {
+            get: jest.fn(),
+          },
+        },
+        {
+          provide: AlbionRegistrationService,
+          useValue: albionRegistrationService,
+        },
+        {
+          provide: AlbionApiService,
+          useValue: albionApiService,
+        },
+        {
+          provide: getRepositoryToken(AlbionRegistrationQueueEntity),
+          useValue: queueRepo,
+        },
+      ],
+    }).compile();
+
+    TestBootstrapper.setupConfig(moduleRef);
+
+    const localService = moduleRef.get(AlbionRegistrationRetryCronService);
+
+    await expect(localService.onApplicationBootstrap()).rejects.toThrow(
+      `Could not find queue channel with ID ${TestBootstrapper.mockConfig.discord.channels.albionRegistrationQueue} for Albion retry cron.`,
+    );
+  });
 });
