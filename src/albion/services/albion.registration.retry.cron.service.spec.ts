@@ -259,7 +259,9 @@ describe('AlbionRegistrationRetryCronService', () => {
 
     queueRepo.find.mockResolvedValue([attempt]);
     const expectedExpire = `<t:${Math.floor(attempt.expiresAt.getTime() / 1000)}:f>`;
-    discordService.getGuildMember = jest.fn().mockResolvedValue(null);
+    discordService.getGuildMember = jest
+      .fn()
+      .mockRejectedValue(new Error('Member not found'));
 
     await service.retryAlbionRegistrations();
 
