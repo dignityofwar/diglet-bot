@@ -47,9 +47,10 @@ Always reference these instructions first and fallback to search or bash command
 - Use WSL-specific commands (`pnpm test:wsl`) on Windows Subsystem for Linux to avoid filesystem issues.
 
 ### Database Configuration Notes
-- Default digletbot.env uses `DB_HOST=localhost` and `DB_PORT=3307` for local development.
-- For Docker internal networking, use `DB_HOST=digletbot-db` and `DB_PORT=3306`.
-- On WSL or direct connections, use `DB_HOST=127.0.0.1`.
+- Default digletbot.env uses `DB_HOST=localhost` and `DB_PORT=3307` for connecting from host to Docker container.
+- The Docker container exposes MariaDB on host port 3307 (mapped from container port 3306).
+- For Docker internal networking (container-to-container), use `DB_HOST=digletbot-db` and `DB_PORT=3306`.
+- On WSL or direct connections, `DB_HOST=127.0.0.1` with `DB_PORT=3307` should work.
 - Database credentials: root/password.
 - Migration failures typically require building first: `pnpm build` then `pnpm migration:up`.
 
