@@ -95,7 +95,7 @@ export class AlbionRegistrationRetryCronService implements OnApplicationBootstra
     }
     catch (err) {
       // Member not found - they've left the server
-      this.logger.error(`Failed to get guild member for Discord ID ${attempt.discordId}: ${err?.message ?? String(err)}`);
+      this.logger.error(`Failed to get guild member for Discord ID ${attempt.discordId} during registration retry for character ${attempt.characterName}: ${err?.message ?? String(err)}`);
       attempt.status = AlbionRegistrationQueueStatus.FAILED;
       attempt.lastError = 'User is no longer in the Discord guild.';
       await this.albionRegistrationQueueRepository.getEntityManager().flush();
