@@ -417,7 +417,7 @@ describe('AlbionRegistrationService', () => {
             mockChannel.id,
           ),
         ).rejects.toThrow(
-          `Registration failed for character "${mockRegistrationDataEU.character.Name}"! Err: ${errorMsg}. Pinging <@${mockDevUserId}>!`,
+          `Registration failed for character "${mockRegistrationDataEU.character.Name}"!\nReason: ${errorMsg}`,
         );
       });
 
@@ -458,7 +458,7 @@ describe('AlbionRegistrationService', () => {
             mockChannel.id,
           ),
         ).rejects.toThrow(
-          `Registration failed for character "${mockRegistrationDataEU.character.Name}"! Err: ${errorMsg}. Pinging <@${mockDevUserId}>!`,
+          `Registration failed for character "${mockRegistrationDataEU.character.Name}"!\nReason: ${errorMsg}`,
         );
       });
 
@@ -479,7 +479,7 @@ describe('AlbionRegistrationService', () => {
             mockChannel.id,
           ),
         ).rejects.toThrow(
-          `Registration failed for character "${mockRegistrationDataEU.character.Name}"! Err: ${errorMsg}. Pinging <@${mockDevUserId}>!`,
+          `Registration failed for character "${mockRegistrationDataEU.character.Name}"!\nReason: ${errorMsg}`,
         );
       });
 
