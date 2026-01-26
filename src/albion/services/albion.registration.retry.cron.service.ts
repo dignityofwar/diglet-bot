@@ -147,6 +147,9 @@ export class AlbionRegistrationRetryCronService implements OnApplicationBootstra
       attempt.status = AlbionRegistrationQueueStatus.SUCCEEDED;
       attempt.lastError = null;
       await this.albionRegistrationQueueRepository.getEntityManager().flush();
+
+      // Send a message in the queue channel to also say it was successful otherwise it's confusing and looks like something is wrong.
+      await this.registrationQueueSend(`✅ Registration successful for **${attempt.characterName}**!`);
     }
     catch (err) {
       const message = err?.message ?? String(err);

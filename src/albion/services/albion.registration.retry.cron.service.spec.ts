@@ -193,6 +193,7 @@ describe('AlbionRegistrationRetryCronService', () => {
     expect(flushCallOrder[1]).toBeGreaterThan(handleCallOrder[0]);
 
     expect(attempt.status).toBe(AlbionRegistrationQueueStatus.SUCCEEDED);
+    expect(registrationQueueChannel.send).toHaveBeenCalledWith('✅ Registration successful for **Char**!');
   });
 
   it('should not attempt registration when character is not in guild', async () => {
