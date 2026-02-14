@@ -11,7 +11,7 @@ services:
 #      - "com.centurylinklabs.watchtower.enable=true"
   digletbot-db:
     container_name: digletbot-db
-    image: mariadb:12.1.2
+    image: mariadb:12.2.2
     env_file: digletbot-db.env
     restart: unless-stopped
     ports:
