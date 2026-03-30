@@ -74,7 +74,7 @@ jobs:
           version: latest
 
       - name: Check if app builds properly via docker
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@v7
         with:
           file: Dockerfile
           platforms: linux/amd64
