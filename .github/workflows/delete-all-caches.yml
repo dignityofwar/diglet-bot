@@ -1,0 +1,49 @@
+name: Clear All Caches
+
+on:
+  workflow_dispatch:
+
+jobs:
+  clear-caches:
+    name: Delete All Repository Caches
+    runs-on: ubuntu-latest
+    permissions:
+      actions: write
+
+    steps:
+      - name: Delete all caches
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO: ${{ github.repository }}
+        run: |
+          echo "Fetching all cache IDs for $REPO..."
+
+          PAGE=1
+          DELETED=0
+
+          while true; do
+            RESPONSE=$(gh api \
+              -H "Accept: application/vnd.github+json" \
+              "/repos/$REPO/actions/caches?per_page=100&page=$PAGE")
+
+            CACHE_IDS=$(echo "$RESPONSE" | jq -r '.actions_caches[].id')
+            TOTAL=$(echo "$RESPONSE" | jq '.total_count')
+
+            if [ -z "$CACHE_IDS" ]; then
+              echo "No more caches found on page $PAGE."
+              break
+            fi
+
+            for ID in $CACHE_IDS; do
+              echo "Deleting cache ID: $ID"
+              gh api \
+                --method DELETE \
+                -H "Accept: application/vnd.github+json" \
+                "/repos/$REPO/actions/caches/$ID"
+              DELETED=$((DELETED + 1))
+            done
+
+            PAGE=$((PAGE + 1))
+          done
+
+          echo "Done. Deleted $DELETED cache(s). Total reported by API: $TOTAL"
