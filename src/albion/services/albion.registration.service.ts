@@ -313,6 +313,14 @@ export class AlbionRegistrationService implements OnApplicationBootstrap {
       return;
     }
 
+    // Delete any previous failed records for this user before re-queuing.
+    await this.albionRegistrationQueueRepository.nativeDelete({
+      guildId: data.guildId,
+      discordId: String(data.discordMember.user.id),
+      discordGuildId: data.discordMember.guild.id,
+      status: AlbionRegistrationQueueStatus.FAILED,
+    });
+
     // Enqueue a retryable attempt.
     const now = new Date();
     const expiresAt = new Date(now);

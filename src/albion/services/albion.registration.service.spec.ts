@@ -29,6 +29,7 @@ describe('AlbionRegistrationService', () => {
     create: jest.Mock
     upsert: jest.Mock
     findOne: jest.Mock
+    nativeDelete: jest.Mock
     flush: jest.Mock
     getEntityManager?: jest.Mock
   };
@@ -59,6 +60,7 @@ describe('AlbionRegistrationService', () => {
       create: jest.fn(),
       upsert: jest.fn(),
       findOne: jest.fn(),
+      nativeDelete: jest.fn().mockResolvedValue(1),
       flush: jest.fn().mockResolvedValue(true),
       getEntityManager: jest.fn().mockReturnValue({
         flush: jest.fn().mockResolvedValue(true),
@@ -372,6 +374,32 @@ describe('AlbionRegistrationService', () => {
           // Should exit early before any enqueue/update.
           expect(mockAlbionRegistrationQueueRepository.create).not.toHaveBeenCalled();
           expect(mockAlbionRegistrationQueueRepository.upsert).not.toHaveBeenCalled();
+        });
+      });
+
+      describe('checkIfInGuild', () => {
+        it('should delete any existing FAILED records before re-queuing when character is not in guild', async () => {
+          mockCharacter.GuildId = 'utter nonsense';
+
+          // Ensure verificationChannelId is populated for this test.
+          await service.onApplicationBootstrap();
+
+          // No pending attempt exists, so queue checks pass through to checkIfInGuild.
+          mockAlbionRegistrationQueueRepository.findOne = jest.fn().mockResolvedValue(null);
+          (albionApiService as any).checkCharacterGuildMembership = jest.fn().mockResolvedValue(false);
+
+          await expect(service.validate(mockRegistrationDataEU, { queueValidation: true })).rejects.toThrow(
+            `<@${mockDiscordUser.id}> the character **${mockCharacter.Name}** has not been detected`,
+          );
+
+          expect(mockAlbionRegistrationQueueRepository.nativeDelete).toHaveBeenCalledWith({
+            guildId: mockRegistrationDataEU.guildId,
+            discordId: String(mockDiscordUser.id),
+            discordGuildId: mockDiscordUser.guild.id,
+            status: AlbionRegistrationQueueStatus.FAILED,
+          });
+          expect(mockAlbionRegistrationQueueRepository.create).toHaveBeenCalled();
+          expect(mockAlbionRegistrationQueueRepository.upsert).toHaveBeenCalled();
         });
       });
 
