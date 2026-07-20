@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Claude memories
 
-Persistent memories are version-controlled in this repo at `.claude/memory/`, wired up natively via `autoMemoryDirectory` in the committed `.claude/settings.json` (which assumes the repo lives at `~/code/diglet-bot`). Before writing a memory, sanity-check you're writing inside the repo's `.claude/memory/` — if your memory directory resolves elsewhere (e.g. a plain `~/.claude/projects/<slug>/memory` dir because the repo was cloned to a different path), merge any stray files into `.claude/memory/`, flag the mismatch to the user, and suggest fixing it per README "Claude Code memory". Memory changes should be committed like any other file.
+Persistent memories are version-controlled in this repo at `.claude/memory/`, wired up natively via `autoMemoryDirectory` in the committed `.claude/settings.json` (which assumes the repo lives at `~/code/dignityofwar/diglet-bot`). Before writing a memory, sanity-check you're writing inside the repo's `.claude/memory/` — if your memory directory resolves elsewhere (e.g. a plain `~/.claude/projects/<slug>/memory` dir because the repo was cloned to a different path), merge any stray files into `.claude/memory/`, flag the mismatch to the user, and suggest fixing it per README "Claude Code memory". Memory changes should be committed like any other file.
 
 ## Project
 
