@@ -41,15 +41,15 @@ While this project is designed for a Mac ecosystem, it can be run on WSL, but yo
 2. You cannot use docker's internal DNS for some reason. `DB_HOST` in your `.env` needs to be `127.0.0.1`.
 3. Tests are a problem when running from within WSL. The filesystem absolutely shits the bed (it went up to 500MB/s on an SSD...). I figured this is due to the multi-concurrency, so run `pnpm test:wsl` to set maxWorkers to 4. If you're finding it's still locking up, adjust the worker count to 1/2 in `package.json`.
 
-# Claude Code memories
-Claude Code's persistent project memories are committed to this repo at `.claude/memories/`, so learnings are shared via git across machines and collaborators. Claude's per-user auto-memory directory needs to be a symlink pointing at it:
+# Claude Code memory
+Claude Code's persistent project memories are committed to this repo at `.claude/memory/` (matching the canonical name of Claude's per-user auto-memory dir), so learnings are shared via git across machines and collaborators. Claude's per-user auto-memory directory needs to be a symlink pointing at it:
 
 ```bash
 # From the repo root. The project slug is your repo's absolute path with '/' swapped for '-'.
-ln -s "$(pwd)/.claude/memories" ~/.claude/projects/"$(pwd | tr '/' '-')"/memory
+ln -s "$(pwd)/.claude/memory" ~/.claude/projects/"$(pwd | tr '/' '-')"/memory
 ```
 
-If `~/.claude/projects/<slug>/memory` already exists as a real directory, merge any files in it into `.claude/memories/` first, then delete it and create the symlink.
+If `~/.claude/projects/<slug>/memory` already exists as a real directory, merge any files in it into `.claude/memory/` first, then delete it and create the symlink.
 
 # Troubleshooting
 ## Running migration:up fails

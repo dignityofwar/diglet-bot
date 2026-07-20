@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Claude memories
 
-Persistent memories are version-controlled in this repo at `.claude/memories/`; the per-user auto-memory dir (`~/.claude/projects/<path-slug>/memory`) is expected to be a symlink to it. Before writing a memory, check that the auto-memory dir is actually a symlink into this repo (`readlink ~/.claude/projects/"$(pwd | tr '/' '-')"/memory`). If it's a plain directory, merge its contents into `.claude/memories/`, replace it with the symlink (see README "Claude Code memories"), and mention this to the user. Memory changes should be committed like any other file.
+Persistent memories are version-controlled in this repo at `.claude/memory/`; the per-user auto-memory dir (`~/.claude/projects/<path-slug>/memory`) is expected to be a symlink to it. Before writing a memory, check that the auto-memory dir is actually a symlink into this repo (`readlink ~/.claude/projects/"$(pwd | tr '/' '-')"/memory`). If it's a plain directory, merge its contents into `.claude/memory/`, replace it with the symlink (see README "Claude Code memory"), and mention this to the user. Memory changes should be committed like any other file.
 
 ## Project
 
