@@ -42,14 +42,16 @@ While this project is designed for a Mac ecosystem, it can be run on WSL, but yo
 3. Tests are a problem when running from within WSL. The filesystem absolutely shits the bed (it went up to 500MB/s on an SSD...). I figured this is due to the multi-concurrency, so run `pnpm test:wsl` to set maxWorkers to 4. If you're finding it's still locking up, adjust the worker count to 1/2 in `package.json`.
 
 # Claude Code memory
-Claude Code's persistent project memories are committed to this repo at `.claude/memory/` (matching the canonical name of Claude's per-user auto-memory dir), so learnings are shared via git across machines and collaborators. Claude's per-user auto-memory directory needs to be a symlink pointing at it:
+Claude Code's persistent project memories are committed to this repo at `.claude/memory/`, so learnings are shared via git across machines and collaborators. The committed `.claude/settings.json` sets `autoMemoryDirectory` to `~/code/diglet-bot/.claude/memory`, so Claude reads/writes memory in-repo natively — **provided you clone the repo to `~/code/diglet-bot`**. The setting takes effect after you accept the workspace trust dialog.
+
+If you must clone elsewhere, either override `autoMemoryDirectory` in `.claude/settings.local.json` (gitignored) with your actual path, or fall back to symlinking the per-user auto-memory dir:
 
 ```bash
 # From the repo root. The project slug is your repo's absolute path with '/' swapped for '-'.
 ln -s "$(pwd)/.claude/memory" ~/.claude/projects/"$(pwd | tr '/' '-')"/memory
 ```
 
-If `~/.claude/projects/<slug>/memory` already exists as a real directory, merge any files in it into `.claude/memory/` first, then delete it and create the symlink.
+If `~/.claude/projects/<slug>/memory` already exists as a real directory with files in it, merge them into `.claude/memory/` first.
 
 # Troubleshooting
 ## Running migration:up fails
