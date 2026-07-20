@@ -2,6 +2,10 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## Claude memories
+
+Persistent memories are version-controlled in this repo at `.claude/memories/`; the per-user auto-memory dir (`~/.claude/projects/<path-slug>/memory`) is expected to be a symlink to it. Before writing a memory, check that the auto-memory dir is actually a symlink into this repo (`readlink ~/.claude/projects/"$(pwd | tr '/' '-')"/memory`). If it's a plain directory, merge its contents into `.claude/memories/`, replace it with the symlink (see README "Claude Code memories"), and mention this to the user. Memory changes should be committed like any other file.
+
 ## Project
 
 diglet-bot is a TypeScript Discord bot (NestJS + discord.js v14) serving the Dignity of War gaming community, with Albion Online and PlanetSide 2 integrations. Package manager is **pnpm** (Node 24.x enforced via `engines`).

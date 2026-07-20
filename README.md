@@ -20,8 +20,8 @@ This project is now considered **stable**, and is now versioned appropriately vi
 - Install brew (on Mac / Linux), or your own package manager, I'm not your mum!
 - Install node version manager `nvm`: `brew install nvm`
 - Install `pnpm`: `brew install pnpm`
-- Run `nvm install 22.14.0` which will set up your node version correctly.
-- Run `nvm use 22.14.0` which configures your terminal to the correct version of node and npm.
+- Run `nvm install 24.12.0` which will set up your node version correctly.
+- Run `nvm use 24.12.0` which configures your terminal to the correct version of node and npm.
 - Ensure you have at least `pnpm` version `9.14.4` installed. If you use nvm, it should be installed for you.
 
 The engines are enforced via `package.json`, you'll know if it's wrong as no commands will work.
@@ -40,6 +40,16 @@ While this project is designed for a Mac ecosystem, it can be run on WSL, but yo
 1. Rather than running `pnpm install`, you need to run `npm install`, as `pnpm` creates symlinks that winblows doesn't understand, thus your IDE will likely break. Grab a brew, it will take fecking forever to install everything with npm.
 2. You cannot use docker's internal DNS for some reason. `DB_HOST` in your `.env` needs to be `127.0.0.1`.
 3. Tests are a problem when running from within WSL. The filesystem absolutely shits the bed (it went up to 500MB/s on an SSD...). I figured this is due to the multi-concurrency, so run `pnpm test:wsl` to set maxWorkers to 4. If you're finding it's still locking up, adjust the worker count to 1/2 in `package.json`.
+
+# Claude Code memories
+Claude Code's persistent project memories are committed to this repo at `.claude/memories/`, so learnings are shared via git across machines and collaborators. Claude's per-user auto-memory directory needs to be a symlink pointing at it:
+
+```bash
+# From the repo root. The project slug is your repo's absolute path with '/' swapped for '-'.
+ln -s "$(pwd)/.claude/memories" ~/.claude/projects/"$(pwd | tr '/' '-')"/memory
+```
+
+If `~/.claude/projects/<slug>/memory` already exists as a real directory, merge any files in it into `.claude/memories/` first, then delete it and create the symlink.
 
 # Troubleshooting
 ## Running migration:up fails

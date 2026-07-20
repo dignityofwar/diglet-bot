@@ -10,3 +10,6 @@ coverage
 package-lock.json
 
 provisioning/local-data
+
+# Claude Code local settings (memories in .claude/memories ARE committed)
+.claude/settings.local.json
