@@ -15,3 +15,7 @@ badges
 coverage
 provisioning
 scripts
+
+# The image installs and builds these itself
+node_modules
+dist
