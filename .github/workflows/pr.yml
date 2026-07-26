@@ -57,14 +57,6 @@ jobs:
           fetch-depth: 2
           submodules: true
 
-      - uses: actions/cache@v5
-        name: Pull pnpm cache
-        with:
-          path: node_modules
-          key: "${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}"
-          restore-keys: |
-            ${{ runner.os }}-pnpm-store-
-
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v3
 
