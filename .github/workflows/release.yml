@@ -17,7 +17,7 @@ jobs:
       version: ${{ steps.version.outputs.newTag }}
     steps:
       - name: Checkout source code
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           # Full history + tags: the changelog rollup diffs this release's tag against the previous one.
           fetch-depth: 0
