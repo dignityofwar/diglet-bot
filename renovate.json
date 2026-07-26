@@ -12,6 +12,14 @@
   },
   "packageRules": [
     {
+      "description": "MikroORM packages pin their siblings exactly, so bumping one alone installs a second @mikro-orm/core and breaks entity discovery on boot. They must move together.",
+      "groupName": "mikro-orm",
+      "matchPackageNames": [
+        "mikro-orm",
+        "/^@mikro-orm/"
+      ]
+    },
+    {
       "matchDatasources": [
         "dockerfile",
         "github-actions",

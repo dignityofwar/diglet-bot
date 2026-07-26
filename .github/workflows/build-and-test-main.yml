@@ -14,6 +14,9 @@ jobs:
           fetch-depth: 0
           submodules: true
 
+      - name: Check MikroORM packages resolve a single core
+        run: ./scripts/check-single-orm-core.sh
+
       - name: Install Node.js
         uses: actions/setup-node@v6
         with:
