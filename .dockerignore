@@ -15,3 +15,8 @@ badges
 coverage
 provisioning
 scripts
+
+# Build artefacts, the image installs and builds these itself. Copying the host's copies in would
+# make the image depend on whatever the build machine happens to have lying around.
+node_modules
+dist
