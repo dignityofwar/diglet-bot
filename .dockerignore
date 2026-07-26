@@ -1,13 +1,19 @@
 .git*
 .es*
 .npmrc
-.env
 docker-compose.yaml
 README.md
 renovate.json
 sonar-project.properties
 {start,stop}.sh
 **.spec.ts
+
+# No env file belongs in the image - the container gets its config from the compose env_file
+# at runtime. Copying one in bakes it into a layer, where anyone with the image can read it.
+.env*
+*.env*
+**/.env*
+**/*.env*
 
 # dirs
 .idea

@@ -1,10 +1,15 @@
 node_modules
 .idea
-digletbot.env
-.env
 dist
 yarn-error.log
 coverage
+
+# Env files hold real credentials - digletbot.env, the .env symlink the MikroORM CLI reads,
+# and anything else. Deliberately narrow enough to leave digletbot.env.example tracked;
+# digletbot-db.env is re-included because it is local-dev-only creds docker compose needs.
+.env*
+*.env
+!digletbot-db.env
 
 # Stop npm being comitted
 package-lock.json
