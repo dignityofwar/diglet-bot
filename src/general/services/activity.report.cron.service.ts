@@ -17,7 +17,7 @@ export class ActivityReportCronService implements OnApplicationBootstrap {
     private readonly config: ConfigService,
     private readonly activityService: ActivityService,
     private readonly joinerLeaverService: JoinerLeaverService,
-    private readonly roleMetricsService: RoleMetricsService
+    private readonly roleMetricsService: RoleMetricsService,
   ) {}
 
   async onApplicationBootstrap(): Promise<void> {

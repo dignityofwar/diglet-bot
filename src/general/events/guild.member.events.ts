@@ -10,7 +10,7 @@ export class GuildMemberEvents {
   private readonly logger = new Logger(GuildMemberEvents.name);
 
   constructor(
-    @InjectRepository(ActivityEntity) private readonly activityRepository: EntityRepository<ActivityEntity>
+    @InjectRepository(ActivityEntity) private readonly activityRepository: EntityRepository<ActivityEntity>,
   ) {}
 
   @On(Events.GuildMemberRemove)

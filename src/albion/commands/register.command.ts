@@ -48,7 +48,7 @@ export class AlbionRegisterCommand {
       member.id,
       member.guild.id,
       interaction[0].channelId,
-      message
+      message,
     );
 
     // Successful! Success message now within handleRegistration.
@@ -62,7 +62,7 @@ export class AlbionRegisterCommand {
     discordMemberId: string,
     discordMemberGuildId: string,
     discordChannelId: string,
-    message: Message
+    message: Message,
   ) {
     try {
       await this.albionRegistrationService.handleRegistration(
@@ -70,7 +70,7 @@ export class AlbionRegisterCommand {
         server,
         discordMemberId,
         discordMemberGuildId,
-        discordChannelId
+        discordChannelId,
       );
     }
     catch (err) {

@@ -28,7 +28,7 @@ export class AlbionScanningService {
     private readonly config: ConfigService,
     private readonly albionDeregistrationService: AlbionDeregistrationService,
     private readonly albionUtilities: AlbionUtilities,
-    @InjectRepository(AlbionRegistrationsEntity) private readonly albionRegistrationsRepository: EntityRepository<AlbionRegistrationsEntity>
+    @InjectRepository(AlbionRegistrationsEntity) private readonly albionRegistrationsRepository: EntityRepository<AlbionRegistrationsEntity>,
   ) {}
 
   // Pull the list of verified members from the database and check if they're still in the Guild
@@ -37,7 +37,7 @@ export class AlbionScanningService {
   async startScan(
     message: Message,
     dryRun = false,
-    server: AlbionServer = AlbionServer.EUROPE
+    server: AlbionServer = AlbionServer.EUROPE,
   ) {
     const emoji = this.serverEmoji(server);
     const guildId = this.config.get('albion.guildId');
@@ -106,7 +106,7 @@ export class AlbionScanningService {
     guildMembers: AlbionRegistrationsEntity[],
     message: Message,
     tries = 0,
-    server: AlbionServer = AlbionServer.EUROPE
+    server: AlbionServer = AlbionServer.EUROPE,
   ) {
     const emoji = this.serverEmoji(server);
     const characterPromises: Promise<AlbionPlayerInterface>[] = [];
@@ -139,7 +139,7 @@ export class AlbionScanningService {
     characters: AlbionPlayerInterface[],
     message: Message,
     dryRun = false,
-    server: AlbionServer = AlbionServer.EUROPE
+    server: AlbionServer = AlbionServer.EUROPE,
   ): Promise<boolean> {
     const emoji = this.serverEmoji(server);
     const guildId = this.config.get('albion.guildId');
@@ -231,7 +231,7 @@ export class AlbionScanningService {
 
       await this.albionDeregistrationService.deregister(
         message.channel as GuildTextBasedChannel,
-        dto
+        dto,
       );
     }
 
@@ -258,7 +258,7 @@ export class AlbionScanningService {
   async reverseRoleScan(
     message: Message,
     dryRun = false,
-    server: AlbionServer = AlbionServer.EUROPE
+    server: AlbionServer = AlbionServer.EUROPE,
   ) {
     const guildId = this.config.get('albion.guildId');
     const emoji = this.serverEmoji(server);
@@ -289,13 +289,13 @@ export class AlbionScanningService {
         // Force fetch the role to get the correct members
         discordRole = await message.guild.roles.fetch(
           role.discordRoleId,
-          { cache: false, force: true }
+          { cache: false, force: true },
         );
       }
       catch (err) {
         const error = `Reverse Role Scan: Error fetching role ${role.name}! Err: ${err.message}`;
         this.logger.error(error);
-        throw new Error(error);
+        throw new Error(error, { cause: err });
       }
 
       // If for some reason the role didn't throw an error but doesn't exist
@@ -380,7 +380,7 @@ export class AlbionScanningService {
   async roleInconsistencies(
     message: Message,
     dryRun = false,
-    server: AlbionServer = AlbionServer.EUROPE
+    server: AlbionServer = AlbionServer.EUROPE,
   ): Promise<boolean> {
     const suggestions: string[] = [];
     const emoji = this.serverEmoji(server);
@@ -399,7 +399,7 @@ export class AlbionScanningService {
       if (count % 5 === 0) {
         await scanCountMessage.edit(`## ${emoji} Scanning ${guildMembers.length} members for role inconsistencies... [${count}/${guildMembers.length}]`);
       }
-      let discordMember: GuildMember | null = null;
+      let discordMember: GuildMember | null;
 
       try {
         discordMember = await message.guild.members.fetch({ user: member.discordId, force: true });
@@ -450,7 +450,7 @@ export class AlbionScanningService {
 
   async checkRoleInconsistencies(
     discordMember: GuildMember,
-    server: AlbionServer = AlbionServer.EUROPE
+    server: AlbionServer = AlbionServer.EUROPE,
   ): Promise<RoleInconsistencyResult[]> {
     const serverEmoji = this.serverEmoji(server);
     // If the user is excluded from role inconsistency checks, skip them

@@ -334,7 +334,7 @@ describe('AlbionScanningService', () => {
         [mockCharacter],
         mockDiscordMessage,
         false,
-        AlbionServer.EUROPE
+        AlbionServer.EUROPE,
       );
 
       expect(mockDiscordMessage.channel.send).toHaveBeenCalledTimes(3);
@@ -347,7 +347,7 @@ describe('AlbionScanningService', () => {
         {
           character: mockCharacter.Name,
           discordMember: mockDiscordUser.id,
-        }
+        },
       );
     });
 
@@ -380,7 +380,7 @@ describe('AlbionScanningService', () => {
         {
           character: mockCharacter.Name,
           discordMember: mockDiscordUser.id,
-        }
+        },
       );
     });
 
@@ -392,7 +392,7 @@ describe('AlbionScanningService', () => {
         [mockCharacter],
         mockDiscordMessage,
         false,
-        AlbionServer.EUROPE
+        AlbionServer.EUROPE,
       );
 
       expect(mockDiscordMessage.channel.send).toHaveBeenCalledTimes(3);
@@ -403,7 +403,7 @@ describe('AlbionScanningService', () => {
       expect(albionDeregistrationService.deregister).toHaveBeenCalledWith(
         mockDiscordMessage.channel, {
           character: mockCharacter.Name,
-        }
+        },
       );
     });
 
@@ -427,7 +427,7 @@ describe('AlbionScanningService', () => {
         [mockCharacter],
         mockDiscordMessage,
         false,
-        AlbionServer.EUROPE
+        AlbionServer.EUROPE,
       );
       expect(mockDiscordMessage.channel.send).toHaveBeenCalledTimes(3);
       expect(mockDiscordMessage.channel.send).toHaveBeenCalledWith('### 🇪🇺 Scanned 0/1 registered members...');
@@ -437,7 +437,7 @@ describe('AlbionScanningService', () => {
       expect(albionDeregistrationService.deregister).toHaveBeenCalledWith(
         mockDiscordMessage.channel, {
           character: mockCharacter.Name,
-        }
+        },
       );
     });
 
@@ -450,7 +450,7 @@ describe('AlbionScanningService', () => {
         [mockCharacter],
         mockDiscordMessage,
         true, // Dry run flagged here
-        AlbionServer.EUROPE
+        AlbionServer.EUROPE,
       );
       expect(mockDiscordMessage.channel.send).toHaveBeenCalledTimes(3);
       expect(mockDiscordMessage.channel.send).toHaveBeenCalledWith('### 🇪🇺 Scanned 0/1 registered members...');
@@ -467,7 +467,7 @@ describe('AlbionScanningService', () => {
         return {
           ...mockedRole,
           members: {
-            // eslint-disable-next-line max-nested-callbacks
+
             has: jest.fn().mockImplementationOnce(() => true),
           },
         };
@@ -478,7 +478,7 @@ describe('AlbionScanningService', () => {
         [mockCharacter],
         mockDiscordMessage,
         false,
-        AlbionServer.EUROPE
+        AlbionServer.EUROPE,
       );
       expect(mockDiscordMessage.channel.send).toHaveBeenCalledWith('### 🇪🇺 Scanned 0/1 registered members...');
       expect(mockDiscordMessage.channel.send).toHaveBeenCalledWith('## 🇪🇺 🚪 1 leavers detected!');
@@ -489,7 +489,7 @@ describe('AlbionScanningService', () => {
         {
           character: mockCharacter.Name,
           discordMember: mockDiscordUser.id,
-        }
+        },
       );
     });
 
@@ -499,7 +499,7 @@ describe('AlbionScanningService', () => {
         [mockCharacter],
         mockDiscordMessage,
         false,
-        AlbionServer.EUROPE
+        AlbionServer.EUROPE,
       );
       expect(mockDiscordMessage.channel.send).toHaveBeenCalledTimes(2);
       expect(mockDiscordMessage.channel.send).toHaveBeenCalledWith('### 🇪🇺 Scanned 0/1 registered members...');
@@ -509,13 +509,13 @@ describe('AlbionScanningService', () => {
     });
 
     it('should properly correctly update the message every 5 members', async () => {
-      mockAlbionRegistrationsRepository.find = jest.fn().mockResolvedValue(new Array(6).fill(mockRegisteredMember),);
+      mockAlbionRegistrationsRepository.find = jest.fn().mockResolvedValue(new Array(6).fill(mockRegisteredMember));
       mockCharacter.GuildId = TestBootstrapper.mockConfig.albion.guildId;
       await service.removeLeavers(
         new Array(6).fill(mockCharacter),
         mockDiscordMessage,
         false,
-        AlbionServer.EUROPE
+        AlbionServer.EUROPE,
       );
 
       expect(mockDiscordMessage.channel.send).toHaveBeenCalledTimes(2);

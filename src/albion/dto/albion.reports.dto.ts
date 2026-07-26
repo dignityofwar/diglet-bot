@@ -8,7 +8,7 @@ export class AlbionReportsDto {
     required: false,
     type: ParamType.BOOLEAN,
   })
-    fullReport = false;
+  fullReport = false;
   @Param({
     name: 'squire-candidates',
     description:
@@ -16,5 +16,5 @@ export class AlbionReportsDto {
     required: false,
     type: ParamType.BOOLEAN,
   })
-    squireCandidates = false;
+  squireCandidates = false;
 }

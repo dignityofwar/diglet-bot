@@ -184,7 +184,7 @@ describe('JoinerLeaverService', () => {
           rejoinCount: 0,
           createdAt: expect.any(Date),
           updatedAt: expect.any(Date),
-        })
+        }),
       );
 
       expect(joinerLeaverService['logger'].log).toHaveBeenCalledWith(`Recorded leaver ${mockGuildMember.user.tag} (${mockGuildMember.id})`);

@@ -65,7 +65,7 @@ describe('AlbionDeregisterCommand', () => {
 
     expect(albionDeregistrationService.deregister).toHaveBeenCalledWith(
       mockMessage.channel,
-      dto
+      dto,
     );
   });
 
@@ -77,7 +77,7 @@ describe('AlbionDeregisterCommand', () => {
 
     expect(albionDeregistrationService.deregister).toHaveBeenCalledWith(
       mockMessage.channel,
-      mockDto
+      mockDto,
     );
   });
 

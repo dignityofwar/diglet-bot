@@ -26,7 +26,7 @@ export class PS2GameScanningService {
   constructor(
     private readonly censusService: CensusApiService,
     private readonly config: ConfigService,
-    @InjectRepository(PS2MembersEntity) private readonly ps2MembersRepository: EntityRepository<PS2MembersEntity>
+    @InjectRepository(PS2MembersEntity) private readonly ps2MembersRepository: EntityRepository<PS2MembersEntity>,
   ) {
   }
 
@@ -40,7 +40,7 @@ export class PS2GameScanningService {
 
   async gatherCharacters(
     outfitMembers: PS2MembersEntity[],
-    statusMessage: Message
+    statusMessage: Message,
   ): Promise<CensusCharacterWithOutfitInterface[]> {
     const characterPromises = [];
     const length = outfitMembers.length;
@@ -156,11 +156,11 @@ export class PS2GameScanningService {
     characters: CensusCharacterWithOutfitInterface[],
     ps2Members: PS2MembersEntity[],
     message: Message,
-    dryRun = false
+    dryRun = false,
   ) {
     for (const member of ps2Members) {
       const character = characters.find((char) => char.character_id === member.characterId);
-      let discordMember: GuildMember | null = null;
+      let discordMember: GuildMember | null;
       this.logger.log(`Checking ${member.characterName}...`);
 
       // The character for some reason doesn't exist. This may be because of Census Server Errors, therefore we need to skip them this time.
@@ -200,7 +200,7 @@ export class PS2GameScanningService {
   async removeDiscordLeaver(
     member: PS2MembersEntity,
     character: CensusCharacterWithOutfitInterface,
-    dryRun = false
+    dryRun = false,
   ): Promise<void> {
     if (!dryRun) {
       await this.ps2MembersRepository.getEntityManager().removeAndFlush(member);
@@ -218,7 +218,7 @@ export class PS2GameScanningService {
     character: CensusCharacterWithOutfitInterface,
     discordMember: GuildMember,
     message: Message,
-    dryRun = false
+    dryRun = false,
   ): Promise<void> {
     // If a dry run, there is nothing else to do beyond reporting the "change".
     if (dryRun) {
@@ -263,7 +263,7 @@ export class PS2GameScanningService {
 
   async checkForSuggestions(
     outfitMembers: PS2MembersEntity[],
-    message: Message
+    message: Message,
   ) {
     // Check if there are any characters in the outfit that have invalid discord permissions
 

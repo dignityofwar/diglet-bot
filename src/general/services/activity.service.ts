@@ -18,7 +18,7 @@ export class ActivityService {
 
   async removeActivityRecord(
     activityRecord: ActivityEntity,
-    dryRun: boolean
+    dryRun: boolean,
   ): Promise<void> {
     try {
       if (!dryRun) {
@@ -29,7 +29,7 @@ export class ActivityService {
     catch (err) {
       const error = `Error removing activity record for leaver ${activityRecord.discordNickname} (${activityRecord.discordId}). Error: ${err.message}`;
       this.logger.error(error);
-      throw new Error(error);
+      throw new Error(error, { cause: err });
     }
   }
 
@@ -99,7 +99,7 @@ export class ActivityService {
     catch (err) {
       const error = `Error fetching activity records. Error: ${err.message}`;
       this.logger.error(error);
-      throw new Error(error);
+      throw new Error(error, { cause: err });
     }
   }
 
@@ -144,7 +144,7 @@ export class ActivityService {
     catch (err) {
       const error = `Error enumerating activity records. Error: ${err.message}`;
       this.logger.error(error);
-      throw new Error(error);
+      throw new Error(error, { cause: err });
     }
   }
 

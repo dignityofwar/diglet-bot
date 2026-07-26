@@ -9,7 +9,7 @@ export class PS2VerifyManualDto {
     minLength: 3,
     maxLength: 32,
   })
-    character: string;
+  character: string;
   @Param({
     name: 'discord-user',
     description:
@@ -17,14 +17,14 @@ export class PS2VerifyManualDto {
     required: true,
     type: ParamType.USER,
   })
-    discordId: string;
+  discordId: string;
 
-@Param({
-  name: 'remove',
-  description:
+  @Param({
+    name: 'remove',
+    description:
     'Remove verification status instead of adding',
-  required: false,
-  type: ParamType.BOOLEAN,
-})
+    required: false,
+    type: ParamType.BOOLEAN,
+  })
   remove: boolean;
 }

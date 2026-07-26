@@ -25,41 +25,41 @@ export class AlbionRegistrationsEntity extends BaseEntity {
     nullable: false,
   })
   @Index()
-    discordId: string;
+  discordId: string;
 
   @Property({
     nullable: false,
   })
   @Index()
-    characterId: string;
+  characterId: string;
 
   @Property({
     nullable: false,
   })
-    characterName: string;
+  characterName: string;
 
   @Property({
     nullable: false,
   })
-    guildId: AlbionRegistrationsEntityInterface['guildId'];
+  guildId: AlbionRegistrationsEntityInterface['guildId'];
 
   @Property({
     nullable: false,
     default: false,
   })
-    manual = false;
+  manual = false;
 
   @Property({
     nullable: true,
     default: null,
   })
-    manualCreatedByDiscordId: null | string = null;
+  manualCreatedByDiscordId: null | string = null;
 
   @Property({
     nullable: true,
     default: null,
   })
-    manualCreatedByDiscordName: null | string = null;
+  manualCreatedByDiscordName: null | string = null;
 
   constructor(options: AlbionRegistrationsEntityInterface) {
     super();

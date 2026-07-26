@@ -12,7 +12,7 @@ export class RecRolePingService implements OnApplicationBootstrap {
 
   constructor(
     private readonly discordService: DiscordService,
-    private readonly configService: ConfigService
+    private readonly configService: ConfigService,
   ) {}
 
   async onApplicationBootstrap(): Promise<void> {

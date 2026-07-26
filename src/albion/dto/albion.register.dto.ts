@@ -10,7 +10,7 @@ export class AlbionRegisterDto {
     minLength: 3,
     maxLength: 16,
   })
-    character: string;
+  character: string;
 
   // @Choice(AlbionServer)
   // @Param({

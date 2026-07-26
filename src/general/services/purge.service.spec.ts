@@ -557,7 +557,7 @@ DIG Community Staff`;
       expect(service.isPurgable(
         mockMembers.members[0],
         activeMembers,
-        mockRole
+        mockRole,
       )).toBe(false);
     });
     it('should not mark a member as purgable if they are a bot', async () => {
@@ -571,7 +571,7 @@ DIG Community Staff`;
       expect(service.isPurgable(
         mockMembers.members[0],
         activeMembers,
-        mockRole
+        mockRole,
       )).toBe(false);
     });
     it('should not mark a member as purgable if they are freshly joined and not onboarded', async () => {
@@ -585,7 +585,7 @@ DIG Community Staff`;
       expect(service.isPurgable(
         mockMembers.members[0],
         activeMembers,
-        mockRole
+        mockRole,
       )).toBe(false);
     });
     it('should mark someone as purgable if they are inactive', async () => {
@@ -599,7 +599,7 @@ DIG Community Staff`;
       expect(service.isPurgable(
         mockMembers.members[0],
         activeMembers,
-        mockRole
+        mockRole,
       )).toBe(true);
     });
     it('should mark someone as purgable if they are not onboarded and out of grace period', async () => {
@@ -613,7 +613,7 @@ DIG Community Staff`;
       expect(service.isPurgable(
         mockMembers.members[0],
         activeMembers,
-        mockRole
+        mockRole,
       )).toBe(true);
     });
   });
@@ -866,7 +866,7 @@ Note, these numbers will not add up to total numbers, as a member can be in mult
   });
 });
 
-function createMockMember(options: MockMemberOptions, returnCount: number, key = 1): { members: any[], actives: any[]} {
+function createMockMember(options: MockMemberOptions, returnCount: number, key = 1): { members: any[], actives: any[] } {
   // Create a hash of the options object values so the users will always be unique
 
   const members: any[] = [];

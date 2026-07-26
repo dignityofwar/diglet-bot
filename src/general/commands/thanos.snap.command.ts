@@ -20,7 +20,7 @@ export class ThanosSnapCommand {
   @Handler()
   async onThanosSnapCommand(
     @InteractionEvent(SlashCommandPipe) dto: DryRunDto,
-    @EventParams() interaction: ChatInputCommandInteraction[]
+    @EventParams() interaction: ChatInputCommandInteraction[],
   ): Promise<void> {
     this.logger.log('Executing Thanos Snap Command');
     const channel = interaction[0].channel;

@@ -1,5 +1,6 @@
 .git*
 .es*
+eslint.config.*
 .npmrc
 docker-compose.yaml
 README.md

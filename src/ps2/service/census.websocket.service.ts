@@ -20,7 +20,7 @@ export class CensusWebsocketService implements OnModuleInit, OnModuleDestroy {
 
   constructor(
     private readonly config: ConfigService,
-    private readonly eventBus: EventEmitter
+    private readonly eventBus: EventEmitter,
   ) {}
 
   onModuleInit() {

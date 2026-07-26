@@ -9,5 +9,5 @@ export class PS2VerifyDto {
     minLength: 3,
     maxLength: 32,
   })
-    character: string;
+  character: string;
 }

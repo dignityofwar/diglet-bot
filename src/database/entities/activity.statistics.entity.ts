@@ -17,34 +17,34 @@ interface ActivityStatisticsEntityOptions extends BaseEntityOptions {
 @Entity()
 export class ActivityStatisticsEntity extends BaseEntity {
   @Property()
-    totalUsers: number = 0;
+  totalUsers: number = 0;
 
   @Property()
-    inactiveUsers: number = 0;
+  inactiveUsers: number = 0;
 
   @Property()
-    activeUsers90d: number = 0;
+  activeUsers90d: number = 0;
 
   @Property()
-    activeUsers60d: number = 0;
+  activeUsers60d: number = 0;
 
   @Property()
-    activeUsers30d: number = 0;
+  activeUsers30d: number = 0;
 
   @Property()
-    activeUsers14d: number = 0;
+  activeUsers14d: number = 0;
 
   @Property()
-    activeUsers7d: number = 0;
+  activeUsers7d: number = 0;
 
   @Property()
-    activeUsers3d: number = 0;
+  activeUsers3d: number = 0;
 
   @Property()
-    activeUsers2d: number = 0;
+  activeUsers2d: number = 0;
 
   @Property()
-    activeUsers1d: number = 0;
+  activeUsers1d: number = 0;
 
   constructor(options: ActivityStatisticsEntityOptions) {
     super();

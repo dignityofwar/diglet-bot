@@ -70,10 +70,10 @@ export class RoleMetricsService {
 
     // Sort the communityGames by the value
     stat.communityGames = Object.fromEntries(
-      Object.entries(stat.communityGames).sort(([, a], [, b]) => b - a)
+      Object.entries(stat.communityGames).sort(([, a], [, b]) => b - a),
     );
     stat.recGames = Object.fromEntries(
-      Object.entries(stat.recGames).sort(([, a], [, b]) => b - a)
+      Object.entries(stat.recGames).sort(([, a], [, b]) => b - a),
     );
 
     // Since the role metrics are stored as JSON objects, we will have to deconstruct them into legible strings.
@@ -164,7 +164,7 @@ ${recGames}
       member.roles.cache.has(roles.onboardedRole.id) &&
         activeMembers.some(
           activeMember => activeMember.discordId === member.id &&
-          activeMember.lastActivity > generateDateInPast(this.activeDayThreshold)
+          activeMember.lastActivity > generateDateInPast(this.activeDayThreshold),
         )).size;
 
     // Get the community game role counts, using the role name as a key
@@ -176,7 +176,7 @@ ${recGames}
         member.roles.cache.has(role.id) &&
         activeMembers.some(
           activeMember => activeMember.discordId === member.id &&
-          activeMember.lastActivity > generateDateInPast(this.activeDayThreshold)
+          activeMember.lastActivity > generateDateInPast(this.activeDayThreshold),
         )).size;
       return [role.name, size];
     });
@@ -190,7 +190,7 @@ ${recGames}
         member.roles.cache.has(role.id) &&
         activeMembers.some(
           activeMember => activeMember.discordId === member.id &&
-          activeMember.lastActivity > generateDateInPast(this.activeDayThreshold)
+          activeMember.lastActivity > generateDateInPast(this.activeDayThreshold),
         )).size;
       return [role.name, size];
     });

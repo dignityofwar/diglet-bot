@@ -14,7 +14,7 @@ export class AlbionCronService implements OnApplicationBootstrap {
   constructor(
     private readonly discordService: DiscordService,
     private readonly config: ConfigService,
-    private readonly albionScanningService: AlbionScanningService
+    private readonly albionScanningService: AlbionScanningService,
   ) {}
 
   async onApplicationBootstrap(): Promise<void> {

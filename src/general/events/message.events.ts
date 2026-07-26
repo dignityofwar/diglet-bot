@@ -45,7 +45,7 @@ export class MessageEvents {
   async handleMessageReaction(
     message: MessageReaction,
     user: User,
-    type: string
+    type: string,
   ): Promise<void> {
     if (user.bot) {
       return;

@@ -83,7 +83,7 @@ export class PurgeService {
   async startPurge(
     originMessage: Message,
     dryRun = true,
-    interactionMember: GuildMember | null = null
+    interactionMember: GuildMember | null = null,
   ): Promise<void> {
     const statusMessage = await getChannel(originMessage).send('Snapping fingers...');
 
@@ -116,7 +116,7 @@ export class PurgeService {
       await this.kickPurgableMembers(
         originMessage,
         purgables.purgableMembers,
-        dryRun
+        dryRun,
       );
     }
     catch (err) {
@@ -139,7 +139,7 @@ export class PurgeService {
 
   async getPurgableMembers(
     message: Message,
-    dryRun = true
+    dryRun = true,
   ): Promise<PurgableMemberList> {
     let onboardedRole: Role;
     let ps2Role: Role;
@@ -160,7 +160,7 @@ export class PurgeService {
     catch (err) {
       const string = `Preflight checks failed! Err: ${err.message}`;
       this.logger.error(string);
-      throw new Error(string);
+      throw new Error(string, { cause: err });
     }
 
     // 2. Get a list of active members and hydrate their cache.
@@ -268,7 +268,7 @@ export class PurgeService {
       }
       const guildMember = await this.discordService.getGuildMember(
         message.guild.id,
-        activeMember.discordId
+        activeMember.discordId,
       );
 
       // If the member is not found, remove their activity record as they're no longer on the server as it's pointless to keep it.
@@ -289,7 +289,7 @@ export class PurgeService {
       }
       activeMembers.set(
         activeMember.discordId,
-        guildMember
+        guildMember,
       );
     }
 
@@ -332,7 +332,7 @@ export class PurgeService {
   async kickPurgableMembers(
     message: Message,
     purgableMembers: Collection<string, GuildMember>,
-    dryRun = true
+    dryRun = true,
   ): Promise<void> {
     await getChannel(message).send(`Kicking ${purgableMembers.size} purgable members...`);
     let lastKickedMessage = await getChannel(message).send('Kicking started...');
