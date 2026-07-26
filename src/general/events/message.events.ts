@@ -35,7 +35,11 @@ export class MessageEvents {
     this.logger.verbose(`Message ${type} event detected from: ${name}`);
 
     await this.databaseService.updateActivity(message.member);
-    await this.recRolePingService.onMessage(message);
+
+    // Create only, otherwise edits and deletions re-send the reminder.
+    if (type === 'create') {
+      await this.recRolePingService.onMessage(message);
+    }
   }
 
   async handleMessageReaction(
