@@ -19,7 +19,8 @@ jobs:
       - name: Checkout source code
         uses: actions/checkout@v6
         with:
-          fetch-depth: 2
+          # Full history + tags: the changelog rollup diffs this release's tag against the previous one.
+          fetch-depth: 0
 
       # Needed as when a badge is updated, checkout for some reason won't pull it in
       - name: Ensure the very latest commit has been pulled
@@ -35,9 +36,19 @@ jobs:
         with:
           target-branch: main
 
+      # GitHub's own generated notes only list merged pull requests, so anything pushed straight to
+      # main left the release body as nothing but a compare link. This rolls up every conventional
+      # commit since the last tag - PR or direct push - and the generated notes get appended below it.
+      - name: Build changelog rollup
+        run: |
+          git fetch --tags --force origin
+          ./scripts/build-release-notes.sh "${{ steps.version.outputs.newTag }}" > release-notes.md
+          cat release-notes.md
+
       - name: Create new GitHub Release
         uses: ncipollo/release-action@v1.21.0
         with:
           tag: ${{ steps.version.outputs.newTag }}
+          bodyFile: release-notes.md
           generateReleaseNotes: true
           makeLatest: true
