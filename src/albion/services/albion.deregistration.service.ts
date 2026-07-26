@@ -56,7 +56,7 @@ export class AlbionDeregistrationService {
       discordMember = await this.discordService.getGuildMember(
         responseChannel.guild.id,
         registration.discordId,
-        true
+        true,
       );
     }
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -79,7 +79,7 @@ export class AlbionDeregistrationService {
 
   async stripRegistration(
     registration: AlbionRegistrationsEntity,
-    responseChannel: GuildTextBasedChannel
+    responseChannel: GuildTextBasedChannel,
   ): Promise<void> {
     // Remove the registration record from the database
     try {
@@ -93,7 +93,7 @@ export class AlbionDeregistrationService {
 
   async stripRoles(
     discordMember: GuildMember,
-    responseChannel: GuildTextBasedChannel
+    responseChannel: GuildTextBasedChannel,
   ): Promise<void> {
     // List all the albion roles to remove.
     const roleMaps: AlbionRoleMapInterface = this.config.get('albion.roleMap');

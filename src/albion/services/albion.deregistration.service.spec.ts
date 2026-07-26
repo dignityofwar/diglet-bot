@@ -123,7 +123,7 @@ describe('AlbionDeregistrationService', () => {
       expect(discordService.getGuildMember).toHaveBeenCalledWith(
         mockChannel.guild.id,
         mockRegistration.discordId,
-        true
+        true,
       );
       expect(stripRegistrationSpy).toHaveBeenCalledWith(mockRegistration, mockChannel);
       expect(stripRolesSpy).toHaveBeenCalledWith(mockDiscordMember, mockChannel);
@@ -136,7 +136,7 @@ describe('AlbionDeregistrationService', () => {
       await service.deregister(mockChannel, dto);
 
       expect(mockChannel.send).toHaveBeenCalledWith(
-        `❌ No registration found for Discord User ID "${mockDiscordMember.id}"!`
+        `❌ No registration found for Discord User ID "${mockDiscordMember.id}"!`,
       );
       expect(stripRegistrationSpy).not.toHaveBeenCalled();
       expect(stripRolesSpy).not.toHaveBeenCalled();
@@ -157,7 +157,7 @@ describe('AlbionDeregistrationService', () => {
       expect(discordService.getGuildMember).toHaveBeenCalledWith(
         mockChannel.guild.id,
         mockRegistration.discordId,
-        true
+        true,
       );
       expect(stripRegistrationSpy).toHaveBeenCalledWith(mockRegistration, mockChannel);
       expect(stripRolesSpy).toHaveBeenCalledWith(mockDiscordMember, mockChannel);
@@ -170,7 +170,7 @@ describe('AlbionDeregistrationService', () => {
       await service.deregister(mockChannel, dto);
 
       expect(mockChannel.send).toHaveBeenCalledWith(
-        '❌ No registration found for character "MissingChar"!'
+        '❌ No registration found for character "MissingChar"!',
       );
       expect(stripRegistrationSpy).not.toHaveBeenCalled();
       expect(stripRolesSpy).not.toHaveBeenCalled();
@@ -186,7 +186,7 @@ describe('AlbionDeregistrationService', () => {
       expect(stripRegistrationSpy).toHaveBeenCalledWith(mockRegistration, mockChannel);
       expect(stripRolesSpy).not.toHaveBeenCalled();
       expect(mockChannel.send).toHaveBeenCalledWith(
-        expect.stringContaining('⚠️ Discord Member with ID')
+        expect.stringContaining('⚠️ Discord Member with ID'),
       );
     });
   });
@@ -201,7 +201,7 @@ describe('AlbionDeregistrationService', () => {
 
       expect(removeAndFlushSpy).toHaveBeenCalledWith(mockRegistration);
       expect(mockChannel.send).toHaveBeenCalledWith(
-        `Successfully deregistered Character ${mockRegistration.characterName}.`
+        `Successfully deregistered Character ${mockRegistration.characterName}.`,
       );
     });
 
@@ -214,7 +214,7 @@ describe('AlbionDeregistrationService', () => {
       await service.stripRegistration(mockRegistration, mockChannel);
 
       expect(mockChannel.send).toHaveBeenCalledWith(
-        `ERROR: Failed to deregister character "${mockRegistration.characterName}" (${mockRegistration.characterId}) from registration database!\nError: "${error.message}". Pinging <@${TestBootstrapper.mockConfig.discord.devUserId}>!`
+        `ERROR: Failed to deregister character "${mockRegistration.characterName}" (${mockRegistration.characterId}) from registration database!\nError: "${error.message}". Pinging <@${TestBootstrapper.mockConfig.discord.devUserId}>!`,
       );
     });
   });
@@ -228,7 +228,7 @@ describe('AlbionDeregistrationService', () => {
     beforeEach(() => {
       jest.clearAllMocks();
       discordService.getRoleViaMember.mockImplementation(async (_member: any, roleId: string) => {
-        // eslint-disable-next-line max-nested-callbacks
+
         const found = mockRoles.find(r => r.id === roleId);
         return {
           ...found,
@@ -247,7 +247,7 @@ describe('AlbionDeregistrationService', () => {
 
     it('should skip roles not present on member', async () => {
       discordService.getRoleViaMember.mockImplementation(async (_m: any, roleId: string) => {
-        // eslint-disable-next-line max-nested-callbacks
+
         const found = mockRoles.find(r => r.id === roleId);
         return {
           ...found,
@@ -271,7 +271,7 @@ describe('AlbionDeregistrationService', () => {
       await service.stripRoles(mockDiscordMember, mockChannel);
 
       expect(mockChannel.send).toHaveBeenCalledWith(
-        `ERROR: Unable to remove role "${mockRoles[0].name}" from ${mockDiscordMember.user.username} (${mockDiscordMember.id}). Err: "Discord says no". Pinging <@${TestBootstrapper.mockConfig.discord.devUserId}>!`
+        `ERROR: Unable to remove role "${mockRoles[0].name}" from ${mockDiscordMember.user.username} (${mockDiscordMember.id}). Err: "Discord says no". Pinging <@${TestBootstrapper.mockConfig.discord.devUserId}>!`,
       );
     });
   });

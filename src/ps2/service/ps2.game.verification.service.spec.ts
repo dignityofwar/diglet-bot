@@ -27,7 +27,7 @@ describe('PS2GameVerificationService', () => {
   let mockDiscordUser: any;
   let mockDiscordMessage: any;
   let mockPS2Character: CensusCharacterWithOutfitInterface;
-  let mockEntityManager: jest.Mocked<EntityManager>;
+  const mockEntityManager = { flush: jest.fn() } as unknown as jest.Mocked<EntityManager>;
   let mockDeathEvent: any;
 
   // Spies consts

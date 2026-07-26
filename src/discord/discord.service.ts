@@ -29,7 +29,7 @@ export class DiscordService {
     }
     catch (err) {
       this.logger.error(`Failed to fetch guild with ID ${guildId}`, err);
-      throw new Error(`Failed to fetch guild with ID ${guildId}. Err: ${err.message}`);
+      throw new Error(`Failed to fetch guild with ID ${guildId}. Err: ${err.message}`, { cause: err });
     }
 
     if (!guild) {
@@ -44,7 +44,7 @@ export class DiscordService {
       return await this.discordClient.channels.fetch(channelId) as TextChannel;
     }
     catch (err) {
-      throw new Error(`Failed to fetch channel with ID ${channelId}! Error: ${err.message}.`);
+      throw new Error(`Failed to fetch channel with ID ${channelId}! Error: ${err.message}.`, { cause: err });
     }
   }
 
@@ -52,7 +52,7 @@ export class DiscordService {
   async getGuildMember(
     guildId: string,
     memberId: string,
-    forceFetch = false
+    forceFetch = false,
   ): Promise<GuildMember> {
     const server = await this.getGuild(guildId);
 
@@ -64,7 +64,7 @@ export class DiscordService {
     catch (err) {
       const error = `Failed to fetch member with ID ${memberId}. Err: ${err.message}`;
       this.logger.error(error, err);
-      throw new Error(error);
+      throw new Error(error, { cause: err });
     }
 
     if (!member) {
@@ -84,7 +84,7 @@ export class DiscordService {
       role = await this.discordClient.guilds.cache.get(serverId).roles.fetch(roleId);
     }
     catch (err) {
-      throw new Error(`Failed to fetch role with ID ${roleId}. Err: ${err.message}`);
+      throw new Error(`Failed to fetch role with ID ${roleId}. Err: ${err.message}`, { cause: err });
     }
 
     if (!role) {
@@ -151,7 +151,7 @@ export class DiscordService {
     catch (err) {
       const error = `Failed to fetch roles from guild ${guild.id}. Error: ${err.message}`;
       this.logger.error(error);
-      throw new Error(error);
+      throw new Error(error, { cause: err });
     }
   }
 }

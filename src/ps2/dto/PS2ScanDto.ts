@@ -8,5 +8,5 @@ export class PS2ScanDto {
     required: false,
     type: ParamType.BOOLEAN,
   })
-    dryRun = false;
+  dryRun = false;
 }

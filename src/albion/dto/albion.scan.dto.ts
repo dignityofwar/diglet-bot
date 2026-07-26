@@ -9,7 +9,7 @@ export class AlbionScanDto {
       'Which server to scan for? Americas or Europe?',
     required: true,
   })
-    server: AlbionServer;
+  server: AlbionServer;
   @Param({
     name: 'dry-run',
     description:
@@ -17,5 +17,5 @@ export class AlbionScanDto {
     required: false,
     type: ParamType.BOOLEAN,
   })
-    dryRun = false;
+  dryRun = false;
 }

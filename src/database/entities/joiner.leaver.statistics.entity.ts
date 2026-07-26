@@ -14,19 +14,19 @@ interface JoinerLeaverStatisticsEntityOptions {
 @Entity()
 export class JoinerLeaverStatisticsEntity extends BaseEntity {
   @Property()
-    joiners: number = 0;
+  joiners: number = 0;
 
   @Property()
-    leavers: number = 0;
+  leavers: number = 0;
 
   @Property()
-    rejoiners: number = 0;
+  rejoiners: number = 0;
 
   @Property()
-    earlyLeavers: number = 0;
+  earlyLeavers: number = 0;
 
   @Property()
-    avgTimeToLeave: string = '0d 0h 0m';
+  avgTimeToLeave: string = '0d 0h 0m';
 
   constructor(options: JoinerLeaverStatisticsEntityOptions) {
     super();

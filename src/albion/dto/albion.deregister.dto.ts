@@ -10,14 +10,14 @@ export class AlbionDeregisterDto {
     maxLength: 16,
     type: ParamType.STRING,
   })
-    character?: string;
+  character?: string;
 
-   @Param({
-     name: 'discord-member',
-     description:
+  @Param({
+    name: 'discord-member',
+    description:
       'Discord User to deregister.',
-     required: false,
-     type: ParamType.USER,
-   })
-     discordMember?: string;
+    required: false,
+    type: ParamType.USER,
+  })
+  discordMember?: string;
 }

@@ -14,10 +14,10 @@ export class PS2VerificationAttemptEntity extends BaseEntity {
   @Property()
   @Unique()
   @Index()
-    characterId: string;
+  characterId: string;
 
   @Property()
-    characterName: string;
+  characterName: string;
 
   constructor(options: PS2VerificationAttemptEntityOptions) {
     super();

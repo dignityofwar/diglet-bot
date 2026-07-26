@@ -25,7 +25,7 @@ export interface RegistrationData {
 
 type RegistrationOptions = {
   queueValidation?: boolean
-}
+};
 
 @Injectable()
 export class AlbionRegistrationService implements OnApplicationBootstrap {

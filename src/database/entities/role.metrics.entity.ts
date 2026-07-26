@@ -16,13 +16,13 @@ interface RoleMetricsEntityOptions {
 @Entity()
 export class RoleMetricsEntity extends BaseEntity {
   @Property()
-    onboarded: number = 0;
+  onboarded: number = 0;
 
   @Property({ type: 'json', nullable: true })
-    communityGames: GameMetrics = {};
+  communityGames: GameMetrics = {};
 
   @Property({ type: 'json', nullable: true })
-    recGames: GameMetrics = {};
+  recGames: GameMetrics = {};
 
   constructor(options: RoleMetricsEntityOptions) {
     super();

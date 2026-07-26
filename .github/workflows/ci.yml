@@ -9,7 +9,7 @@ on:
       - 'src/**'                   # Source code directory
       - 'package.json'             # Node.js dependencies and scripts
       - 'pnpm-lock.yaml'           # Lock file for Node.js dependencies
-      - '.eslint*'                 # ESLint configuration
+      - 'eslint.config.*'          # ESLint configuration
       - 'Dockerfile'               # Dockerfile
       - 'docker-compose.yml'       # Docker Compose file
       - 'entrypoint.sh'            # Entrypoint script for Docker container

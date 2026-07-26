@@ -34,7 +34,7 @@ Always reference these instructions first and fallback to search or bash command
 ### Code Quality
 - Run linter: `pnpm lint` -- takes ~6 seconds. Fixes issues automatically.
 - Run formatter: `pnpm format` -- takes ~2 seconds. Formats all TypeScript files.
-- **CRITICAL**: Add `provisioning` to `.eslintignore` if linting fails with permission errors on database files.
+- **CRITICAL**: Add `provisioning` to the `globalIgnores` list in `eslint.config.mjs` if linting fails with permission errors on database files.
 
 ## Validation
 
@@ -113,7 +113,7 @@ Key variables in `digletbot.env`:
 
 ### Troubleshooting
 - **Migration failures**: Run `pnpm build` first to compile TypeScript for MikroORM CLI.
-- **Linting permission errors**: Add `provisioning` to `.eslintignore`.
+- **Linting permission errors**: Add `provisioning` to the `globalIgnores` list in `eslint.config.mjs`.
 - **Database connection issues**: Check Docker container status and DB_HOST setting.
 - **Test performance on WSL**: Use `pnpm test:wsl` with reduced worker count.
 - **Docker issues**: Ensure Docker daemon is running with `docker info`.

@@ -21,10 +21,10 @@ describe('PS2GameScanningService', () => {
   let mockCensusService: CensusApiService;
   let mockDiscordMessage: any;
 
-  let mockEntityManager: jest.Mocked<EntityManager>;
+  const mockEntityManager = { flush: jest.fn() } as unknown as jest.Mocked<EntityManager>;
   let mockPS2Character: any;
   const mockPS2MemberEntity = TestBootstrapper.getMockPS2MemberEntity(
-    mockCharacterId
+    mockCharacterId,
   );
   let mockPS2MembersRepository: jest.Mocked<any>;
 
@@ -115,7 +115,7 @@ describe('PS2GameScanningService', () => {
 
       const result = await service.gatherCharacters(
         [mockPS2Entity],
-        mockDiscordMessage
+        mockDiscordMessage,
       );
 
       expect(mockDiscordMessage.channel.send).toHaveBeenCalledWith(`❌ ${error}`);
@@ -143,7 +143,7 @@ describe('PS2GameScanningService', () => {
 
       const result = await service.gatherCharacters(
         [mockPS2Entity, mockPS2Entity],
-        mockDiscordMessage
+        mockDiscordMessage,
       );
 
       expect(mockDiscordMessage.channel.send).toHaveBeenCalledWith(`❌ ${error}`);
@@ -214,7 +214,7 @@ describe('PS2GameScanningService', () => {
       };
       service['changesMap'] = new Map();
       service['changesMap'].set(
-        mockPS2Character.character_id, change
+        mockPS2Character.character_id, change,
       );
       await service.startScan(mockDiscordMessage);
 
@@ -233,7 +233,7 @@ describe('PS2GameScanningService', () => {
       };
       service['suggestionsMap'] = new Map();
       service['suggestionsMap'].set(
-        mockPS2Character.character_id, [suggestion, suggestion]
+        mockPS2Character.character_id, [suggestion, suggestion],
       );
       service['suggestionsCount'] = 2;
       await service.startScan(mockDiscordMessage);
@@ -256,7 +256,7 @@ describe('PS2GameScanningService', () => {
         [],
         [mockPS2MemberEntity],
         mockDiscordMessage,
-        false
+        false,
       );
 
       expect(mockDiscordMessage.channel.send).toHaveBeenCalledWith(`❌ Character data for **${mockPS2MemberEntity.characterName}** (${mockPS2MemberEntity.characterId}) did not exist when attempting to verify their membership. Skipping. Pinging <@474839309484>!`);
@@ -269,7 +269,7 @@ describe('PS2GameScanningService', () => {
         [mockPS2Character],
         [mockPS2MemberEntity],
         mockDiscordMessage,
-        false
+        false,
       );
 
       expect(service.removeDiscordLeaver).not.toHaveBeenCalled();
@@ -286,7 +286,7 @@ describe('PS2GameScanningService', () => {
         [mockPS2Character2],
         [mockPS2MemberEntity, mockPS2MemberEntity2],
         mockDiscordMessage,
-        false
+        false,
       );
 
       expect(mockDiscordMessage.channel.send).toHaveBeenCalledWith(`❌ Character data for **${mockPS2MemberEntity.characterName}** (${mockPS2MemberEntity.characterId}) did not exist when attempting to verify their membership. Skipping. Pinging <@${mockDevUserId}>!`);
@@ -296,7 +296,7 @@ describe('PS2GameScanningService', () => {
         mockPS2Character2,
         mockDiscordMember,
         mockDiscordMessage,
-        false
+        false,
       );
     });
 
@@ -310,7 +310,7 @@ describe('PS2GameScanningService', () => {
         [mockPS2Character],
         [mockPS2MemberEntity],
         mockDiscordMessage,
-        false
+        false,
       );
 
       expect(service.removeDiscordLeaver).not.toHaveBeenCalled();
@@ -319,7 +319,7 @@ describe('PS2GameScanningService', () => {
         mockPS2Character,
         mockDiscordMember,
         mockDiscordMessage,
-        false
+        false,
       );
     });
 
@@ -334,7 +334,7 @@ describe('PS2GameScanningService', () => {
         [mockPS2Character],
         [mockPS2MemberEntity],
         mockDiscordMessage,
-        false
+        false,
       );
 
       expect(service.removeDiscordLeaver).not.toHaveBeenCalled();
@@ -343,7 +343,7 @@ describe('PS2GameScanningService', () => {
         mockPS2Character,
         mockDiscordMember,
         mockDiscordMessage,
-        false
+        false,
       );
     });
 
@@ -354,13 +354,13 @@ describe('PS2GameScanningService', () => {
         [mockPS2Character],
         [mockPS2MemberEntity],
         mockDiscordMessage,
-        false
+        false,
       );
 
       expect(service.removeDiscordLeaver).toHaveBeenCalledWith(
         mockPS2MemberEntity,
         mockPS2Character,
-        false
+        false,
       );
       expect(service.removeOutfitLeaver).not.toHaveBeenCalled();
     });
@@ -373,7 +373,7 @@ describe('PS2GameScanningService', () => {
       await service.removeDiscordLeaver(
         mockPS2MemberEntity,
         mockPS2Character,
-        false
+        false,
       );
 
       expect(mockPS2MembersRepository.getEntityManager().removeAndFlush).toHaveBeenCalledWith(mockPS2MemberEntity);
@@ -383,7 +383,7 @@ describe('PS2GameScanningService', () => {
           character: mockPS2Character,
           discordMember: null,
           change: `- 🫥️ Discord member for Character **${mockPS2Character.name.first}** has left the DIG Discord server.`,
-        }
+        },
       );
     });
     it('should not remove the discord leaver when in dry run', async () => {
@@ -392,7 +392,7 @@ describe('PS2GameScanningService', () => {
       await service.removeDiscordLeaver(
         mockPS2MemberEntity,
         mockPS2Character,
-        true
+        true,
       );
 
       expect(mockPS2MembersRepository.getEntityManager().removeAndFlush).toHaveBeenCalledTimes(0);
@@ -402,7 +402,7 @@ describe('PS2GameScanningService', () => {
           character: mockPS2Character,
           discordMember: null,
           change: `- 🫥️ Discord member for Character **${mockPS2Character.name.first}** has left the DIG Discord server.`,
-        }
+        },
       );
     });
   });
@@ -418,7 +418,7 @@ describe('PS2GameScanningService', () => {
         mockPS2Character,
         mockDiscordMember,
         mockDiscordMessage,
-        true
+        true,
       );
 
       expect(mockPS2MembersRepository.getEntityManager().removeAndFlush).toHaveBeenCalledTimes(0);
@@ -428,7 +428,7 @@ describe('PS2GameScanningService', () => {
           character: mockPS2Character,
           discordMember: mockDiscordMember,
           change: `- 👋 <@${mockDiscordMember.id}>'s character **${mockPS2Character.name.first}** has left the outfit. Their roles and verification status have been stripped.`,
-        }
+        },
       );
     });
 
@@ -455,7 +455,7 @@ describe('PS2GameScanningService', () => {
         mockPS2Character,
         mockDiscordMember,
         mockDiscordMessage,
-        false
+        false,
       );
 
       // Asset ranks were stripped
@@ -473,7 +473,7 @@ describe('PS2GameScanningService', () => {
           character: mockPS2Character,
           discordMember: mockDiscordMember,
           change: `- 👋 <@${mockDiscordMember.id}>'s character **${mockPS2Character.name.first}** has left the outfit. Their roles and verification status have been stripped.`,
-        }
+        },
       );
     });
 
@@ -496,12 +496,12 @@ describe('PS2GameScanningService', () => {
         mockPS2Character,
         mockDiscordMember,
         mockDiscordMessage,
-        false
+        false,
       );
 
       expect(mockDiscordMember.roles.remove).toHaveBeenCalledWith(mockVerifiedRank.discordRoleId);
       expect(mockDiscordMessage.channel.send).toHaveBeenCalledWith(
-        `ERROR: Unable to remove role "${mockDiscordRole.name}" from ${mockPS2Character.name.first} (${mockPS2Character.character_id}).\nError: "Discord says no".\nPinging <@${TestBootstrapper.mockConfig.discord.devUserId}>!`
+        `ERROR: Unable to remove role "${mockDiscordRole.name}" from ${mockPS2Character.name.first} (${mockPS2Character.character_id}).\nError: "Discord says no".\nPinging <@${TestBootstrapper.mockConfig.discord.devUserId}>!`,
       );
     });
   });

@@ -80,7 +80,7 @@ export class TestBootstrapper {
 
   static getMockRepositoryInjected(
     entity: any,
-    entityManagerOverrides?: Partial<EntityManagerMock>
+    entityManagerOverrides?: Partial<EntityManagerMock>,
   ) {
     const defaultEntityManagerMock: EntityManagerMock = {
       persistAndFlush: jest.fn().mockResolvedValue(true),
@@ -305,7 +305,7 @@ export class TestBootstrapper {
   }
 
   static getMockAlbionCharacter(
-    server: AlbionServer = AlbionServer.EUROPE
+    server: AlbionServer = AlbionServer.EUROPE,
   ) {
     return {
       Id: 'clhoV9OdRm-5BuYQYZBT_Q',
@@ -345,7 +345,7 @@ export class TestBootstrapper {
   static getMockPS2MemberEntity(
     characterId = '123456',
     characterName = 'MrBojangles',
-    discordMemberId = '123456'
+    discordMemberId = '123456',
   ): PS2MembersEntity {
     return {
       id: 1,

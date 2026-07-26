@@ -11,7 +11,7 @@ import { Logger } from '@nestjs/common';
 export class PingCommand {
   private readonly logger = new Logger(PingCommand.name);
   constructor(
-    private readonly config: ConfigService
+    private readonly config: ConfigService,
   ) {}
   @Handler()
   async onPingCommand(interaction: ChatInputCommandInteraction): Promise<void> {

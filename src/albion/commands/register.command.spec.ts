@@ -89,7 +89,7 @@ describe('AlbionRegisterCommand', () => {
         mockDiscordUser.id,
         mockDiscordUser.guild.id,
         mockDiscordInteraction[0].channelId,
-        mockDiscordMessage
+        mockDiscordMessage,
       );
 
       expect(albionRegistrationService.handleRegistration).toHaveBeenCalledWith(
@@ -97,7 +97,7 @@ describe('AlbionRegisterCommand', () => {
         AlbionServer.EUROPE,
         mockDiscordUser.id,
         mockDiscordUser.guild.id,
-        mockDiscordInteraction[0].channelId
+        mockDiscordInteraction[0].channelId,
       );
       expect(mockDiscordMessage.delete).toHaveBeenCalled();
       //       expect(mockDiscordMessage.channel.send).toHaveBeenLastCalledWith({
@@ -117,7 +117,7 @@ describe('AlbionRegisterCommand', () => {
         mockDiscordUser.id,
         mockDiscordUser.guild.id,
         mockDiscordInteraction[0].channelId,
-        mockDiscordMessage
+        mockDiscordMessage,
       );
 
       expect(albionRegistrationService.handleRegistration).toHaveBeenCalledWith(
@@ -125,7 +125,7 @@ describe('AlbionRegisterCommand', () => {
         AlbionServer.EUROPE,
         mockDiscordUser.id,
         mockDiscordUser.guild.id,
-        mockDiscordInteraction[0].channelId
+        mockDiscordInteraction[0].channelId,
       );
       expect(mockDiscordMessage.channel.send).toHaveBeenCalledWith(`⛔️ **ERROR:** ${errorMessage}`);
       expect(mockDiscordMessage.delete).toHaveBeenCalled();

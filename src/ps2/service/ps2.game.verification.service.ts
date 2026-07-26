@@ -36,7 +36,7 @@ export class PS2GameVerificationService implements OnApplicationBootstrap {
     private readonly censusWebsocketService: CensusWebsocketService,
     private readonly eventBus: EventEmitter,
     @InjectRepository(PS2VerificationAttemptEntity) private readonly ps2VerificationAttemptRepository: EntityRepository<PS2VerificationAttemptEntity>,
-    @InjectRepository(PS2MembersEntity) private readonly ps2MembersRepository: EntityRepository<PS2MembersEntity>
+    @InjectRepository(PS2MembersEntity) private readonly ps2MembersRepository: EntityRepository<PS2MembersEntity>,
   ) {
   }
 
@@ -104,7 +104,7 @@ export class PS2GameVerificationService implements OnApplicationBootstrap {
       {
         characterId: character.character_id,
         characterName: character.name.first,
-      }
+      },
     );
     await this.ps2VerificationAttemptRepository.getEntityManager().persistAndFlush(verificationAttemptEntity);
 
@@ -137,7 +137,7 @@ export class PS2GameVerificationService implements OnApplicationBootstrap {
   public async forceAdd(
     character: CensusCharacterWithOutfitInterface,
     targetMember: GuildMember,
-    createdByMember: GuildMember
+    createdByMember: GuildMember,
   ) {
     await this.applyDiscordChanges(character, targetMember);
 
@@ -163,7 +163,7 @@ export class PS2GameVerificationService implements OnApplicationBootstrap {
   public async forceRemove(
     character: CensusCharacterWithOutfitInterface,
     targetMember: GuildMember,
-    createdByMember: GuildMember
+    createdByMember: GuildMember,
   ) {
     await this.applyDiscordChanges(character, targetMember, true);
 

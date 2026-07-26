@@ -8,5 +8,5 @@ export class DryRunDto {
     required: false,
     type: ParamType.BOOLEAN,
   })
-    dryRun = true;
+  dryRun = true;
 }

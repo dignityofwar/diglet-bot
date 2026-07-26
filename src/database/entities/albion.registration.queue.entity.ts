@@ -30,40 +30,40 @@ export interface AlbionRegistrationQueueEntityInterface {
 export class AlbionRegistrationQueueEntity extends BaseEntity {
   @Property({ nullable: false })
   @Index()
-    guildId: string;
+  guildId: string;
 
   @Property({ nullable: false })
   @Index()
-    discordGuildId: string;
+  discordGuildId: string;
 
   @Property({ nullable: false })
-    discordChannelId: string;
+  discordChannelId: string;
 
   @Property({ nullable: false })
   @Index()
-    discordId: string;
+  discordId: string;
 
   @Property({ nullable: false })
-    characterName: string;
+  characterName: string;
 
   @Enum(() => AlbionServer)
   @Property({ nullable: false })
-    server: AlbionServer;
+  server: AlbionServer;
 
   @Enum(() => AlbionRegistrationQueueStatus)
   @Property({ nullable: false, default: AlbionRegistrationQueueStatus.PENDING })
   @Index()
-    status: AlbionRegistrationQueueStatus = AlbionRegistrationQueueStatus.PENDING;
+  status: AlbionRegistrationQueueStatus = AlbionRegistrationQueueStatus.PENDING;
 
   @Property({ nullable: false, default: 0 })
-    attemptCount = 0;
+  attemptCount = 0;
 
   @Property({ nullable: false })
   @Index()
-    expiresAt: Date;
+  expiresAt: Date;
 
   @Property({ nullable: true, default: null, length: 2000 })
-    lastError: null | string = null;
+  lastError: null | string = null;
 
   constructor(options: AlbionRegistrationQueueEntityInterface) {
     super();
