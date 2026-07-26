@@ -1,11 +1,23 @@
-# To get started with Dependabot version updates, you'll need to specify which
-# package ecosystems to update and where the package manifests are located.
-# Please see the documentation for all configuration options:
-# https://docs.github.com/code-security/dependabot/dependabot-version-updates/configuration-options-for-the-dependabot.yml-file
+# Renovate (see renovate.json) owns dependency version updates for this repo. Dependabot is kept
+# only for GitHub's security advisories, which it raises regardless of the config below.
+#
+# Why version updates are off here:
+#   - Renovate and Dependabot were both raising PRs for the same packages, so every bump arrived
+#     twice and the two bots' PRs went stale against each other.
+#   - Dependabot PRs cannot pass CI in this repo anyway: they run without access to repository
+#     secrets, so the SonarCloud step fails with "Not authorized ... check the 'SONAR_TOKEN'"
+#     on every single one.
+#   - Renovate carries the rules that matter here (the MikroORM sibling grouping, the TypeScript
+#     and @types/node caps); Dependabot has no view of them and would happily propose past them.
+#
+# `open-pull-requests-limit: 0` is GitHub's documented way to disable version-update PRs while
+# leaving security updates untouched:
+# https://docs.github.com/code-security/dependabot/dependabot-version-updates/configuration-options-for-the-dependabot.yml-file#open-pull-requests-limit
 
 version: 2
 updates:
-  - package-ecosystem: "npm" # See documentation for possible values
-    directory: "/" # Location of package manifests
+  - package-ecosystem: "npm"
+    directory: "/"
     schedule:
       interval: "weekly"
+    open-pull-requests-limit: 0
