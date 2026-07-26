@@ -29,6 +29,20 @@
       "minimumReleaseAge": "7 days"
     },
     {
+      "description": "TypeScript 7 is the native compiler rewrite, and typescript-eslint refuses to load against it (typescript-eslint/typescript-eslint#10940), so `pnpm lint` dies before it reaches a single rule. Hold at 6.x until upstream ships support; lifting this cap is a deliberate decision, not a bot's.",
+      "matchPackageNames": [
+        "typescript"
+      ],
+      "allowedVersions": "<7"
+    },
+    {
+      "description": "@types/node tracks the runtime, which engines pins to Node 24. Types ahead of the runtime typecheck against APIs that do not exist at boot. Raise this together with the engines range and the Dockerfile base image.",
+      "matchPackageNames": [
+        "@types/node"
+      ],
+      "allowedVersions": "<25"
+    },
+    {
       "description": "Automerge linters and formatters",
       "matchDepTypes": [
         "devDependencies"
