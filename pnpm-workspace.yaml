@@ -1,0 +1,8 @@
+# These packages' install scripts are deliberately not run: @nestjs/core's is an OpenCollective
+# donation banner, and the other two only *check* that a prebuilt native binary is present — the
+# binaries ship in the published tarballs. The production image installs with --ignore-scripts
+# anyway, so allowing them here would only diverge CI from what actually ships.
+allowBuilds:
+  '@nestjs/core': false
+  '@sentry-internal/node-cpu-profiler': false
+  unrs-resolver: false
