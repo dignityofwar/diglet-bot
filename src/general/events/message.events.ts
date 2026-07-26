@@ -35,7 +35,12 @@ export class MessageEvents {
     this.logger.verbose(`Message ${type} event detected from: ${name}`);
 
     await this.databaseService.updateActivity(message.member);
-    await this.recRolePingService.onMessage(message);
+
+    // Only new messages should trigger the rec role ping reminder. Edits and deletions of a message
+    // that mentions a rec role would otherwise re-send the reminder every time.
+    if (type === 'create') {
+      await this.recRolePingService.onMessage(message);
+    }
   }
 
   async handleMessageReaction(

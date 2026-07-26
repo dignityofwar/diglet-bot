@@ -59,6 +59,20 @@ describe('MessageEvents', () => {
       expect(recRolePingService.onMessage).toHaveBeenCalledWith(mockMessage);
     });
 
+    it('should not trigger the rec role ping reminder for edited messages', async () => {
+      await messageEvents.handleMessageEvent(mockMessage, 'update');
+
+      expect(databaseService.updateActivity).toHaveBeenCalledWith(mockMessage.member);
+      expect(recRolePingService.onMessage).not.toHaveBeenCalled();
+    });
+
+    it('should not trigger the rec role ping reminder for deleted messages', async () => {
+      await messageEvents.handleMessageEvent(mockMessage, 'delete');
+
+      expect(databaseService.updateActivity).toHaveBeenCalledWith(mockMessage.member);
+      expect(recRolePingService.onMessage).not.toHaveBeenCalled();
+    });
+
     it('should not handle message events for bot users', async () => {
       mockMessage.member.user.bot = true;
 
@@ -144,6 +158,7 @@ describe('MessageEvents', () => {
     it('should handle message creation', async () => {
       await messageEvents.onMessageCreate(mockMessage);
       expect(databaseService.updateActivity).toHaveBeenCalledWith(mockMessage.member);
+      expect(recRolePingService.onMessage).toHaveBeenCalledWith(mockMessage);
     });
     it('should handle message creation from a bot', async () => {
       mockMessage.member = TestBootstrapper.getMockDiscordUser(true);
@@ -154,11 +169,13 @@ describe('MessageEvents', () => {
     it('should handle message update', async () => {
       await messageEvents.onMessageUpdate(mockMessage);
       expect(databaseService.updateActivity).toHaveBeenCalledWith(mockMessage.member);
+      expect(recRolePingService.onMessage).not.toHaveBeenCalled();
     });
 
     it('should handle message deletion', async () => {
       await messageEvents.onMessageDelete(mockMessage);
       expect(databaseService.updateActivity).toHaveBeenCalledWith(mockMessage.member);
+      expect(recRolePingService.onMessage).not.toHaveBeenCalled();
     });
 
     it('should handle message reaction addition', async () => {
