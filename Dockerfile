@@ -25,6 +25,11 @@ COPY . /app
 # Build and lock the execution down to node non privledged user
 RUN pnpm build && chown node:node /app
 
+# The heartbeat lives here rather than /tmp: /tmp is world-writable, so any other
+# process could pre-create or symlink a file the deploy gate trusts (Sonar S5443,
+# CodeQL). This directory is owned by the runtime user and writable by nobody else.
+RUN mkdir -p /var/run/digletbot && chown node:node /var/run/digletbot
+
 USER node
 
 # The bot is a standalone Nest application context — no HTTP server, no port to
@@ -42,6 +47,6 @@ USER node
 # The deploy is gated on this: the shared update.sh runs `up -d --wait`, so a bot
 # that starts and wedges now fails the deploy instead of reporting success.
 HEALTHCHECK --interval=30s --timeout=5s --start-period=150s --retries=3 \
-  CMD ["node", "-e", "const{statSync}=require('fs');try{process.exit(Date.now()-statSync('/tmp/digletbot-heartbeat').mtimeMs<180000?0:1)}catch{process.exit(1)}"]
+  CMD ["node", "-e", "const{statSync}=require('node:fs');try{process.exit(Date.now()-statSync('/var/run/digletbot/heartbeat').mtimeMs<180000?0:1)}catch{process.exit(1)}"]
 
 ENTRYPOINT ["/app/entrypoint.sh"]

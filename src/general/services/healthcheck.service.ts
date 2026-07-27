@@ -2,14 +2,21 @@ import { Injectable, Logger } from '@nestjs/common';
 import { Cron } from '@nestjs/schedule';
 import axios from 'axios';
 import { ConfigService } from '@nestjs/config';
-import { writeFile } from 'fs/promises';
+import { writeFile } from 'node:fs/promises';
 import { InjectRepository } from '@mikro-orm/nestjs';
 import { EntityRepository } from '@mikro-orm/core';
 import { ActivityEntity } from '../../database/entities/activity.entity';
 
 // Touched every cron tick and read by the container HEALTHCHECK in the Dockerfile.
-// /tmp because the image runs as the unprivileged `node` user.
-export const HEARTBEAT_PATH = '/tmp/digletbot-heartbeat';
+//
+// Deliberately NOT /tmp. That directory is world-writable, so any other process
+// in the container could pre-create this path, symlink it elsewhere, or forge a
+// heartbeat — which for a file the deploy gate trusts is a genuine weakness
+// (Sonar S5443, CodeQL). This directory is created in the Dockerfile and owned
+// by the unprivileged `node` user the image runs as, so nothing else can write
+// to it.
+export const HEARTBEAT_DIR = '/var/run/digletbot';
+export const HEARTBEAT_PATH = `${HEARTBEAT_DIR}/heartbeat`;
 
 @Injectable()
 export class HealthcheckService {

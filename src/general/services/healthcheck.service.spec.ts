@@ -2,12 +2,12 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { ConfigService } from '@nestjs/config';
 import { Logger } from '@nestjs/common';
 import axios from 'axios';
-import { writeFile } from 'fs/promises';
+import { writeFile } from 'node:fs/promises';
 import { getRepositoryToken } from '@mikro-orm/nestjs';
 import { ActivityEntity } from '../../database/entities/activity.entity';
 import { HealthcheckService, HEARTBEAT_PATH } from './healthcheck.service';
 
-jest.mock('fs/promises', () => ({ writeFile: jest.fn() }));
+jest.mock('node:fs/promises', () => ({ writeFile: jest.fn() }));
 
 const mockWriteFile = writeFile as jest.Mock;
 
