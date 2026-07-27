@@ -2,9 +2,12 @@ import { Injectable, OnModuleInit, Logger, OnModuleDestroy } from '@nestjs/commo
 import { ConfigService } from '@nestjs/config';
 import { CensusCharacterWithOutfitInterface } from '../interfaces/CensusCharacterResponseInterface';
 import { CensusClient } from 'ps2census';
-import { EventSubscription } from 'ps2census/dist/types/client/types';
 import { EventConstants } from '../constants/EventConstants';
 import EventEmitter from 'events';
+
+// ps2census doesn't export this from its package root, and its `exports` map blocks the
+// deep import into dist/. Derive it from the public API surface instead.
+type EventSubscription = Parameters<CensusClient['subscribe']>[0];
 
 @Injectable()
 export class CensusWebsocketService implements OnModuleInit, OnModuleDestroy {
