@@ -10,6 +10,9 @@ on:
         required: true
         default: '0.0.0'
 
+permissions:
+  contents: read
+
 jobs:
   build-docker-images:
     runs-on: ubuntu-latest

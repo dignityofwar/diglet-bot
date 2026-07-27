@@ -47,9 +47,6 @@
         "devDependencies"
       ],
       "automerge": true,
-      "schedule": [
-        "before 6am on saturday"
-      ],
       "matchPackageNames": [
         "/lint/",
         "/prettier/"
@@ -62,10 +59,15 @@
         "patch"
       ],
       "matchCurrentVersion": "!/^0/",
-      "automerge": true,
-      "schedule": [
-        "before 6am on saturday"
-      ]
+      "automerge": true
+    },
+    {
+      "description": "MikroORM stays manual, and this rule sits last on purpose — later rules win, so an exclusion placed above the automerge rules above would be overridden by them. start:prod is `migration:up && node dist/src/main`, so every container boot applies pending migrations to the live database before the app starts, and the ORM config sets transactional false. A half-applied migration is not undone by rolling the image back, which is the one failure the deploy cannot walk away from. A green suite runs against mocks and cannot speak for it.",
+      "matchPackageNames": [
+        "mikro-orm",
+        "/^@mikro-orm/"
+      ],
+      "automerge": false
     }
   ]
 }
