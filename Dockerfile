@@ -22,9 +22,33 @@ RUN pnpm install --frozen-lockfile --ignore-scripts
 # Many things are ignored, check .dockerignore
 COPY . /app
 
-# Build and lock the execution down to node non privledged user
-RUN pnpm build && chown node:node /app
+# Build, then lock execution down to the unprivileged node user.
+#
+# The heartbeat directory is created here rather than using /tmp: /tmp is
+# world-writable, so any other process could pre-create or symlink a file the
+# deploy gate trusts (Sonar S5443, CodeQL). This one is owned by the runtime user
+# and writable by nobody else.
+RUN pnpm build \
+    && mkdir -p /var/run/digletbot \
+    && chown node:node /app /var/run/digletbot
 
 USER node
+
+# The bot is a standalone Nest application context — no HTTP server, no port to
+# probe — so liveness is a heartbeat file that HealthcheckService touches on its
+# one-minute cron. Stale means the scheduler has stopped, which is what a wedged
+# or crash-looping bot looks like from the outside. A process check would prove
+# nothing: the bot is PID 1, so if it dies the container dies and Docker already
+# knows.
+#
+# This lives here rather than in the server's compose file because that file is
+# not mirrored in any repo — shipping the check with the image means every box
+# gets it without a config change, and there is nothing to drift.
+#
+# start-period covers boot plus up to a minute of waiting for the first tick.
+# The deploy is gated on this: the shared update.sh runs `up -d --wait`, so a bot
+# that starts and wedges now fails the deploy instead of reporting success.
+HEALTHCHECK --interval=30s --timeout=5s --start-period=150s --retries=3 \
+  CMD ["node", "-e", "const{statSync}=require('node:fs');try{process.exit(Date.now()-statSync('/var/run/digletbot/heartbeat').mtimeMs<180000?0:1)}catch{process.exit(1)}"]
 
 ENTRYPOINT ["/app/entrypoint.sh"]
