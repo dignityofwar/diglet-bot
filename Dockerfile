@@ -22,13 +22,15 @@ RUN pnpm install --frozen-lockfile --ignore-scripts
 # Many things are ignored, check .dockerignore
 COPY . /app
 
-# Build and lock the execution down to node non privledged user
-RUN pnpm build && chown node:node /app
-
-# The heartbeat lives here rather than /tmp: /tmp is world-writable, so any other
-# process could pre-create or symlink a file the deploy gate trusts (Sonar S5443,
-# CodeQL). This directory is owned by the runtime user and writable by nobody else.
-RUN mkdir -p /var/run/digletbot && chown node:node /var/run/digletbot
+# Build, then lock execution down to the unprivileged node user.
+#
+# The heartbeat directory is created here rather than using /tmp: /tmp is
+# world-writable, so any other process could pre-create or symlink a file the
+# deploy gate trusts (Sonar S5443, CodeQL). This one is owned by the runtime user
+# and writable by nobody else.
+RUN pnpm build \
+    && mkdir -p /var/run/digletbot \
+    && chown node:node /app /var/run/digletbot
 
 USER node
 
