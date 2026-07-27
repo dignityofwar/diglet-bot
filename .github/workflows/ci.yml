@@ -17,6 +17,13 @@ on:
       - 'mikro-orm.config.ts'      # MikroORM configuration
       - 'sonar-project.properties' # SonarQube configuration'
 
+  # Run the full production pipeline by hand from the Actions tab. The paths filter above
+  # means a commit touching nothing it lists — an empty commit, a README tweak — will not
+  # deploy, so without this there is no way to re-run a deployment without an artificial
+  # code change. Useful for verifying the deploy webhook end to end, and for re-deploying
+  # after fixing something on the receiving side rather than in this repo.
+  workflow_dispatch:
+
 jobs:
   build:
     name: Build & Test application
