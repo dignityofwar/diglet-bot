@@ -1,13 +1,12 @@
 import 'dotenv/config'; // Needed as of mikro-orm v6
 import { SqlHighlighter } from '@mikro-orm/sql-highlighter';
 import { Logger } from '@nestjs/common';
-import { MariaDbOptions } from '@mikro-orm/mariadb/MariaDbMikroORM';
-import { defineConfig } from '@mikro-orm/mariadb';
+import { defineConfig, Options } from '@mikro-orm/mariadb';
 
 const logger = new Logger('MikroORM');
 const port = Number(process.env.DB_PORT) || 3306;
 
-const config: MariaDbOptions = defineConfig({
+const config: Options = defineConfig({
   entities: ['./dist/src/database/entities'],
   entitiesTs: ['./src/database/entities'],
   highlighter: new SqlHighlighter(),
