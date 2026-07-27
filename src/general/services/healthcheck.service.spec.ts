@@ -3,6 +3,8 @@ import { ConfigService } from '@nestjs/config';
 import { Logger } from '@nestjs/common';
 import axios from 'axios';
 import { writeFile } from 'fs/promises';
+import { getRepositoryToken } from '@mikro-orm/nestjs';
+import { ActivityEntity } from '../../database/entities/activity.entity';
 import { HealthcheckService, HEARTBEAT_PATH } from './healthcheck.service';
 
 jest.mock('fs/promises', () => ({ writeFile: jest.fn() }));
@@ -12,6 +14,7 @@ const mockWriteFile = writeFile as jest.Mock;
 describe('HealthcheckService', () => {
   let healthcheckService: HealthcheckService;
   let configService: ConfigService;
+  let execute: jest.Mock;
 
   const configure = (env: string, uuid?: string) => {
     jest.spyOn(configService, 'get').mockImplementation((key: string) => {
@@ -22,12 +25,20 @@ describe('HealthcheckService', () => {
   };
 
   beforeEach(async () => {
+    execute = jest.fn().mockResolvedValue([{ 1: 1 }]);
+
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         HealthcheckService,
         {
           provide: ConfigService,
           useValue: { get: jest.fn() },
+        },
+        {
+          provide: getRepositoryToken(ActivityEntity),
+          useValue: {
+            getEntityManager: () => ({ getConnection: () => ({ execute }) }),
+          },
         },
       ],
     }).compile();
@@ -93,6 +104,26 @@ describe('HealthcheckService', () => {
     await healthcheckService.check();
 
     expect(create).not.toHaveBeenCalled();
+  });
+
+  // The whole point of the DB probe: a bot that is resident but cannot reach
+  // MariaDB must not look healthy, so the heartbeat goes stale and the deploy
+  // gate rejects it.
+  it('does not write the heartbeat when the database is unreachable', async () => {
+    configure('development');
+    execute.mockRejectedValue(new Error('ECONNREFUSED'));
+
+    await healthcheckService.check();
+
+    expect(mockWriteFile).not.toHaveBeenCalled();
+  });
+
+  it('probes the database with a trivial query', async () => {
+    configure('development');
+
+    await healthcheckService.check();
+
+    expect(execute).toHaveBeenCalledWith('select 1');
   });
 
   it('does not ping when no UUID is configured', async () => {

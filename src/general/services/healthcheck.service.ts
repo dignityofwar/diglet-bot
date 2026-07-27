@@ -3,6 +3,9 @@ import { Cron } from '@nestjs/schedule';
 import axios from 'axios';
 import { ConfigService } from '@nestjs/config';
 import { writeFile } from 'fs/promises';
+import { InjectRepository } from '@mikro-orm/nestjs';
+import { EntityRepository } from '@mikro-orm/core';
+import { ActivityEntity } from '../../database/entities/activity.entity';
 
 // Touched every cron tick and read by the container HEALTHCHECK in the Dockerfile.
 // /tmp because the image runs as the unprivileged `node` user.
@@ -14,6 +17,8 @@ export class HealthcheckService {
 
   constructor(
     private readonly config: ConfigService,
+    // Any repository will do — this is only used to reach the connection.
+    @InjectRepository(ActivityEntity) private readonly activityRepository: EntityRepository<ActivityEntity>,
   ) {}
 
   @Cron('*/1 * * * *')
@@ -30,13 +35,29 @@ export class HealthcheckService {
     // It goes before the environment gate so a non-production container is
     // still probeable, and before the hc-ping call so an outage at hc-ping.com
     // cannot mark this container unhealthy.
+    //
+    // The heartbeat is only written if the database answers, so "healthy" means
+    // the scheduler is ticking AND the bot can reach MariaDB — a bot that is
+    // resident but cannot read or write anything is not healthy in any useful
+    // sense. `select 1` is the cheapest possible proof of a live connection and
+    // depends on no schema.
     try {
-      await writeFile(HEARTBEAT_PATH, new Date().toISOString());
+      await this.activityRepository.getEntityManager().getConnection().execute('select 1');
+
+      try {
+        await writeFile(HEARTBEAT_PATH, new Date().toISOString());
+      }
+      catch (err) {
+        // Never throw: failing to write the heartbeat must not take out the
+        // uptime ping below.
+        this.logger.error(`Could not write heartbeat file: ${err}`);
+      }
     }
     catch (err) {
-      // Never throw: failing to write the heartbeat must not take out the
-      // uptime ping below.
-      this.logger.error(`Could not write heartbeat file: ${err}`);
+      // Deliberately leaves the heartbeat stale, so the container healthcheck
+      // starts failing and `docker compose up --wait` will not accept a deploy
+      // whose bot cannot reach its database.
+      this.logger.error(`Database healthcheck failed, heartbeat not written: ${err}`);
     }
 
     const env = this.config.get('app.environment');
