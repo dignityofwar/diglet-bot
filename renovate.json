@@ -3,6 +3,12 @@
   "extends": [
     "config:recommended"
   ],
+  "description": [
+    "A release has to have been public for 14 days before Renovate will propose it. With minor and patch updates automerging unattended, this is the window in which a compromised or immediately-yanked publish gets found by someone else before it can land here on its own.",
+    "Security fixes are not delayed by this: Renovate's vulnerabilityAlerts defaults are minimumReleaseAge null, an empty schedule and prCreation immediate, so a CVE fix is raised straight away regardless of the wait below.",
+    "This is set at the top level on purpose. It used to be a packageRule matching matchDatasources on dockerfile, github-actions, npm and nvm — but those are manager names, not datasource names, so only npm ever matched and the Dockerfile base image, the Actions versions and the .nvmrc were being proposed the moment they were published."
+  ],
+  "minimumReleaseAge": "14 days",
   "lockFileMaintenance": {
     "enabled": true,
     "automerge": true,
@@ -18,15 +24,6 @@
         "mikro-orm",
         "/^@mikro-orm/"
       ]
-    },
-    {
-      "matchDatasources": [
-        "dockerfile",
-        "github-actions",
-        "npm",
-        "nvm"
-      ],
-      "minimumReleaseAge": "7 days"
     },
     {
       "description": "TypeScript 7 is the native compiler rewrite, and typescript-eslint refuses to load against it (typescript-eslint/typescript-eslint#10940), so `pnpm lint` dies before it reaches a single rule. Hold at 6.x until upstream ships support; lifting this cap is a deliberate decision, not a bot's.",
