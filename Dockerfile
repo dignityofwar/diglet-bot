@@ -27,4 +27,21 @@ RUN pnpm build && chown node:node /app
 
 USER node
 
+# The bot is a standalone Nest application context — no HTTP server, no port to
+# probe — so liveness is a heartbeat file that HealthcheckService touches on its
+# one-minute cron. Stale means the scheduler has stopped, which is what a wedged
+# or crash-looping bot looks like from the outside. A process check would prove
+# nothing: the bot is PID 1, so if it dies the container dies and Docker already
+# knows.
+#
+# This lives here rather than in the server's compose file because that file is
+# not mirrored in any repo — shipping the check with the image means every box
+# gets it without a config change, and there is nothing to drift.
+#
+# start-period covers boot plus up to a minute of waiting for the first tick.
+# The deploy is gated on this: the shared update.sh runs `up -d --wait`, so a bot
+# that starts and wedges now fails the deploy instead of reporting success.
+HEALTHCHECK --interval=30s --timeout=5s --start-period=150s --retries=3 \
+  CMD ["node", "-e", "const{statSync}=require('fs');try{process.exit(Date.now()-statSync('/tmp/digletbot-heartbeat').mtimeMs<180000?0:1)}catch{process.exit(1)}"]
+
 ENTRYPOINT ["/app/entrypoint.sh"]
