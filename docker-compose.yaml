@@ -2,7 +2,7 @@ services:
 # Uncommented on server
 #  digletbot:
 #    container_name: digletbot
-#    image: maelstromeous/applications:digletbot-latest
+#    image: maelstromeous/diglet-bot:latest
 #    env_file: digletbot.env
 #    restart: unless-stopped
 #    depends_on:

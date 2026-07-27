@@ -44,5 +44,5 @@ jobs:
           build-args: |
             VERSION=${{ inputs.version }}
           tags: |
-            maelstromeous/applications:digletbot-${{ inputs.version }}
-            maelstromeous/applications:digletbot-latest
+            maelstromeous/diglet-bot:${{ inputs.version }}
+            maelstromeous/diglet-bot:latest
