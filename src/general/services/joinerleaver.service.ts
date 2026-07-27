@@ -42,7 +42,7 @@ export class JoinerLeaverService {
     record.joinDate = new Date();
 
     // Save the record
-    await this.joinerLeaverRepository.getEntityManager().persistAndFlush(record);
+    await this.joinerLeaverRepository.getEntityManager().persist(record).flush();
 
     this.logger.log(`Recorded joiner ${guildMember.user.tag} (${guildMember.id})`);
   }
@@ -57,7 +57,7 @@ export class JoinerLeaverService {
 
     if (record) {
       record.leaveDate = new Date();
-      await this.joinerLeaverRepository.getEntityManager().persistAndFlush(record);
+      await this.joinerLeaverRepository.getEntityManager().persist(record).flush();
       this.logger.log(`Recorded leaver ${guildMember.user.tag} (${guildMember.id})`);
     }
     else {
@@ -139,7 +139,7 @@ Stats as of April 5th 2025
     // Check if there is already a report on the same date, if so, delete it
     const existingReport = await this.joinerLeaverStatisticsRepository.findOne({ createdAt: date });
     if (existingReport) {
-      await this.joinerLeaverStatisticsRepository.getEntityManager().removeAndFlush(existingReport);
+      await this.joinerLeaverStatisticsRepository.getEntityManager().remove(existingReport).flush();
       this.logger.warn(`Removed existing report for date ${date}`);
     }
 
@@ -152,7 +152,7 @@ Stats as of April 5th 2025
       earlyLeavers,
       avgTimeToLeave,
     });
-    await this.joinerLeaverStatisticsRepository.getEntityManager().persistAndFlush(entity);
+    await this.joinerLeaverStatisticsRepository.getEntityManager().persist(entity).flush();
 
     this.logger.log('Enumerated joiner leavers');
   }

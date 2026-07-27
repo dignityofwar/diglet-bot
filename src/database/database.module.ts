@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { MikroOrmModule } from '@mikro-orm/nestjs';
+import mikroOrmConfig from '../../mikro-orm.config';
 import { PS2VerificationAttemptEntity } from './entities/ps2.verification.attempt.entity';
 import { PS2MembersEntity } from './entities/ps2.members.entity';
 import { AlbionRegistrationsEntity } from './entities/albion.registrations.entity';
@@ -13,7 +14,7 @@ import { AlbionRegistrationQueueEntity } from './entities/albion.registration.qu
 
 @Module({
   imports: [
-    MikroOrmModule.forRoot(),
+    MikroOrmModule.forRoot(mikroOrmConfig),
     MikroOrmModule.forFeature({
       entities: [
         ActivityEntity,

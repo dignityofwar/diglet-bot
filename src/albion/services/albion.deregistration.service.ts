@@ -83,7 +83,7 @@ export class AlbionDeregistrationService {
   ): Promise<void> {
     // Remove the registration record from the database
     try {
-      await this.albionRegistrationsRepository.getEntityManager().removeAndFlush(registration);
+      await this.albionRegistrationsRepository.getEntityManager().remove(registration).flush();
       await responseChannel.send(`Successfully deregistered Character ${registration.characterName}.`);
     }
     catch (err) {

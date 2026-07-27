@@ -376,7 +376,7 @@ describe('PS2GameScanningService', () => {
         false,
       );
 
-      expect(mockPS2MembersRepository.getEntityManager().removeAndFlush).toHaveBeenCalledWith(mockPS2MemberEntity);
+      expect(mockPS2MembersRepository.getEntityManager().remove).toHaveBeenCalledWith(mockPS2MemberEntity);
       expect(service['changesMap'].set).toHaveBeenCalledWith(
         mockPS2Character.character_id,
         {
@@ -395,7 +395,7 @@ describe('PS2GameScanningService', () => {
         true,
       );
 
-      expect(mockPS2MembersRepository.getEntityManager().removeAndFlush).toHaveBeenCalledTimes(0);
+      expect(mockPS2MembersRepository.getEntityManager().remove).toHaveBeenCalledTimes(0);
       expect(service['changesMap'].set).toHaveBeenCalledWith(
         mockPS2Character.character_id,
         {
@@ -421,7 +421,7 @@ describe('PS2GameScanningService', () => {
         true,
       );
 
-      expect(mockPS2MembersRepository.getEntityManager().removeAndFlush).toHaveBeenCalledTimes(0);
+      expect(mockPS2MembersRepository.getEntityManager().remove).toHaveBeenCalledTimes(0);
       expect(service['changesMap'].set).toHaveBeenCalledWith(
         mockPS2MemberEntity.characterId,
         {
@@ -464,7 +464,7 @@ describe('PS2GameScanningService', () => {
       expect(mockDiscordMember.roles.remove).toHaveBeenCalledTimes(2);
 
       // Asset the member was removed from the outfit database
-      expect(mockPS2MembersRepository.getEntityManager().removeAndFlush).toHaveBeenCalledTimes(1);
+      expect(mockPS2MembersRepository.getEntityManager().remove).toHaveBeenCalledTimes(1);
 
       // Asset the change was logged
       expect(service['changesMap'].set).toHaveBeenCalledWith(

@@ -205,7 +205,7 @@ ${recGames}
     // If there is already a record, delete it
     const existingRecords = await this.roleMetricsRepository.find({ createdAt });
     if (existingRecords) {
-      await this.roleMetricsRepository.getEntityManager().removeAndFlush(existingRecords);
+      await this.roleMetricsRepository.getEntityManager().remove(existingRecords).flush();
     }
 
     // Create the role metrics entity
@@ -218,7 +218,7 @@ ${recGames}
     });
 
     // Persist the entity to the database
-    await this.roleMetricsRepository.getEntityManager().persistAndFlush(roleMetrics);
+    await this.roleMetricsRepository.getEntityManager().persist(roleMetrics).flush();
 
     this.logger.log('Role metrics enumeration completed.');
   }

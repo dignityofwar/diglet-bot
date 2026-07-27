@@ -1,5 +1,5 @@
 import { BaseEntity, BaseEntityOptions } from './base.entity';
-import { Entity, Property } from '@mikro-orm/core';
+import { Entity, Property } from '@mikro-orm/decorators/legacy';
 
 interface ActivityStatisticsEntityOptions extends BaseEntityOptions {
   totalUsers: number;

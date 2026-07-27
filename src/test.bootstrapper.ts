@@ -41,8 +41,9 @@ const ps2RankMap: PS2RankMapInterface = {
 
 // Define a type for your EntityManager mock if you like:
 interface EntityManagerMock {
-  persistAndFlush: jest.Mock;
-  removeAndFlush: jest.Mock;
+  persist: jest.Mock;
+  remove: jest.Mock;
+  flush: jest.Mock;
 }
 
 // This file helps set up mocks for various tests, which have been copied and pasted across the suite, causing a lot of duplication.
@@ -57,18 +58,35 @@ export class TestBootstrapper {
     } as any;
   }
 
+  static getMockEntityManager(overrides?: Partial<EntityManagerMock>) {
+    const entityManagerMock: EntityManagerMock = {
+      persist: jest.fn(),
+      remove: jest.fn(),
+      flush: jest.fn().mockResolvedValue(true),
+      // Overrides let a test have, say, flush reject
+      ...overrides,
+    };
+    // persist()/remove() return the EM so `em.persist(x).flush()` chains as it does in MikroORM v7
+    entityManagerMock.persist.mockReturnValue(entityManagerMock);
+    entityManagerMock.remove.mockReturnValue(entityManagerMock);
+
+    return entityManagerMock as any;
+  }
+
   static mockORM() {
     const mockEntityManager = {
       find: jest.fn(),
-      persistAndFlush: jest.fn(),
+      persist: jest.fn(),
+      flush: jest.fn(),
       getRepository: jest.fn().mockReturnValue({
         find: jest.fn(),
       }),
       getEntityManager: jest.fn().mockResolvedValue({
         findOne: jest.fn(),
         find: jest.fn(),
-        persistAndFlush: jest.fn(),
-        removeAndFlush: jest.fn(),
+        persist: jest.fn(),
+        remove: jest.fn(),
+        flush: jest.fn(),
       }),
     } as any;
 
@@ -82,13 +100,7 @@ export class TestBootstrapper {
     entity: any,
     entityManagerOverrides?: Partial<EntityManagerMock>,
   ) {
-    const defaultEntityManagerMock: EntityManagerMock = {
-      persistAndFlush: jest.fn().mockResolvedValue(true),
-      removeAndFlush: jest.fn().mockResolvedValue(true),
-    };
-
-    // Merge in any overrides, for instance to have removeAndFlush reject
-    const entityManagerMock = { ...defaultEntityManagerMock, ...entityManagerOverrides };
+    const entityManagerMock = this.getMockEntityManager(entityManagerOverrides);
     return {
       find: jest.fn().mockResolvedValueOnce([entity]),
       findOne: jest.fn().mockResolvedValueOnce(entity),

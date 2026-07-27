@@ -54,7 +54,7 @@ describe('GuildMemberEvents', () => {
       await service.onGuildMemberRemove(mockMember);
 
       expect(mockActivityRepository.findOne).not.toHaveBeenCalled();
-      expect(mockActivityRepository.getEntityManager().removeAndFlush).not.toHaveBeenCalled();
+      expect(mockActivityRepository.getEntityManager().remove).not.toHaveBeenCalled();
       expect(service['logger'].debug).not.toHaveBeenCalled();
       expect(service['logger'].log).not.toHaveBeenCalled();
       expect(service['logger'].warn).not.toHaveBeenCalled();
@@ -78,7 +78,7 @@ describe('GuildMemberEvents', () => {
 
       expect(mockActivityRepository.findOne).toHaveBeenCalledWith({ discordId: mockMember.id });
       expect(service['logger'].debug).toHaveBeenCalledWith(`Member "${mockMember.displayName}" has left the server.`);
-      expect(mockActivityRepository.getEntityManager().removeAndFlush).toHaveBeenCalledWith(mockActivityRecord);
+      expect(mockActivityRepository.getEntityManager().remove).toHaveBeenCalledWith(mockActivityRecord);
       expect(service['logger'].log).toHaveBeenCalledWith(`Removed activity record for leaver ${mockActivityRecord.discordNickname} (${mockActivityRecord.discordId})`);
     });
 
@@ -94,7 +94,7 @@ describe('GuildMemberEvents', () => {
       await service.onGuildMemberRemove(mockMember);
 
       expect(mockActivityRepository.findOne).toHaveBeenCalledWith({ discordId: '123' });
-      expect(mockActivityRepository.getEntityManager().removeAndFlush).not.toHaveBeenCalled();
+      expect(mockActivityRepository.getEntityManager().remove).not.toHaveBeenCalled();
       expect(service['logger'].debug).not.toHaveBeenCalled();
       expect(service['logger'].log).not.toHaveBeenCalled();
       expect(service['logger'].warn).toHaveBeenCalledWith('No activity record was found for leaver TestUser (123), likely left immediately after joining.');

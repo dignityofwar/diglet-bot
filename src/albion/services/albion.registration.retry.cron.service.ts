@@ -98,7 +98,8 @@ export class AlbionRegistrationRetryCronService implements OnApplicationBootstra
       this.logger.error(`Failed to get guild member for Discord ID ${attempt.discordId} during registration retry for character ${attempt.characterName}: ${err?.message ?? String(err)}`);
       attempt.status = AlbionRegistrationQueueStatus.FAILED;
       attempt.lastError = 'User is no longer in the Discord guild.';
-      await this.albionRegistrationQueueRepository.getEntityManager().flush();
+      // v7 no longer change-tracks scalar properties automatically, hence the explicit persist on every flush below.
+      await this.albionRegistrationQueueRepository.getEntityManager().persist(attempt).flush();
       await this.registrationQueueSend(
         `Registration attempt for character **${attempt.characterName}** has failed because the Discord member has left the server.`,
       );
@@ -117,14 +118,14 @@ export class AlbionRegistrationRetryCronService implements OnApplicationBootstra
       if (!inGuild) {
         attempt.attemptCount += 1;
         attempt.lastError = 'Character not found in guild yet.';
-        await this.albionRegistrationQueueRepository.getEntityManager().flush();
+        await this.albionRegistrationQueueRepository.getEntityManager().persist(attempt).flush();
         return;
       }
     }
     catch (err) {
       attempt.attemptCount += 1;
       attempt.lastError = `Failed to fetch guild members: ${err?.message ?? String(err)}`;
-      await this.albionRegistrationQueueRepository.getEntityManager().flush();
+      await this.albionRegistrationQueueRepository.getEntityManager().persist(attempt).flush();
       return;
     }
 
@@ -132,7 +133,7 @@ export class AlbionRegistrationRetryCronService implements OnApplicationBootstra
       attempt.attemptCount += 1;
       attempt.lastError = null;
 
-      await this.albionRegistrationQueueRepository.getEntityManager().flush();
+      await this.albionRegistrationQueueRepository.getEntityManager().persist(attempt).flush();
 
       // This is a scheduled attempt, so we must not re-run the normal registration validation that checks for existing queued attempts.
       await this.albionRegistrationService.handleRegistration(
@@ -146,7 +147,7 @@ export class AlbionRegistrationRetryCronService implements OnApplicationBootstra
 
       attempt.status = AlbionRegistrationQueueStatus.SUCCEEDED;
       attempt.lastError = null;
-      await this.albionRegistrationQueueRepository.getEntityManager().flush();
+      await this.albionRegistrationQueueRepository.getEntityManager().persist(attempt).flush();
 
       // Send a message in the queue channel to also say it was successful otherwise it's confusing and looks like something is wrong.
       await this.registrationQueueSend(`✅ Registration successful for **${attempt.characterName}**!`);
@@ -158,12 +159,12 @@ export class AlbionRegistrationRetryCronService implements OnApplicationBootstra
       // If the error looks like the character isn't in guild (our retryable case), keep it pending.
       // Everything else we treat as failed and we tell the user to try again / contact leadership.
       if (message.includes('has not been detected in')) {
-        await this.albionRegistrationQueueRepository.getEntityManager().flush();
+        await this.albionRegistrationQueueRepository.getEntityManager().persist(attempt).flush();
         return;
       }
 
       attempt.status = AlbionRegistrationQueueStatus.FAILED;
-      await this.albionRegistrationQueueRepository.getEntityManager().flush();
+      await this.albionRegistrationQueueRepository.getEntityManager().persist(attempt).flush();
 
       await this.registrationSend(
         `⚠️ Albion registration retry failed for <@${attempt.discordId}> (character **${attempt.characterName}**).\n\nReason: ${message}\n\nPlease try again or contact \`@ALB/Archmage\`.`,
@@ -188,7 +189,7 @@ export class AlbionRegistrationRetryCronService implements OnApplicationBootstra
   private async expireAttempt(attempt: AlbionRegistrationQueueEntity): Promise<void> {
     this.logger.log(`Expiring Albion registration attempt for Discord ID ${attempt.discordId} (character ${attempt.characterName})`);
     attempt.status = AlbionRegistrationQueueStatus.EXPIRED;
-    await this.albionRegistrationQueueRepository.getEntityManager().flush();
+    await this.albionRegistrationQueueRepository.getEntityManager().persist(attempt).flush();
 
     await this.registrationSend(
       `⏰ <@${attempt.discordId}> your registration attempt timed out. You are either truly not in the guild, or there is another problem. If you are in the guild, you are recommended to play the game for at least 1 hour, then retry registration. If you are not in the guild, then... why are you trying? :P`,

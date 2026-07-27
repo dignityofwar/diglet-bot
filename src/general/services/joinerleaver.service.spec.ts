@@ -96,7 +96,7 @@ describe('JoinerLeaverService', () => {
 
       expect(mockJoinerLeaverRepository.findOne).toHaveBeenCalledWith({ discordId: mockGuildMember.id });
 
-      expect(mockJoinerLeaverRepository.getEntityManager().persistAndFlush).toHaveBeenCalledWith({
+      expect(mockJoinerLeaverRepository.getEntityManager().persist).toHaveBeenCalledWith({
         discordId: mockGuildMember.id,
         discordNickname: mockGuildMember.displayName,
         joinDate: expect.any(Date),
@@ -118,7 +118,7 @@ describe('JoinerLeaverService', () => {
 
       expect(mockJoinerLeaverRepository.findOne).toHaveBeenCalledWith({ discordId: mockGuildMember.id });
 
-      expect(mockJoinerLeaverRepository.getEntityManager().persistAndFlush).toHaveBeenCalledWith(expect.objectContaining({
+      expect(mockJoinerLeaverRepository.getEntityManager().persist).toHaveBeenCalledWith(expect.objectContaining({
         discordId: mockGuildMember.id,
         discordNickname: mockGuildMember.displayName,
         joinDate: expect.any(Date),
@@ -140,7 +140,7 @@ describe('JoinerLeaverService', () => {
 
       await joinerLeaverService.recordJoiner(mockGuildMember);
 
-      expect(mockJoinerLeaverRepository.getEntityManager().persistAndFlush).toHaveBeenCalledWith(expect.objectContaining({
+      expect(mockJoinerLeaverRepository.getEntityManager().persist).toHaveBeenCalledWith(expect.objectContaining({
         discordId: mockGuildMember.id,
         discordNickname: mockGuildMember.displayName,
         joinDate: expect.any(Date),
@@ -160,7 +160,7 @@ describe('JoinerLeaverService', () => {
       await joinerLeaverService.recordJoiner(mockMember);
 
       expect(mockJoinerLeaverRepository.findOne).not.toHaveBeenCalled();
-      expect(mockJoinerLeaverRepository.getEntityManager().persistAndFlush).not.toHaveBeenCalled();
+      expect(mockJoinerLeaverRepository.getEntityManager().persist).not.toHaveBeenCalled();
       expect(joinerLeaverService['logger'].log).not.toHaveBeenCalled();
     });
   });
@@ -175,7 +175,7 @@ describe('JoinerLeaverService', () => {
 
       expect(mockJoinerLeaverRepository.findOne).toHaveBeenCalledWith({ discordId: mockGuildMember.id });
 
-      expect(mockJoinerLeaverRepository.getEntityManager().persistAndFlush).toHaveBeenCalledWith(
+      expect(mockJoinerLeaverRepository.getEntityManager().persist).toHaveBeenCalledWith(
         expect.objectContaining({
           discordId: mockGuildMember.id,
           discordNickname: mockGuildMember.displayName,
@@ -209,7 +209,7 @@ describe('JoinerLeaverService', () => {
     await joinerLeaverService.recordLeaver(mockMember);
 
     expect(mockJoinerLeaverRepository.findOne).not.toHaveBeenCalled();
-    expect(mockJoinerLeaverRepository.getEntityManager().persistAndFlush).not.toHaveBeenCalled();
+    expect(mockJoinerLeaverRepository.getEntityManager().persist).not.toHaveBeenCalled();
     expect(joinerLeaverService['logger'].log).not.toHaveBeenCalled();
   });
 
@@ -280,7 +280,7 @@ Stats as of April 5th 2025
 
       expect(mockJoinerLeaverRepository.findAll).toHaveBeenCalled();
 
-      expect(mockJoinerLeaverStatisticsRepository.getEntityManager().persistAndFlush).toHaveBeenCalledWith({
+      expect(mockJoinerLeaverStatisticsRepository.getEntityManager().persist).toHaveBeenCalledWith({
         joiners: 6,
         leavers: 3,
         rejoiners: 1,

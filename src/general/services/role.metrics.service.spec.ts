@@ -377,7 +377,7 @@ Stats as of April 5th 2025. All statistics state members who have the role AND a
     it('should properly record the role metrics', async () => {
       await roleMetricsService.enumerateRoleMetrics(mockRoleList, mockGuild);
 
-      expect(mockRoleMetricsRepository.getEntityManager().persistAndFlush).toHaveBeenCalledWith(expect.objectContaining({
+      expect(mockRoleMetricsRepository.getEntityManager().persist).toHaveBeenCalledWith(expect.objectContaining({
         onboarded: 3, // NOT 4
         communityGames: {
           'Albion Online': 2,
@@ -404,7 +404,7 @@ Stats as of April 5th 2025. All statistics state members who have the role AND a
       mockRoleMetricsRepository.find = jest.fn().mockResolvedValue([mockRoleMetricsEntityToday]);
       await roleMetricsService.enumerateRoleMetrics(mockRoleList, mockGuild);
 
-      expect(mockRoleMetricsRepository.getEntityManager().removeAndFlush).toHaveBeenCalledWith([mockRoleMetricsEntityToday]);
+      expect(mockRoleMetricsRepository.getEntityManager().remove).toHaveBeenCalledWith([mockRoleMetricsEntityToday]);
     });
   });
 

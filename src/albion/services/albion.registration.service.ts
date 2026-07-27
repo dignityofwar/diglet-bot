@@ -145,7 +145,8 @@ export class AlbionRegistrationService implements OnApplicationBootstrap {
     existing.lastError = 'Character name updated by user.';
     existing.expiresAt = expiresAt;
 
-    await this.albionRegistrationQueueRepository.getEntityManager().flush();
+    // v7 no longer change-tracks scalar properties automatically, so the entity has to be persisted explicitly.
+    await this.albionRegistrationQueueRepository.getEntityManager().persist(existing).flush();
 
     const expiresDiscordTime = `<t:${Math.floor(expiresAt.getTime() / 1000)}:f>`;
 

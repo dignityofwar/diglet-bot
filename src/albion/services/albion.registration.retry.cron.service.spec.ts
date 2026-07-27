@@ -85,9 +85,7 @@ describe('AlbionRegistrationRetryCronService', () => {
     queueRepo = {
       find: jest.fn(),
       findOne: jest.fn(),
-      getEntityManager: jest.fn().mockReturnValue({
-        flush: jest.fn().mockResolvedValue(true),
-      }),
+      getEntityManager: jest.fn().mockReturnValue(TestBootstrapper.getMockEntityManager()),
     };
 
     albionRegistrationService = {

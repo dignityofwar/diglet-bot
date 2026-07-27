@@ -10,6 +10,13 @@ module.exports = {
   ],
   rootDir: 'src',
   testRegex: '.*\\.spec\\.ts$',
+  // MikroORM v7 ships as native ESM. Jest's CJS runtime can't require it, so its JS is
+  // transpiled down alongside our TypeScript instead of being skipped as a node_module.
+  transform: {
+    '^.+\\.tsx?$': ['ts-jest', {}],
+    '^.+\\.m?js$': './jest-esm-transformer.js',
+  },
+  transformIgnorePatterns: ['node_modules/(?!.*@mikro-orm)'],
   collectCoverage: true,
   collectCoverageFrom: [
     '**/*.{ts,tsx}', // Include only TypeScript and TSX files

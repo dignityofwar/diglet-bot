@@ -203,7 +203,7 @@ export class PS2GameScanningService {
     dryRun = false,
   ): Promise<void> {
     if (!dryRun) {
-      await this.ps2MembersRepository.getEntityManager().removeAndFlush(member);
+      await this.ps2MembersRepository.getEntityManager().remove(member).flush();
     }
 
     this.changesMap.set(member.characterId, {
@@ -252,7 +252,7 @@ export class PS2GameScanningService {
       }
     }
 
-    await this.ps2MembersRepository.getEntityManager().removeAndFlush(member);
+    await this.ps2MembersRepository.getEntityManager().remove(member).flush();
 
     this.changesMap.set(member.characterId, {
       character,
