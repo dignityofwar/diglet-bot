@@ -9,11 +9,24 @@ permissions:
 jobs:
   send-webhook:
     runs-on: ubuntu-latest
+    # Backstop only. The step below should resolve long before this.
+    timeout-minutes: 5
     steps:
+      # The receiving hook waits for the deployment to finish and answers 200 or 500,
+      # so this timeout has to cover a whole deploy rather than just the round trip.
+      # Measured deploys run 37-86s; the proxy in front of the hook gives up at ~100s
+      # and returns a 524 of its own. 120s sits above that deliberately: a deploy that
+      # overruns should surface as that 524 — which says the deploy was still running —
+      # rather than as a client-side timeout, which says nothing at all.
+      #
+      # It was 2000ms, which timed out on 2026-07-28 while the deploy underneath it ran
+      # to completion, reporting a failure that had not happened. The reverse was worse:
+      # at 2000ms this step returned before the hook could know the outcome, so a
+      # crashlooping bot came back green.
       - name: Trigger webhook
         uses: ramzzisudip/secure-github-webhook@0.3.0
         with:
           url: "${{ secrets.WEBHOOK_URL }}"
           data: '{ "application": "digletbot" }'
-          timeout: 2000
+          timeout: 120000
           hmacSecret: "${{ secrets.WEBHOOK_SECRET }}"

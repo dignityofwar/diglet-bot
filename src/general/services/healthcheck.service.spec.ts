@@ -53,6 +53,28 @@ describe('HealthcheckService', () => {
 
   afterEach(() => jest.restoreAllMocks());
 
+  // The heartbeat runs on its own faster tick so a freshly booted container can
+  // go healthy without waiting out the wall-clock minute, which is dead time in
+  // every deploy. It must not depend on the uptime ping half of the service.
+  it('writes the heartbeat on its own tick without pinging', async () => {
+    configure('production', 'some-uuid');
+    const create = jest.spyOn(axios, 'create');
+
+    await healthcheckService.heartbeat();
+
+    expect(mockWriteFile).toHaveBeenCalledWith(HEARTBEAT_PATH, expect.any(String));
+    expect(create).not.toHaveBeenCalled();
+  });
+
+  it('does not write the heartbeat on its own tick when the database is unreachable', async () => {
+    configure('production', 'some-uuid');
+    execute.mockRejectedValue(new Error('MariaDB is down'));
+
+    await healthcheckService.heartbeat();
+
+    expect(mockWriteFile).not.toHaveBeenCalled();
+  });
+
   // The heartbeat is what the container HEALTHCHECK reads, so it has to be
   // written on every tick regardless of environment — otherwise a non-production
   // container reports unhealthy forever.

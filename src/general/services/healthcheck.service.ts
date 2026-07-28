@@ -28,9 +28,16 @@ export class HealthcheckService {
     @InjectRepository(ActivityEntity) private readonly activityRepository: EntityRepository<ActivityEntity>,
   ) {}
 
-  @Cron('*/1 * * * *')
-  async check(): Promise<void> {
-    // Written FIRST, and in every environment, on purpose.
+  // Every 30s rather than every minute because this is what gates a deploy.
+  // `@Cron('*/1 * * * *')` fires on the wall-clock minute, so a container that
+  // booted at :01 could not go healthy until :00 — up to 60s of a deploy spent
+  // waiting on nothing. Measured on two consecutive deploys of the same image:
+  // 72s and 22s in `docker compose up -d --wait`, decided purely by where boot
+  // landed in the minute. Halving the tick halves that, and proves exactly as
+  // much: the scheduler is ticking and MariaDB answers.
+  @Cron('*/30 * * * * *')
+  async heartbeat(): Promise<void> {
+    // Written in every environment on purpose.
     //
     // This is the only liveness signal the container has: the bot is a
     // standalone Nest application context (`createApplicationContext`), so there
@@ -56,7 +63,7 @@ export class HealthcheckService {
       }
       catch (err) {
         // Never throw: failing to write the heartbeat must not take out the
-        // uptime ping below.
+        // uptime ping in check().
         this.logger.error(`Could not write heartbeat file: ${err}`);
       }
     }
@@ -66,6 +73,14 @@ export class HealthcheckService {
       // whose bot cannot reach its database.
       this.logger.error(`Database healthcheck failed, heartbeat not written: ${err}`);
     }
+  }
+
+  @Cron('*/1 * * * *')
+  async check(): Promise<void> {
+    // Still written first here, so an outage at hc-ping.com can never be what
+    // marks this container unhealthy. The 30s tick above covers it in its own
+    // right; this call keeps that ordering guarantee true within check() too.
+    await this.heartbeat();
 
     const env = this.config.get('app.environment');
 
