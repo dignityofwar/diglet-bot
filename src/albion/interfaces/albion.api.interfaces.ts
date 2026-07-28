@@ -1,11 +1,10 @@
-export enum AlbionServer {
-  EUROPE = 'Europe',
-}
-
 export enum AlbionApiEndpoint {
-  // ALBION_AMERICAS = 'https://gameinfo.albiononline.com/api/gameinfo',
   ALBION_EUROPE = 'https://gameinfo-ams.albiononline.com/api/gameinfo',
 }
+
+// DIG is EU-only, so this is a decoration rather than a distinction. It stays a constant
+// so the Discord messages that carried it read the same as before.
+export const ALBION_GUILD_EMOJI = '🇪🇺';
 
 // Seemingly this interface appears to always return null
 interface AlbionEquipmentInterface {

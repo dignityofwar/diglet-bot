@@ -5,7 +5,7 @@ import { GuildMember, GuildTextBasedChannel, Message, Role } from 'discord.js';
 import { ConfigService } from '@nestjs/config';
 import { AlbionApiService } from './albion.api.service';
 import { AlbionRegistrationsEntity } from '../../database/entities/albion.registrations.entity';
-import { AlbionPlayerInterface, AlbionServer } from '../interfaces/albion.api.interfaces';
+import { ALBION_GUILD_EMOJI, AlbionPlayerInterface } from '../interfaces/albion.api.interfaces';
 import { AlbionRoleMapInterface } from '../../config/albion.app.config';
 import { AlbionUtilities } from '../utilities/albion.utilities';
 import { getChannel } from '../../discord/discord.hacks';
@@ -37,9 +37,8 @@ export class AlbionScanningService {
   async startScan(
     message: Message,
     dryRun = false,
-    server: AlbionServer = AlbionServer.EUROPE,
   ) {
-    const emoji = this.serverEmoji(server);
+    const emoji = ALBION_GUILD_EMOJI;
     const guildId = this.config.get('albion.guildId');
 
     await message.edit(`# ${emoji} Starting scan...`);
@@ -55,7 +54,7 @@ export class AlbionScanningService {
 
     try {
       await message.edit(`# ${emoji} Task: [1/4] Gathering ${length} characters from the ALB API...`);
-      characters = await this.gatherCharacters(guildMembers, message, 0, server);
+      characters = await this.gatherCharacters(guildMembers, message, 0);
     }
     catch (err) {
       await message.edit(`## ${emoji} ❌ An error occurred while gathering data from the API!`);
@@ -70,16 +69,16 @@ export class AlbionScanningService {
 
     try {
       await message.edit(`# ${emoji} Task: [2/4] Checking ${length} characters for membership status...`);
-      if (await this.removeLeavers(characters, message, dryRun, server)) {
+      if (await this.removeLeavers(characters, message, dryRun)) {
         actionRequired = true;
       }
 
       // Check if members have roles they shouldn't have
       await message.edit(`# ${emoji} Task: [3/4] Performing reverse role scan...`);
-      await this.reverseRoleScan(message, dryRun, server);
+      await this.reverseRoleScan(message, dryRun);
 
       await message.edit(`# ${emoji} Task: [4/4] Checking for role inconsistencies...`);
-      if (await this.roleInconsistencies(message, dryRun, server)) {
+      if (await this.roleInconsistencies(message, dryRun)) {
         actionRequired = true;
       }
     }
@@ -106,9 +105,8 @@ export class AlbionScanningService {
     guildMembers: AlbionRegistrationsEntity[],
     message: Message,
     tries = 0,
-    server: AlbionServer = AlbionServer.EUROPE,
   ) {
-    const emoji = this.serverEmoji(server);
+    const emoji = ALBION_GUILD_EMOJI;
     const characterPromises: Promise<AlbionPlayerInterface>[] = [];
     tries++;
     const length = guildMembers.length;
@@ -116,10 +114,10 @@ export class AlbionScanningService {
       await getChannel(message).send(`## ❌ An error occurred while gathering data for ${length} characters! Giving up after 3 tries! Pinging <@${this.config.get('discord.devUserId')}>!`);
       return null;
     }
-    const statusMessage = await getChannel(message).send(`${emoji} Gathering ${length} characters from the ${server} ALB API... (attempt #${tries})`);
+    const statusMessage = await getChannel(message).send(`${emoji} Gathering ${length} characters from the Europe ALB API... (attempt #${tries})`);
 
     for (const member of guildMembers) {
-      characterPromises.push(this.albionApiService.getCharacterById(member.characterId, server));
+      characterPromises.push(this.albionApiService.getCharacterById(member.characterId));
     }
 
     try {
@@ -128,10 +126,10 @@ export class AlbionScanningService {
     }
     catch (err) {
       await statusMessage.delete();
-      const tempMessage = await getChannel(message).send(`## ⚠️ Couldn't gather characters from ${server} ALB API.\nError: "${err.message}".\nRetrying in 10s...`);
+      const tempMessage = await getChannel(message).send(`## ⚠️ Couldn't gather characters from Europe ALB API.\nError: "${err.message}".\nRetrying in 10s...`);
       await new Promise(resolve => setTimeout(resolve, 10000));
       await tempMessage.delete();
-      return this.gatherCharacters(guildMembers, message, tries, server);
+      return this.gatherCharacters(guildMembers, message, tries);
     }
   }
 
@@ -139,9 +137,8 @@ export class AlbionScanningService {
     characters: AlbionPlayerInterface[],
     message: Message,
     dryRun = false,
-    server: AlbionServer = AlbionServer.EUROPE,
   ): Promise<boolean> {
-    const emoji = this.serverEmoji(server);
+    const emoji = ALBION_GUILD_EMOJI;
     const guildId = this.config.get('albion.guildId');
     // Save all the characters to a map we can easily pick out later via character ID
     const charactersMap = new Map<string, AlbionPlayerInterface>();
@@ -258,16 +255,13 @@ export class AlbionScanningService {
   async reverseRoleScan(
     message: Message,
     dryRun = false,
-    server: AlbionServer = AlbionServer.EUROPE,
   ) {
     const guildId = this.config.get('albion.guildId');
-    const emoji = this.serverEmoji(server);
+    const emoji = ALBION_GUILD_EMOJI;
 
     // Get the list of roles via the Role Map
     const roleMap: AlbionRoleMapInterface[] = this.config.get('albion.roleMap');
-    // Filter to only the server we care about
-    const roleMapServer = roleMap.filter((role) => role.server === server);
-    const roleMapLength = roleMapServer.length;
+    const roleMapLength = roleMap.length;
 
     const scanMessage = await getChannel(message).send(`### ${emoji} Scanning ${roleMapLength} Discord roles for members who are falsely registered...`);
     const scanCountMessage = await getChannel(message).send('.');
@@ -279,7 +273,7 @@ export class AlbionScanningService {
 
     // Loop each role and scan them
     let count = 0;
-    for (const role of roleMapServer) {
+    for (const role of roleMap) {
       count++;
       let discordRole: Role;
 
@@ -380,10 +374,9 @@ export class AlbionScanningService {
   async roleInconsistencies(
     message: Message,
     dryRun = false,
-    server: AlbionServer = AlbionServer.EUROPE,
   ): Promise<boolean> {
     const suggestions: string[] = [];
-    const emoji = this.serverEmoji(server);
+    const emoji = ALBION_GUILD_EMOJI;
     const guildId = this.config.get('albion.guildId');
     let actionRequired = false;
 
@@ -411,7 +404,7 @@ export class AlbionScanningService {
       }
 
       // Get the role inconsistencies
-      const inconsistencies = await this.checkRoleInconsistencies(discordMember, server);
+      const inconsistencies = await this.checkRoleInconsistencies(discordMember);
 
       if (inconsistencies.length > 0) {
         actionRequired = true;
@@ -450,9 +443,8 @@ export class AlbionScanningService {
 
   async checkRoleInconsistencies(
     discordMember: GuildMember,
-    server: AlbionServer = AlbionServer.EUROPE,
   ): Promise<RoleInconsistencyResult[]> {
-    const serverEmoji = this.serverEmoji(server);
+    const serverEmoji = ALBION_GUILD_EMOJI;
     // If the user is excluded from role inconsistency checks, skip them
     const excludedUsers: string[] = this.config.get('albion.scanExcludedUsers');
     if (excludedUsers.includes(discordMember.id)) {
@@ -465,16 +457,8 @@ export class AlbionScanningService {
 
     // If no roles were found, they must have at least registered and initiate
     if (!highestPriorityRole) {
-      let entryRole: AlbionRoleMapInterface;
-      let registeredRole: AlbionRoleMapInterface;
-
-      if (server === AlbionServer.EUROPE) {
-        entryRole = roleMap.filter((role) => role.name === '@ALB/Disciple')[0];
-        registeredRole = roleMap.filter((role) => role.name === '@ALB/Registered')[0];
-      }
-      else {
-        throw new Error('Invalid server!');
-      }
+      const entryRole = roleMap.filter((role) => role.name === '@ALB/Disciple')[0];
+      const registeredRole = roleMap.filter((role) => role.name === '@ALB/Registered')[0];
 
       const action = 'added';
       const reason = 'they have no roles but are registered!';
@@ -496,7 +480,7 @@ export class AlbionScanningService {
     // If their highest role is registered, this shouldn't be the case. They should have at least the entry level role.
     // We need to get the role for the server they're on, and the priority above the registered priority.
     if (highestPriorityRole.name.includes('Registered')) {
-      const entryRole = roleMap.filter((role) => role.server === server && role.priority === highestPriorityRole.priority - 1)[0];
+      const entryRole = roleMap.filter((role) => role.priority === highestPriorityRole.priority - 1)[0];
       const action = 'added';
       const reason = 'they are registered but don\'t have at least the entry level role!';
 
@@ -511,10 +495,6 @@ export class AlbionScanningService {
 
     // Otherwise, this is based off priority of the highest priority role.
     roleMap.forEach((role) => {
-      // If the role is for the wrong server, skip it
-      if (role.server !== server) {
-        return;
-      }
       const shouldHaveRole = role.priority === highestPriorityRole?.priority || (role.priority > highestPriorityRole?.priority && role.keep);
       const hasRole = discordMember.roles.cache.has(role.discordRoleId);
 
@@ -545,9 +525,5 @@ export class AlbionScanningService {
     });
 
     return inconsistencies;
-  }
-
-  serverEmoji(server: AlbionServer) {
-    return server === AlbionServer.EUROPE ? '🇪🇺' : '???';
   }
 }

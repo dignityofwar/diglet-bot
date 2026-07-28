@@ -2,17 +2,8 @@
   "namespaces": [],
   "tables": [
     {
+      "name": "activity_entity",
       "columns": {
-        "id": {
-          "name": "id",
-          "type": "int",
-          "unsigned": true,
-          "autoincrement": true,
-          "primary": true,
-          "nullable": false,
-          "length": null,
-          "mappedType": "integer"
-        },
         "created_at": {
           "name": "created_at",
           "type": "datetime",
@@ -20,17 +11,14 @@
           "autoincrement": false,
           "primary": false,
           "nullable": false,
+          "unique": false,
           "length": null,
-          "mappedType": "datetime"
-        },
-        "updated_at": {
-          "name": "updated_at",
-          "type": "datetime",
-          "unsigned": false,
-          "autoincrement": false,
-          "primary": false,
-          "nullable": false,
-          "length": null,
+          "precision": null,
+          "scale": null,
+          "default": null,
+          "comment": null,
+          "collation": null,
+          "enumItems": [],
           "mappedType": "datetime"
         },
         "discord_id": {
@@ -40,7 +28,14 @@
           "autoincrement": false,
           "primary": false,
           "nullable": false,
+          "unique": true,
           "length": 255,
+          "precision": null,
+          "scale": null,
+          "default": null,
+          "comment": null,
+          "collation": null,
+          "enumItems": [],
           "mappedType": "string"
         },
         "discord_nickname": {
@@ -50,8 +45,32 @@
           "autoincrement": false,
           "primary": false,
           "nullable": false,
+          "unique": false,
           "length": 255,
+          "precision": null,
+          "scale": null,
+          "default": null,
+          "comment": null,
+          "collation": null,
+          "enumItems": [],
           "mappedType": "string"
+        },
+        "id": {
+          "name": "id",
+          "type": "int",
+          "unsigned": true,
+          "autoincrement": true,
+          "primary": true,
+          "nullable": false,
+          "unique": false,
+          "length": null,
+          "precision": null,
+          "scale": null,
+          "default": null,
+          "comment": null,
+          "collation": null,
+          "enumItems": [],
+          "mappedType": "integer"
         },
         "last_activity": {
           "name": "last_activity",
@@ -60,67 +79,14 @@
           "autoincrement": false,
           "primary": false,
           "nullable": false,
+          "unique": false,
           "length": null,
-          "mappedType": "datetime"
-        }
-      },
-      "name": "activity_entity",
-      "indexes": [
-        {
-          "columnNames": [
-            "discord_id"
-          ],
-          "composite": false,
-          "keyName": "activity_entity_discord_id_index",
-          "constraint": false,
-          "primary": false,
-          "unique": false
-        },
-        {
-          "columnNames": [
-            "discord_id"
-          ],
-          "composite": false,
-          "keyName": "activity_entity_discord_id_unique",
-          "constraint": true,
-          "primary": false,
-          "unique": true
-        },
-        {
-          "keyName": "PRIMARY",
-          "columnNames": [
-            "id"
-          ],
-          "composite": false,
-          "constraint": true,
-          "primary": true,
-          "unique": true
-        }
-      ],
-      "checks": [],
-      "foreignKeys": {},
-      "nativeEnums": {}
-    },
-    {
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "int",
-          "unsigned": true,
-          "autoincrement": true,
-          "primary": true,
-          "nullable": false,
-          "length": null,
-          "mappedType": "integer"
-        },
-        "created_at": {
-          "name": "created_at",
-          "type": "datetime",
-          "unsigned": false,
-          "autoincrement": false,
-          "primary": false,
-          "nullable": false,
-          "length": null,
+          "precision": null,
+          "scale": null,
+          "default": null,
+          "comment": null,
+          "collation": null,
+          "enumItems": [],
           "mappedType": "datetime"
         },
         "updated_at": {
@@ -130,64 +96,57 @@
           "autoincrement": false,
           "primary": false,
           "nullable": false,
+          "unique": false,
           "length": null,
+          "precision": null,
+          "scale": null,
+          "default": null,
+          "comment": null,
+          "collation": null,
+          "enumItems": [],
           "mappedType": "datetime"
+        }
+      },
+      "indexes": [
+        {
+          "columnNames": [
+            "id"
+          ],
+          "composite": false,
+          "constraint": true,
+          "keyName": "PRIMARY",
+          "primary": true,
+          "unique": true
         },
-        "total_users": {
-          "name": "total_users",
-          "type": "int",
-          "unsigned": false,
-          "autoincrement": false,
+        {
+          "columnNames": [
+            "discord_id"
+          ],
+          "composite": false,
+          "constraint": false,
+          "keyName": "activity_entity_discord_id_index",
           "primary": false,
-          "nullable": false,
-          "length": null,
-          "default": "0",
-          "mappedType": "integer"
+          "unique": false
         },
-        "inactive_users": {
-          "name": "inactive_users",
-          "type": "int",
-          "unsigned": false,
-          "autoincrement": false,
+        {
+          "columnNames": [
+            "discord_id"
+          ],
+          "composite": false,
+          "constraint": true,
+          "keyName": "activity_entity_discord_id_unique",
           "primary": false,
-          "nullable": false,
-          "length": null,
-          "default": "0",
-          "mappedType": "integer"
-        },
-        "active_users90d": {
-          "name": "active_users90d",
-          "type": "int",
-          "unsigned": false,
-          "autoincrement": false,
-          "primary": false,
-          "nullable": false,
-          "length": null,
-          "default": "0",
-          "mappedType": "integer"
-        },
-        "active_users60d": {
-          "name": "active_users60d",
-          "type": "int",
-          "unsigned": false,
-          "autoincrement": false,
-          "primary": false,
-          "nullable": false,
-          "length": null,
-          "default": "0",
-          "mappedType": "integer"
-        },
-        "active_users30d": {
-          "name": "active_users30d",
-          "type": "int",
-          "unsigned": false,
-          "autoincrement": false,
-          "primary": false,
-          "nullable": false,
-          "length": null,
-          "default": "0",
-          "mappedType": "integer"
-        },
+          "unique": true
+        }
+      ],
+      "checks": [],
+      "triggers": [],
+      "foreignKeys": {},
+      "comment": null
+    },
+    {
+      "name": "activity_statistics_entity",
+      "columns": {
         "active_users14d": {
           "name": "active_users14d",
           "type": "int",
@@ -195,41 +154,14 @@
           "autoincrement": false,
           "primary": false,
           "nullable": false,
+          "unique": false,
           "length": null,
+          "precision": null,
+          "scale": null,
           "default": "0",
-          "mappedType": "integer"
-        },
-        "active_users7d": {
-          "name": "active_users7d",
-          "type": "int",
-          "unsigned": false,
-          "autoincrement": false,
-          "primary": false,
-          "nullable": false,
-          "length": null,
-          "default": "0",
-          "mappedType": "integer"
-        },
-        "active_users3d": {
-          "name": "active_users3d",
-          "type": "int",
-          "unsigned": false,
-          "autoincrement": false,
-          "primary": false,
-          "nullable": false,
-          "length": null,
-          "default": "0",
-          "mappedType": "integer"
-        },
-        "active_users2d": {
-          "name": "active_users2d",
-          "type": "int",
-          "unsigned": false,
-          "autoincrement": false,
-          "primary": false,
-          "nullable": false,
-          "length": null,
-          "default": "0",
+          "comment": null,
+          "collation": null,
+          "enumItems": [],
           "mappedType": "integer"
         },
         "active_users1d": {
@@ -239,38 +171,116 @@
           "autoincrement": false,
           "primary": false,
           "nullable": false,
+          "unique": false,
           "length": null,
+          "precision": null,
+          "scale": null,
           "default": "0",
+          "comment": null,
+          "collation": null,
+          "enumItems": [],
           "mappedType": "integer"
-        }
-      },
-      "name": "activity_statistics_entity",
-      "indexes": [
-        {
-          "keyName": "PRIMARY",
-          "columnNames": [
-            "id"
-          ],
-          "composite": false,
-          "constraint": true,
-          "primary": true,
-          "unique": true
-        }
-      ],
-      "checks": [],
-      "foreignKeys": {},
-      "nativeEnums": {}
-    },
-    {
-      "columns": {
-        "id": {
-          "name": "id",
+        },
+        "active_users2d": {
+          "name": "active_users2d",
           "type": "int",
-          "unsigned": true,
-          "autoincrement": true,
-          "primary": true,
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
           "nullable": false,
+          "unique": false,
           "length": null,
+          "precision": null,
+          "scale": null,
+          "default": "0",
+          "comment": null,
+          "collation": null,
+          "enumItems": [],
+          "mappedType": "integer"
+        },
+        "active_users30d": {
+          "name": "active_users30d",
+          "type": "int",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "unique": false,
+          "length": null,
+          "precision": null,
+          "scale": null,
+          "default": "0",
+          "comment": null,
+          "collation": null,
+          "enumItems": [],
+          "mappedType": "integer"
+        },
+        "active_users3d": {
+          "name": "active_users3d",
+          "type": "int",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "unique": false,
+          "length": null,
+          "precision": null,
+          "scale": null,
+          "default": "0",
+          "comment": null,
+          "collation": null,
+          "enumItems": [],
+          "mappedType": "integer"
+        },
+        "active_users60d": {
+          "name": "active_users60d",
+          "type": "int",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "unique": false,
+          "length": null,
+          "precision": null,
+          "scale": null,
+          "default": "0",
+          "comment": null,
+          "collation": null,
+          "enumItems": [],
+          "mappedType": "integer"
+        },
+        "active_users7d": {
+          "name": "active_users7d",
+          "type": "int",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "unique": false,
+          "length": null,
+          "precision": null,
+          "scale": null,
+          "default": "0",
+          "comment": null,
+          "collation": null,
+          "enumItems": [],
+          "mappedType": "integer"
+        },
+        "active_users90d": {
+          "name": "active_users90d",
+          "type": "int",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "unique": false,
+          "length": null,
+          "precision": null,
+          "scale": null,
+          "default": "0",
+          "comment": null,
+          "collation": null,
+          "enumItems": [],
           "mappedType": "integer"
         },
         "created_at": {
@@ -280,8 +290,66 @@
           "autoincrement": false,
           "primary": false,
           "nullable": false,
+          "unique": false,
           "length": null,
+          "precision": null,
+          "scale": null,
+          "default": null,
+          "comment": null,
+          "collation": null,
+          "enumItems": [],
           "mappedType": "datetime"
+        },
+        "id": {
+          "name": "id",
+          "type": "int",
+          "unsigned": true,
+          "autoincrement": true,
+          "primary": true,
+          "nullable": false,
+          "unique": false,
+          "length": null,
+          "precision": null,
+          "scale": null,
+          "default": null,
+          "comment": null,
+          "collation": null,
+          "enumItems": [],
+          "mappedType": "integer"
+        },
+        "inactive_users": {
+          "name": "inactive_users",
+          "type": "int",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "unique": false,
+          "length": null,
+          "precision": null,
+          "scale": null,
+          "default": "0",
+          "comment": null,
+          "collation": null,
+          "enumItems": [],
+          "mappedType": "integer"
+        },
+        "total_users": {
+          "name": "total_users",
+          "type": "int",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "unique": false,
+          "length": null,
+          "precision": null,
+          "scale": null,
+          "default": "0",
+          "comment": null,
+          "collation": null,
+          "enumItems": [],
+          "mappedType": "integer"
         },
         "updated_at": {
           "name": "updated_at",
@@ -290,9 +358,329 @@
           "autoincrement": false,
           "primary": false,
           "nullable": false,
+          "unique": false,
           "length": null,
+          "precision": null,
+          "scale": null,
+          "default": null,
+          "comment": null,
+          "collation": null,
+          "enumItems": [],
+          "mappedType": "datetime"
+        }
+      },
+      "indexes": [
+        {
+          "columnNames": [
+            "id"
+          ],
+          "composite": false,
+          "constraint": true,
+          "keyName": "PRIMARY",
+          "primary": true,
+          "unique": true
+        }
+      ],
+      "checks": [],
+      "triggers": [],
+      "foreignKeys": {},
+      "comment": null
+    },
+    {
+      "name": "albion_registration_queue_entity",
+      "columns": {
+        "attempt_count": {
+          "name": "attempt_count",
+          "type": "int",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "unique": false,
+          "length": null,
+          "precision": null,
+          "scale": null,
+          "default": "0",
+          "comment": null,
+          "collation": null,
+          "enumItems": [],
+          "mappedType": "integer"
+        },
+        "character_name": {
+          "name": "character_name",
+          "type": "varchar(255)",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "unique": false,
+          "length": 255,
+          "precision": null,
+          "scale": null,
+          "default": null,
+          "comment": null,
+          "collation": null,
+          "enumItems": [],
+          "mappedType": "string"
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "datetime",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "unique": false,
+          "length": null,
+          "precision": null,
+          "scale": null,
+          "default": null,
+          "comment": null,
+          "collation": null,
+          "enumItems": [],
           "mappedType": "datetime"
         },
+        "discord_channel_id": {
+          "name": "discord_channel_id",
+          "type": "varchar(255)",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "unique": false,
+          "length": 255,
+          "precision": null,
+          "scale": null,
+          "default": null,
+          "comment": null,
+          "collation": null,
+          "enumItems": [],
+          "mappedType": "string"
+        },
+        "discord_guild_id": {
+          "name": "discord_guild_id",
+          "type": "varchar(255)",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "unique": false,
+          "length": 255,
+          "precision": null,
+          "scale": null,
+          "default": null,
+          "comment": null,
+          "collation": null,
+          "enumItems": [],
+          "mappedType": "string"
+        },
+        "discord_id": {
+          "name": "discord_id",
+          "type": "varchar(255)",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "unique": false,
+          "length": 255,
+          "precision": null,
+          "scale": null,
+          "default": null,
+          "comment": null,
+          "collation": null,
+          "enumItems": [],
+          "mappedType": "string"
+        },
+        "expires_at": {
+          "name": "expires_at",
+          "type": "datetime",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "unique": false,
+          "length": null,
+          "precision": null,
+          "scale": null,
+          "default": null,
+          "comment": null,
+          "collation": null,
+          "enumItems": [],
+          "mappedType": "datetime"
+        },
+        "guild_id": {
+          "name": "guild_id",
+          "type": "varchar(255)",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "unique": true,
+          "length": 255,
+          "precision": null,
+          "scale": null,
+          "default": null,
+          "comment": null,
+          "collation": null,
+          "enumItems": [],
+          "mappedType": "string"
+        },
+        "id": {
+          "name": "id",
+          "type": "int",
+          "unsigned": true,
+          "autoincrement": true,
+          "primary": true,
+          "nullable": false,
+          "unique": false,
+          "length": null,
+          "precision": null,
+          "scale": null,
+          "default": null,
+          "comment": null,
+          "collation": null,
+          "enumItems": [],
+          "mappedType": "integer"
+        },
+        "last_error": {
+          "name": "last_error",
+          "type": "varchar(2000)",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": true,
+          "unique": false,
+          "length": 2000,
+          "precision": null,
+          "scale": null,
+          "default": null,
+          "comment": null,
+          "collation": null,
+          "enumItems": [],
+          "mappedType": "string"
+        },
+        "status": {
+          "name": "status",
+          "type": "enum('pending','succeeded','failed','expired')",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "unique": false,
+          "length": null,
+          "precision": null,
+          "scale": null,
+          "default": "'pending'",
+          "comment": null,
+          "collation": null,
+          "enumItems": [
+            "pending",
+            "succeeded",
+            "failed",
+            "expired"
+          ],
+          "mappedType": "enum"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "datetime",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "unique": false,
+          "length": null,
+          "precision": null,
+          "scale": null,
+          "default": null,
+          "comment": null,
+          "collation": null,
+          "enumItems": [],
+          "mappedType": "datetime"
+        }
+      },
+      "indexes": [
+        {
+          "columnNames": [
+            "id"
+          ],
+          "composite": false,
+          "constraint": true,
+          "keyName": "PRIMARY",
+          "primary": true,
+          "unique": true
+        },
+        {
+          "columnNames": [
+            "discord_guild_id"
+          ],
+          "composite": false,
+          "constraint": false,
+          "keyName": "albion_registration_queue_entity_discord_guild_id_index",
+          "primary": false,
+          "unique": false
+        },
+        {
+          "columnNames": [
+            "discord_id"
+          ],
+          "composite": false,
+          "constraint": false,
+          "keyName": "albion_registration_queue_entity_discord_id_index",
+          "primary": false,
+          "unique": false
+        },
+        {
+          "columnNames": [
+            "expires_at"
+          ],
+          "composite": false,
+          "constraint": false,
+          "keyName": "albion_registration_queue_entity_expires_at_index",
+          "primary": false,
+          "unique": false
+        },
+        {
+          "columnNames": [
+            "guild_id"
+          ],
+          "composite": false,
+          "constraint": false,
+          "keyName": "albion_registration_queue_entity_guild_id_index",
+          "primary": false,
+          "unique": false
+        },
+        {
+          "columnNames": [
+            "status"
+          ],
+          "composite": false,
+          "constraint": false,
+          "keyName": "albion_registration_queue_entity_status_index",
+          "primary": false,
+          "unique": false
+        },
+        {
+          "columnNames": [
+            "guild_id",
+            "discord_id",
+            "status"
+          ],
+          "composite": true,
+          "constraint": true,
+          "keyName": "unique_albion_registration_queue_guild_discord_status",
+          "primary": false,
+          "unique": true
+        }
+      ],
+      "checks": [],
+      "triggers": [],
+      "foreignKeys": {},
+      "comment": null
+    },
+    {
+      "name": "albion_registrations_entity",
+      "columns": {
         "character_id": {
           "name": "character_id",
           "type": "varchar(255)",
@@ -300,7 +688,14 @@
           "autoincrement": false,
           "primary": false,
           "nullable": false,
+          "unique": false,
           "length": 255,
+          "precision": null,
+          "scale": null,
+          "default": null,
+          "comment": null,
+          "collation": null,
+          "enumItems": [],
           "mappedType": "string"
         },
         "character_name": {
@@ -310,80 +705,15 @@
           "autoincrement": false,
           "primary": false,
           "nullable": false,
+          "unique": false,
           "length": 255,
+          "precision": null,
+          "scale": null,
+          "default": null,
+          "comment": null,
+          "collation": null,
+          "enumItems": [],
           "mappedType": "string"
-        },
-        "registered": {
-          "name": "registered",
-          "type": "tinyint(1)",
-          "unsigned": false,
-          "autoincrement": false,
-          "primary": false,
-          "nullable": false,
-          "length": 1,
-          "default": "false",
-          "mappedType": "boolean"
-        },
-        "warned": {
-          "name": "warned",
-          "type": "tinyint(1)",
-          "unsigned": false,
-          "autoincrement": false,
-          "primary": false,
-          "nullable": false,
-          "length": 1,
-          "default": "false",
-          "mappedType": "boolean"
-        }
-      },
-      "name": "albion_guild_members_entity",
-      "indexes": [
-        {
-          "columnNames": [
-            "character_id"
-          ],
-          "composite": false,
-          "keyName": "albion_guild_members_entity_character_id_index",
-          "constraint": false,
-          "primary": false,
-          "unique": false
-        },
-        {
-          "columnNames": [
-            "character_id"
-          ],
-          "composite": false,
-          "keyName": "albion_guild_members_entity_character_id_unique",
-          "constraint": true,
-          "primary": false,
-          "unique": true
-        },
-        {
-          "keyName": "PRIMARY",
-          "columnNames": [
-            "id"
-          ],
-          "composite": false,
-          "constraint": true,
-          "primary": true,
-          "unique": true
-        }
-      ],
-      "checks": [],
-      "foreignKeys": {},
-      "nativeEnums": {}
-    },
-    {
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "int",
-          "unsigned": true,
-          "autoincrement": true,
-          "primary": true,
-          "nullable": false,
-          "length": null,
-          "mappedType": "integer"
         },
         "created_at": {
           "name": "created_at",
@@ -392,17 +722,14 @@
           "autoincrement": false,
           "primary": false,
           "nullable": false,
+          "unique": false,
           "length": null,
-          "mappedType": "datetime"
-        },
-        "updated_at": {
-          "name": "updated_at",
-          "type": "datetime",
-          "unsigned": false,
-          "autoincrement": false,
-          "primary": false,
-          "nullable": false,
-          "length": null,
+          "precision": null,
+          "scale": null,
+          "default": null,
+          "comment": null,
+          "collation": null,
+          "enumItems": [],
           "mappedType": "datetime"
         },
         "discord_id": {
@@ -412,27 +739,14 @@
           "autoincrement": false,
           "primary": false,
           "nullable": false,
+          "unique": false,
           "length": 255,
-          "mappedType": "string"
-        },
-        "character_id": {
-          "name": "character_id",
-          "type": "varchar(255)",
-          "unsigned": false,
-          "autoincrement": false,
-          "primary": false,
-          "nullable": false,
-          "length": 255,
-          "mappedType": "string"
-        },
-        "character_name": {
-          "name": "character_name",
-          "type": "varchar(255)",
-          "unsigned": false,
-          "autoincrement": false,
-          "primary": false,
-          "nullable": false,
-          "length": 255,
+          "precision": null,
+          "scale": null,
+          "default": null,
+          "comment": null,
+          "collation": null,
+          "enumItems": [],
           "mappedType": "string"
         },
         "guild_id": {
@@ -442,8 +756,32 @@
           "autoincrement": false,
           "primary": false,
           "nullable": false,
+          "unique": true,
           "length": 255,
+          "precision": null,
+          "scale": null,
+          "default": null,
+          "comment": null,
+          "collation": null,
+          "enumItems": [],
           "mappedType": "string"
+        },
+        "id": {
+          "name": "id",
+          "type": "int",
+          "unsigned": true,
+          "autoincrement": true,
+          "primary": true,
+          "nullable": false,
+          "unique": false,
+          "length": null,
+          "precision": null,
+          "scale": null,
+          "default": null,
+          "comment": null,
+          "collation": null,
+          "enumItems": [],
+          "mappedType": "integer"
         },
         "manual": {
           "name": "manual",
@@ -452,8 +790,14 @@
           "autoincrement": false,
           "primary": false,
           "nullable": false,
-          "length": 1,
+          "unique": false,
+          "length": null,
+          "precision": 3,
+          "scale": 0,
           "default": "false",
+          "comment": null,
+          "collation": null,
+          "enumItems": [],
           "mappedType": "boolean"
         },
         "manual_created_by_discord_id": {
@@ -463,8 +807,14 @@
           "autoincrement": false,
           "primary": false,
           "nullable": true,
+          "unique": false,
           "length": 255,
-          "default": "null",
+          "precision": null,
+          "scale": null,
+          "default": null,
+          "comment": null,
+          "collation": null,
+          "enumItems": [],
           "mappedType": "string"
         },
         "manual_created_by_discord_name": {
@@ -474,91 +824,15 @@
           "autoincrement": false,
           "primary": false,
           "nullable": true,
+          "unique": false,
           "length": 255,
-          "default": "null",
+          "precision": null,
+          "scale": null,
+          "default": null,
+          "comment": null,
+          "collation": null,
+          "enumItems": [],
           "mappedType": "string"
-        }
-      },
-      "name": "albion_registrations_entity",
-      "indexes": [
-        {
-          "columnNames": [
-            "discord_id"
-          ],
-          "composite": false,
-          "keyName": "albion_registrations_entity_discord_id_index",
-          "constraint": false,
-          "primary": false,
-          "unique": false
-        },
-        {
-          "columnNames": [
-            "character_id"
-          ],
-          "composite": false,
-          "keyName": "albion_registrations_entity_character_id_index",
-          "constraint": false,
-          "primary": false,
-          "unique": false
-        },
-        {
-          "keyName": "unique_guild_discord",
-          "columnNames": [
-            "guild_id",
-            "discord_id"
-          ],
-          "composite": true,
-          "constraint": true,
-          "primary": false,
-          "unique": true
-        },
-        {
-          "keyName": "unique_guild_character",
-          "columnNames": [
-            "guild_id",
-            "character_id"
-          ],
-          "composite": true,
-          "constraint": true,
-          "primary": false,
-          "unique": true
-        },
-        {
-          "keyName": "PRIMARY",
-          "columnNames": [
-            "id"
-          ],
-          "composite": false,
-          "constraint": true,
-          "primary": true,
-          "unique": true
-        }
-      ],
-      "checks": [],
-      "foreignKeys": {},
-      "nativeEnums": {}
-    },
-    {
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "int",
-          "unsigned": true,
-          "autoincrement": true,
-          "primary": true,
-          "nullable": false,
-          "length": null,
-          "mappedType": "integer"
-        },
-        "created_at": {
-          "name": "created_at",
-          "type": "datetime",
-          "unsigned": false,
-          "autoincrement": false,
-          "primary": false,
-          "nullable": false,
-          "length": null,
-          "mappedType": "datetime"
         },
         "updated_at": {
           "name": "updated_at",
@@ -567,7 +841,94 @@
           "autoincrement": false,
           "primary": false,
           "nullable": false,
+          "unique": false,
           "length": null,
+          "precision": null,
+          "scale": null,
+          "default": null,
+          "comment": null,
+          "collation": null,
+          "enumItems": [],
+          "mappedType": "datetime"
+        }
+      },
+      "indexes": [
+        {
+          "columnNames": [
+            "id"
+          ],
+          "composite": false,
+          "constraint": true,
+          "keyName": "PRIMARY",
+          "primary": true,
+          "unique": true
+        },
+        {
+          "columnNames": [
+            "character_id"
+          ],
+          "composite": false,
+          "constraint": false,
+          "keyName": "albion_registrations_entity_character_id_index",
+          "primary": false,
+          "unique": false
+        },
+        {
+          "columnNames": [
+            "discord_id"
+          ],
+          "composite": false,
+          "constraint": false,
+          "keyName": "albion_registrations_entity_discord_id_index",
+          "primary": false,
+          "unique": false
+        },
+        {
+          "columnNames": [
+            "guild_id",
+            "character_id"
+          ],
+          "composite": true,
+          "constraint": true,
+          "keyName": "unique_guild_character",
+          "primary": false,
+          "unique": true
+        },
+        {
+          "columnNames": [
+            "guild_id",
+            "discord_id"
+          ],
+          "composite": true,
+          "constraint": true,
+          "keyName": "unique_guild_discord",
+          "primary": false,
+          "unique": true
+        }
+      ],
+      "checks": [],
+      "triggers": [],
+      "foreignKeys": {},
+      "comment": null
+    },
+    {
+      "name": "joiner_leaver_entity",
+      "columns": {
+        "created_at": {
+          "name": "created_at",
+          "type": "datetime",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "unique": false,
+          "length": null,
+          "precision": null,
+          "scale": null,
+          "default": null,
+          "comment": null,
+          "collation": null,
+          "enumItems": [],
           "mappedType": "datetime"
         },
         "discord_id": {
@@ -577,7 +938,14 @@
           "autoincrement": false,
           "primary": false,
           "nullable": false,
+          "unique": true,
           "length": 255,
+          "precision": null,
+          "scale": null,
+          "default": null,
+          "comment": null,
+          "collation": null,
+          "enumItems": [],
           "mappedType": "string"
         },
         "discord_nickname": {
@@ -587,8 +955,32 @@
           "autoincrement": false,
           "primary": false,
           "nullable": false,
+          "unique": false,
           "length": 255,
+          "precision": null,
+          "scale": null,
+          "default": null,
+          "comment": null,
+          "collation": null,
+          "enumItems": [],
           "mappedType": "string"
+        },
+        "id": {
+          "name": "id",
+          "type": "int",
+          "unsigned": true,
+          "autoincrement": true,
+          "primary": true,
+          "nullable": false,
+          "unique": false,
+          "length": null,
+          "precision": null,
+          "scale": null,
+          "default": null,
+          "comment": null,
+          "collation": null,
+          "enumItems": [],
+          "mappedType": "integer"
         },
         "join_date": {
           "name": "join_date",
@@ -597,7 +989,14 @@
           "autoincrement": false,
           "primary": false,
           "nullable": false,
+          "unique": false,
           "length": null,
+          "precision": null,
+          "scale": null,
+          "default": null,
+          "comment": null,
+          "collation": null,
+          "enumItems": [],
           "mappedType": "datetime"
         },
         "leave_date": {
@@ -607,7 +1006,14 @@
           "autoincrement": false,
           "primary": false,
           "nullable": true,
+          "unique": false,
           "length": null,
+          "precision": null,
+          "scale": null,
+          "default": null,
+          "comment": null,
+          "collation": null,
+          "enumItems": [],
           "mappedType": "datetime"
         },
         "rejoin_count": {
@@ -617,69 +1023,15 @@
           "autoincrement": false,
           "primary": false,
           "nullable": false,
+          "unique": false,
           "length": null,
+          "precision": null,
+          "scale": null,
           "default": "0",
+          "comment": null,
+          "collation": null,
+          "enumItems": [],
           "mappedType": "integer"
-        }
-      },
-      "name": "joiner_leaver_entity",
-      "indexes": [
-        {
-          "columnNames": [
-            "discord_id"
-          ],
-          "composite": false,
-          "keyName": "joiner_leaver_entity_discord_id_index",
-          "constraint": false,
-          "primary": false,
-          "unique": false
-        },
-        {
-          "columnNames": [
-            "discord_id"
-          ],
-          "composite": false,
-          "keyName": "joiner_leaver_entity_discord_id_unique",
-          "constraint": true,
-          "primary": false,
-          "unique": true
-        },
-        {
-          "keyName": "PRIMARY",
-          "columnNames": [
-            "id"
-          ],
-          "composite": false,
-          "constraint": true,
-          "primary": true,
-          "unique": true
-        }
-      ],
-      "checks": [],
-      "foreignKeys": {},
-      "nativeEnums": {}
-    },
-    {
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "int",
-          "unsigned": true,
-          "autoincrement": true,
-          "primary": true,
-          "nullable": false,
-          "length": null,
-          "mappedType": "integer"
-        },
-        "created_at": {
-          "name": "created_at",
-          "type": "datetime",
-          "unsigned": false,
-          "autoincrement": false,
-          "primary": false,
-          "nullable": false,
-          "length": null,
-          "mappedType": "datetime"
         },
         "updated_at": {
           "name": "updated_at",
@@ -688,8 +1040,124 @@
           "autoincrement": false,
           "primary": false,
           "nullable": false,
+          "unique": false,
           "length": null,
+          "precision": null,
+          "scale": null,
+          "default": null,
+          "comment": null,
+          "collation": null,
+          "enumItems": [],
           "mappedType": "datetime"
+        }
+      },
+      "indexes": [
+        {
+          "columnNames": [
+            "id"
+          ],
+          "composite": false,
+          "constraint": true,
+          "keyName": "PRIMARY",
+          "primary": true,
+          "unique": true
+        },
+        {
+          "columnNames": [
+            "discord_id"
+          ],
+          "composite": false,
+          "constraint": false,
+          "keyName": "joiner_leaver_entity_discord_id_index",
+          "primary": false,
+          "unique": false
+        },
+        {
+          "columnNames": [
+            "discord_id"
+          ],
+          "composite": false,
+          "constraint": true,
+          "keyName": "joiner_leaver_entity_discord_id_unique",
+          "primary": false,
+          "unique": true
+        }
+      ],
+      "checks": [],
+      "triggers": [],
+      "foreignKeys": {},
+      "comment": null
+    },
+    {
+      "name": "joiner_leaver_statistics_entity",
+      "columns": {
+        "avg_time_to_leave": {
+          "name": "avg_time_to_leave",
+          "type": "varchar(255)",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "unique": false,
+          "length": 255,
+          "precision": null,
+          "scale": null,
+          "default": "'0d 0h 0m'",
+          "comment": null,
+          "collation": null,
+          "enumItems": [],
+          "mappedType": "string"
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "datetime",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "unique": false,
+          "length": null,
+          "precision": null,
+          "scale": null,
+          "default": null,
+          "comment": null,
+          "collation": null,
+          "enumItems": [],
+          "mappedType": "datetime"
+        },
+        "early_leavers": {
+          "name": "early_leavers",
+          "type": "int",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "unique": false,
+          "length": null,
+          "precision": null,
+          "scale": null,
+          "default": "0",
+          "comment": null,
+          "collation": null,
+          "enumItems": [],
+          "mappedType": "integer"
+        },
+        "id": {
+          "name": "id",
+          "type": "int",
+          "unsigned": true,
+          "autoincrement": true,
+          "primary": true,
+          "nullable": false,
+          "unique": false,
+          "length": null,
+          "precision": null,
+          "scale": null,
+          "default": null,
+          "comment": null,
+          "collation": null,
+          "enumItems": [],
+          "mappedType": "integer"
         },
         "joiners": {
           "name": "joiners",
@@ -698,8 +1166,14 @@
           "autoincrement": false,
           "primary": false,
           "nullable": false,
+          "unique": false,
           "length": null,
+          "precision": null,
+          "scale": null,
           "default": "0",
+          "comment": null,
+          "collation": null,
+          "enumItems": [],
           "mappedType": "integer"
         },
         "leavers": {
@@ -709,8 +1183,14 @@
           "autoincrement": false,
           "primary": false,
           "nullable": false,
+          "unique": false,
           "length": null,
+          "precision": null,
+          "scale": null,
           "default": "0",
+          "comment": null,
+          "collation": null,
+          "enumItems": [],
           "mappedType": "integer"
         },
         "rejoiners": {
@@ -720,71 +1200,15 @@
           "autoincrement": false,
           "primary": false,
           "nullable": false,
+          "unique": false,
           "length": null,
+          "precision": null,
+          "scale": null,
           "default": "0",
+          "comment": null,
+          "collation": null,
+          "enumItems": [],
           "mappedType": "integer"
-        },
-        "early_leavers": {
-          "name": "early_leavers",
-          "type": "int",
-          "unsigned": false,
-          "autoincrement": false,
-          "primary": false,
-          "nullable": false,
-          "length": null,
-          "default": "0",
-          "mappedType": "integer"
-        },
-        "avg_time_to_leave": {
-          "name": "avg_time_to_leave",
-          "type": "varchar(255)",
-          "unsigned": false,
-          "autoincrement": false,
-          "primary": false,
-          "nullable": false,
-          "length": 255,
-          "default": "'0d 0h 0m'",
-          "mappedType": "string"
-        }
-      },
-      "name": "joiner_leaver_statistics_entity",
-      "indexes": [
-        {
-          "keyName": "PRIMARY",
-          "columnNames": [
-            "id"
-          ],
-          "composite": false,
-          "constraint": true,
-          "primary": true,
-          "unique": true
-        }
-      ],
-      "checks": [],
-      "foreignKeys": {},
-      "nativeEnums": {}
-    },
-    {
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "int",
-          "unsigned": true,
-          "autoincrement": true,
-          "primary": true,
-          "nullable": false,
-          "length": null,
-          "mappedType": "integer"
-        },
-        "created_at": {
-          "name": "created_at",
-          "type": "datetime",
-          "unsigned": false,
-          "autoincrement": false,
-          "primary": false,
-          "nullable": false,
-          "length": null,
-          "mappedType": "datetime"
         },
         "updated_at": {
           "name": "updated_at",
@@ -793,7 +1217,86 @@
           "autoincrement": false,
           "primary": false,
           "nullable": false,
+          "unique": false,
           "length": null,
+          "precision": null,
+          "scale": null,
+          "default": null,
+          "comment": null,
+          "collation": null,
+          "enumItems": [],
+          "mappedType": "datetime"
+        }
+      },
+      "indexes": [
+        {
+          "columnNames": [
+            "id"
+          ],
+          "composite": false,
+          "constraint": true,
+          "keyName": "PRIMARY",
+          "primary": true,
+          "unique": true
+        }
+      ],
+      "checks": [],
+      "triggers": [],
+      "foreignKeys": {},
+      "comment": null
+    },
+    {
+      "name": "ps2members_entity",
+      "columns": {
+        "character_id": {
+          "name": "character_id",
+          "type": "varchar(255)",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "unique": true,
+          "length": 255,
+          "precision": null,
+          "scale": null,
+          "default": null,
+          "comment": null,
+          "collation": null,
+          "enumItems": [],
+          "mappedType": "string"
+        },
+        "character_name": {
+          "name": "character_name",
+          "type": "varchar(255)",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "unique": false,
+          "length": 255,
+          "precision": null,
+          "scale": null,
+          "default": null,
+          "comment": null,
+          "collation": null,
+          "enumItems": [],
+          "mappedType": "string"
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "datetime",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "unique": false,
+          "length": null,
+          "precision": null,
+          "scale": null,
+          "default": null,
+          "comment": null,
+          "collation": null,
+          "enumItems": [],
           "mappedType": "datetime"
         },
         "discord_id": {
@@ -803,28 +1306,32 @@
           "autoincrement": false,
           "primary": false,
           "nullable": false,
+          "unique": true,
           "length": 255,
+          "precision": null,
+          "scale": null,
+          "default": null,
+          "comment": null,
+          "collation": null,
+          "enumItems": [],
           "mappedType": "string"
         },
-        "character_id": {
-          "name": "character_id",
-          "type": "varchar(255)",
-          "unsigned": false,
-          "autoincrement": false,
-          "primary": false,
+        "id": {
+          "name": "id",
+          "type": "int",
+          "unsigned": true,
+          "autoincrement": true,
+          "primary": true,
           "nullable": false,
-          "length": 255,
-          "mappedType": "string"
-        },
-        "character_name": {
-          "name": "character_name",
-          "type": "varchar(255)",
-          "unsigned": false,
-          "autoincrement": false,
-          "primary": false,
-          "nullable": false,
-          "length": 255,
-          "mappedType": "string"
+          "unique": false,
+          "length": null,
+          "precision": null,
+          "scale": null,
+          "default": null,
+          "comment": null,
+          "collation": null,
+          "enumItems": [],
+          "mappedType": "integer"
         },
         "manual": {
           "name": "manual",
@@ -833,8 +1340,14 @@
           "autoincrement": false,
           "primary": false,
           "nullable": false,
-          "length": 1,
+          "unique": false,
+          "length": null,
+          "precision": 3,
+          "scale": 0,
           "default": "false",
+          "comment": null,
+          "collation": null,
+          "enumItems": [],
           "mappedType": "boolean"
         },
         "manual_created_by_discord_id": {
@@ -844,8 +1357,14 @@
           "autoincrement": false,
           "primary": false,
           "nullable": true,
+          "unique": false,
           "length": 255,
-          "default": "null",
+          "precision": null,
+          "scale": null,
+          "default": null,
+          "comment": null,
+          "collation": null,
+          "enumItems": [],
           "mappedType": "string"
         },
         "manual_created_by_discord_name": {
@@ -855,89 +1374,15 @@
           "autoincrement": false,
           "primary": false,
           "nullable": true,
+          "unique": false,
           "length": 255,
-          "default": "null",
+          "precision": null,
+          "scale": null,
+          "default": null,
+          "comment": null,
+          "collation": null,
+          "enumItems": [],
           "mappedType": "string"
-        }
-      },
-      "name": "ps2members_entity",
-      "indexes": [
-        {
-          "columnNames": [
-            "discord_id"
-          ],
-          "composite": false,
-          "keyName": "ps2members_entity_discord_id_index",
-          "constraint": false,
-          "primary": false,
-          "unique": false
-        },
-        {
-          "columnNames": [
-            "discord_id"
-          ],
-          "composite": false,
-          "keyName": "ps2members_entity_discord_id_unique",
-          "constraint": true,
-          "primary": false,
-          "unique": true
-        },
-        {
-          "columnNames": [
-            "character_id"
-          ],
-          "composite": false,
-          "keyName": "ps2members_entity_character_id_index",
-          "constraint": false,
-          "primary": false,
-          "unique": false
-        },
-        {
-          "columnNames": [
-            "character_id"
-          ],
-          "composite": false,
-          "keyName": "ps2members_entity_character_id_unique",
-          "constraint": true,
-          "primary": false,
-          "unique": true
-        },
-        {
-          "keyName": "PRIMARY",
-          "columnNames": [
-            "id"
-          ],
-          "composite": false,
-          "constraint": true,
-          "primary": true,
-          "unique": true
-        }
-      ],
-      "checks": [],
-      "foreignKeys": {},
-      "nativeEnums": {}
-    },
-    {
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "int",
-          "unsigned": true,
-          "autoincrement": true,
-          "primary": true,
-          "nullable": false,
-          "length": null,
-          "mappedType": "integer"
-        },
-        "created_at": {
-          "name": "created_at",
-          "type": "datetime",
-          "unsigned": false,
-          "autoincrement": false,
-          "primary": false,
-          "nullable": false,
-          "length": null,
-          "mappedType": "datetime"
         },
         "updated_at": {
           "name": "updated_at",
@@ -946,9 +1391,77 @@
           "autoincrement": false,
           "primary": false,
           "nullable": false,
+          "unique": false,
           "length": null,
+          "precision": null,
+          "scale": null,
+          "default": null,
+          "comment": null,
+          "collation": null,
+          "enumItems": [],
           "mappedType": "datetime"
+        }
+      },
+      "indexes": [
+        {
+          "columnNames": [
+            "id"
+          ],
+          "composite": false,
+          "constraint": true,
+          "keyName": "PRIMARY",
+          "primary": true,
+          "unique": true
         },
+        {
+          "columnNames": [
+            "character_id"
+          ],
+          "composite": false,
+          "constraint": false,
+          "keyName": "ps2members_entity_character_id_index",
+          "primary": false,
+          "unique": false
+        },
+        {
+          "columnNames": [
+            "character_id"
+          ],
+          "composite": false,
+          "constraint": true,
+          "keyName": "ps2members_entity_character_id_unique",
+          "primary": false,
+          "unique": true
+        },
+        {
+          "columnNames": [
+            "discord_id"
+          ],
+          "composite": false,
+          "constraint": false,
+          "keyName": "ps2members_entity_discord_id_index",
+          "primary": false,
+          "unique": false
+        },
+        {
+          "columnNames": [
+            "discord_id"
+          ],
+          "composite": false,
+          "constraint": true,
+          "keyName": "ps2members_entity_discord_id_unique",
+          "primary": false,
+          "unique": true
+        }
+      ],
+      "checks": [],
+      "triggers": [],
+      "foreignKeys": {},
+      "comment": null
+    },
+    {
+      "name": "ps2verification_attempt_entity",
+      "columns": {
         "character_id": {
           "name": "character_id",
           "type": "varchar(255)",
@@ -956,7 +1469,14 @@
           "autoincrement": false,
           "primary": false,
           "nullable": false,
+          "unique": true,
           "length": 255,
+          "precision": null,
+          "scale": null,
+          "default": null,
+          "comment": null,
+          "collation": null,
+          "enumItems": [],
           "mappedType": "string"
         },
         "character_name": {
@@ -966,58 +1486,15 @@
           "autoincrement": false,
           "primary": false,
           "nullable": false,
+          "unique": false,
           "length": 255,
+          "precision": null,
+          "scale": null,
+          "default": null,
+          "comment": null,
+          "collation": null,
+          "enumItems": [],
           "mappedType": "string"
-        }
-      },
-      "name": "ps2verification_attempt_entity",
-      "indexes": [
-        {
-          "columnNames": [
-            "character_id"
-          ],
-          "composite": false,
-          "keyName": "ps2verification_attempt_entity_character_id_index",
-          "constraint": false,
-          "primary": false,
-          "unique": false
-        },
-        {
-          "columnNames": [
-            "character_id"
-          ],
-          "composite": false,
-          "keyName": "ps2verification_attempt_entity_character_id_unique",
-          "constraint": true,
-          "primary": false,
-          "unique": true
-        },
-        {
-          "keyName": "PRIMARY",
-          "columnNames": [
-            "id"
-          ],
-          "composite": false,
-          "constraint": true,
-          "primary": true,
-          "unique": true
-        }
-      ],
-      "checks": [],
-      "foreignKeys": {},
-      "nativeEnums": {}
-    },
-    {
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "int",
-          "unsigned": true,
-          "autoincrement": true,
-          "primary": true,
-          "nullable": false,
-          "length": null,
-          "mappedType": "integer"
         },
         "created_at": {
           "name": "created_at",
@@ -1026,8 +1503,32 @@
           "autoincrement": false,
           "primary": false,
           "nullable": false,
+          "unique": false,
           "length": null,
+          "precision": null,
+          "scale": null,
+          "default": null,
+          "comment": null,
+          "collation": null,
+          "enumItems": [],
           "mappedType": "datetime"
+        },
+        "id": {
+          "name": "id",
+          "type": "int",
+          "unsigned": true,
+          "autoincrement": true,
+          "primary": true,
+          "nullable": false,
+          "unique": false,
+          "length": null,
+          "precision": null,
+          "scale": null,
+          "default": null,
+          "comment": null,
+          "collation": null,
+          "enumItems": [],
+          "mappedType": "integer"
         },
         "updated_at": {
           "name": "updated_at",
@@ -1036,8 +1537,107 @@
           "autoincrement": false,
           "primary": false,
           "nullable": false,
+          "unique": false,
           "length": null,
+          "precision": null,
+          "scale": null,
+          "default": null,
+          "comment": null,
+          "collation": null,
+          "enumItems": [],
           "mappedType": "datetime"
+        }
+      },
+      "indexes": [
+        {
+          "columnNames": [
+            "id"
+          ],
+          "composite": false,
+          "constraint": true,
+          "keyName": "PRIMARY",
+          "primary": true,
+          "unique": true
+        },
+        {
+          "columnNames": [
+            "character_id"
+          ],
+          "composite": false,
+          "constraint": false,
+          "keyName": "ps2verification_attempt_entity_character_id_index",
+          "primary": false,
+          "unique": false
+        },
+        {
+          "columnNames": [
+            "character_id"
+          ],
+          "composite": false,
+          "constraint": true,
+          "keyName": "ps2verification_attempt_entity_character_id_unique",
+          "primary": false,
+          "unique": true
+        }
+      ],
+      "checks": [],
+      "triggers": [],
+      "foreignKeys": {},
+      "comment": null
+    },
+    {
+      "name": "role_metrics_entity",
+      "columns": {
+        "community_games": {
+          "name": "community_games",
+          "type": "json",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": true,
+          "unique": false,
+          "length": null,
+          "precision": null,
+          "scale": null,
+          "default": null,
+          "comment": null,
+          "collation": null,
+          "enumItems": [],
+          "mappedType": "json"
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "datetime",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "unique": false,
+          "length": null,
+          "precision": null,
+          "scale": null,
+          "default": null,
+          "comment": null,
+          "collation": null,
+          "enumItems": [],
+          "mappedType": "datetime"
+        },
+        "id": {
+          "name": "id",
+          "type": "int",
+          "unsigned": true,
+          "autoincrement": true,
+          "primary": true,
+          "nullable": false,
+          "unique": false,
+          "length": null,
+          "precision": null,
+          "scale": null,
+          "default": null,
+          "comment": null,
+          "collation": null,
+          "enumItems": [],
+          "mappedType": "integer"
         },
         "onboarded": {
           "name": "onboarded",
@@ -1046,19 +1646,15 @@
           "autoincrement": false,
           "primary": false,
           "nullable": false,
+          "unique": false,
           "length": null,
+          "precision": null,
+          "scale": null,
           "default": "0",
+          "comment": null,
+          "collation": null,
+          "enumItems": [],
           "mappedType": "integer"
-        },
-        "community_games": {
-          "name": "community_games",
-          "type": "json",
-          "unsigned": false,
-          "autoincrement": false,
-          "primary": false,
-          "nullable": true,
-          "length": null,
-          "mappedType": "json"
         },
         "rec_games": {
           "name": "rec_games",
@@ -1067,27 +1663,52 @@
           "autoincrement": false,
           "primary": false,
           "nullable": true,
+          "unique": false,
           "length": null,
+          "precision": null,
+          "scale": null,
+          "default": null,
+          "comment": null,
+          "collation": null,
+          "enumItems": [],
           "mappedType": "json"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "datetime",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "unique": false,
+          "length": null,
+          "precision": null,
+          "scale": null,
+          "default": null,
+          "comment": null,
+          "collation": null,
+          "enumItems": [],
+          "mappedType": "datetime"
         }
       },
-      "name": "role_metrics_entity",
       "indexes": [
         {
-          "keyName": "PRIMARY",
           "columnNames": [
             "id"
           ],
           "composite": false,
           "constraint": true,
+          "keyName": "PRIMARY",
           "primary": true,
           "unique": true
         }
       ],
       "checks": [],
+      "triggers": [],
       "foreignKeys": {},
-      "nativeEnums": {}
+      "comment": null
     }
   ],
+  "views": [],
   "nativeEnums": {}
 }

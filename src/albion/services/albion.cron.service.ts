@@ -4,7 +4,6 @@ import { TextChannel } from 'discord.js';
 import { ConfigService } from '@nestjs/config';
 import { DiscordService } from '../../discord/discord.service';
 import { AlbionScanningService } from './albion.scanning.service';
-import { AlbionServer } from '../interfaces/albion.api.interfaces';
 
 @Injectable()
 export class AlbionCronService implements OnApplicationBootstrap {
@@ -39,6 +38,6 @@ export class AlbionCronService implements OnApplicationBootstrap {
 
     const message = await this.channel.send('Starting EU Scans');
 
-    await this.albionScanningService.startScan(message, false, AlbionServer.EUROPE);
+    await this.albionScanningService.startScan(message, false);
   }
 }

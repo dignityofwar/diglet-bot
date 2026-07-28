@@ -111,7 +111,6 @@ export class AlbionRegistrationRetryCronService implements OnApplicationBootstra
       const guildId = this.configService.get('albion.guildId');
       const inGuild = await this.albionApiService.checkCharacterGuildMembership(
         attempt.characterName,
-        attempt.server,
         guildId,
       );
 
@@ -138,7 +137,6 @@ export class AlbionRegistrationRetryCronService implements OnApplicationBootstra
       // This is a scheduled attempt, so we must not re-run the normal registration validation that checks for existing queued attempts.
       await this.albionRegistrationService.handleRegistration(
         attempt.characterName,
-        attempt.server,
         attempt.discordId,
         attempt.discordGuildId,
         attempt.discordChannelId,

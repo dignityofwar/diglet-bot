@@ -1,6 +1,5 @@
 import axios from 'axios';
 import AlbionAxiosFactory from './albion.axios.factory';
-import { AlbionServer } from '../interfaces/albion.api.interfaces';
 
 // Mocking the axios module
 jest.mock('axios');
@@ -23,20 +22,7 @@ describe('AlbionAxiosFactory', () => {
       },
     };
 
-    albionAxiosFactory.createApiClient(AlbionServer.EUROPE);
-    expect(mockedAxios.create).toHaveBeenCalledWith(expectedConfig);
-  });
-
-  it('should create an AxiosInstance with the correct configuration for Europe', () => {
-    // Arrange
-    const expectedConfig = {
-      baseURL: 'https://gameinfo-ams.albiononline.com/api/gameinfo',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    };
-
-    albionAxiosFactory.createApiClient(AlbionServer.EUROPE);
+    albionAxiosFactory.createApiClient();
     expect(mockedAxios.create).toHaveBeenCalledWith(expectedConfig);
   });
 });

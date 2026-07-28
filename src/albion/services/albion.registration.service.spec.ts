@@ -7,7 +7,7 @@ import { ConfigService } from '@nestjs/config';
 import { EntityRepository } from '@mikro-orm/core';
 import { getRepositoryToken } from '@mikro-orm/nestjs';
 import { AlbionRegistrationsEntity } from '../../database/entities/albion.registrations.entity';
-import { AlbionPlayerInterface, AlbionServer } from '../interfaces/albion.api.interfaces';
+import { ALBION_GUILD_EMOJI, AlbionPlayerInterface } from '../interfaces/albion.api.interfaces';
 import { TestBootstrapper } from '../../test.bootstrapper';
 import { AlbionApiService } from './albion.api.service';
 import {
@@ -65,15 +65,12 @@ describe('AlbionRegistrationService', () => {
       getEntityManager: jest.fn().mockReturnValue(TestBootstrapper.getMockEntityManager()),
     } as any;
 
-    mockCharacter = TestBootstrapper.getMockAlbionCharacter(AlbionServer.EUROPE) as any;
+    mockCharacter = TestBootstrapper.getMockAlbionCharacter() as any;
     mockDiscordUser = TestBootstrapper.getMockDiscordUser();
 
     mockRegistrationDataEU = {
       discordMember: mockDiscordUser,
       character: mockCharacter,
-      server: AlbionServer.EUROPE,
-      serverName: 'Europe',
-      serverEmoji: '🇪🇺',
       guildId: TestBootstrapper.mockConfig.albion.guildId,
       guildName: 'Dignity Of War',
       guildPingable: '@ALB/Archmage',
@@ -202,7 +199,7 @@ describe('AlbionRegistrationService', () => {
         discordService.getGuildMember = jest.fn().mockResolvedValue(null);
 
         await expect(service.validate(mockRegistrationDataEU)).rejects.toThrow(
-          `Sorry <@${mockDiscordUser.id}>, character **${mockCharacter.Name}** has already been registered for the ${mockRegistrationDataEU.serverEmoji} ${mockRegistrationDataEU.guildName} Guild, but the user who registered it has left the server.\n\n${contactMessage}`,
+          `Sorry <@${mockDiscordUser.id}>, character **${mockCharacter.Name}** has already been registered for the ${ALBION_GUILD_EMOJI} ${mockRegistrationDataEU.guildName} Guild, but the user who registered it has left the server.\n\n${contactMessage}`,
         );
       });
 
@@ -233,7 +230,7 @@ describe('AlbionRegistrationService', () => {
         discordService.getGuildMember = jest.fn().mockResolvedValue(mockDiscordUser2);
 
         await expect(service.validate(mockRegistrationDataEU)).rejects.toThrow(
-          `Sorry <@${mockDiscordUser.id}>, character **${mockCharacter.Name}** has already been registered for the ${mockRegistrationDataEU.serverEmoji} ${mockRegistrationDataEU.guildName} Guild by Discord user \`@${mockDiscordUser2.displayName}\`.\n\n${contactMessage}`,
+          `Sorry <@${mockDiscordUser.id}>, character **${mockCharacter.Name}** has already been registered for the ${ALBION_GUILD_EMOJI} ${mockRegistrationDataEU.guildName} Guild by Discord user \`@${mockDiscordUser2.displayName}\`.\n\n${contactMessage}`,
         );
       });
 
@@ -246,7 +243,7 @@ describe('AlbionRegistrationService', () => {
         });
 
         await expect(service.validate(mockRegistrationDataEU)).rejects.toThrow(
-          `Sorry <@${mockDiscordUser.id}>, character **${mockCharacter.Name}** has already been registered for the ${mockRegistrationDataEU.serverEmoji} ${mockRegistrationDataEU.guildName} Guild, but the user who registered it has left the server.\n\n${contactMessage}`,
+          `Sorry <@${mockDiscordUser.id}>, character **${mockCharacter.Name}** has already been registered for the ${ALBION_GUILD_EMOJI} ${mockRegistrationDataEU.guildName} Guild, but the user who registered it has left the server.\n\n${contactMessage}`,
         );
 
         expect(service['logger'].warn).toHaveBeenCalledWith(
@@ -265,7 +262,6 @@ describe('AlbionRegistrationService', () => {
           guildId: mockRegistrationDataEU.guildId,
           discordId: String(mockDiscordUser.id),
           characterName: mockCharacter.Name,
-          server: AlbionServer.EUROPE,
           discordChannelId: 'oldChannel',
           discordGuildId: 'oldGuild',
           status: AlbionRegistrationQueueStatus.PENDING,
@@ -297,7 +293,6 @@ describe('AlbionRegistrationService', () => {
           guildId: mockRegistrationDataEU.guildId,
           discordId: String(mockDiscordUser.id),
           characterName: 'OldChar',
-          server: AlbionServer.EUROPE,
           discordChannelId: 'oldChannel',
           discordGuildId: 'oldGuild',
           status: AlbionRegistrationQueueStatus.PENDING,
@@ -354,7 +349,6 @@ describe('AlbionRegistrationService', () => {
             guildId: mockRegistrationDataEU.guildId,
             discordId: 'some-other-user',
             characterName: mockCharacter.Name,
-            server: AlbionServer.EUROPE,
             discordChannelId: 'oldChannel',
             discordGuildId: 'oldGuild',
             status: AlbionRegistrationQueueStatus.PENDING,
@@ -408,7 +402,6 @@ describe('AlbionRegistrationService', () => {
           guildId: mockRegistrationDataEU.guildId,
           discordId: String(mockDiscordUser.id),
           characterName: mockCharacter.Name,
-          server: AlbionServer.EUROPE,
           discordChannelId: 'oldChannel',
           discordGuildId: 'oldGuild',
           status: AlbionRegistrationQueueStatus.PENDING,
@@ -437,7 +430,6 @@ describe('AlbionRegistrationService', () => {
         await expect(
           service.handleRegistration(
             mockRegistrationDataEU.character.Name,
-            mockRegistrationDataEU.server,
             mockRegistrationDataEU.discordMember.id,
             'foo1234',
             mockChannel.id,
@@ -457,7 +449,6 @@ describe('AlbionRegistrationService', () => {
         await expect(
           service.handleRegistration(
             mockRegistrationDataEU.character.Name,
-            mockRegistrationDataEU.server,
             mockRegistrationDataEU.discordMember.id,
             'foo1234',
             mockChannel.id,
@@ -478,7 +469,6 @@ describe('AlbionRegistrationService', () => {
         await expect(
           service.handleRegistration(
             mockRegistrationDataEU.character.Name,
-            mockRegistrationDataEU.server,
             mockRegistrationDataEU.discordMember.id,
             'foo1234',
             mockChannel.id,
@@ -499,7 +489,6 @@ describe('AlbionRegistrationService', () => {
         await expect(
           service.handleRegistration(
             mockRegistrationDataEU.character.Name,
-            mockRegistrationDataEU.server,
             mockRegistrationDataEU.discordMember.id,
             'foo1234',
             mockChannel.id,
@@ -517,7 +506,6 @@ describe('AlbionRegistrationService', () => {
 
         await service.handleRegistration(
           mockRegistrationDataEU.character.Name,
-          mockRegistrationDataEU.server,
           mockRegistrationDataEU.discordMember.id,
           'foo1234',
           mockChannel.id,
@@ -552,7 +540,6 @@ describe('AlbionRegistrationService', () => {
         await expect(
           service.handleRegistration(
             mockRegistrationDataEU.character.Name,
-            mockRegistrationDataEU.server,
             mockRegistrationDataEU.discordMember.id,
             'foo1234',
             mockChannel.id,
@@ -576,7 +563,6 @@ describe('AlbionRegistrationService', () => {
         await expect(
           service.handleRegistration(
             mockRegistrationDataEU.character.Name,
-            mockRegistrationDataEU.server,
             mockRegistrationDataEU.discordMember.id,
             'foo1234',
             mockChannel.id,
@@ -603,7 +589,6 @@ describe('AlbionRegistrationService', () => {
         await expect(
           service.handleRegistration(
             mockRegistrationDataEU.character.Name,
-            mockRegistrationDataEU.server,
             mockRegistrationDataEU.discordMember.id,
             'foo1234',
             mockChannel.id,
@@ -632,7 +617,6 @@ describe('AlbionRegistrationService', () => {
         await expect(
           service.handleRegistration(
             mockRegistrationDataEU.character.Name,
-            mockRegistrationDataEU.server,
             mockRegistrationDataEU.discordMember.id,
             'foo1234',
             mockChannel.id,
@@ -663,7 +647,6 @@ CC <@&${mockEULeaderRoleId}>, <@&${mockEUOfficerRoleId}>`,
         await expect(
           service.handleRegistration(
             mockRegistrationDataEU.character.Name,
-            mockRegistrationDataEU.server,
             mockRegistrationDataEU.discordMember.id,
             mockRegistrationDataEU.discordMember.guild.id,
             mockChannel.id,

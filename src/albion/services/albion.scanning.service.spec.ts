@@ -6,7 +6,7 @@ import { ConfigService } from '@nestjs/config';
 import { EntityRepository } from '@mikro-orm/core';
 import { getRepositoryToken } from '@mikro-orm/nestjs';
 import { AlbionRegistrationsEntity } from '../../database/entities/albion.registrations.entity';
-import { AlbionPlayerInterface, AlbionServer } from '../interfaces/albion.api.interfaces';
+import { ALBION_GUILD_EMOJI, AlbionPlayerInterface } from '../interfaces/albion.api.interfaces';
 import { AlbionScanningService } from './albion.scanning.service';
 import { AlbionApiService } from './albion.api.service';
 import { AlbionUtilities } from '../utilities/albion.utilities';
@@ -42,7 +42,7 @@ describe('AlbionScanningService', () => {
   let mockRegisteredMember: AlbionRegistrationsEntity;
 
   beforeEach(async () => {
-    mockCharacter = TestBootstrapper.getMockAlbionCharacter(AlbionServer.EUROPE);
+    mockCharacter = TestBootstrapper.getMockAlbionCharacter();
     mockRegisteredMember = {
       id: 123456789,
       discordId: '123456789',
@@ -107,42 +107,36 @@ describe('AlbionScanningService', () => {
             discordRoleId: mockGuildLeaderRoleId,
             priority: 1,
             keep: true,
-            server: AlbionServer.EUROPE,
           },
           {
             name: mockOfficerRoleName,
             discordRoleId: mockGuildOfficerRoleId,
             priority: 2,
             keep: false,
-            server: AlbionServer.EUROPE,
           },
           {
             name: mockAdeptRoleName,
             discordRoleId: mockAdeptRoleId,
             priority: 4,
             keep: false,
-            server: AlbionServer.EUROPE,
           },
           {
             name: mockGraduateName,
             discordRoleId: mockGraduateRoleId,
             priority: 5,
             keep: true,
-            server: AlbionServer.EUROPE,
           },
           {
             name: mockDiscipleName,
             discordRoleId: mockDiscipleRoleId,
             priority: 6,
             keep: false,
-            server: AlbionServer.EUROPE,
           },
           {
             name: mockRegisteredName,
             discordRoleId: mockRegisteredRoleId,
             priority: 7,
             keep: true,
-            server: AlbionServer.EUROPE,
           },
         ],
       },
@@ -198,7 +192,7 @@ describe('AlbionScanningService', () => {
       mockAlbionRegistrationsRepository.find = jest.fn().mockResolvedValueOnce([mockRegisteredMember]);
       service.gatherCharacters = jest.fn().mockResolvedValueOnce([]);
 
-      await service.startScan(mockDiscordMessage, false, AlbionServer.EUROPE);
+      await service.startScan(mockDiscordMessage, false);
 
       expect(mockDiscordMessage.edit).toHaveBeenCalledWith('## 🇪🇺 ❌ No characters were gathered from the API!');
     });
@@ -212,7 +206,7 @@ describe('AlbionScanningService', () => {
         throw new Error('Operation went boom');
       });
 
-      await service.startScan(mockDiscordMessage, false, AlbionServer.EUROPE);
+      await service.startScan(mockDiscordMessage, false);
 
       expect(mockDiscordMessage.edit).toHaveBeenLastCalledWith('## 🇪🇺 ❌ An error occurred while scanning!');
       expect(mockDiscordMessage.channel.send).toHaveBeenCalledWith('Error: Operation went boom');
@@ -225,7 +219,7 @@ describe('AlbionScanningService', () => {
       service.reverseRoleScan = jest.fn().mockResolvedValueOnce([]);
       service.roleInconsistencies = jest.fn().mockResolvedValueOnce([]);
 
-      await service.startScan(mockDiscordMessage, false, AlbionServer.EUROPE);
+      await service.startScan(mockDiscordMessage, false);
 
       expect(mockDiscordMessage.edit).toHaveBeenCalledWith('# 🇪🇺 Starting scan...');
       expect(mockDiscordMessage.edit).toHaveBeenCalledWith('# 🇪🇺 Task: [1/4] Gathering 1 characters from the ALB API...');
@@ -244,7 +238,7 @@ describe('AlbionScanningService', () => {
       service.reverseRoleScan = jest.fn().mockResolvedValueOnce([]);
       service.roleInconsistencies = jest.fn().mockResolvedValueOnce([]);
 
-      await service.startScan(mockDiscordMessage, false, AlbionServer.EUROPE);
+      await service.startScan(mockDiscordMessage, false);
 
       // Also expect functions to actually be called
       expect(service.gatherCharacters).toHaveBeenCalledTimes(1);
@@ -266,7 +260,7 @@ describe('AlbionScanningService', () => {
 
       const longText = 'Please review the above actions marked with (‼️) and make any necessary changes manually. To scan again without pinging, run the `/albion-scan` command with the `dry-run` flag set to `true`.';
 
-      await service.startScan(mockDiscordMessage, false, AlbionServer.EUROPE);
+      await service.startScan(mockDiscordMessage, false);
       expect(mockDiscordMessage.channel.send).toHaveBeenCalledWith(`🔔 <@&${mockGuildLeaderRoleId}>, <@&${mockGuildOfficerRoleId}> ${longText}`);
     });
   });
@@ -278,7 +272,6 @@ describe('AlbionScanningService', () => {
         [mockRegisteredMember],
         mockDiscordMessage,
         0,
-        AlbionServer.EUROPE,
       );
       expect(mockDiscordMessage.channel.send).toHaveBeenCalledWith('🇪🇺 Gathering 1 characters from the Europe ALB API... (attempt #1)');
       expect(result).toEqual([mockCharacter]);
@@ -290,7 +283,6 @@ describe('AlbionScanningService', () => {
         [mockRegisteredMember],
         mockDiscordMessage,
         1,
-        AlbionServer.EUROPE,
       );
       expect(mockDiscordMessage.channel.send).toHaveBeenCalledWith('🇪🇺 Gathering 1 characters from the Europe ALB API... (attempt #2)');
     });
@@ -301,7 +293,6 @@ describe('AlbionScanningService', () => {
         [mockRegisteredMember],
         mockDiscordMessage,
         3,
-        AlbionServer.EUROPE,
       );
       expect(mockDiscordMessage.channel.send).toHaveBeenCalledWith(`## ❌ An error occurred while gathering data for 1 characters! Giving up after 3 tries! Pinging <@${mockDevUserId}>!`);
       expect(result).toEqual(null);
@@ -316,7 +307,6 @@ describe('AlbionScanningService', () => {
         [mockRegisteredMember],
         mockDiscordMessage,
         0,
-        AlbionServer.EUROPE,
       );
       expect(setTimeout).toHaveBeenCalledTimes(1);
       expect(setTimeout).toHaveBeenLastCalledWith(expect.any(Function), 10000);
@@ -334,7 +324,6 @@ describe('AlbionScanningService', () => {
         [mockCharacter],
         mockDiscordMessage,
         false,
-        AlbionServer.EUROPE,
       );
 
       expect(mockDiscordMessage.channel.send).toHaveBeenCalledTimes(3);
@@ -392,7 +381,6 @@ describe('AlbionScanningService', () => {
         [mockCharacter],
         mockDiscordMessage,
         false,
-        AlbionServer.EUROPE,
       );
 
       expect(mockDiscordMessage.channel.send).toHaveBeenCalledTimes(3);
@@ -427,7 +415,6 @@ describe('AlbionScanningService', () => {
         [mockCharacter],
         mockDiscordMessage,
         false,
-        AlbionServer.EUROPE,
       );
       expect(mockDiscordMessage.channel.send).toHaveBeenCalledTimes(3);
       expect(mockDiscordMessage.channel.send).toHaveBeenCalledWith('### 🇪🇺 Scanned 0/1 registered members...');
@@ -450,7 +437,6 @@ describe('AlbionScanningService', () => {
         [mockCharacter],
         mockDiscordMessage,
         true, // Dry run flagged here
-        AlbionServer.EUROPE,
       );
       expect(mockDiscordMessage.channel.send).toHaveBeenCalledTimes(3);
       expect(mockDiscordMessage.channel.send).toHaveBeenCalledWith('### 🇪🇺 Scanned 0/1 registered members...');
@@ -478,7 +464,6 @@ describe('AlbionScanningService', () => {
         [mockCharacter],
         mockDiscordMessage,
         false,
-        AlbionServer.EUROPE,
       );
       expect(mockDiscordMessage.channel.send).toHaveBeenCalledWith('### 🇪🇺 Scanned 0/1 registered members...');
       expect(mockDiscordMessage.channel.send).toHaveBeenCalledWith('## 🇪🇺 🚪 1 leavers detected!');
@@ -499,7 +484,6 @@ describe('AlbionScanningService', () => {
         [mockCharacter],
         mockDiscordMessage,
         false,
-        AlbionServer.EUROPE,
       );
       expect(mockDiscordMessage.channel.send).toHaveBeenCalledTimes(2);
       expect(mockDiscordMessage.channel.send).toHaveBeenCalledWith('### 🇪🇺 Scanned 0/1 registered members...');
@@ -515,7 +499,6 @@ describe('AlbionScanningService', () => {
         new Array(6).fill(mockCharacter),
         mockDiscordMessage,
         false,
-        AlbionServer.EUROPE,
       );
 
       expect(mockDiscordMessage.channel.send).toHaveBeenCalledTimes(2);
@@ -576,7 +559,7 @@ describe('AlbionScanningService', () => {
           }
         });
 
-      await service.reverseRoleScan(mockDiscordMessage, false, AlbionServer.EUROPE);
+      await service.reverseRoleScan(mockDiscordMessage, false);
 
       expect(mockDiscordMessage.channel.send).toHaveBeenCalledWith('### 🇪🇺 Scanning 6 Discord roles for members who are falsely registered...');
       expect(mockDiscordMessage.channel.send).toHaveBeenCalledWith('🇪🇺 ✅ No invalid users were detected via Reverse Role Scan.');
@@ -651,7 +634,7 @@ describe('AlbionScanningService', () => {
           }
         });
 
-      await service.reverseRoleScan(mockDiscordMessage, false, AlbionServer.EUROPE);
+      await service.reverseRoleScan(mockDiscordMessage, false);
 
       expect(mockDiscordMessage.channel.send).toHaveBeenCalledWith('### 🇪🇺 Scanning 6 Discord roles for members who are falsely registered...');
       expect(mockDiscordMessage.channel.send).toHaveBeenCalledWith('## 🇪🇺 🚨 1 errors detected via Reverse Role Scan!\nAffected users have been **automatically** stripped of their incorrect roles.');
@@ -693,7 +676,7 @@ describe('AlbionScanningService', () => {
           }
         });
 
-      await service.reverseRoleScan(mockDiscordMessage, false, AlbionServer.EUROPE);
+      await service.reverseRoleScan(mockDiscordMessage, false);
 
       expect(mockDiscordMessage.channel.send).toHaveBeenCalledWith('### 🇪🇺 Scanning 6 Discord roles for members who are falsely registered...');
       expect(mockDiscordMessage.channel.send).toHaveBeenCalledWith('## 🇪🇺 🚨 1 errors detected via Reverse Role Scan!\nAffected users have been **automatically** stripped of their incorrect roles.');
@@ -737,7 +720,7 @@ describe('AlbionScanningService', () => {
           }
         });
 
-      await service.reverseRoleScan(mockDiscordMessage, false, AlbionServer.EUROPE);
+      await service.reverseRoleScan(mockDiscordMessage, false);
 
       expect(mockDiscordMessage.channel.send).toHaveBeenCalledWith('### 🇪🇺 Scanning 6 Discord roles for members who are falsely registered...');
       expect(mockDiscordMessage.channel.send).toHaveBeenCalledWith('## 🇪🇺 🚨 3 errors detected via Reverse Role Scan!\nAffected users have been **automatically** stripped of their incorrect roles.');
@@ -779,7 +762,7 @@ describe('AlbionScanningService', () => {
           }
         });
 
-      await service.reverseRoleScan(mockDiscordMessage, true, AlbionServer.EUROPE);
+      await service.reverseRoleScan(mockDiscordMessage, true);
 
       expect(mockDiscordMessage.channel.send).toHaveBeenCalledWith('### 🇪🇺 Scanning 6 Discord roles for members who are falsely registered...');
       expect(mockDiscordMessage.channel.send).toHaveBeenCalledWith('## 🇪🇺 🚨 1 errors detected via Reverse Role Scan!\nAffected users have been **automatically** stripped of their incorrect roles.');
@@ -798,7 +781,6 @@ describe('AlbionScanningService', () => {
         expected: [
           { id: mockGraduateRoleId, name: mockGraduateName, action: 'added', message: '' },
         ],
-        server: AlbionServer.EUROPE,
       },
       {
         title: 'Magister requires Graduate',
@@ -807,7 +789,6 @@ describe('AlbionScanningService', () => {
         expected: [
           { id: mockGraduateRoleId, name: mockGraduateName, action: 'added', message: '' },
         ],
-        server: AlbionServer.EUROPE,
       },
       {
         title: 'Adept requires Graduate',
@@ -816,21 +797,18 @@ describe('AlbionScanningService', () => {
         expected: [
           { id: mockGraduateRoleId, name: mockGraduateName, action: 'added', message: '' },
         ],
-        server: AlbionServer.EUROPE,
       },
       {
         title: 'Graduate has no extra roles',
         roles: [mockGraduateRoleId, mockRegisteredRoleId],
         highestPriorityRole: { id: mockGraduateRoleId, name: mockGraduateName },
         expected: [],
-        server: AlbionServer.EUROPE,
       },
       {
         title: 'Disciples has no extra roles',
         roles: [mockDiscipleRoleId, mockRegisteredRoleId],
         highestPriorityRole: { id: mockDiscipleRoleId, name: mockDiscipleName },
         expected: [],
-        server: AlbionServer.EUROPE,
       },
       {
         title: 'Guild Masters should not have Disciple, and should have Graduate',
@@ -840,7 +818,6 @@ describe('AlbionScanningService', () => {
           { id: mockGraduateRoleId, name: mockGraduateName, action: 'added', message: '' },
           { id: mockDiscipleRoleId, name: mockDiscipleName, action: 'removed', message: '' },
         ],
-        server: AlbionServer.EUROPE,
       },
       {
         title: 'Adepts should not have Disciple',
@@ -849,7 +826,6 @@ describe('AlbionScanningService', () => {
         expected: [
           { id: mockDiscipleRoleId, name: mockDiscipleName, action: 'removed', message: '' },
         ],
-        server: AlbionServer.EUROPE,
       },
       {
         title: 'Adepts should have graduate if missing',
@@ -858,7 +834,6 @@ describe('AlbionScanningService', () => {
         expected: [
           { id: mockGraduateRoleId, name: mockGraduateName, action: 'added', message: '' },
         ],
-        server: AlbionServer.EUROPE,
       },
       {
         title: 'Graduates should have Registered role',
@@ -867,7 +842,6 @@ describe('AlbionScanningService', () => {
         expected: [
           { id: mockRegisteredRoleId, name: mockRegisteredName, action: 'added', message: '' },
         ],
-        server: AlbionServer.EUROPE,
       },
       {
         title: 'Graduates should not have roles of lower priority (Disciple)',
@@ -876,7 +850,6 @@ describe('AlbionScanningService', () => {
         expected: [
           { id: mockDiscipleRoleId, name: mockDiscipleName, action: 'removed', message: '' },
         ],
-        server: AlbionServer.EUROPE,
       },
       {
         title: 'Disciples should always have ALB/Registered role',
@@ -885,7 +858,6 @@ describe('AlbionScanningService', () => {
         expected: [
           { id: mockRegisteredRoleId, name: mockRegisteredName, action: 'added', message: '' },
         ],
-        server: AlbionServer.EUROPE,
       },
       {
         title: 'Registered members should at least have the entry level role',
@@ -894,7 +866,6 @@ describe('AlbionScanningService', () => {
         expected: [
           { id: mockDiscipleRoleId, name: mockDiscipleName, action: 'missingEntryRole', message: '' },
         ],
-        server: AlbionServer.EUROPE,
       },
       {
         title: 'Disciple members should have at least registered role',
@@ -904,7 +875,6 @@ describe('AlbionScanningService', () => {
           { id: mockDiscipleRoleId, name: mockDiscipleName, action: 'added', message: '' },
           { id: mockRegisteredRoleId, name: mockRegisteredName, action: 'added', message: '' },
         ],
-        server: AlbionServer.EUROPE,
       },
     ];
 
@@ -918,7 +888,7 @@ describe('AlbionScanningService', () => {
 
     const generateMessage = (testCase, expected) => {
       // Dynamically generate the expected message
-      const serverEmoji = testCase.server === AlbionServer.EUROPE ? '🇪🇺' : '???';
+      const serverEmoji = ALBION_GUILD_EMOJI;
       let emoji = `${serverEmoji} ➕`;
       let reason = `their highest role is **${testCase.highestPriorityRole.name}**, and the role is marked as "keep".`;
 
@@ -947,14 +917,14 @@ describe('AlbionScanningService', () => {
 
     testCases.forEach(testCase => {
       it(`roleInconsistencies detects ${testCase.title}`, async () => {
-        const serverEmoji = testCase.server === AlbionServer.EUROPE ? '🇪🇺' : '???';
+        const serverEmoji = ALBION_GUILD_EMOJI;
         // Take the test case and fill in the expected messages, as it would be a PITA to define them at the array level
         testCase.expected.forEach((expected, i) => {
           testCase.expected[i].message = generateMessage(testCase, expected);
         });
         setupRoleTestMocks(testCase.roles);
 
-        const result = await service.checkRoleInconsistencies(mockDiscordUser, testCase.server);
+        const result = await service.checkRoleInconsistencies(mockDiscordUser);
 
         expect(result.length).toEqual(testCase.expected.length);
         result.forEach((r, i) => {
@@ -969,7 +939,7 @@ describe('AlbionScanningService', () => {
         });
 
         // Run it again except checking the messages it sends back
-        await service.roleInconsistencies(mockDiscordMessage, false, testCase.server);
+        await service.roleInconsistencies(mockDiscordMessage, false);
 
         if (testCase.expected.length === 0) {
           expect(mockDiscordMessage.channel.send).toHaveBeenCalledWith(`${serverEmoji} ✅ No role inconsistencies were detected.`);
@@ -984,7 +954,7 @@ describe('AlbionScanningService', () => {
     it('roleInconsistencies should properly indicate progress when multiple users are involved', async () => {
       mockAlbionRegistrationsRepository.find = jest.fn().mockResolvedValueOnce([mockRegisteredMember, mockRegisteredMember, mockRegisteredMember, mockRegisteredMember, mockRegisteredMember]);
 
-      await service.roleInconsistencies(mockDiscordMessage, true, AlbionServer.EUROPE);
+      await service.roleInconsistencies(mockDiscordMessage, true);
 
       expect(mockDiscordMessage.channel.send).toHaveBeenCalledWith('## 🇪🇺 Scanning 5 members for role inconsistencies... [0/5]');
     });

@@ -8,7 +8,6 @@ import {
   AlbionApiEndpoint,
   AlbionPlayerInterface,
   AlbionPlayersResponseInterface,
-  AlbionServer,
 } from '../interfaces/albion.api.interfaces';
 
 const mockGuildId = TestBootstrapper.mockConfig.albion.guildId;
@@ -43,14 +42,14 @@ describe('AlbionApiService', () => {
       },
     };
 
-    jest.spyOn(AlbionAxiosFactory.prototype, 'createAlbionApiEuropeClient').mockReturnValue({
+    jest.spyOn(AlbionAxiosFactory.prototype, 'createApiClient').mockReturnValue({
       defaults: {
         baseURL: AlbionApiEndpoint.ALBION_EUROPE,
       },
       get: jest.fn().mockResolvedValue(searchResponse),
     } as any);
 
-    await expect(service.getCharacter('who.dis', AlbionServer.EUROPE))
+    await expect(service.getCharacter('who.dis'))
       .rejects
       .toThrow('Character **who.dis** does not seem to exist on the Europe server. Please ensure: \n1. You\'ve supplied your **exact** character name (case sensitive).\n2. Your character is older than 48 hours.');
   });
@@ -73,7 +72,7 @@ describe('AlbionApiService', () => {
       },
     };
 
-    jest.spyOn(AlbionAxiosFactory.prototype, 'createAlbionApiEuropeClient').mockReturnValue({
+    jest.spyOn(AlbionAxiosFactory.prototype, 'createApiClient').mockReturnValue({
       defaults: {
         baseURL: AlbionApiEndpoint.ALBION_EUROPE,
       },
@@ -82,7 +81,7 @@ describe('AlbionApiService', () => {
       }),
     } as any);
 
-    await expect(service.getCharacter('Maelstrome', AlbionServer.EUROPE))
+    await expect(service.getCharacter('Maelstrome'))
       .resolves
       .toStrictEqual(properResult);
   });
@@ -97,14 +96,14 @@ describe('AlbionApiService', () => {
       data: properResult,
     };
 
-    jest.spyOn(AlbionAxiosFactory.prototype, 'createAlbionApiEuropeClient').mockReturnValue({
+    jest.spyOn(AlbionAxiosFactory.prototype, 'createApiClient').mockReturnValue({
       defaults: {
         baseURL: AlbionApiEndpoint.ALBION_EUROPE,
       },
       get: jest.fn().mockResolvedValueOnce(response),
     } as any);
 
-    await expect(service.getCharacterById(id, AlbionServer.EUROPE))
+    await expect(service.getCharacterById(id))
       .resolves
       .toStrictEqual(properResult);
   });
@@ -122,7 +121,7 @@ describe('AlbionApiService', () => {
       },
     };
 
-    jest.spyOn(AlbionAxiosFactory.prototype, 'createAlbionApiEuropeClient').mockReturnValue({
+    jest.spyOn(AlbionAxiosFactory.prototype, 'createApiClient').mockReturnValue({
       defaults: {
         baseURL: AlbionApiEndpoint.ALBION_EUROPE,
       },
@@ -131,7 +130,7 @@ describe('AlbionApiService', () => {
       }),
     } as any);
 
-    await expect(service.getCharacter('Maelstrome', AlbionServer.EUROPE))
+    await expect(service.getCharacter('Maelstrome'))
       .rejects
       .toThrow(`Character ID \`${id}\` does not match API response consistently. Pinging <@${TestBootstrapper.mockConfig.discord.devUserId}>!`);
   });
@@ -160,7 +159,7 @@ describe('AlbionApiService', () => {
       },
     };
 
-    jest.spyOn(AlbionAxiosFactory.prototype, 'createAlbionApiEuropeClient').mockReturnValue({
+    jest.spyOn(AlbionAxiosFactory.prototype, 'createApiClient').mockReturnValue({
       defaults: {
         baseURL: AlbionApiEndpoint.ALBION_EUROPE,
       },
@@ -169,7 +168,7 @@ describe('AlbionApiService', () => {
         .mockResolvedValueOnce({ data: properResult }),
     } as any);
 
-    await expect(service.getCharacter(characterName, AlbionServer.EUROPE))
+    await expect(service.getCharacter(characterName))
       .resolves
       .toStrictEqual(properResult);
   });
@@ -197,7 +196,7 @@ describe('AlbionApiService', () => {
       },
     };
 
-    jest.spyOn(AlbionAxiosFactory.prototype, 'createAlbionApiEuropeClient').mockReturnValue({
+    jest.spyOn(AlbionAxiosFactory.prototype, 'createApiClient').mockReturnValue({
       defaults: {
         baseURL: AlbionApiEndpoint.ALBION_EUROPE,
       },
@@ -206,7 +205,7 @@ describe('AlbionApiService', () => {
         .mockResolvedValueOnce({ data: properResult }),
     } as any);
 
-    await expect(service.getCharacter(characterName, AlbionServer.EUROPE))
+    await expect(service.getCharacter(characterName))
       .rejects
       .toThrow(`multiple characters for **${characterName}** were found, none of them are a guild member.`);
   });
@@ -241,7 +240,7 @@ describe('AlbionApiService', () => {
       },
     };
 
-    jest.spyOn(AlbionAxiosFactory.prototype, 'createAlbionApiEuropeClient').mockReturnValue({
+    jest.spyOn(AlbionAxiosFactory.prototype, 'createApiClient').mockReturnValue({
       defaults: {
         baseURL: AlbionApiEndpoint.ALBION_EUROPE,
       },
@@ -249,7 +248,7 @@ describe('AlbionApiService', () => {
         .mockResolvedValueOnce(searchResponse),
     } as any);
 
-    await expect(service.getCharacter(characterName, AlbionServer.EUROPE))
+    await expect(service.getCharacter(characterName))
       .rejects
       .toThrow(`multiple characters for **NightRaven2511** were found within the DIG guild. This is an unsupported use case for this registration system. Pinging <@${TestBootstrapper.mockConfig.discord.devUserId}>!`);
   });
@@ -277,7 +276,7 @@ describe('AlbionApiService', () => {
       },
     };
 
-    jest.spyOn(AlbionAxiosFactory.prototype, 'createAlbionApiEuropeClient').mockReturnValue({
+    jest.spyOn(AlbionAxiosFactory.prototype, 'createApiClient').mockReturnValue({
       defaults: {
         baseURL: AlbionApiEndpoint.ALBION_EUROPE,
       },
@@ -286,7 +285,7 @@ describe('AlbionApiService', () => {
         .mockResolvedValueOnce(playerResponse),
     } as any);
 
-    const result = await service.getCharacter('R4L2E1', AlbionServer.EUROPE);
+    const result = await service.getCharacter('R4L2E1');
     expect(result.Name).toBe('R4L2E1');
   });
 
@@ -326,16 +325,16 @@ describe('AlbionApiService', () => {
       get: jest.fn().mockResolvedValue(mockResponse),
     } as any;
 
-    jest.spyOn(AlbionAxiosFactory.prototype, 'createAlbionApiEuropeClient').mockReturnValue(mockRequest);
+    jest.spyOn(AlbionAxiosFactory.prototype, 'createApiClient').mockReturnValue(mockRequest);
 
-    const receivedMembers = await service.getAllGuildMembers(guildId, AlbionServer.EUROPE);
+    const receivedMembers = await service.getAllGuildMembers(guildId);
 
     expect(receivedMembers).toEqual(mockMembers);
     expect(mockRequest.get).toHaveBeenCalledWith(`/guilds/${guildId}/members`);
   });
 
   describe('Europe', () => {
-    it('should properly return a character using expected client generated by createAlbionApiEuropeClient', async () => {
+    it('should properly return a character using expected client generated by createApiClient', async () => {
       const id = 'clhoV9OdRm-5BuYQYZBT_Q';
       const properResult = {
         'Id': id,
@@ -345,14 +344,14 @@ describe('AlbionApiService', () => {
         data: properResult,
       };
 
-      jest.spyOn(AlbionAxiosFactory.prototype, 'createAlbionApiEuropeClient').mockReturnValue({
+      jest.spyOn(AlbionAxiosFactory.prototype, 'createApiClient').mockReturnValue({
         defaults: {
           baseURL: AlbionApiEndpoint.ALBION_EUROPE,
         },
         get: jest.fn().mockResolvedValueOnce(response),
       } as any);
 
-      await expect(service.getCharacterById(id, AlbionServer.EUROPE))
+      await expect(service.getCharacterById(id))
         .resolves
         .toStrictEqual(properResult);
     });
@@ -370,7 +369,7 @@ describe('AlbionApiService', () => {
         },
       };
 
-      jest.spyOn(AlbionAxiosFactory.prototype, 'createAlbionApiEuropeClient').mockReturnValue({
+      jest.spyOn(AlbionAxiosFactory.prototype, 'createApiClient').mockReturnValue({
         defaults: {
           baseURL: AlbionApiEndpoint.ALBION_EUROPE,
         },
@@ -379,7 +378,7 @@ describe('AlbionApiService', () => {
           .mockResolvedValueOnce({ data: correctResult }),
       } as any);
 
-      await expect(service.getCharacter('Lilith1', AlbionServer.EUROPE))
+      await expect(service.getCharacter('Lilith1'))
         .resolves
         .toStrictEqual(correctResult);
     });
@@ -394,14 +393,14 @@ describe('AlbionApiService', () => {
         },
       };
 
-      jest.spyOn(AlbionAxiosFactory.prototype, 'createAlbionApiEuropeClient').mockReturnValue({
+      jest.spyOn(AlbionAxiosFactory.prototype, 'createApiClient').mockReturnValue({
         defaults: {
           baseURL: AlbionApiEndpoint.ALBION_EUROPE,
         },
         get: jest.fn().mockResolvedValueOnce(searchResponse).mockResolvedValueOnce({ data: correctResult }),
       } as any);
 
-      await expect(service.getCharacter('Dedalus17', AlbionServer.EUROPE))
+      await expect(service.getCharacter('Dedalus17'))
         .resolves
         .toStrictEqual(correctResult);
     });
@@ -411,14 +410,14 @@ describe('AlbionApiService', () => {
         data: JSON.parse(correctResultJson),
       };
 
-      jest.spyOn(AlbionAxiosFactory.prototype, 'createAlbionApiEuropeClient').mockReturnValue({
+      jest.spyOn(AlbionAxiosFactory.prototype, 'createApiClient').mockReturnValue({
         defaults: {
           baseURL: AlbionApiEndpoint.ALBION_EUROPE,
         },
         get: jest.fn().mockResolvedValueOnce(searchResponse),
       } as any);
 
-      await expect(service.getCharacterId('Lugasi', AlbionServer.EUROPE))
+      await expect(service.getCharacterId('Lugasi'))
         .resolves
         .toStrictEqual('JRlDBmqHS86m764x-jc96g');
     });
@@ -427,7 +426,6 @@ describe('AlbionApiService', () => {
   describe('checkCharacterGuildMembership', () => {
     it('should return true when direct character lookup indicates membership', async () => {
       const characterName = 'Maelstrome';
-      const server = AlbionServer.EUROPE;
       const guildId = mockGuildId;
 
       const char = { Id: '1', Name: characterName, GuildId: guildId } as any;
@@ -435,14 +433,13 @@ describe('AlbionApiService', () => {
       jest.spyOn(service, 'getCharacter').mockResolvedValue(char);
       jest.spyOn(service, 'getAllGuildMembers').mockResolvedValue([] as any);
 
-      await expect(service.checkCharacterGuildMembership(characterName, server, guildId))
+      await expect(service.checkCharacterGuildMembership(characterName, guildId))
         .resolves
         .toBe(true);
     });
 
     it('should return true when guild member list indicates membership even if character lookup says not in guild', async () => {
       const characterName = 'Maelstrome';
-      const server = AlbionServer.EUROPE;
       const guildId = mockGuildId;
 
       const char = { Id: '1', Name: characterName, GuildId: 'other' } as any;
@@ -451,14 +448,13 @@ describe('AlbionApiService', () => {
       jest.spyOn(service, 'getCharacter').mockResolvedValue(char);
       jest.spyOn(service, 'getAllGuildMembers').mockResolvedValue(members);
 
-      await expect(service.checkCharacterGuildMembership(characterName, server, guildId))
+      await expect(service.checkCharacterGuildMembership(characterName, guildId))
         .resolves
         .toBe(true);
     });
 
     it('should return false when both sources indicate not in guild', async () => {
       const characterName = 'Maelstrome';
-      const server = AlbionServer.EUROPE;
       const guildId = mockGuildId;
 
       const char = { Id: '1', Name: characterName, GuildId: 'other' } as any;
@@ -467,20 +463,19 @@ describe('AlbionApiService', () => {
       jest.spyOn(service, 'getCharacter').mockResolvedValue(char);
       jest.spyOn(service, 'getAllGuildMembers').mockResolvedValue(members);
 
-      await expect(service.checkCharacterGuildMembership(characterName, server, guildId))
+      await expect(service.checkCharacterGuildMembership(characterName, guildId))
         .resolves
         .toBe(false);
     });
 
     it('should return false when both checks fail', async () => {
       const characterName = 'Maelstrome';
-      const server = AlbionServer.EUROPE;
       const guildId = mockGuildId;
 
       jest.spyOn(service, 'getCharacter').mockRejectedValue(new Error('character down'));
       jest.spyOn(service, 'getAllGuildMembers').mockRejectedValue(new Error('members down'));
 
-      await expect(service.checkCharacterGuildMembership(characterName, server, guildId))
+      await expect(service.checkCharacterGuildMembership(characterName, guildId))
         .resolves
         .toBe(false);
     });
