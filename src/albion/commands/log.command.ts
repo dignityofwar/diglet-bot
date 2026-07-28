@@ -11,7 +11,7 @@ export class AlbionLogCommand {
   })
   async onAlbionLogCommand(
     @Context() [interaction]: SlashCommandContext,
-  ): Promise<string> {
+  ): Promise<void> {
     this.logger.debug('Received Albion Log Command');
 
     const images = [
@@ -29,7 +29,5 @@ The log is hard,
 The log is girthy, the log is big.
 The log will log our logs with speed.`);
     (await interaction.channel.send(images[Math.floor(Math.random() * images.length)])).react('🪵');
-
-    return '';
   }
 }

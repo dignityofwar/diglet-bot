@@ -7,12 +7,13 @@ export class AlbionReportsDto {
       'Create a full report of all members.',
     required: false,
   })
-  fullReport = false;
+  // Defaulted at the use site — necord ignores field initialisers, see DryRunDto.
+  fullReport: boolean;
   @BooleanOption({
     name: 'squire-candidates',
     description:
       'Create a list of initiates who are eligible for squire.',
     required: false,
   })
-  squireCandidates = false;
+  squireCandidates: boolean;
 }

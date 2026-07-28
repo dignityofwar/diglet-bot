@@ -20,15 +20,17 @@ export class ThanosSnapCommand {
     @Context() [interaction]: SlashCommandContext,
   ): Promise<void> {
     this.logger.log('Executing Thanos Snap Command');
+    // Omitting the option must mean a dry run, never a real purge.
+    const dryRun = dto.dryRun ?? true;
     const channel = interaction.channel;
     await interaction.reply('I am... inevitable.');
 
-    if (dto.dryRun) {
+    if (dryRun) {
       await channel.send('## This is a dry run! No members will be kicked!');
     }
 
     const message = await channel.send('https://media.giphy.com/media/ie76dJeem4xBDcf83e/giphy.gif');
 
-    this.purgeService.startPurge(message, dto.dryRun);
+    this.purgeService.startPurge(message, dryRun);
   }
 }

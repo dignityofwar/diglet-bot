@@ -17,6 +17,9 @@ describe('MessageEvents', () => {
   let mockMessageReaction: any;
   let mockGuildMember: any;
 
+  // discord.js passes reaction event details as a third argument; the handlers ignore it.
+  const mockReactionDetails = {} as any;
+
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -192,7 +195,7 @@ describe('MessageEvents', () => {
     });
 
     it('should handle message update', async () => {
-      await messageEvents.onMessageUpdate([mockMessage]);
+      await messageEvents.onMessageUpdate([mockMessage, mockMessage]);
       expect(databaseService.updateActivity).toHaveBeenCalledWith(mockMessage.member);
       expect(recRolePingService.onMessage).not.toHaveBeenCalled();
     });
@@ -206,7 +209,7 @@ describe('MessageEvents', () => {
     it('should handle message reaction addition', async () => {
       mockMessageReaction.partial = false; // assuming this is a full reaction
 
-      await messageEvents.onMessageReactionAdd([mockMessageReaction, mockUser]);
+      await messageEvents.onMessageReactionAdd([mockMessageReaction, mockUser, mockReactionDetails]);
 
       expect(mockMessageReaction.fetch).not.toHaveBeenCalled(); // since it's a full reaction
       expect(databaseService.updateActivity).toHaveBeenCalledTimes(1);
@@ -216,7 +219,7 @@ describe('MessageEvents', () => {
       mockMessageReaction.partial = false; // assuming this is a full reaction
       mockUser.bot = true; // assuming this is a bot user
 
-      await messageEvents.onMessageReactionAdd([mockMessageReaction, mockUser]);
+      await messageEvents.onMessageReactionAdd([mockMessageReaction, mockUser, mockReactionDetails]);
 
       expect(databaseService.updateActivity).toHaveBeenCalledTimes(0);
     });
@@ -225,7 +228,7 @@ describe('MessageEvents', () => {
       mockMessageReaction.partial = false; // assuming this is a full reaction
       mockUser.bot = false; // assuming this is a non-bot user
 
-      await messageEvents.onMessageReactionRemove([mockMessageReaction, mockUser]);
+      await messageEvents.onMessageReactionRemove([mockMessageReaction, mockUser, mockReactionDetails]);
 
       expect(mockMessageReaction.fetch).not.toHaveBeenCalled(); // since it's a full reaction
       expect(databaseService.updateActivity).toHaveBeenCalledTimes(1); // exact args depend on your implementation

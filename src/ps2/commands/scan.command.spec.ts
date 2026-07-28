@@ -64,5 +64,6 @@ describe('PS2ScanCommand', () => {
 
     expect(ps2GameScanningService.startScan).toHaveBeenCalledWith(expect.anything(), true);
     expect(response).toBe('Scan initiated. [DRY RUN, NO CHANGES WILL ACTUALLY BE PERFORMED]');
+    expect(mockDiscordInteraction[0].reply).toHaveBeenCalledWith(response);
   });
 });

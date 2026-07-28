@@ -66,6 +66,7 @@ describe('AlbionScanCommand', () => {
 
     expect(albionScanningService.startScan).toHaveBeenCalledWith(expect.anything(), true);
     expect(response).toBe('Albion Scan initiated! [DRY RUN, NO CHANGES WILL ACTUALLY BE PERFORMED]');
+    expect(mockDiscordInteraction[0].reply).toHaveBeenCalledWith(response);
   });
 
   it('should not flag a dry run when it is off', async () => {

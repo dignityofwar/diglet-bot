@@ -23,6 +23,7 @@ export class PS2ScanCommand {
     @Context() [interaction]: SlashCommandContext,
   ): Promise<string> {
     this.logger.debug('Received PS2ScanCommand');
+    const dryRun = dto.dryRun ?? false;
 
     // Check if the command came from the correct channel ID
     const scanChannelId = this.config.get('discord.channels.ps2Scans');
@@ -34,8 +35,8 @@ export class PS2ScanCommand {
 
     const message = await interaction.channel.send('Starting scan...');
 
-    this.ps2GameScanningService.startScan(message, dto.dryRun);
+    this.ps2GameScanningService.startScan(message, dryRun);
 
-    return replyTo(interaction, `Scan initiated. ${dto.dryRun ? '[DRY RUN, NO CHANGES WILL ACTUALLY BE PERFORMED]' : ''}`);
+    return replyTo(interaction, `Scan initiated. ${dryRun ? '[DRY RUN, NO CHANGES WILL ACTUALLY BE PERFORMED]' : ''}`);
   }
 }

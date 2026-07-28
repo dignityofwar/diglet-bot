@@ -1,7 +1,7 @@
 import { Test } from '@nestjs/testing';
 import { ThanosSnapCommand } from './thanos.snap.command';
 import { PurgeService } from '../services/purge.service';
-import { ChatInputCommandInteraction } from 'discord.js';
+import { SlashCommandContext } from 'necord';
 import { DryRunDto } from '../dto/dry.run.dto';
 import { TestBootstrapper } from '../../test.bootstrapper';
 
@@ -15,7 +15,7 @@ describe('ThanosSnapCommand', () => {
 
   const mockDiscordUser = TestBootstrapper.getMockDiscordUser();
 
-  const mockInteraction = TestBootstrapper.getMockDiscordInteraction('12345', mockDiscordUser) as unknown as ChatInputCommandInteraction[];
+  const mockInteraction = TestBootstrapper.getMockDiscordInteraction('12345', mockDiscordUser) as unknown as SlashCommandContext;
 
   beforeEach(async () => {
     const moduleRef = await Test.createTestingModule({
@@ -64,6 +64,17 @@ describe('ThanosSnapCommand', () => {
       expect(mockInteraction[0].reply).toHaveBeenCalledWith('I am... inevitable.');
       expect(mockInteraction[0].channel.send).toHaveBeenCalledWith('## This is a dry run! No members will be kicked!');
       expect(purgeService.startPurge).toHaveBeenCalled();
+    });
+
+    // necord hands over a plain object, so an omitted option arrives as null rather than
+    // picking up the DTO's default. A purge must never fall back to "not a dry run".
+    it('should default to a dry run when the option is omitted', async () => {
+      const dto = { dryRun: null } as unknown as DryRunDto;
+
+      await command.onThanosSnapCommand(dto, mockInteraction);
+
+      expect(mockInteraction[0].channel.send).toHaveBeenCalledWith('## This is a dry run! No members will be kicked!');
+      expect(purgeService.startPurge).toHaveBeenCalledWith(expect.anything(), true);
     });
 
     it('should send a gif and start the purge', async () => {

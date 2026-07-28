@@ -67,6 +67,16 @@ describe('PS2VerifyManualCommand', () => {
     expect(censusApiService.getCharacter).not.toHaveBeenCalled();
   });
 
+  it('should report when the target Discord user cannot be found', async () => {
+    mockDiscordInteraction[0].guild.members.fetch = jest.fn().mockResolvedValue(undefined);
+
+    const response = await command.onPS2VerifyManualCommand(dto, mockDiscordInteraction);
+
+    expect(response).toBe(`The Discord user <@${dto.discordUser.id}> could not be found.`);
+    expect(mockDiscordInteraction[0].reply).toHaveBeenCalledWith(response);
+    expect(ps2GameVerificationService.forceAdd).not.toHaveBeenCalled();
+  });
+
   it('should return the census error when the character cannot be found', async () => {
     censusApiService.getCharacter = jest.fn().mockImplementation(() => {
       throw new Error('Character `Maelstrome26` does not exist.');

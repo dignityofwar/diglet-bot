@@ -7,5 +7,6 @@ export class AlbionScanDto {
       'If set to true, will output the results of the scan to #albion-scans but not execute.',
     required: false,
   })
-  dryRun = false;
+  // Defaulted at the use site — necord ignores field initialisers, see DryRunDto.
+  dryRun: boolean;
 }

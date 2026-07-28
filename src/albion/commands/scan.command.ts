@@ -23,6 +23,7 @@ export class AlbionScanCommand {
     @Context() [interaction]: SlashCommandContext,
   ): Promise<string> {
     this.logger.debug('Received Albion Scan Command');
+    const dryRun = dto.dryRun ?? false;
 
     // Check if the command came from the correct channel ID
     const scanChannelId = this.config.get('discord.channels.albionScans');
@@ -34,8 +35,8 @@ export class AlbionScanCommand {
 
     const message = await interaction.channel.send('Starting Albion Members scan...');
 
-    this.albionScanningService.startScan(message, dto.dryRun);
+    this.albionScanningService.startScan(message, dryRun);
 
-    return replyTo(interaction, `Albion Scan initiated!${dto.dryRun ? ' [DRY RUN, NO CHANGES WILL ACTUALLY BE PERFORMED]' : ''}`);
+    return replyTo(interaction, `Albion Scan initiated!${dryRun ? ' [DRY RUN, NO CHANGES WILL ACTUALLY BE PERFORMED]' : ''}`);
   }
 }
