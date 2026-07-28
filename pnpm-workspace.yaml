@@ -1,14 +1,11 @@
-# These packages' install scripts are deliberately not run: @nestjs/core's is an OpenCollective
-# donation banner, and the other two only *check* that a prebuilt native binary is present — the
-# binaries ship in the published tarballs. The production image installs with --ignore-scripts
-# anyway, so allowing them here would only diverge CI from what actually ships.
+# These packages' install scripts are deliberately not run: @nestjs/core's and necord's are
+# OpenCollective donation banners, and the other two only *check* that a prebuilt native binary is
+# present — the binaries ship in the published tarballs. The production image installs with
+# --ignore-scripts anyway, so allowing them here would only diverge CI from what actually ships.
 allowBuilds:
   '@nestjs/core': false
   '@sentry-internal/node-cpu-profiler': false
+  necord: false
   unrs-resolver: false
 minimumReleaseAgeExclude:
   - ps2census@4.9.2
-# Command registration hangs off discord.js' `ready` event, which v15 removes. Upstream has had no
-# release since Jan 2025, so we swap it for `clientReady` ourselves — see issue #724.
-patchedDependencies:
-  '@discord-nestjs/core@5.5.1': patches/@discord-nestjs__core@5.5.1.patch

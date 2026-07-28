@@ -41,7 +41,7 @@ If `migration:up` fails with "MikroORM config file not found", run `pnpm build` 
 NestJS dependency-injection app bootstrapped in `src/main.ts` / `src/app.module.ts`. There is no HTTP server — the app's "controllers" are Discord slash commands and gateway events.
 
 - **Feature modules** — `src/general/` (core community features: activity tracking, purges, joiner/leaver stats, role metrics), `src/albion/`, `src/ps2/` (per-game registration/verification/scanning). Each follows the same internal layout:
-  - `commands/` — slash commands via `@discord-nestjs/core` decorators (`@Command`, `@Handler`). Commands are thin; logic lives in services.
+  - `commands/` — slash commands via `necord` decorators (`@SlashCommand` on the handler method, `@Context`/`@Options` on its params). Commands are thin; logic lives in services.
   - `services/` — business logic. `*.cron.service.ts` files hold scheduled jobs (`@nestjs/schedule` `@Cron` decorators) that drive recurring scans/reports/purges.
   - `events/` (general only) — Discord gateway event handlers (guild member, message, voice state).
 - **`src/database/`** — MikroORM (MariaDB) entities and migrations. Entities extend `base.entity.ts`. Config is in root-level `mikro-orm.config.ts`. Migrations are non-transactional.

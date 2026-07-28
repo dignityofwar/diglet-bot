@@ -1,8 +1,8 @@
 import { ConfigService } from '@nestjs/config';
 import { ConfigModule } from './config/config.module';
-import { DiscordModule } from '@discord-nestjs/core';
 import { Module } from '@nestjs/common';
 import { GatewayIntentBits, Partials } from 'discord.js';
+import { NecordModule } from 'necord';
 import { GeneralModule } from './general/general.module';
 import { AlbionModule } from './albion/albion.module';
 import { DatabaseModule } from './database/database.module';
@@ -13,27 +13,22 @@ import { ScheduleModule } from '@nestjs/schedule';
   imports: [
     ConfigModule,
     DatabaseModule,
-    DiscordModule.forRootAsync({
+    NecordModule.forRootAsync({
       imports: [ConfigModule],
       useFactory: (configService: ConfigService) => ({
         token: configService.get('TOKEN'),
-        discordClientOptions: {
-          intents: [
-            GatewayIntentBits.Guilds,
-            GatewayIntentBits.GuildMembers,
-            GatewayIntentBits.GuildMessages,
-            GatewayIntentBits.GuildMessageReactions,
-            GatewayIntentBits.GuildPresences,
-            GatewayIntentBits.GuildVoiceStates,
-          ],
-          partials: [Partials.Message, Partials.Channel, Partials.Reaction],
-        },
-        registerCommandOptions: [
-          {
-            forGuild: configService.get('discord.guildId'),
-            removeCommandsBefore: true,
-          },
+        intents: [
+          GatewayIntentBits.Guilds,
+          GatewayIntentBits.GuildMembers,
+          GatewayIntentBits.GuildMessages,
+          GatewayIntentBits.GuildMessageReactions,
+          GatewayIntentBits.GuildPresences,
+          GatewayIntentBits.GuildVoiceStates,
         ],
+        partials: [Partials.Message, Partials.Channel, Partials.Reaction],
+        // Scopes every command to the DIG guild. necord bulk-overwrites that guild's command set
+        // on startup, which is what prunes stale commands now `removeCommandsBefore` is gone.
+        development: [configService.get('discord.guildId')],
       }),
       inject: [ConfigService],
     }),
@@ -41,7 +36,6 @@ import { ScheduleModule } from '@nestjs/schedule';
     AlbionModule,
     Ps2Module,
     ScheduleModule.forRoot(),
-    DiscordModule,
   ],
 })
 export class AppModule {}

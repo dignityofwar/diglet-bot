@@ -4,7 +4,6 @@ import { AlbionDeregisterCommand } from './deregistration.command';
 import { AlbionDeregistrationService } from '../services/albion.deregistration.service';
 import { Logger } from '@nestjs/common';
 import { TestBootstrapper } from '../../test.bootstrapper';
-import { ReflectMetadataProvider } from '@discord-nestjs/core';
 
 describe('AlbionDeregisterCommand', () => {
   let command: AlbionDeregisterCommand;
@@ -20,7 +19,6 @@ describe('AlbionDeregisterCommand', () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         AlbionDeregisterCommand,
-        ReflectMetadataProvider,
         {
           provide: AlbionDeregistrationService,
           useValue: {

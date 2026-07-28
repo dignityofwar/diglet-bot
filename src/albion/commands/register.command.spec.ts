@@ -3,7 +3,6 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { AlbionRegisterCommand } from './register.command';
 import { ConfigService } from '@nestjs/config';
 import { AlbionRegisterDto } from '../dto/albion.register.dto';
-import { ReflectMetadataProvider } from '@discord-nestjs/core';
 import { AlbionRegistrationService } from '../services/albion.registration.service';
 import { TestBootstrapper } from '../../test.bootstrapper';
 
@@ -23,7 +22,6 @@ describe('AlbionRegisterCommand', () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         AlbionRegisterCommand,
-        ReflectMetadataProvider,
         {
           provide: AlbionRegistrationService,
           useValue: {

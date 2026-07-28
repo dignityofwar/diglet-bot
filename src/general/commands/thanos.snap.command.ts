@@ -1,15 +1,9 @@
-import { Command, EventParams, Handler, InteractionEvent } from '@discord-nestjs/core';
-import { ApplicationCommandType, ChatInputCommandInteraction } from 'discord.js';
-import { Logger } from '@nestjs/common';
+import { Context, Options, SlashCommand, SlashCommandContext } from 'necord';
+import { Injectable, Logger } from '@nestjs/common';
 import { PurgeService } from '../services/purge.service';
-import { SlashCommandPipe } from '@discord-nestjs/common';
 import { DryRunDto } from '../dto/dry.run.dto';
 
-@Command({
-  name: 'thanos-snap',
-  type: ApplicationCommandType.ChatInput,
-  description: 'Execute a purge of the DIG server.',
-})
+@Injectable()
 export class ThanosSnapCommand {
   private readonly logger = new Logger(ThanosSnapCommand.name);
 
@@ -17,14 +11,17 @@ export class ThanosSnapCommand {
     private readonly purgeService: PurgeService,
   ) {}
 
-  @Handler()
+  @SlashCommand({
+    name: 'thanos-snap',
+    description: 'Execute a purge of the DIG server.',
+  })
   async onThanosSnapCommand(
-    @InteractionEvent(SlashCommandPipe) dto: DryRunDto,
-    @EventParams() interaction: ChatInputCommandInteraction[],
+    @Options() dto: DryRunDto,
+    @Context() [interaction]: SlashCommandContext,
   ): Promise<void> {
     this.logger.log('Executing Thanos Snap Command');
-    const channel = interaction[0].channel;
-    await interaction[0].reply('I am... inevitable.');
+    const channel = interaction.channel;
+    await interaction.reply('I am... inevitable.');
 
     if (dto.dryRun) {
       await channel.send('## This is a dry run! No members will be kicked!');

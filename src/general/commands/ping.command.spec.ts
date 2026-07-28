@@ -29,7 +29,7 @@ describe('PingCommand', () => {
     const version = '1.2.3';
     jest.spyOn(mockConfigService, 'get').mockReturnValue(version);
 
-    await service.onPingCommand(mockInteraction);
+    await service.onPingCommand([mockInteraction]);
 
     expect(mockInteraction.reply).toHaveBeenCalledWith({
       content: `Hello ${mockInteraction.user.username}, I'm alive! Version: ${version}`,

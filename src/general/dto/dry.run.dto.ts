@@ -1,12 +1,11 @@
-import { Param, ParamType } from '@discord-nestjs/core';
+import { BooleanOption } from 'necord';
 
 export class DryRunDto {
-  @Param({
+  @BooleanOption({
     name: 'dry-run',
     description:
       'If set to true, will simulate the purge but not execute it.',
     required: false,
-    type: ParamType.BOOLEAN,
   })
   dryRun = true;
 }

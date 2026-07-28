@@ -1,7 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { Test, TestingModule } from '@nestjs/testing';
 import { ConfigService } from '@nestjs/config';
-import { ReflectMetadataProvider } from '@discord-nestjs/core';
 import { PS2VerifyCommand } from './verify.command';
 import { CensusApiService } from '../service/census.api.service';
 import { PS2VerifyDto } from '../dto/PS2VerifyDto';
@@ -27,7 +26,6 @@ describe('PS2VerifyCommand', () => {
       providers: [
         PS2VerifyCommand,
         PS2GameVerificationService,
-        ReflectMetadataProvider,
         {
           provide: CensusApiService,
           useValue: {

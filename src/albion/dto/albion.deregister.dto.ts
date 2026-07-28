@@ -1,23 +1,22 @@
-import { Param, ParamType } from '@discord-nestjs/core';
+import { StringOption, UserOption } from 'necord';
+import { User } from 'discord.js';
 
 export class AlbionDeregisterDto {
-  @Param({
+  @StringOption({
     name: 'character-name',
     description:
       'Name of the character in game',
     required: false,
-    minLength: 3,
-    maxLength: 16,
-    type: ParamType.STRING,
+    min_length: 3,
+    max_length: 16,
   })
   character?: string;
 
-  @Param({
+  @UserOption({
     name: 'discord-member',
     description:
       'Discord User to deregister.',
     required: false,
-    type: ParamType.USER,
   })
-  discordMember?: string;
+  discordMember?: User;
 }

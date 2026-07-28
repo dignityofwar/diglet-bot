@@ -14,6 +14,11 @@
     "outDir": "./dist",
     // Matches what tsc already infers; without it ts-jest's per-file compiles trip TS5011.
     "rootDir": ".",
+    // necord re-exports discord.js types. Without this pin, ts-jest's per-file compiles can load
+    // discord.js' typings twice and treat the two copies as unrelated.
+    "paths": {
+      "discord.js": ["./node_modules/discord.js"]
+    },
     "incremental": true,
     "skipLibCheck": true,
     "strictNullChecks": false,

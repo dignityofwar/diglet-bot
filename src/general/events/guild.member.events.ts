@@ -1,6 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { On } from '@discord-nestjs/core';
-import { Events, GuildMember } from 'discord.js';
+import { Context, ContextOf, On } from 'necord';
 import { InjectRepository } from '@mikro-orm/nestjs';
 import { EntityRepository } from '@mikro-orm/core';
 import { ActivityEntity } from '../../database/entities/activity.entity';
@@ -13,8 +12,10 @@ export class GuildMemberEvents {
     @InjectRepository(ActivityEntity) private readonly activityRepository: EntityRepository<ActivityEntity>,
   ) {}
 
-  @On(Events.GuildMemberRemove)
-  async onGuildMemberRemove(member: GuildMember): Promise<void> {
+  @On('guildMemberRemove')
+  async onGuildMemberRemove(
+    @Context() [member]: ContextOf<'guildMemberRemove'>,
+  ): Promise<void> {
     if (member.user.bot) return;
 
     const activityRecord = await this.activityRepository.findOne({ discordId: member.id });

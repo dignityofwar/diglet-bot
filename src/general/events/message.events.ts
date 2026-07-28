@@ -1,9 +1,10 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { On } from '@discord-nestjs/core';
+import { Context, ContextOf, On } from 'necord';
 import {
-  Events,
   Message,
   MessageReaction,
+  PartialMessageReaction,
+  PartialUser,
   User,
 } from 'discord.js';
 import { DatabaseService } from '../../database/services/database.service';
@@ -63,8 +64,11 @@ export class MessageEvents {
     await this.databaseService.updateActivity(guildMember);
   }
 
-  async handlePartialReactions(reaction: MessageReaction, user: User): Promise<{ reaction: MessageReaction, user: User }> {
-    let realReaction: MessageReaction = reaction;
+  async handlePartialReactions(
+    reaction: MessageReaction | PartialMessageReaction,
+    user: User | PartialUser,
+  ): Promise<{ reaction: MessageReaction, user: User }> {
+    let realReaction = reaction as MessageReaction;
     if (reaction.partial) {
       try {
         realReaction = await reaction.fetch();
@@ -75,7 +79,7 @@ export class MessageEvents {
       }
     }
 
-    let realUser = user;
+    let realUser = user as User;
 
     if (user.partial) {
       try {
@@ -94,8 +98,8 @@ export class MessageEvents {
   }
 
   // Annoyingly, these events are not additive and have to be defined every time.
-  @On(Events.MessageCreate)
-  async onMessageCreate(message: Message): Promise<void> {
+  @On('messageCreate')
+  async onMessageCreate(@Context() [message]: ContextOf<'messageCreate'>): Promise<void> {
     try {
       await this.handleMessageEvent(message, 'create');
       this.logger.verbose(`Message create event handled for ${message.member.displayName}`);
@@ -105,10 +109,10 @@ export class MessageEvents {
     }
   }
 
-  @On(Events.MessageUpdate)
-  async onMessageUpdate(message: Message): Promise<void> {
+  @On('messageUpdate')
+  async onMessageUpdate(@Context() [message]: ContextOf<'messageUpdate'>): Promise<void> {
     try {
-      await this.handleMessageEvent(message, 'update');
+      await this.handleMessageEvent(message as Message, 'update');
       this.logger.verbose(`Message update event handled for ${message.member.displayName}`);
     }
     catch (error) {
@@ -116,10 +120,10 @@ export class MessageEvents {
     }
   }
 
-  @On(Events.MessageDelete)
-  async onMessageDelete(message: Message): Promise<void> {
+  @On('messageDelete')
+  async onMessageDelete(@Context() [message]: ContextOf<'messageDelete'>): Promise<void> {
     try {
-      await this.handleMessageEvent(message, 'delete');
+      await this.handleMessageEvent(message as Message, 'delete');
       this.logger.verbose(`Message delete event handled for ${message.member.displayName}`);
     }
     catch (error) {
@@ -127,8 +131,10 @@ export class MessageEvents {
     }
   }
 
-  @On(Events.MessageReactionAdd)
-  async onMessageReactionAdd(reaction: MessageReaction, user: User): Promise<void> {
+  @On('messageReactionAdd')
+  async onMessageReactionAdd(
+    @Context() [reaction, user]: ContextOf<'messageReactionAdd'>,
+  ): Promise<void> {
     try {
       const { reaction: fullReaction, user: fullUser } = await this.handlePartialReactions(reaction, user);
       await this.handleMessageReaction(fullReaction, fullUser, 'add');
@@ -138,8 +144,10 @@ export class MessageEvents {
     }
   }
 
-  @On(Events.MessageReactionRemove)
-  async onMessageReactionRemove(reaction: MessageReaction, user: User): Promise<void> {
+  @On('messageReactionRemove')
+  async onMessageReactionRemove(
+    @Context() [reaction, user]: ContextOf<'messageReactionRemove'>,
+  ): Promise<void> {
     try {
       const { reaction: fullReaction, user: fullUser } = await this.handlePartialReactions(reaction, user);
       await this.handleMessageReaction(fullReaction, fullUser, 'remove');

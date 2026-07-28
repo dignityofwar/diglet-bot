@@ -6,7 +6,6 @@ import { Test } from '@nestjs/testing';
 import { ConfigService } from '@nestjs/config';
 import { getRepositoryToken } from '@mikro-orm/nestjs';
 import { EntityRepository } from '@mikro-orm/core';
-import { ReflectMetadataProvider } from '@discord-nestjs/core';
 import { AlbionDeregistrationService } from './albion.deregistration.service';
 import { DiscordService } from '../../discord/discord.service';
 import { AlbionDeregisterDto } from '../dto/albion.deregister.dto';
@@ -46,7 +45,6 @@ describe('AlbionDeregistrationService', () => {
 
     const moduleRef = await Test.createTestingModule({
       providers: [
-        ReflectMetadataProvider,
         AlbionDeregistrationService,
         {
           provide: ConfigService,
@@ -114,12 +112,12 @@ describe('AlbionDeregistrationService', () => {
     });
 
     it('should deregister via discordMember', async () => {
-      const dto: AlbionDeregisterDto = { discordMember: mockDiscordMember.id };
+      const dto: AlbionDeregisterDto = { discordMember: mockDiscordMember.user };
       mockAlbionRegistrationsRepository.findOne.mockResolvedValueOnce(mockRegistration);
 
       await service.deregister(mockChannel, dto);
 
-      expect(mockAlbionRegistrationsRepository.findOne).toHaveBeenCalledWith({ discordId: dto.discordMember });
+      expect(mockAlbionRegistrationsRepository.findOne).toHaveBeenCalledWith({ discordId: dto.discordMember.id });
       expect(discordService.getGuildMember).toHaveBeenCalledWith(
         mockChannel.guild.id,
         mockRegistration.discordId,
@@ -130,7 +128,7 @@ describe('AlbionDeregistrationService', () => {
     });
 
     it('should send not found message for discordMember path', async () => {
-      const dto: AlbionDeregisterDto = { discordMember: mockDiscordMember.id };
+      const dto: AlbionDeregisterDto = { discordMember: mockDiscordMember.user };
       mockAlbionRegistrationsRepository.findOne.mockResolvedValueOnce(null);
 
       await service.deregister(mockChannel, dto);

@@ -1,18 +1,12 @@
-import { Command, EventParams, Handler, InteractionEvent } from '@discord-nestjs/core';
-import { ApplicationCommandType, ChatInputCommandInteraction } from 'discord.js';
-import { SlashCommandPipe } from '@discord-nestjs/common';
+import { Context, Options, SlashCommand, SlashCommandContext } from 'necord';
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { CensusCharacterWithOutfitInterface } from '../interfaces/CensusCharacterResponseInterface';
 import { CensusApiService } from '../service/census.api.service';
 import { PS2GameVerificationService } from '../service/ps2.game.verification.service';
 import { PS2VerifyManualDto } from '../dto/PS2VerifyManualDto';
+import { replyTo } from '../../discord/discord.hacks';
 
-@Command({
-  name: 'ps2-verify-manual',
-  type: ApplicationCommandType.ChatInput,
-  description: 'Manually verify a character in the DIG Outfit',
-})
 @Injectable()
 export class PS2VerifyManualCommand {
   private readonly logger = new Logger(PS2VerifyManualCommand.name);
@@ -23,26 +17,29 @@ export class PS2VerifyManualCommand {
     private readonly ps2GameVerificationService: PS2GameVerificationService,
   ) {}
 
-  @Handler()
+  @SlashCommand({
+    name: 'ps2-verify-manual',
+    description: 'Manually verify a character in the DIG Outfit',
+  })
   async onPS2VerifyManualCommand(
-    @InteractionEvent(SlashCommandPipe) dto: PS2VerifyManualDto,
-    @EventParams() interaction: ChatInputCommandInteraction[],
+    @Options() dto: PS2VerifyManualDto,
+    @Context() [interaction]: SlashCommandContext,
   ): Promise<string> {
     this.logger.debug(`Received onPS2VerifyManualCommand with character ${dto.character}`);
     // Check if the command came from the correct channel ID
     const verifyChannelId = this.config.get('discord.channels.ps2Verify');
 
     // Check if channel is correct
-    if (interaction[0].channelId !== verifyChannelId) {
-      return `Please use the <#${verifyChannelId}> channel to register.`;
+    if (interaction.channelId !== verifyChannelId) {
+      return replyTo(interaction, `Please use the <#${verifyChannelId}> channel to register.`);
     }
 
     // Get the target and createdBy Discord guild members to be able to edit things about them
-    const targetMember = await interaction[0].guild?.members.fetch(dto.discordId);
-    const createdByMember = await interaction[0].guild?.members.fetch(interaction[0].user.id);
+    const targetMember = await interaction.guild?.members.fetch(dto.discordUser.id);
+    const createdByMember = await interaction.guild?.members.fetch(interaction.user.id);
 
     if (!targetMember) {
-      return `The Discord user <@${dto.discordId}> could not be found.`;
+      return replyTo(interaction, `The Discord user <@${dto.discordUser.id}> could not be found.`);
     }
 
     let character: CensusCharacterWithOutfitInterface;
@@ -53,33 +50,33 @@ export class PS2VerifyManualCommand {
     }
     catch (err) {
       if (err instanceof Error) {
-        return err.message;
+        return replyTo(interaction, err.message);
       }
     }
 
     // If a force remove, skip all the extra checks
     if (dto.remove) {
       await this.ps2GameVerificationService.forceRemove(character, targetMember, createdByMember);
-      return 'Member manually unverified.';
+      return replyTo(interaction, 'Member manually unverified.');
     }
 
     const outfitId = this.config.get('ps2.outfitId');
 
     // Check if the character is in the PS2 Outfit
     if (!character.outfit_info || character.outfit_info?.outfit_id !== outfitId) {
-      return `The character **${character.name.first}** has not been detected in the [DIG]. Please try again.`;
+      return replyTo(interaction, `The character **${character.name.first}** has not been detected in the [DIG]. Please try again.`);
     }
 
     // Check first if the registration is valid
     const isValid = await this.ps2GameVerificationService.isValidRegistrationAttempt(character, targetMember);
 
     if (isValid !== true) {
-      return isValid;
+      return replyTo(interaction, isValid);
     }
 
     await this.ps2GameVerificationService.forceAdd(character, targetMember, createdByMember);
 
     // Successful, but send nothing back as we send a separate message as the command may fail due to census being slow.
-    return 'Member manually verified.';
+    return replyTo(interaction, 'Member manually verified.');
   }
 }

@@ -1,7 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { Test } from '@nestjs/testing';
 import { DiscordService } from '../../discord/discord.service';
-import { ReflectMetadataProvider } from '@discord-nestjs/core';
 import { ConfigService } from '@nestjs/config';
 import { EntityRepository } from '@mikro-orm/core';
 import { getRepositoryToken } from '@mikro-orm/nestjs';
@@ -63,7 +62,6 @@ describe('AlbionScanningService', () => {
     const moduleRef = await Test.createTestingModule({
       providers: [
         AlbionScanningService,
-        ReflectMetadataProvider,
         AlbionApiService,
         AlbionUtilities,
         {
@@ -335,7 +333,7 @@ describe('AlbionScanningService', () => {
         mockDiscordMessage.channel,
         {
           character: mockCharacter.Name,
-          discordMember: mockDiscordUser.id,
+          discordMember: mockDiscordUser.user,
         },
       );
     });
@@ -368,7 +366,7 @@ describe('AlbionScanningService', () => {
         mockDiscordMessage.channel,
         {
           character: mockCharacter.Name,
-          discordMember: mockDiscordUser.id,
+          discordMember: mockDiscordUser.user,
         },
       );
     });
@@ -473,7 +471,7 @@ describe('AlbionScanningService', () => {
         mockDiscordMessage.channel,
         {
           character: mockCharacter.Name,
-          discordMember: mockDiscordUser.id,
+          discordMember: mockDiscordUser.user,
         },
       );
     });

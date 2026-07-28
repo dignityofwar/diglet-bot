@@ -1,15 +1,8 @@
-import { Command, EventParams, Handler, InteractionEvent } from '@discord-nestjs/core';
-import { ApplicationCommandType, ChatInputCommandInteraction } from 'discord.js';
+import { Context, Options, SlashCommand, SlashCommandContext } from 'necord';
 import { Injectable, Logger } from '@nestjs/common';
-import { SlashCommandPipe } from '@discord-nestjs/common';
 import { AlbionDeregistrationService } from '../services/albion.deregistration.service';
 import { AlbionDeregisterDto } from '../dto/albion.deregister.dto';
 
-@Command({
-  name: 'albion-deregister',
-  type: ApplicationCommandType.ChatInput,
-  description: 'Deregisters an Albion member from the guild',
-})
 @Injectable()
 export class AlbionDeregisterCommand {
   private readonly logger = new Logger(AlbionDeregisterCommand.name);
@@ -18,23 +11,26 @@ export class AlbionDeregisterCommand {
     private readonly albionDeregistrationService: AlbionDeregistrationService,
   ) {}
 
-  @Handler()
+  @SlashCommand({
+    name: 'albion-deregister',
+    description: 'Deregisters an Albion member from the guild',
+  })
   async onAlbionDeregisterCommand(
-    @InteractionEvent(SlashCommandPipe) dto: AlbionDeregisterDto,
-    @EventParams() interaction: ChatInputCommandInteraction[],
+    @Options() dto: AlbionDeregisterDto,
+    @Context() [interaction]: SlashCommandContext,
   ): Promise<void> {
     this.logger.log('Received Albion Deregister Command', dto);
 
     // If neither character nor discordMember is provided, throw
     if (!dto.character && !dto.discordMember) {
-      await interaction[0].reply('❌ You must provide either a character name or a Discord member to deregister.');
+      await interaction.reply('❌ You must provide either a character name or a Discord member to deregister.');
       return;
     }
 
-    const name = dto.character ?? dto.discordMember ?? 'Unknown';
+    const name = dto.character ?? dto.discordMember?.id ?? 'Unknown';
 
     // Create placeholder message
-    const message = await interaction[0].channel.send(`Deregistration process for ${name} started. Please wait...`);
+    const message = await interaction.channel.send(`Deregistration process for ${name} started. Please wait...`);
 
     try {
       await this.albionDeregistrationService.deregister(

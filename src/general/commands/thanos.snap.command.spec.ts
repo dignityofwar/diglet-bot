@@ -4,7 +4,6 @@ import { PurgeService } from '../services/purge.service';
 import { ChatInputCommandInteraction } from 'discord.js';
 import { DryRunDto } from '../dto/dry.run.dto';
 import { TestBootstrapper } from '../../test.bootstrapper';
-import { ReflectMetadataProvider } from '@discord-nestjs/core';
 
 describe('ThanosSnapCommand', () => {
   let command: ThanosSnapCommand;
@@ -22,7 +21,6 @@ describe('ThanosSnapCommand', () => {
     const moduleRef = await Test.createTestingModule({
       providers: [
         ThanosSnapCommand,
-        ReflectMetadataProvider,
         {
           provide: PurgeService,
           useValue: mockPurgeService,

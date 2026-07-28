@@ -29,7 +29,7 @@ export class AlbionDeregistrationService {
       throw new Error('Either character or discordId must be provided for deregistration.');
     }
 
-    const discordId = dto.discordMember ?? null;
+    const discordId = dto.discordMember?.id ?? null;
 
     // If we got a discordId, find it via that
     let registration: AlbionRegistrationsEntity | null = null;
@@ -43,7 +43,7 @@ export class AlbionDeregistrationService {
     }
 
     if (!registration) {
-      const error = dto.character ? `No registration found for character "${dto.character}"!` : `No registration found for Discord User ID "${dto.discordMember}"!`;
+      const error = dto.character ? `No registration found for character "${dto.character}"!` : `No registration found for Discord User ID "${discordId}"!`;
       this.logger.error(error);
       await responseChannel.send(`❌ ${error}`);
       return;

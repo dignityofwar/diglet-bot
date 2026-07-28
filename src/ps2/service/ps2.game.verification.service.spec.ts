@@ -2,7 +2,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { ConfigService } from '@nestjs/config';
 
-import { ReflectMetadataProvider } from '@discord-nestjs/core';
 import { CensusCharacterWithOutfitInterface } from '../interfaces/CensusCharacterResponseInterface';
 import { PS2GameVerificationService } from './ps2.game.verification.service';
 import { DiscordService } from '../../discord/discord.service';
@@ -40,7 +39,6 @@ describe('PS2GameVerificationService', () => {
     const moduleRef: TestingModule = await Test.createTestingModule({
       providers: [
         PS2GameVerificationService,
-        ReflectMetadataProvider,
         { provide: EntityManager, useValue: mockEntityManager },
         {
           provide: ConfigService,

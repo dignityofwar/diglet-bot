@@ -1,9 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { On } from '@discord-nestjs/core';
-import {
-  Events,
-  VoiceState,
-} from 'discord.js';
+import { Context, ContextOf, On } from 'necord';
 import { DatabaseService } from '../../database/services/database.service';
 
 @Injectable()
@@ -14,8 +10,10 @@ export class VoiceStateEvents {
     private readonly databaseService: DatabaseService,
   ) {}
 
-  @On(Events.VoiceStateUpdate)
-  async onVoiceStateUpdate(oldState: VoiceState, newState: VoiceState): Promise<void> {
+  @On('voiceStateUpdate')
+  async onVoiceStateUpdate(
+    @Context() [oldState, newState]: ContextOf<'voiceStateUpdate'>,
+  ): Promise<void> {
 
     // Don't care about bots
     if (newState.member.user.bot) return;

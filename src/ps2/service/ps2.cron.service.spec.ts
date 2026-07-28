@@ -3,7 +3,6 @@ import { DiscordService } from '../../discord/discord.service';
 import { PS2GameScanningService } from './ps2.game.scanning.service';
 import { ConfigService } from '@nestjs/config';
 import { Test, TestingModule } from '@nestjs/testing';
-import { ReflectMetadataProvider } from '@discord-nestjs/core';
 import { TestBootstrapper } from '../../test.bootstrapper';
 
 jest.mock('discord.js', () => {
@@ -26,7 +25,6 @@ describe('PS2CronService', () => {
       providers: [
         PS2CronService,
         ConfigService,
-        ReflectMetadataProvider,
         {
           provide: ConfigService,
           useValue: {

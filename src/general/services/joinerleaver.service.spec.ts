@@ -92,7 +92,7 @@ describe('JoinerLeaverService', () => {
     });
 
     it('should record a new joiner', async () => {
-      await joinerLeaverService.recordJoiner(mockGuildMember);
+      await joinerLeaverService.recordJoiner([mockGuildMember]);
 
       expect(mockJoinerLeaverRepository.findOne).toHaveBeenCalledWith({ discordId: mockGuildMember.id });
 
@@ -114,7 +114,7 @@ describe('JoinerLeaverService', () => {
     it('should record a previous joiner', async () => {
       mockJoinerLeaverRepository.findOne = jest.fn().mockResolvedValue(createMockJoinerLeaverEntity());
 
-      await joinerLeaverService.recordJoiner(mockGuildMember);
+      await joinerLeaverService.recordJoiner([mockGuildMember]);
 
       expect(mockJoinerLeaverRepository.findOne).toHaveBeenCalledWith({ discordId: mockGuildMember.id });
 
@@ -138,7 +138,7 @@ describe('JoinerLeaverService', () => {
 
       mockJoinerLeaverRepository.findOne = jest.fn().mockResolvedValue(rejoinedLeaver);
 
-      await joinerLeaverService.recordJoiner(mockGuildMember);
+      await joinerLeaverService.recordJoiner([mockGuildMember]);
 
       expect(mockJoinerLeaverRepository.getEntityManager().persist).toHaveBeenCalledWith(expect.objectContaining({
         discordId: mockGuildMember.id,
@@ -157,7 +157,7 @@ describe('JoinerLeaverService', () => {
         user: { bot: true },
       } as GuildMember;
 
-      await joinerLeaverService.recordJoiner(mockMember);
+      await joinerLeaverService.recordJoiner([mockMember]);
 
       expect(mockJoinerLeaverRepository.findOne).not.toHaveBeenCalled();
       expect(mockJoinerLeaverRepository.getEntityManager().persist).not.toHaveBeenCalled();
@@ -171,7 +171,7 @@ describe('JoinerLeaverService', () => {
     });
 
     it('should record a leaver', async () => {
-      await joinerLeaverService.recordLeaver(mockGuildMember);
+      await joinerLeaverService.recordLeaver([mockGuildMember]);
 
       expect(mockJoinerLeaverRepository.findOne).toHaveBeenCalledWith({ discordId: mockGuildMember.id });
 
@@ -194,7 +194,7 @@ describe('JoinerLeaverService', () => {
   it('should error if a leaver is not found', async () => {
     mockJoinerLeaverRepository.findOne = jest.fn().mockResolvedValue(null);
 
-    await joinerLeaverService.recordLeaver(mockGuildMember);
+    await joinerLeaverService.recordLeaver([mockGuildMember]);
 
     expect(mockJoinerLeaverRepository.findOne).toHaveBeenCalledWith({ discordId: mockGuildMember.id });
 
@@ -206,7 +206,7 @@ describe('JoinerLeaverService', () => {
       user: { bot: true },
     } as GuildMember;
 
-    await joinerLeaverService.recordLeaver(mockMember);
+    await joinerLeaverService.recordLeaver([mockMember]);
 
     expect(mockJoinerLeaverRepository.findOne).not.toHaveBeenCalled();
     expect(mockJoinerLeaverRepository.getEntityManager().persist).not.toHaveBeenCalled();

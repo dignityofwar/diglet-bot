@@ -32,8 +32,6 @@
     "node": ">=24.12.0 <25.0.0"
   },
   "dependencies": {
-    "@discord-nestjs/common": "^5.2.12",
-    "@discord-nestjs/core": "^5.3.14",
     "@mikro-orm/core": "7.1.6",
     "@mikro-orm/decorators": "7.1.6",
     "@mikro-orm/mariadb": "7.1.6",
@@ -51,6 +49,7 @@
     "discord.js": "^14.22.0",
     "dotenv": "^17.0.0",
     "lodash": "^4.17.21",
+    "necord": "^6.14.0",
     "ps2census": "^4.9.2",
     "reflect-metadata": "^0.2.2"
   },
