@@ -106,7 +106,7 @@ export class PS2GameVerificationService implements OnApplicationBootstrap {
         characterName: character.name.first,
       },
     );
-    await this.ps2VerificationAttemptRepository.getEntityManager().persistAndFlush(verificationAttemptEntity);
+    await this.ps2VerificationAttemptRepository.getEntityManager().persist(verificationAttemptEntity).flush();
 
     // Force the message to wait so the reply is sent first and messages are rendered in the proper order
     setTimeout(async () => {
@@ -174,7 +174,7 @@ export class PS2GameVerificationService implements OnApplicationBootstrap {
       return 'ERROR';
     }
 
-    await this.ps2MembersRepository.getEntityManager().removeAndFlush(entity);
+    await this.ps2MembersRepository.getEntityManager().remove(entity).flush();
 
     await this.sendMessage(`🗑️ <@${targetMember.id}> your verification status has been manually removed by <@${createdByMember.id}>! You will need to re-verify yourself should you wish to regain full membership.
 ===================`);
@@ -197,7 +197,7 @@ export class PS2GameVerificationService implements OnApplicationBootstrap {
     // Flush any pending verification attempts that were in progress
     const verificationAttempts = await this.ps2VerificationAttemptRepository.findAll();
     for (const verificationAttempt of verificationAttempts) {
-      await this.ps2VerificationAttemptRepository.getEntityManager().removeAndFlush(verificationAttempt);
+      await this.ps2VerificationAttemptRepository.getEntityManager().remove(verificationAttempt).flush();
     }
 
     for (const verificationAttempt of verificationAttempts) {
@@ -275,7 +275,7 @@ export class PS2GameVerificationService implements OnApplicationBootstrap {
 
       try {
         const entity = await this.ps2VerificationAttemptRepository.find({ characterId: character.character_id });
-        await this.ps2VerificationAttemptRepository.getEntityManager().removeAndFlush(entity);
+        await this.ps2VerificationAttemptRepository.getEntityManager().remove(entity).flush();
       }
       catch (err) {
         // Fucked
@@ -320,7 +320,7 @@ export class PS2GameVerificationService implements OnApplicationBootstrap {
 
     try {
       const entity = await this.ps2VerificationAttemptRepository.find({ characterId: character.character_id });
-      await this.ps2VerificationAttemptRepository.getEntityManager().removeAndFlush(entity);
+      await this.ps2VerificationAttemptRepository.getEntityManager().remove(entity).flush();
     }
     catch (err) {
       const errorMessage = 'Failed to delete PS2 member verification attempt from the database!';

@@ -8,14 +8,14 @@
     "build": "nest build",
     "format": "prettier --write \"src/**/*.ts\"",
     "lint": "eslint \"{src,apps,libs,test}/**/*.ts\" --fix",
-    "migration:create": "pnpx ts-node node_modules/@mikro-orm/cli/cli.js migration:create",
-    "migration:up": "pnpx ts-node node_modules/@mikro-orm/cli/cli.js migration:up",
-    "migration:down": "pnpx ts-node node_modules/@mikro-orm/cli/cli.js migration:down",
-    "migration:list": "pnpx ts-node node_modules/@mikro-orm/cli/cli.js migration:list",
+    "migration:create": "mikro-orm migration:create",
+    "migration:up": "mikro-orm migration:up",
+    "migration:down": "mikro-orm migration:down",
+    "migration:list": "mikro-orm migration:list",
     "start": "nest start",
     "start:dev": "nest start --watch",
     "start:debug": "nest start --debug --watch",
-    "start:prod": "ts-node node_modules/@mikro-orm/cli/cli.js migration:up && node dist/src/main",
+    "start:prod": "mikro-orm migration:up && node dist/src/main",
     "test": "jest --coverage",
     "test:wsl": "jest --coverage --maxWorkers=4",
     "test:ci": "jest --ci --coverage",
@@ -23,6 +23,9 @@
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand"
   },
   "packageManager": "pnpm@11.15.1",
+  "mikro-orm": {
+    "preferTs": false
+  },
   "engines": {
     "npm": ">=10.9.2",
     "pnpm": ">=10.25.0",
@@ -31,11 +34,12 @@
   "dependencies": {
     "@discord-nestjs/common": "^5.2.12",
     "@discord-nestjs/core": "^5.3.14",
-    "@mikro-orm/core": "6.6.10",
-    "@mikro-orm/mariadb": "6.6.10",
-    "@mikro-orm/migrations": "6.6.10",
-    "@mikro-orm/nestjs": "^6.0.0",
-    "@mikro-orm/seeder": "6.6.10",
+    "@mikro-orm/core": "7.1.6",
+    "@mikro-orm/decorators": "7.1.6",
+    "@mikro-orm/mariadb": "7.1.6",
+    "@mikro-orm/migrations": "7.1.6",
+    "@mikro-orm/nestjs": "^7.0.0",
+    "@mikro-orm/seeder": "7.1.6",
     "@mikro-orm/sql-highlighter": "^1.0.1",
     "@nestjs/common": "11.1.17",
     "@nestjs/config": "4.0.3",
@@ -47,11 +51,12 @@
     "discord.js": "^14.18.0",
     "dotenv": "^17.0.0",
     "lodash": "^4.17.21",
-    "ps2census": "^4.6.0"
+    "ps2census": "^4.6.0",
+    "reflect-metadata": "^0.2.2"
   },
   "devDependencies": {
     "@eslint/js": "10.0.1",
-    "@mikro-orm/cli": "6.6.10",
+    "@mikro-orm/cli": "7.1.6",
     "@nestjs/cli": "11.0.16",
     "@nestjs/schematics": "11.0.9",
     "@nestjs/testing": "^11.0.0",

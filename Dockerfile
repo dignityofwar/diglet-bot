@@ -14,7 +14,7 @@ RUN corepack enable
 WORKDIR /app
 
 # Own layer so it's only redone when the manifests change. Dev deps are kept, entrypoint.sh runs
-# migrations through ts-node.
+# migrations through the MikroORM CLI.
 COPY package.json pnpm-lock.yaml ./
 RUN corepack install && chmod -R a+rX "$COREPACK_HOME"
 RUN pnpm install --frozen-lockfile --ignore-scripts

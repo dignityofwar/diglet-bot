@@ -32,7 +32,7 @@ Local MariaDB runs via `docker compose up -d` (host port 3307, credentials root/
 pnpm migration:create | migration:up | migration:down | migration:list
 ```
 
-If `migration:up` fails with "MikroORM config file not found", run `pnpm build` first — the CLI needs the compiled entities in `dist/`.
+If `migration:up` fails with "MikroORM config file not found", run `pnpm build` first — the CLI is pinned to the compiled output (`preferTs: false` in package.json), so it needs `dist/mikro-orm.config.js` and the compiled entities and migrations under `dist/src/database/`. New migrations are still emitted as TypeScript into `src/database/migrations` via `migrations.pathTs`.
 
 `./start.sh` runs the full local sequence (DB, build, migrations, dev mode); `./stop.sh` stops the containers.
 

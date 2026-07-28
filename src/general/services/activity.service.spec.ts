@@ -77,22 +77,22 @@ describe('ActivityService', () => {
     it('should remove the activity record', async () => {
       await activityService.removeActivityRecord(mockActivityEntity, false);
 
-      expect(mockActivityRepository.getEntityManager().removeAndFlush).toHaveBeenCalledWith(mockActivityEntity);
+      expect(mockActivityRepository.getEntityManager().remove).toHaveBeenCalledWith(mockActivityEntity);
     });
 
     it('should not remove the activity record on a dry run', async () => {
       await activityService.removeActivityRecord(mockActivityEntity, true);
-      expect(mockActivityRepository.getEntityManager().removeAndFlush).toHaveBeenCalledTimes(0);
+      expect(mockActivityRepository.getEntityManager().remove).toHaveBeenCalledTimes(0);
     });
 
     it('should properly handle database errors and throw an custom error', async () => {
-      mockActivityRepository.getEntityManager().removeAndFlush = jest.fn().mockImplementation(() => {throw new Error('Database went boom!');});
+      mockActivityRepository.getEntityManager().flush = jest.fn().mockImplementation(() => {throw new Error('Database went boom!');});
 
       await expect(activityService.removeActivityRecord(mockActivityEntity, false))
         .rejects
         .toThrow('Error removing activity record for leaver testuser (123456). Error: Database went boom!');
 
-      expect(mockActivityRepository.getEntityManager().removeAndFlush).toHaveBeenCalledTimes(1);
+      expect(mockActivityRepository.getEntityManager().flush).toHaveBeenCalledTimes(1);
     });
   });
 
@@ -160,7 +160,7 @@ describe('ActivityService', () => {
 
       mockActivityRepository.findAll = jest.fn().mockResolvedValue(activityRecords);
 
-      mockActivityStatisticsRepository.getEntityManager().persistAndFlush = jest.fn();
+      mockActivityStatisticsRepository.getEntityManager().persist = jest.fn().mockReturnThis();
     });
 
     it('should collate activity records and create statistics', async () => {
@@ -185,11 +185,11 @@ describe('ActivityService', () => {
         },
       );
 
-      expect(mockActivityStatisticsRepository.getEntityManager().persistAndFlush).toHaveBeenCalledWith(mockStatistics);
+      expect(mockActivityStatisticsRepository.getEntityManager().persist).toHaveBeenCalledWith(mockStatistics);
     });
 
     it('should handle database errors', async () => {
-      mockActivityStatisticsRepository.getEntityManager().persistAndFlush = jest.fn().mockRejectedValue(new Error('Database error'));
+      mockActivityStatisticsRepository.getEntityManager().flush = jest.fn().mockRejectedValue(new Error('Database error'));
 
       await expect(activityService.enumerateActivity()).rejects.toThrow('Error enumerating activity records. Error: Database error');
     });

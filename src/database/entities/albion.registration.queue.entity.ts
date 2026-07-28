@@ -1,4 +1,4 @@
-import { Entity, Enum, Index, Property, Unique } from '@mikro-orm/core';
+import { Entity, Enum, Index, Property, Unique } from '@mikro-orm/decorators/legacy';
 import { BaseEntity } from './base.entity';
 import { AlbionServer } from '../../albion/interfaces/albion.api.interfaces';
 

@@ -56,6 +56,6 @@ If `~/.claude/projects/<slug>/memory` already exists as a real directory with fi
 # Troubleshooting
 ## Running migration:up fails
 ```
-Error: MikroORM config file not found in ['./src/mikro-orm.config.ts', './mikro-orm.config.ts']
+Error: MikroORM config file not found in ['./dist/mikro-orm.config.js', './mikro-orm.config.js']
 ```
-This is due to ts-node not properly transpiling typescript into javascript which the package understands. To get round this, you can run `pnpm build` to in effect create the files for the migration to be able to run. Don't ask me why it works, it just does.
+The MikroORM CLI runs against the compiled output rather than the TypeScript sources, so run `pnpm build` first and the config and entities it is looking for will be there.

@@ -193,13 +193,12 @@ describe('AlbionDeregistrationService', () => {
 
   describe('stripRegistration', () => {
     it('should remove registration and confirm', async () => {
-      const removeAndFlushSpy = jest
-        .spyOn(mockAlbionRegistrationsRepository.getEntityManager(), 'removeAndFlush')
-        .mockResolvedValue();
+      const entityManager = mockAlbionRegistrationsRepository.getEntityManager();
 
       await service.stripRegistration(mockRegistration, mockChannel);
 
-      expect(removeAndFlushSpy).toHaveBeenCalledWith(mockRegistration);
+      expect(entityManager.remove).toHaveBeenCalledWith(mockRegistration);
+      expect(entityManager.flush).toHaveBeenCalled();
       expect(mockChannel.send).toHaveBeenCalledWith(
         `Successfully deregistered Character ${mockRegistration.characterName}.`,
       );
@@ -208,7 +207,7 @@ describe('AlbionDeregistrationService', () => {
     it('should report error on failure', async () => {
       const error = new Error('DB fail');
       jest
-        .spyOn(mockAlbionRegistrationsRepository.getEntityManager(), 'removeAndFlush')
+        .spyOn(mockAlbionRegistrationsRepository.getEntityManager(), 'flush')
         .mockRejectedValue(error);
 
       await service.stripRegistration(mockRegistration, mockChannel);

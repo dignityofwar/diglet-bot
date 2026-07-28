@@ -62,9 +62,7 @@ describe('AlbionRegistrationService', () => {
       findOne: jest.fn(),
       nativeDelete: jest.fn().mockResolvedValue(1),
       flush: jest.fn().mockResolvedValue(true),
-      getEntityManager: jest.fn().mockReturnValue({
-        flush: jest.fn().mockResolvedValue(true),
-      }),
+      getEntityManager: jest.fn().mockReturnValue(TestBootstrapper.getMockEntityManager()),
     } as any;
 
     mockCharacter = TestBootstrapper.getMockAlbionCharacter(AlbionServer.EUROPE) as any;

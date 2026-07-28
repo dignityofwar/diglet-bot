@@ -10,12 +10,20 @@ module.exports = {
   ],
   rootDir: 'src',
   testRegex: '.*\\.spec\\.ts$',
+  // MikroORM v7 ships as native ESM. Jest's CJS runtime can't require it, so its JS is
+  // transpiled down alongside our TypeScript instead of being skipped as a node_module.
+  transform: {
+    '^.+\\.tsx?$': ['ts-jest', {}],
+    '^.+\\.m?js$': './jest-esm-transformer.js',
+  },
+  transformIgnorePatterns: ['node_modules/(?!.*@mikro-orm)'],
   collectCoverage: true,
   collectCoverageFrom: [
     '**/*.{ts,tsx}', // Include only TypeScript and TSX files
     '**/*.spec.ts', // Explicitly exclude test files
     '**/*index.ts', // Exclude index files if they just re-export, as an example
-    '!database/**', // Exclude database folder, filled with migrations that's pointless to test
+    '!database/migrations/**', // Exclude migrations, pointless to test
+    '!database/entities/**', // Exclude entities, they're declarations rather than logic
     '!config/**', // Exclude config folder, mostly pointless to test
     '!**/*.module.ts', // Exclude module files, really hard to test with not much value
     '!main.ts', // Exclude main.ts, as it's the entrypoint to the app
