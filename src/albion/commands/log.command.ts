@@ -1,5 +1,6 @@
 import { Context, SlashCommand, SlashCommandContext } from 'necord';
 import { Injectable, Logger } from '@nestjs/common';
+import { randomInt } from 'node:crypto';
 
 @Injectable()
 export class AlbionLogCommand {
@@ -28,6 +29,7 @@ The log is good,
 The log is hard,
 The log is girthy, the log is big.
 The log will log our logs with speed.`);
-    (await interaction.channel.send(images[Math.floor(Math.random() * images.length)])).react('🪵');
+    // crypto rather than Math.random purely to keep the SAST scanner quiet — see rule S2245.
+    (await interaction.channel.send(images[randomInt(images.length)])).react('🪵');
   }
 }
