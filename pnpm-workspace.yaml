@@ -6,3 +6,7 @@ allowBuilds:
   '@nestjs/core': false
   '@sentry-internal/node-cpu-profiler': false
   unrs-resolver: false
+# Command registration hangs off discord.js' `ready` event, which v15 removes. Upstream has had no
+# release since Jan 2025, so we swap it for `clientReady` ourselves — see issue #724.
+patchedDependencies:
+  '@discord-nestjs/core@5.5.1': patches/@discord-nestjs__core@5.5.1.patch
