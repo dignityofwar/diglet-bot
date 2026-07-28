@@ -15,7 +15,12 @@ WORKDIR /app
 
 # Own layer so it's only redone when the manifests change. Dev deps are kept, entrypoint.sh runs
 # migrations through the MikroORM CLI.
-COPY package.json pnpm-lock.yaml ./
+#
+# pnpm-workspace.yaml and patches/ are manifests too, not extras: the lockfile records the
+# patch, pnpm-workspace.yaml declares it, and the patch file is what gets applied. Copy the
+# lockfile without the other two and --frozen-lockfile fails on the mismatch.
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
+COPY patches ./patches
 RUN corepack install && chmod -R a+rX "$COREPACK_HOME"
 RUN pnpm install --frozen-lockfile --ignore-scripts
 
