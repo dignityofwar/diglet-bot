@@ -24,15 +24,18 @@ on:
   # after fixing something on the receiving side rather than in this repo.
   workflow_dispatch:
 
-# The release job needs contents: write to push the version bump and tag. A called
-# workflow cannot be granted more than its caller holds, so it has to be granted
-# here as well as inside release.yml.
+# The build and release jobs both need contents: write — build to push the coverage
+# badges, release to push the version bump and tag. A called workflow cannot be granted
+# more than its caller holds, so each has to be granted here as well as inside the
+# workflow it calls.
 permissions:
   contents: read
 
 jobs:
   build:
     name: Build & Test application
+    permissions:
+      contents: write
     uses: ./.github/workflows/build-and-test-main.yml
     secrets: inherit
 

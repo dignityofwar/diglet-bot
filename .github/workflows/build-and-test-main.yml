@@ -3,8 +3,10 @@ name: Build & Test Main
 on:
   workflow_call:
 
+# contents: write is for the coverage badge step, which commits the regenerated SVGs
+# back to main. Read is not enough and the push 403s.
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   build:
