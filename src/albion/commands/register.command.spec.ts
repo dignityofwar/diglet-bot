@@ -6,7 +6,6 @@ import { AlbionRegisterDto } from '../dto/albion.register.dto';
 import { ReflectMetadataProvider } from '@discord-nestjs/core';
 import { AlbionRegistrationService } from '../services/albion.registration.service';
 import { TestBootstrapper } from '../../test.bootstrapper';
-import { AlbionServer } from '../interfaces/albion.api.interfaces';
 
 const expectedChannelId = TestBootstrapper.mockConfig.discord.channels.albionRegistration;
 
@@ -72,7 +71,6 @@ describe('AlbionRegisterCommand', () => {
       expect(result).toBe('Registration request sent!');
       expect(command.registrationCommandProxy).toHaveBeenCalledWith(
         dto.character,
-        AlbionServer.EUROPE,
         mockDiscordUser.id,
         mockDiscordUser.guild.id,
         mockDiscordInteraction[0].channelId,
@@ -85,7 +83,6 @@ describe('AlbionRegisterCommand', () => {
     it('should call the registration service', async () => {
       await command.registrationCommandProxy(
         dto.character,
-        AlbionServer.EUROPE,
         mockDiscordUser.id,
         mockDiscordUser.guild.id,
         mockDiscordInteraction[0].channelId,
@@ -94,7 +91,6 @@ describe('AlbionRegisterCommand', () => {
 
       expect(albionRegistrationService.handleRegistration).toHaveBeenCalledWith(
         dto.character,
-        AlbionServer.EUROPE,
         mockDiscordUser.id,
         mockDiscordUser.guild.id,
         mockDiscordInteraction[0].channelId,
@@ -113,7 +109,6 @@ describe('AlbionRegisterCommand', () => {
 
       await command.registrationCommandProxy(
         dto.character,
-        AlbionServer.EUROPE,
         mockDiscordUser.id,
         mockDiscordUser.guild.id,
         mockDiscordInteraction[0].channelId,
@@ -122,7 +117,6 @@ describe('AlbionRegisterCommand', () => {
 
       expect(albionRegistrationService.handleRegistration).toHaveBeenCalledWith(
         dto.character,
-        AlbionServer.EUROPE,
         mockDiscordUser.id,
         mockDiscordUser.guild.id,
         mockDiscordInteraction[0].channelId,

@@ -4,7 +4,6 @@ import {
   AlbionPlayerInterface,
   AlbionPlayersResponseInterface,
   AlbionSearchResponseInterface,
-  AlbionServer,
 } from '../interfaces/albion.api.interfaces';
 import { ConfigService } from '@nestjs/config';
 
@@ -15,17 +14,17 @@ export class AlbionApiService {
     private readonly config: ConfigService,
   ) {}
 
-  async getCharacter(characterName: string, server: AlbionServer): Promise<AlbionPlayerInterface> {
-    const characterId = await this.getCharacterId(characterName, server);
-    return await this.queryCharacter(characterId, server);
+  async getCharacter(characterName: string): Promise<AlbionPlayerInterface> {
+    const characterId = await this.getCharacterId(characterName);
+    return await this.queryCharacter(characterId);
   }
 
-  async getCharacterById(characterId: string, server: AlbionServer): Promise<AlbionPlayerInterface> {
-    return await this.queryCharacter(characterId, server);
+  async getCharacterById(characterId: string): Promise<AlbionPlayerInterface> {
+    return await this.queryCharacter(characterId);
   }
 
-  async queryCharacter(characterId: string, server: AlbionServer): Promise<AlbionPlayerInterface> {
-    const request = new AlbionAxiosFactory().createApiClient(server);
+  async queryCharacter(characterId: string): Promise<AlbionPlayerInterface> {
+    const request = new AlbionAxiosFactory().createApiClient();
 
     const response: AlbionPlayersResponseInterface = await request.get(`/players/${characterId}`);
 
@@ -36,8 +35,8 @@ export class AlbionApiService {
     return response.data;
   }
 
-  async getCharacterId(characterName: string, server: AlbionServer): Promise<string> {
-    const request = new AlbionAxiosFactory().createApiClient(server);
+  async getCharacterId(characterName: string): Promise<string> {
+    const request = new AlbionAxiosFactory().createApiClient();
     const query = `/search?q=${characterName}`;
     this.logger.debug(`Querying Albion API for character ID: ${request.defaults.baseURL}${query}`);
     const response: AlbionSearchResponseInterface = await request.get(query);
@@ -76,8 +75,8 @@ export class AlbionApiService {
     return foundPlayer[0].Id;
   }
 
-  async getAllGuildMembers(guildId: string, server: AlbionServer): Promise<AlbionPlayerInterface[]> {
-    const request = new AlbionAxiosFactory().createApiClient(server);
+  async getAllGuildMembers(guildId: string): Promise<AlbionPlayerInterface[]> {
+    const request = new AlbionAxiosFactory().createApiClient();
     const response: AlbionPlayersResponseInterface = await request.get(`/guilds/${guildId}/members`);
     const data = response.data;
 
@@ -100,11 +99,10 @@ export class AlbionApiService {
    */
   async checkCharacterGuildMembership(
     characterName: string,
-    server: AlbionServer,
     guildId: string,
   ): Promise<boolean> {
-    const getCharacter = this.getCharacter(characterName, server).catch(() => undefined);
-    const getGuildMembers = this.getAllGuildMembers(guildId, server).catch(() => undefined);
+    const getCharacter = this.getCharacter(characterName).catch(() => undefined);
+    const getGuildMembers = this.getAllGuildMembers(guildId).catch(() => undefined);
 
     const [character, guildMembers] = await Promise.all([getCharacter, getGuildMembers]);
 

@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { AlbionRegistrationsEntity } from '../../database/entities/albion.registrations.entity';
-import { AlbionPlayerInterface, AlbionServer } from '../interfaces/albion.api.interfaces';
+import { AlbionPlayerInterface } from '../interfaces/albion.api.interfaces';
 import { TestBootstrapper } from '../../test.bootstrapper';
 import { Test } from '@nestjs/testing';
 import { ConfigService } from '@nestjs/config';
@@ -25,7 +25,7 @@ describe('AlbionDeregistrationService', () => {
   let configService: jest.Mocked<ConfigService>;
 
   beforeEach(async () => {
-    mockCharacter = TestBootstrapper.getMockAlbionCharacter(AlbionServer.EUROPE);
+    mockCharacter = TestBootstrapper.getMockAlbionCharacter();
 
     mockRegistration = {
       id: 123456789,

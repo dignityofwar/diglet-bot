@@ -4,7 +4,6 @@ import _ from 'lodash';
 import { ConfigService } from '@nestjs/config';
 import { TestingModule } from '@nestjs/testing';
 import { MikroORM } from '@mikro-orm/core';
-import { AlbionServer } from './albion/interfaces/albion.api.interfaces';
 import { PS2MembersEntity } from './database/entities/ps2.members.entity';
 import { PS2RankMapInterface } from './config/ps2.app.config';
 import { Collection, Role, Snowflake } from 'discord.js';
@@ -316,12 +315,10 @@ export class TestBootstrapper {
     };
   }
 
-  static getMockAlbionCharacter(
-    server: AlbionServer = AlbionServer.EUROPE,
-  ) {
+  static getMockAlbionCharacter() {
     return {
       Id: 'clhoV9OdRm-5BuYQYZBT_Q',
-      Name: `Maelstrome26${server === AlbionServer.EUROPE ? 'EU' : 'US'}`,
+      Name: 'Maelstrome26EU',
       GuildId: this.mockConfig.albion.guildId,
     } as any;
   }
@@ -384,14 +381,12 @@ export class TestBootstrapper {
           discordRoleId: '1218115619732455474',
           priority: 1,
           keep: true,
-          server: AlbionServer.EUROPE,
         },
         {
           name: '@ALB/Magister',
           discordRoleId: '1218115569455464498',
           priority: 2,
           keep: false,
-          server: AlbionServer.EUROPE,
         },
       ],
     },

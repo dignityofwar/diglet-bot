@@ -10,7 +10,7 @@ import {
 } from '../../database/entities/albion.registration.queue.entity';
 import { AlbionRegistrationService } from './albion.registration.service';
 import { TestBootstrapper } from '../../test.bootstrapper';
-import { AlbionServer } from '../interfaces/albion.api.interfaces';
+
 import { AlbionApiService } from './albion.api.service';
 
 describe('AlbionRegistrationRetryCronService', () => {
@@ -145,7 +145,6 @@ describe('AlbionRegistrationRetryCronService', () => {
       discordChannelId: 'dc1',
       discordId: 'u1',
       characterName: 'Char',
-      server: AlbionServer.EUROPE,
       expiresAt,
     });
 
@@ -171,7 +170,6 @@ describe('AlbionRegistrationRetryCronService', () => {
 
     expect(albionRegistrationService.handleRegistration).toHaveBeenCalledWith(
       'Char',
-      AlbionServer.EUROPE,
       'u1',
       'dg1',
       'dc1',
@@ -201,7 +199,6 @@ describe('AlbionRegistrationRetryCronService', () => {
       discordChannelId: 'dc1',
       discordId: 'u1',
       characterName: 'Char',
-      server: AlbionServer.EUROPE,
       expiresAt: new Date(Date.now() + 1000 * 60 * 60),
     });
 
@@ -229,7 +226,6 @@ describe('AlbionRegistrationRetryCronService', () => {
       discordChannelId: 'dc1',
       discordId: 'u1',
       characterName: 'Char',
-      server: AlbionServer.EUROPE,
       expiresAt: new Date(Date.now() + 1000 * 60 * 60),
     });
 
@@ -252,7 +248,6 @@ describe('AlbionRegistrationRetryCronService', () => {
       discordChannelId: 'dc1',
       discordId: 'u1',
       characterName: 'Char',
-      server: AlbionServer.EUROPE,
       expiresAt: new Date(Date.now() + 1000 * 60 * 60),
     });
 
@@ -280,7 +275,6 @@ describe('AlbionRegistrationRetryCronService', () => {
       discordChannelId: 'dc1',
       discordId: 'u1',
       characterName: 'Char',
-      server: AlbionServer.EUROPE,
       expiresAt: new Date(Date.now() - 1000),
     });
 
@@ -308,7 +302,6 @@ describe('AlbionRegistrationRetryCronService', () => {
       discordChannelId: 'dc1',
       discordId: 'u1',
       characterName: 'Char1',
-      server: AlbionServer.EUROPE,
       expiresAt: expiresAt1,
     });
 
@@ -319,7 +312,6 @@ describe('AlbionRegistrationRetryCronService', () => {
       discordChannelId: 'dc1',
       discordId: 'u2',
       characterName: 'Char2',
-      server: AlbionServer.EUROPE,
       expiresAt: expiresAt2,
     });
 
@@ -343,7 +335,6 @@ describe('AlbionRegistrationRetryCronService', () => {
       discordChannelId: 'dc1',
       discordId: 'u1',
       characterName: 'Char',
-      server: AlbionServer.EUROPE,
       expiresAt: new Date(Date.now() + 1000 * 60 * 60),
     });
 
@@ -368,7 +359,6 @@ describe('AlbionRegistrationRetryCronService', () => {
       discordChannelId: 'dc1',
       discordId: 'u1',
       characterName: 'Char',
-      server: AlbionServer.EUROPE,
       expiresAt: new Date(Date.now() + 1000 * 60 * 60),
     });
 
@@ -389,7 +379,6 @@ describe('AlbionRegistrationRetryCronService', () => {
       discordChannelId: 'dc1',
       discordId: 'u1',
       characterName: 'Char',
-      server: AlbionServer.EUROPE,
       expiresAt: new Date(Date.now() + 1000 * 60 * 60),
     });
 
@@ -412,7 +401,6 @@ describe('AlbionRegistrationRetryCronService', () => {
       discordChannelId: 'dc1',
       discordId: 'u1',
       characterName: 'Char',
-      server: AlbionServer.EUROPE,
       expiresAt: new Date(Date.now() + 1000 * 60 * 60),
     });
 
@@ -433,7 +421,6 @@ describe('AlbionRegistrationRetryCronService', () => {
       discordChannelId: 'dc1',
       discordId: 'u1',
       characterName: 'Char',
-      server: AlbionServer.EUROPE,
       expiresAt: new Date(Date.now() - 1000),
     });
 

@@ -5,7 +5,7 @@ import { InjectRepository } from '@mikro-orm/nestjs';
 import { AlbionRegistrationsEntity } from '../../database/entities/albion.registrations.entity';
 import { EntityRepository } from '@mikro-orm/core';
 import { Channel, GuildMember, MessageFlags, TextChannel } from 'discord.js';
-import { AlbionPlayerInterface, AlbionServer } from '../interfaces/albion.api.interfaces';
+import { ALBION_GUILD_EMOJI, AlbionPlayerInterface } from '../interfaces/albion.api.interfaces';
 import { AlbionApiService } from './albion.api.service';
 import {
   AlbionRegistrationQueueEntity,
@@ -15,9 +15,6 @@ import {
 export interface RegistrationData {
   discordMember: GuildMember
   character: AlbionPlayerInterface
-  server: AlbionServer
-  serverName: string
-  serverEmoji: string
   guildId: string
   guildName: string
   guildPingable: string
@@ -138,7 +135,6 @@ export class AlbionRegistrationService implements OnApplicationBootstrap {
     const previousName = existing.characterName;
 
     existing.characterName = data.character.Name;
-    existing.server = data.server;
     existing.discordGuildId = data.discordMember.guild.id;
     existing.discordChannelId = this.verificationChannelId;
     existing.attemptCount = 0;
@@ -177,7 +173,6 @@ export class AlbionRegistrationService implements OnApplicationBootstrap {
   // This function will throw an error, which will be caught by its caller, and displayed to the user there.
   async handleRegistration(
     characterName: string,
-    server: AlbionServer,
     discordMemberId: string,
     discordGuildId: string,
     discordChannelId: string,
@@ -201,21 +196,18 @@ export class AlbionRegistrationService implements OnApplicationBootstrap {
     }
 
     try {
-      const charData = await this.albionApiService.getCharacter(characterName, server);
+      const charData = await this.albionApiService.getCharacter(characterName);
 
       const data: RegistrationData = {
         character: charData,
         discordMember: await this.discordService.getGuildMember(discordGuildId, discordMemberId),
-        server,
-        serverName: AlbionServer.EUROPE,
-        serverEmoji: '🇪🇺',
         guildId: this.config.get('albion.guildId'),
         guildName: 'Dignity Of War',
         guildPingable: '@ALB/Archmage',
       };
 
       this.logger.debug(
-        `Handling Albion character "${data.character.Name}" registration for "${data.discordMember.displayName}" on server "${data.server}"`,
+        `Handling Albion character "${data.character.Name}" registration for "${data.discordMember.displayName}"`,
       );
 
       await this.validate(data, options);
@@ -274,7 +266,7 @@ export class AlbionRegistrationService implements OnApplicationBootstrap {
 
     if (foundByDiscord?.discordId) {
       this.throwError(
-        `Sorry <@${data.discordMember.id}>, you have already registered a character named **${foundByDiscord.characterName}** for the ${data.serverEmoji} ${data.guildName} Guild. We don't allow multiple character registrations to the same Discord user.\n\n${contactMessage}`,
+        `Sorry <@${data.discordMember.id}>, you have already registered a character named **${foundByDiscord.characterName}** for the ${ALBION_GUILD_EMOJI} ${data.guildName} Guild. We don't allow multiple character registrations to the same Discord user.\n\n${contactMessage}`,
       );
     }
 
@@ -295,18 +287,17 @@ export class AlbionRegistrationService implements OnApplicationBootstrap {
     // If the person who originally registered the character has left the server
     if (!originalDiscordMember?.user?.id) {
       this.throwError(
-        `Sorry <@${data.discordMember.id}>, character **${data.character.Name}** has already been registered for the ${data.serverEmoji} ${data.guildName} Guild, but the user who registered it has left the server.\n\n${contactMessage}`,
+        `Sorry <@${data.discordMember.id}>, character **${data.character.Name}** has already been registered for the ${ALBION_GUILD_EMOJI} ${data.guildName} Guild, but the user who registered it has left the server.\n\n${contactMessage}`,
       );
     }
     this.throwError(
-      `Sorry <@${data.discordMember.id}>, character **${data.character.Name}** has already been registered for the ${data.serverEmoji} ${data.guildName} Guild by Discord user \`@${originalDiscordMember.displayName}\`.\n\n${contactMessage}`,
+      `Sorry <@${data.discordMember.id}>, character **${data.character.Name}** has already been registered for the ${ALBION_GUILD_EMOJI} ${data.guildName} Guild by Discord user \`@${originalDiscordMember.displayName}\`.\n\n${contactMessage}`,
     );
   }
 
   private async checkIfInGuild(data: RegistrationData) {
     const membership = await this.albionApiService.checkCharacterGuildMembership(
       data.character.Name,
-      data.server,
       data.guildId,
     );
 
@@ -333,7 +324,6 @@ export class AlbionRegistrationService implements OnApplicationBootstrap {
       discordChannelId: this.verificationChannelId,
       discordId: String(data.discordMember.user.id),
       characterName: data.character.Name,
-      server: data.server,
       attemptCount: 0,
       expiresAt,
       status: AlbionRegistrationQueueStatus.PENDING,
@@ -344,7 +334,7 @@ export class AlbionRegistrationService implements OnApplicationBootstrap {
     const expiresDiscordTime = `<t:${Math.floor(expiresAt.getTime() / 1000)}:f>`;
 
     this.throwError(
-      `<@${data.discordMember.id}> the character **${data.character.Name}** has not been detected in the ${data.serverEmoji} **${data.guildName}** Guild.\n\n ➡️ **Please ensure you have spelt your character __exactly__ correct as it appears in-game**. If you have mis-spelt it, please run the command again with the correct spelling.\n\n## ⏳ We will automatically retry your registration attempt hourly until ${expiresDiscordTime}.\n Sometimes our data source is slow to update, so please be patient. **If you are not a member of DIG, this WILL fail regardless.**`,
+      `<@${data.discordMember.id}> the character **${data.character.Name}** has not been detected in the ${ALBION_GUILD_EMOJI} **${data.guildName}** Guild.\n\n ➡️ **Please ensure you have spelt your character __exactly__ correct as it appears in-game**. If you have mis-spelt it, please run the command again with the correct spelling.\n\n## ⏳ We will automatically retry your registration attempt hourly until ${expiresDiscordTime}.\n Sometimes our data source is slow to update, so please be patient. **If you are not a member of DIG, this WILL fail regardless.**`,
     );
   }
 

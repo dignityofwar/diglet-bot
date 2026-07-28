@@ -9,7 +9,7 @@
 // import { AlbionUtilities } from '../utilities/albion.utilities';
 // import { Message } from 'discord.js';
 // import { AlbionApiService } from './albion.api.service';
-// import { AlbionPlayerInterface, AlbionServer } from '../interfaces/albion.api.interfaces';
+// import { AlbionPlayerInterface } from '../interfaces/albion.api.interfaces';
 // import { getChannel } from '../../discord/discord.hacks';
 //
 // export class AlbionReportsService {
@@ -32,7 +32,7 @@
 //     let albionMembers: AlbionPlayerInterface[] = [];
 //
 //     try {
-//       albionMembers = await this.albionApiService.getAllGuildMembers(this.config.get('albion.guildId'), AlbionServer.EUROPE);
+//       albionMembers = await this.albionApiService.getAllGuildMembers(this.config.get('albion.guildId'));
 //     }
 //     catch (err) {
 //       this.logger.error(err);
