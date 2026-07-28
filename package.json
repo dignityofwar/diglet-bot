@@ -51,7 +51,7 @@
     "discord.js": "^14.22.0",
     "dotenv": "^17.0.0",
     "lodash": "^4.17.21",
-    "ps2census": "^4.6.0",
+    "ps2census": "^4.9.2",
     "reflect-metadata": "^0.2.2"
   },
   "devDependencies": {
