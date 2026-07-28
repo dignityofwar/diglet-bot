@@ -4,16 +4,19 @@ settings:
   autoInstallPeers: true
   excludeLinksFromLockfile: false
 
+patchedDependencies:
+  '@discord-nestjs/core@5.5.1': d513283518530669362cbdf943b23f7fc63d0dc8e65b52273d27dad9e5a34f68
+
 importers:
 
   .:
     dependencies:
       '@discord-nestjs/common':
         specifier: ^5.2.12
-        version: 5.3.2(@discord-nestjs/core@5.5.1(@nestjs/common@11.1.28(class-transformer@0.5.1)(class-validator@0.14.1)(reflect-metadata@0.2.2)(rxjs@7.8.1)(supports-color@8.1.1))(@nestjs/core@11.1.28(@nestjs/common@11.1.28(class-transformer@0.5.1)(class-validator@0.14.1)(reflect-metadata@0.2.2)(rxjs@7.8.1)(supports-color@8.1.1))(reflect-metadata@0.2.2)(rxjs@7.8.1))(discord.js@14.26.5)(reflect-metadata@0.2.2)(rxjs@7.8.1))(@nestjs/common@11.1.28(class-transformer@0.5.1)(class-validator@0.14.1)(reflect-metadata@0.2.2)(rxjs@7.8.1)(supports-color@8.1.1))(@nestjs/core@11.1.28(@nestjs/common@11.1.28(class-transformer@0.5.1)(class-validator@0.14.1)(reflect-metadata@0.2.2)(rxjs@7.8.1)(supports-color@8.1.1))(reflect-metadata@0.2.2)(rxjs@7.8.1))(discord.js@14.26.5)(reflect-metadata@0.2.2)(rxjs@7.8.1)
+        version: 5.3.2(@discord-nestjs/core@5.5.1(patch_hash=d513283518530669362cbdf943b23f7fc63d0dc8e65b52273d27dad9e5a34f68)(@nestjs/common@11.1.28(class-transformer@0.5.1)(class-validator@0.14.1)(reflect-metadata@0.2.2)(rxjs@7.8.1)(supports-color@8.1.1))(@nestjs/core@11.1.28(@nestjs/common@11.1.28(class-transformer@0.5.1)(class-validator@0.14.1)(reflect-metadata@0.2.2)(rxjs@7.8.1)(supports-color@8.1.1))(reflect-metadata@0.2.2)(rxjs@7.8.1))(discord.js@14.26.5)(reflect-metadata@0.2.2)(rxjs@7.8.1))(@nestjs/common@11.1.28(class-transformer@0.5.1)(class-validator@0.14.1)(reflect-metadata@0.2.2)(rxjs@7.8.1)(supports-color@8.1.1))(@nestjs/core@11.1.28(@nestjs/common@11.1.28(class-transformer@0.5.1)(class-validator@0.14.1)(reflect-metadata@0.2.2)(rxjs@7.8.1)(supports-color@8.1.1))(reflect-metadata@0.2.2)(rxjs@7.8.1))(discord.js@14.26.5)(reflect-metadata@0.2.2)(rxjs@7.8.1)
       '@discord-nestjs/core':
         specifier: ^5.3.14
-        version: 5.5.1(@nestjs/common@11.1.28(class-transformer@0.5.1)(class-validator@0.14.1)(reflect-metadata@0.2.2)(rxjs@7.8.1)(supports-color@8.1.1))(@nestjs/core@11.1.28(@nestjs/common@11.1.28(class-transformer@0.5.1)(class-validator@0.14.1)(reflect-metadata@0.2.2)(rxjs@7.8.1)(supports-color@8.1.1))(reflect-metadata@0.2.2)(rxjs@7.8.1))(discord.js@14.26.5)(reflect-metadata@0.2.2)(rxjs@7.8.1)
+        version: 5.5.1(patch_hash=d513283518530669362cbdf943b23f7fc63d0dc8e65b52273d27dad9e5a34f68)(@nestjs/common@11.1.28(class-transformer@0.5.1)(class-validator@0.14.1)(reflect-metadata@0.2.2)(rxjs@7.8.1)(supports-color@8.1.1))(@nestjs/core@11.1.28(@nestjs/common@11.1.28(class-transformer@0.5.1)(class-validator@0.14.1)(reflect-metadata@0.2.2)(rxjs@7.8.1)(supports-color@8.1.1))(reflect-metadata@0.2.2)(rxjs@7.8.1))(discord.js@14.26.5)(reflect-metadata@0.2.2)(rxjs@7.8.1)
       '@mikro-orm/core':
         specifier: 7.1.6
         version: 7.1.6(dataloader@2.2.3)
@@ -57,7 +60,7 @@ importers:
         specifier: ^1.7.2
         version: 1.18.1(debug@4.4.3(supports-color@8.1.1))(supports-color@8.1.1)
       discord.js:
-        specifier: ^14.18.0
+        specifier: ^14.22.0
         version: 14.26.5
       dotenv:
         specifier: ^17.0.0
@@ -3810,9 +3813,9 @@ snapshots:
     dependencies:
       '@jridgewell/trace-mapping': 0.3.9
 
-  '@discord-nestjs/common@5.3.2(@discord-nestjs/core@5.5.1(@nestjs/common@11.1.28(class-transformer@0.5.1)(class-validator@0.14.1)(reflect-metadata@0.2.2)(rxjs@7.8.1)(supports-color@8.1.1))(@nestjs/core@11.1.28(@nestjs/common@11.1.28(class-transformer@0.5.1)(class-validator@0.14.1)(reflect-metadata@0.2.2)(rxjs@7.8.1)(supports-color@8.1.1))(reflect-metadata@0.2.2)(rxjs@7.8.1))(discord.js@14.26.5)(reflect-metadata@0.2.2)(rxjs@7.8.1))(@nestjs/common@11.1.28(class-transformer@0.5.1)(class-validator@0.14.1)(reflect-metadata@0.2.2)(rxjs@7.8.1)(supports-color@8.1.1))(@nestjs/core@11.1.28(@nestjs/common@11.1.28(class-transformer@0.5.1)(class-validator@0.14.1)(reflect-metadata@0.2.2)(rxjs@7.8.1)(supports-color@8.1.1))(reflect-metadata@0.2.2)(rxjs@7.8.1))(discord.js@14.26.5)(reflect-metadata@0.2.2)(rxjs@7.8.1)':
+  '@discord-nestjs/common@5.3.2(@discord-nestjs/core@5.5.1(patch_hash=d513283518530669362cbdf943b23f7fc63d0dc8e65b52273d27dad9e5a34f68)(@nestjs/common@11.1.28(class-transformer@0.5.1)(class-validator@0.14.1)(reflect-metadata@0.2.2)(rxjs@7.8.1)(supports-color@8.1.1))(@nestjs/core@11.1.28(@nestjs/common@11.1.28(class-transformer@0.5.1)(class-validator@0.14.1)(reflect-metadata@0.2.2)(rxjs@7.8.1)(supports-color@8.1.1))(reflect-metadata@0.2.2)(rxjs@7.8.1))(discord.js@14.26.5)(reflect-metadata@0.2.2)(rxjs@7.8.1))(@nestjs/common@11.1.28(class-transformer@0.5.1)(class-validator@0.14.1)(reflect-metadata@0.2.2)(rxjs@7.8.1)(supports-color@8.1.1))(@nestjs/core@11.1.28(@nestjs/common@11.1.28(class-transformer@0.5.1)(class-validator@0.14.1)(reflect-metadata@0.2.2)(rxjs@7.8.1)(supports-color@8.1.1))(reflect-metadata@0.2.2)(rxjs@7.8.1))(discord.js@14.26.5)(reflect-metadata@0.2.2)(rxjs@7.8.1)':
     dependencies:
-      '@discord-nestjs/core': 5.5.1(@nestjs/common@11.1.28(class-transformer@0.5.1)(class-validator@0.14.1)(reflect-metadata@0.2.2)(rxjs@7.8.1)(supports-color@8.1.1))(@nestjs/core@11.1.28(@nestjs/common@11.1.28(class-transformer@0.5.1)(class-validator@0.14.1)(reflect-metadata@0.2.2)(rxjs@7.8.1)(supports-color@8.1.1))(reflect-metadata@0.2.2)(rxjs@7.8.1))(discord.js@14.26.5)(reflect-metadata@0.2.2)(rxjs@7.8.1)
+      '@discord-nestjs/core': 5.5.1(patch_hash=d513283518530669362cbdf943b23f7fc63d0dc8e65b52273d27dad9e5a34f68)(@nestjs/common@11.1.28(class-transformer@0.5.1)(class-validator@0.14.1)(reflect-metadata@0.2.2)(rxjs@7.8.1)(supports-color@8.1.1))(@nestjs/core@11.1.28(@nestjs/common@11.1.28(class-transformer@0.5.1)(class-validator@0.14.1)(reflect-metadata@0.2.2)(rxjs@7.8.1)(supports-color@8.1.1))(reflect-metadata@0.2.2)(rxjs@7.8.1))(discord.js@14.26.5)(reflect-metadata@0.2.2)(rxjs@7.8.1)
       '@nestjs/common': 11.1.28(class-transformer@0.5.1)(class-validator@0.14.1)(reflect-metadata@0.2.2)(rxjs@7.8.1)(supports-color@8.1.1)
       '@nestjs/core': 11.1.28(@nestjs/common@11.1.28(class-transformer@0.5.1)(class-validator@0.14.1)(reflect-metadata@0.2.2)(rxjs@7.8.1)(supports-color@8.1.1))(reflect-metadata@0.2.2)(rxjs@7.8.1)
       '@nestjs/mapped-types': 2.1.0(@nestjs/common@11.1.28(class-transformer@0.5.1)(class-validator@0.14.1)(reflect-metadata@0.2.2)(rxjs@7.8.1)(supports-color@8.1.1))(class-transformer@0.5.1)(class-validator@0.14.1)(reflect-metadata@0.2.2)
@@ -3822,7 +3825,7 @@ snapshots:
       reflect-metadata: 0.2.2
       rxjs: 7.8.1
 
-  '@discord-nestjs/core@5.5.1(@nestjs/common@11.1.28(class-transformer@0.5.1)(class-validator@0.14.1)(reflect-metadata@0.2.2)(rxjs@7.8.1)(supports-color@8.1.1))(@nestjs/core@11.1.28(@nestjs/common@11.1.28(class-transformer@0.5.1)(class-validator@0.14.1)(reflect-metadata@0.2.2)(rxjs@7.8.1)(supports-color@8.1.1))(reflect-metadata@0.2.2)(rxjs@7.8.1))(discord.js@14.26.5)(reflect-metadata@0.2.2)(rxjs@7.8.1)':
+  '@discord-nestjs/core@5.5.1(patch_hash=d513283518530669362cbdf943b23f7fc63d0dc8e65b52273d27dad9e5a34f68)(@nestjs/common@11.1.28(class-transformer@0.5.1)(class-validator@0.14.1)(reflect-metadata@0.2.2)(rxjs@7.8.1)(supports-color@8.1.1))(@nestjs/core@11.1.28(@nestjs/common@11.1.28(class-transformer@0.5.1)(class-validator@0.14.1)(reflect-metadata@0.2.2)(rxjs@7.8.1)(supports-color@8.1.1))(reflect-metadata@0.2.2)(rxjs@7.8.1))(discord.js@14.26.5)(reflect-metadata@0.2.2)(rxjs@7.8.1)':
     dependencies:
       '@nestjs/common': 11.1.28(class-transformer@0.5.1)(class-validator@0.14.1)(reflect-metadata@0.2.2)(rxjs@7.8.1)(supports-color@8.1.1)
       '@nestjs/core': 11.1.28(@nestjs/common@11.1.28(class-transformer@0.5.1)(class-validator@0.14.1)(reflect-metadata@0.2.2)(rxjs@7.8.1)(supports-color@8.1.1))(reflect-metadata@0.2.2)(rxjs@7.8.1)

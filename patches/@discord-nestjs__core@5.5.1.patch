@@ -1,0 +1,14 @@
+diff --git a/dist/services/register-command.service.js b/dist/services/register-command.service.js
+index 1a2762f81c7ed930eae528422dcb52f5411cd076..80cd9c00be63c779b6ba23a6a7a5a741a11b820f 100644
+--- a/dist/services/register-command.service.js
++++ b/dist/services/register-command.service.js
+@@ -32,7 +32,8 @@ let RegisterCommandService = RegisterCommandService_1 = class RegisterCommandSer
+     }
+     async register() {
+         const options = this.discordOptionService.getClientData();
+-        this.client.on('ready', () => this.registerCommands(this.client, options));
++        // 'ready' is deprecated in discord.js v14 and gone in v15, taking command registration with it.
++        this.client.on('clientReady', () => this.registerCommands(this.client, options));
+     }
+     async registerCommands(client, { registerCommandOptions }) {
+         const commands = this.discordCommandProvider.getAllCommands();
