@@ -9,5 +9,9 @@ allowBuilds:
   '@sentry/node-cpu-profiler': false
   necord: false
   unrs-resolver: false
+# Renovate's 14-day wait does not apply to lock file maintenance, which re-resolves every caret
+# range weekly — pnpm's own gate is the only guard on that path, and 1 day (the v11 default) is
+# thin. 7 rather than 14 days keeps a vulnerabilityAlert fix installable without an exclusion.
+minimumReleaseAge: 10080
 minimumReleaseAgeExclude:
   - ps2census@4.9.2
