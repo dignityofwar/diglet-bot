@@ -2,7 +2,6 @@ import { Module } from '@nestjs/common';
 
 import { PingCommand } from './commands/ping.command';
 import { ConfigModule } from '../config/config.module';
-import { PurgeService } from './services/purge.service';
 import { DiscordService } from '../discord/discord.service';
 import { MessageEvents } from './events/message.events';
 import { DatabaseModule } from '../database/database.module';
@@ -11,7 +10,6 @@ import { VoiceStateEvents } from './events/voice.state.events';
 import { ActivityService } from './services/activity.service';
 import { GuildMemberEvents } from './events/guild.member.events';
 import { InteractionEvents } from './events/interaction.events';
-import { PurgeCronService } from './services/purge.cron.service';
 import { ActivityReportCronService } from './services/activity.report.cron.service';
 import { ActivityReportCommand } from './commands/activity.report.command';
 import { JoinerLeaverService } from './services/joinerleaver.service';
@@ -31,7 +29,6 @@ import { HealthcheckService } from './services/healthcheck.service';
     DiscordService,
     HealthcheckService,
     JoinerLeaverService,
-    PurgeService,
     RecRolePingService,
     RoleMetricsService,
 
@@ -46,7 +43,6 @@ import { HealthcheckService } from './services/healthcheck.service';
     InteractionEvents,
 
     // Cron Services
-    PurgeCronService,
     ActivityReportCronService,
   ],
 })
