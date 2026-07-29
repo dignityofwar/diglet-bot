@@ -1,6 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { Context, ContextOf, On } from 'necord';
-import { CommandInteractionOption } from 'discord.js';
+import { ChatInputCommandInteraction, CommandInteractionOption } from 'discord.js';
 
 @Injectable()
 export class InteractionEvents {
@@ -14,11 +14,21 @@ export class InteractionEvents {
     if (!interaction.isChatInputCommand()) return;
 
     const args = interaction.options.data.map((option) => this.formatOption(option)).join(' ');
-    const location = interaction.channelId ? `channel ${interaction.channelId}` : 'DM';
+    const location = this.formatLocation(interaction);
 
     this.logger.log(
       `/${interaction.commandName} by ${interaction.user.username} (${interaction.user.id}) in ${location} args: ${args || 'none'}`,
     );
+  }
+
+  private formatLocation(interaction: ChatInputCommandInteraction): string {
+    if (!interaction.channelId) return 'DM';
+
+    // DM channels have no name, and the channel can be uncached, so fall back to the bare ID.
+    const channel = interaction.channel;
+    const name = channel && 'name' in channel ? channel.name : null;
+
+    return name ? `#${name} (${interaction.channelId})` : `channel ${interaction.channelId}`;
   }
 
   private formatOption(option: CommandInteractionOption): string {
