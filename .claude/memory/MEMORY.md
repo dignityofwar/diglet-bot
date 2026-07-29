@@ -6,5 +6,8 @@
 - [necord's @Options() drops DTO defaults](necord-options-drops-dto-defaults.md) — field initialisers are ignored; omitted options arrive as null, so default at the read site
 - [MariaDB upgrades need MARIADB_AUTO_UPGRADE](mariadb-upgrades-need-auto-upgrade-env.md) — a tag bump alone leaves system tables un-upgraded; the DB container drifts behind the repo
 - [The deploy webhook reports false failures](deploy-webhook-reports-false-failure.md) — Node 19+ globalAgent kills the request at 5s, so Actions webhook wrappers are unusable; use curl
+- [allowBuilds breaks on dependency renames](pnpm-allowbuilds-breaks-on-renames.md) — an unlisted ignored build script fails pnpm install outright, killing CI before lint/test
+- [Lock file maintenance bypasses Renovate's age gate](lockfile-maintenance-bypasses-renovate-age-gate.md) — the 14-day wait doesn't cover it; pnpm's own minimumReleaseAge is the only guard
+- [Renovate freezes PRs under minimumReleaseAge](renovate-freezes-prs-under-minimum-release-age.md) — forced PRs never rebase, and the rebase checkbox can't unstick them
 
 Note: this memory lives in the repo at `.claude/memory/` (wired via `autoMemoryDirectory` in `.claude/settings.json`) so it's shared via git across machines and collaborators. See README "Claude Code memory".
