@@ -3,7 +3,6 @@ import { Module } from '@nestjs/common';
 import { PingCommand } from './commands/ping.command';
 import { ConfigModule } from '../config/config.module';
 import { PurgeService } from './services/purge.service';
-import { ThanosSnapCommand } from './commands/thanos.snap.command';
 import { DiscordService } from '../discord/discord.service';
 import { MessageEvents } from './events/message.events';
 import { DatabaseModule } from '../database/database.module';
@@ -39,7 +38,6 @@ import { HealthcheckService } from './services/healthcheck.service';
     // Commands
     ActivityReportCommand,
     PingCommand,
-    ThanosSnapCommand,
 
     // Events
     MessageEvents,

@@ -7,6 +7,6 @@ export class PS2ScanDto {
       'If set to true, will output the results of the scan to #ps2-scans but not execute.',
     required: false,
   })
-  // Defaulted at the use site — necord ignores field initialisers, see DryRunDto.
+  // Defaulted at the use site — necord ignores field initialisers on option DTOs.
   dryRun: boolean;
 }
