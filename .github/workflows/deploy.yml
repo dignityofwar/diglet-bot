@@ -9,24 +9,29 @@ permissions:
 jobs:
   send-webhook:
     runs-on: ubuntu-latest
-    # Backstop only. The step below should resolve long before this.
+    # Backstop only. --max-time below should resolve first.
     timeout-minutes: 5
     steps:
-      # The receiving hook waits for the deployment to finish and answers 200 or 500,
-      # so this timeout has to cover a whole deploy rather than just the round trip.
-      # Measured deploys run 37-86s; the proxy in front of the hook gives up at ~100s
-      # and returns a 524 of its own. 120s sits above that deliberately: a deploy that
-      # overruns should surface as that 524 — which says the deploy was still running —
-      # rather than as a client-side timeout, which says nothing at all.
-      #
-      # It was 2000ms, which timed out on 2026-07-28 while the deploy underneath it ran
-      # to completion, reporting a failure that had not happened. The reverse was worse:
-      # at 2000ms this step returned before the hook could know the outcome, so a
-      # crashlooping bot came back green.
+      # curl rather than an action. Every Actions wrapper for this leaves Node's
+      # default agent in place, and since Node 19 https.globalAgent carries
+      # timeout: 5000 — so the socket is killed at 5s no matter what timeout the
+      # action was given, and the error still quotes the configured value. The
+      # hook waits for the whole deploy, so that fired on every single run.
       - name: Trigger webhook
-        uses: ramzzisudip/secure-github-webhook@0.3.0
-        with:
-          url: "${{ secrets.WEBHOOK_URL }}"
-          data: '{ "application": "digletbot" }'
-          timeout: 120000
-          hmacSecret: "${{ secrets.WEBHOOK_SECRET }}"
+        env:
+          WEBHOOK_URL: ${{ secrets.WEBHOOK_URL }}
+          WEBHOOK_SECRET: ${{ secrets.WEBHOOK_SECRET }}
+        run: |
+          body='{"application":"digletbot"}'
+          signature=$(printf '%s' "$body" | openssl dgst -sha256 -hmac "$WEBHOOK_SECRET" -r | cut -d' ' -f1)
+
+          # The hook answers 200 or 500 carrying the deploy's own output, so this
+          # step's result is the deploy's result. 180s clears the ~100s at which the
+          # proxy in front gives up — an overrun should surface as that 524, which
+          # at least says the deploy was still running.
+          curl --fail-with-body --silent --show-error --max-time 180 \
+            --header 'Content-Type: application/json' \
+            --header "X-Hub-Signature-256: sha256=$signature" \
+            --header "X-Hub-SHA: $GITHUB_SHA" \
+            --data "$body" \
+            "$WEBHOOK_URL"
