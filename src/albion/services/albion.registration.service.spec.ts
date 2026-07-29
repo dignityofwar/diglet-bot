@@ -2,7 +2,6 @@
 import { Test } from '@nestjs/testing';
 import { AlbionRegistrationService, RegistrationData } from './albion.registration.service';
 import { DiscordService } from '../../discord/discord.service';
-import { ReflectMetadataProvider } from '@discord-nestjs/core';
 import { ConfigService } from '@nestjs/config';
 import { EntityRepository } from '@mikro-orm/core';
 import { getRepositoryToken } from '@mikro-orm/nestjs';
@@ -80,7 +79,6 @@ describe('AlbionRegistrationService', () => {
     const moduleRef = await Test.createTestingModule({
       providers: [
         AlbionRegistrationService,
-        ReflectMetadataProvider,
         {
           provide: DiscordService,
           useValue: {

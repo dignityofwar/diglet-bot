@@ -51,7 +51,7 @@ describe('GuildMemberEvents', () => {
         user: { bot: true },
       } as GuildMember;
 
-      await service.onGuildMemberRemove(mockMember);
+      await service.onGuildMemberRemove([mockMember]);
 
       expect(mockActivityRepository.findOne).not.toHaveBeenCalled();
       expect(mockActivityRepository.getEntityManager().remove).not.toHaveBeenCalled();
@@ -74,7 +74,7 @@ describe('GuildMemberEvents', () => {
 
       mockActivityRepository.findOne = jest.fn().mockResolvedValue(mockActivityRecord);
 
-      await service.onGuildMemberRemove(mockMember);
+      await service.onGuildMemberRemove([mockMember]);
 
       expect(mockActivityRepository.findOne).toHaveBeenCalledWith({ discordId: mockMember.id });
       expect(service['logger'].debug).toHaveBeenCalledWith(`Member "${mockMember.displayName}" has left the server.`);
@@ -91,7 +91,7 @@ describe('GuildMemberEvents', () => {
 
       mockActivityRepository.findOne = jest.fn().mockResolvedValue(null);
 
-      await service.onGuildMemberRemove(mockMember);
+      await service.onGuildMemberRemove([mockMember]);
 
       expect(mockActivityRepository.findOne).toHaveBeenCalledWith({ discordId: '123' });
       expect(mockActivityRepository.getEntityManager().remove).not.toHaveBeenCalled();

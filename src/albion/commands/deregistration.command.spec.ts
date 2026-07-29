@@ -4,7 +4,6 @@ import { AlbionDeregisterCommand } from './deregistration.command';
 import { AlbionDeregistrationService } from '../services/albion.deregistration.service';
 import { Logger } from '@nestjs/common';
 import { TestBootstrapper } from '../../test.bootstrapper';
-import { ReflectMetadataProvider } from '@discord-nestjs/core';
 
 describe('AlbionDeregisterCommand', () => {
   let command: AlbionDeregisterCommand;
@@ -20,7 +19,6 @@ describe('AlbionDeregisterCommand', () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         AlbionDeregisterCommand,
-        ReflectMetadataProvider,
         {
           provide: AlbionDeregistrationService,
           useValue: {
@@ -70,7 +68,7 @@ describe('AlbionDeregisterCommand', () => {
   });
 
   it('should call deregister with discord member', async () => {
-    const mockDto = { discordMember: mockDiscordUser };
+    const mockDto = { discordMember: mockDiscordUser.user };
     await command.onAlbionDeregisterCommand(mockDto, mockDiscordInteraction);
 
     mockMessage = (await mockDiscordInteraction[0].channel.send.mock.results[0]).value;

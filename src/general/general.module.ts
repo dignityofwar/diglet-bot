@@ -1,4 +1,3 @@
-import { DiscordModule } from '@discord-nestjs/core';
 import { Module } from '@nestjs/common';
 
 import { PingCommand } from './commands/ping.command';
@@ -22,7 +21,6 @@ import { HealthcheckService } from './services/healthcheck.service';
 
 @Module({
   imports: [
-    DiscordModule.forFeature(),
     ConfigModule,
     DatabaseModule,
   ],

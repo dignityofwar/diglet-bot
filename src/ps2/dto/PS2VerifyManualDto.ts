@@ -1,30 +1,29 @@
-import { Param, ParamType } from '@discord-nestjs/core';
+import { BooleanOption, StringOption, UserOption } from 'necord';
+import { User } from 'discord.js';
 
 export class PS2VerifyManualDto {
-  @Param({
+  @StringOption({
     name: 'character-name',
     description:
       'Name of the in-game Planetside 2 Character to link.',
     required: true,
-    minLength: 3,
-    maxLength: 32,
+    min_length: 3,
+    max_length: 32,
   })
   character: string;
-  @Param({
+  @UserOption({
     name: 'discord-user',
     description:
       'Select the Discord user to apply the verification to.',
     required: true,
-    type: ParamType.USER,
   })
-  discordId: string;
+  discordUser: User;
 
-  @Param({
+  @BooleanOption({
     name: 'remove',
     description:
     'Remove verification status instead of adding',
     required: false,
-    type: ParamType.BOOLEAN,
   })
   remove: boolean;
 }

@@ -36,12 +36,12 @@ describe('VoiceStateEvents', () => {
 
   describe('onVoiceStateUpdate', () => {
     it('should handle a user joining a voice channel', async () => {
-      await voiceStateEvents.onVoiceStateUpdate(mockOldState, mockNewState);
+      await voiceStateEvents.onVoiceStateUpdate([mockOldState, mockNewState]);
       expect(databaseService.updateActivity).toHaveBeenCalledWith(mockNewState.member);
     });
 
     it('should handle a user leaving a voice channel', async () => {
-      await voiceStateEvents.onVoiceStateUpdate(mockNewState, mockOldState);
+      await voiceStateEvents.onVoiceStateUpdate([mockNewState, mockOldState]);
       expect(databaseService.updateActivity).toHaveBeenCalledWith(mockOldState.member);
     });
 
@@ -49,13 +49,13 @@ describe('VoiceStateEvents', () => {
       mockNewState.channel = mockOldState.channel;
       mockNewState.selfMute = true;
       mockNewState.selfDeaf = true;
-      await voiceStateEvents.onVoiceStateUpdate(mockOldState, mockNewState);
+      await voiceStateEvents.onVoiceStateUpdate([mockOldState, mockNewState]);
       expect(databaseService.updateActivity).not.toHaveBeenCalled();
     });
 
     it('should not process events for bots', async () => {
       mockNewState.member.user.bot = true;
-      await voiceStateEvents.onVoiceStateUpdate(mockOldState, mockNewState);
+      await voiceStateEvents.onVoiceStateUpdate([mockOldState, mockNewState]);
       expect(databaseService.updateActivity).not.toHaveBeenCalled();
     });
   });

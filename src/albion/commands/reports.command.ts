@@ -1,18 +1,12 @@
 // This command is now dead and it's not been asked for in ages. It's being kept here in case we need to resurrect it later.
 
-// import { Command, EventParams, Handler, InteractionEvent } from '@discord-nestjs/core';
-// import { ApplicationCommandType, ChatInputCommandInteraction } from 'discord.js';
+// import { Context, Options, SlashCommand, SlashCommandContext } from 'necord';
 // import { Injectable, Logger } from '@nestjs/common';
 // import { ConfigService } from '@nestjs/config';
 // import { AlbionReportsService } from '../services/albion.reports.service';
-// import { SlashCommandPipe } from '@discord-nestjs/common';
 // import { AlbionReportsDto } from '../dto/albion.reports.dto';
+// import { replyTo } from '../../discord/discord.hacks';
 //
-// @Command({
-//   name: 'albion-reports',
-//   type: ApplicationCommandType.ChatInput,
-//   description: 'Run reports on the Albion Guild',
-// })
 // @Injectable()
 // export class AlbionReportsCommand {
 //   private readonly logger = new Logger(AlbionReportsCommand.name);
@@ -22,10 +16,13 @@
 //     private readonly albionReportsService: AlbionReportsService,
 //   ) {}
 //
-//   @Handler()
+//   @SlashCommand({
+//     name: 'albion-reports',
+//     description: 'Run reports on the Albion Guild',
+//   })
 //   async onAlbionReportsCommand(
-//     @InteractionEvent(SlashCommandPipe) dto: AlbionReportsDto,
-//     @EventParams() interaction: ChatInputCommandInteraction[],
+//     @Options() dto: AlbionReportsDto,
+//     @Context() [interaction]: SlashCommandContext,
 //   ): Promise<string> {
 //     this.logger.debug('Received Albion Reports Command');
 //
@@ -33,11 +30,11 @@
 //     const scanChannelId = this.config.get('discord.channels.albionScans');
 //
 //     // Check if channel is correct
-//     if (interaction[0].channelId !== scanChannelId) {
-//       return `Please use the <#${scanChannelId}> channel to generate Reports.`;
+//     if (interaction.channelId !== scanChannelId) {
+//       return replyTo(interaction, `Please use the <#${scanChannelId}> channel to generate Reports.`);
 //     }
 //
-//     const message = await interaction[0].channel.send('Starting Albion Members Report...');
+//     const message = await interaction.channel.send('Starting Albion Members Report...');
 //
 //     if (dto.fullReport) {
 //       this.albionReportsService.fullReport(message);
@@ -46,6 +43,6 @@
 //       this.albionReportsService.squireCandidates(message);
 //     }
 //
-//     return 'Albion Report Initiated...';
+//     return replyTo(interaction, 'Albion Report Initiated...');
 //   }
 // }

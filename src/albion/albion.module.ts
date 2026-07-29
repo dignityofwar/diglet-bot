@@ -1,4 +1,3 @@
-import { DiscordModule as DiscordJSModule } from '@discord-nestjs/core';
 import { Module } from '@nestjs/common';
 import { AlbionRegisterCommand } from './commands/register.command';
 import { AlbionApiService } from './services/albion.api.service';
@@ -17,7 +16,7 @@ import { AlbionRegistrationRetryCronService } from './services/albion.registrati
 import { AlbionForceRetryCommand } from './commands/force-retry.command';
 
 @Module({
-  imports: [ConfigModule, DatabaseModule, DiscordJSModule.forFeature(), DiscordModule],
+  imports: [ConfigModule, DatabaseModule, DiscordModule],
   providers: [
     AlbionApiService,
     AlbionCronService,

@@ -223,7 +223,7 @@ export class AlbionScanningService {
 
       const dto = {
         character: character.Name,
-        discordMember: discordMember?.id ?? undefined,
+        discordMember: discordMember?.user ?? undefined,
       };
 
       await this.albionDeregistrationService.deregister(

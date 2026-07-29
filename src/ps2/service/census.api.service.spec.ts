@@ -1,7 +1,6 @@
 import { CensusApiService } from './census.api.service';
 import CensusAxiosFactory from '../factories/census.axios.factory';
 import { Test, TestingModule } from '@nestjs/testing';
-import { ReflectMetadataProvider } from '@discord-nestjs/core';
 import { ConfigService } from '@nestjs/config';
 import { TestBootstrapper } from '../../test.bootstrapper';
 import { CensusRetriesError } from '../interfaces/CensusRetriesError';
@@ -22,7 +21,6 @@ describe('CensusApiService', () => {
     moduleRef = await Test.createTestingModule({
       providers: [
         CensusApiService,
-        ReflectMetadataProvider,
         {
           provide: CensusAxiosFactory,
           useValue: {

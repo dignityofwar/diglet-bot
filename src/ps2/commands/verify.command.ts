@@ -1,18 +1,12 @@
-import { Command, EventParams, Handler, InteractionEvent } from '@discord-nestjs/core';
-import { ApplicationCommandType, ChatInputCommandInteraction } from 'discord.js';
-import { SlashCommandPipe } from '@discord-nestjs/common';
+import { Context, Options, SlashCommand, SlashCommandContext } from 'necord';
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { CensusCharacterWithOutfitInterface } from '../interfaces/CensusCharacterResponseInterface';
 import { CensusApiService } from '../service/census.api.service';
 import { PS2VerifyDto } from '../dto/PS2VerifyDto';
 import { PS2GameVerificationService } from '../service/ps2.game.verification.service';
+import { replyTo } from '../../discord/discord.hacks';
 
-@Command({
-  name: 'ps2-verify',
-  type: ApplicationCommandType.ChatInput,
-  description: 'Verify your character in the DIG Outfit',
-})
 @Injectable()
 export class PS2VerifyCommand {
   private readonly logger = new Logger(PS2VerifyCommand.name);
@@ -23,18 +17,21 @@ export class PS2VerifyCommand {
     private readonly ps2GameVerificationService: PS2GameVerificationService,
   ) {}
 
-  @Handler()
+  @SlashCommand({
+    name: 'ps2-verify',
+    description: 'Verify your character in the DIG Outfit',
+  })
   async onPS2VerifyCommand(
-    @InteractionEvent(SlashCommandPipe) dto: PS2VerifyDto,
-    @EventParams() interaction: ChatInputCommandInteraction[],
+    @Options() dto: PS2VerifyDto,
+    @Context() [interaction]: SlashCommandContext,
   ): Promise<string> {
     this.logger.debug(`Received PS2VerifyCommand with character ${dto.character}`);
     // Check if the command came from the correct channel ID
     const verifyChannelId = this.config.get('discord.channels.ps2Verify');
 
     // Check if channel is correct
-    if (interaction[0].channelId !== verifyChannelId) {
-      return `Please use the <#${verifyChannelId}> channel to register.`;
+    if (interaction.channelId !== verifyChannelId) {
+      return replyTo(interaction, `Please use the <#${verifyChannelId}> channel to register.`);
     }
 
     let character: CensusCharacterWithOutfitInterface;
@@ -45,7 +42,7 @@ export class PS2VerifyCommand {
     }
     catch (err) {
       if (err instanceof Error) {
-        return err.message;
+        return replyTo(interaction, err.message);
       }
     }
 
@@ -53,22 +50,22 @@ export class PS2VerifyCommand {
 
     // Check if the character is in the PS2 Outfit
     if (!character.outfit_info || character.outfit_info?.outfit_id !== outfitId) {
-      return `Your character **${character.name.first}** has not been detected in the [DIG] outfit. If you are in the outfit, please log out and in again, or wait 24 hours and try again as Census (the game's API) can be slow to update sometimes.`;
+      return replyTo(interaction, `Your character **${character.name.first}** has not been detected in the [DIG] outfit. If you are in the outfit, please log out and in again, or wait 24 hours and try again as Census (the game's API) can be slow to update sometimes.`);
     }
 
     // Get the Discord guild member to be able to edit things about them
-    const guildMember = await interaction[0].guild?.members.fetch(interaction[0].user.id);
+    const guildMember = await interaction.guild?.members.fetch(interaction.user.id);
 
     // Check first if the registration is valid
     const isValid = await this.ps2GameVerificationService.isValidRegistrationAttempt(character, guildMember);
 
     if (isValid !== true) {
-      return isValid;
+      return replyTo(interaction, isValid);
     }
 
     this.ps2GameVerificationService.watch(character, guildMember);
 
     // Successful, but send nothing back as we send a separate message as the command may fail due to census being slow.
-    return '==================\nVerification started, if the bot hasn\'t responded within 30 seconds, please try again.';
+    return replyTo(interaction, '==================\nVerification started, if the bot hasn\'t responded within 30 seconds, please try again.');
   }
 }

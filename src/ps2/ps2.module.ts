@@ -1,4 +1,3 @@
-import { DiscordModule as DiscordJSModule } from '@discord-nestjs/core';
 import { Module } from '@nestjs/common';
 
 import { DatabaseModule } from '../database/database.module';
@@ -17,7 +16,6 @@ import EventEmitter from 'events';
 
 @Module({
   imports: [
-    DiscordJSModule.forFeature(), // Needed for the command decorators to work
     DiscordModule,
     DatabaseModule,
     ConfigModule,

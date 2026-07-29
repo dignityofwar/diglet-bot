@@ -75,7 +75,7 @@ src/
 
 ### Key Technologies
 - **Framework**: NestJS with dependency injection
-- **Discord**: discord.js v14 with @discord-nestjs/core
+- **Discord**: discord.js v14 with necord
 - **Database**: MikroORM with MariaDB
 - **Testing**: Jest with coverage reporting
 - **Linting**: ESLint with TypeScript rules

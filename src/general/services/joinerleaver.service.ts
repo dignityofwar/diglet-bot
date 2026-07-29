@@ -1,9 +1,9 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@mikro-orm/nestjs';
 import { EntityRepository } from '@mikro-orm/core';
-import { Events, GuildMember, Message } from 'discord.js';
+import { Message } from 'discord.js';
 import { JoinerLeaverEntity } from '../../database/entities/joiner.leaver.entity';
-import { On } from '@discord-nestjs/core';
+import { Context, ContextOf, On } from 'necord';
 import { JoinerLeaverStatisticsEntity } from '../../database/entities/joiner.leaver.statistics.entity';
 import { DiscordService } from '../../discord/discord.service';
 
@@ -17,8 +17,8 @@ export class JoinerLeaverService {
     private readonly discordService: DiscordService,
   ) {}
 
-  @On(Events.GuildMemberAdd)
-  async recordJoiner(guildMember: GuildMember) {
+  @On('guildMemberAdd')
+  async recordJoiner(@Context() [guildMember]: ContextOf<'guildMemberAdd'>) {
     if (guildMember.user.bot) {
       return;
     }
@@ -47,8 +47,8 @@ export class JoinerLeaverService {
     this.logger.log(`Recorded joiner ${guildMember.user.tag} (${guildMember.id})`);
   }
 
-  @On(Events.GuildMemberRemove)
-  async recordLeaver(guildMember: GuildMember) {
+  @On('guildMemberRemove')
+  async recordLeaver(@Context() [guildMember]: ContextOf<'guildMemberRemove'>) {
     if (guildMember.user.bot) {
       return;
     }

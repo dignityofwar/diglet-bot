@@ -1,16 +1,10 @@
-import { Command, EventParams, Handler, InteractionEvent } from '@discord-nestjs/core';
-import { ApplicationCommandType, ChatInputCommandInteraction } from 'discord.js';
-import { SlashCommandPipe } from '@discord-nestjs/common';
+import { Context, Options, SlashCommand, SlashCommandContext } from 'necord';
 import { Injectable, Logger } from '@nestjs/common';
 import { PS2ScanDto } from '../dto/PS2ScanDto';
 import { PS2GameScanningService } from '../service/ps2.game.scanning.service';
 import { ConfigService } from '@nestjs/config';
+import { replyTo } from '../../discord/discord.hacks';
 
-@Command({
-  name: 'ps2-scan',
-  type: ApplicationCommandType.ChatInput,
-  description: 'Trigger a scan of verified DIG outfit members to ensure they\'re valid members',
-})
 @Injectable()
 export class PS2ScanCommand {
   private readonly logger = new Logger(PS2ScanCommand.name);
@@ -20,25 +14,29 @@ export class PS2ScanCommand {
     private readonly ps2GameScanningService: PS2GameScanningService,
   ) {}
 
-  @Handler()
+  @SlashCommand({
+    name: 'ps2-scan',
+    description: 'Trigger a scan of verified DIG outfit members to ensure they\'re valid members',
+  })
   async onPS2ScanCommand(
-    @InteractionEvent(SlashCommandPipe) dto: PS2ScanDto,
-    @EventParams() interaction: ChatInputCommandInteraction[],
+    @Options() dto: PS2ScanDto,
+    @Context() [interaction]: SlashCommandContext,
   ): Promise<string> {
     this.logger.debug('Received PS2ScanCommand');
+    const dryRun = dto.dryRun ?? false;
 
     // Check if the command came from the correct channel ID
     const scanChannelId = this.config.get('discord.channels.ps2Scans');
 
     // Check if channel is correct
-    if (interaction[0].channelId !== scanChannelId) {
-      return `Please use the <#${scanChannelId}> channel to perform Scans.`;
+    if (interaction.channelId !== scanChannelId) {
+      return replyTo(interaction, `Please use the <#${scanChannelId}> channel to perform Scans.`);
     }
 
-    const message = await interaction[0].channel.send('Starting scan...');
+    const message = await interaction.channel.send('Starting scan...');
 
-    this.ps2GameScanningService.startScan(message, dto.dryRun);
+    this.ps2GameScanningService.startScan(message, dryRun);
 
-    return `Scan initiated. ${dto.dryRun ? '[DRY RUN, NO CHANGES WILL ACTUALLY BE PERFORMED]' : ''}`;
+    return replyTo(interaction, `Scan initiated. ${dryRun ? '[DRY RUN, NO CHANGES WILL ACTUALLY BE PERFORMED]' : ''}`);
   }
 }

@@ -1,13 +1,8 @@
-import { Command, EventParams, Handler } from '@discord-nestjs/core';
-import { ApplicationCommandType, ChatInputCommandInteraction } from 'discord.js';
-import { Logger } from '@nestjs/common';
+import { Context, SlashCommand, SlashCommandContext } from 'necord';
+import { Injectable, Logger } from '@nestjs/common';
 import { ActivityReportCronService } from '../services/activity.report.cron.service';
 
-@Command({
-  name: 'activity-report',
-  type: ApplicationCommandType.ChatInput,
-  description: 'Run the Activity Report.',
-})
+@Injectable()
 export class ActivityReportCommand {
   private readonly logger = new Logger(ActivityReportCommand.name);
 
@@ -15,13 +10,16 @@ export class ActivityReportCommand {
     private readonly activityReportCronService: ActivityReportCronService,
   ) {}
 
-  @Handler()
+  @SlashCommand({
+    name: 'activity-report',
+    description: 'Run the Activity Report.',
+  })
   async onActivityReportCommand(
-    @EventParams() interaction: ChatInputCommandInteraction[],
+    @Context() [interaction]: SlashCommandContext,
   ): Promise<void> {
     this.logger.log('Executing Activity Enumeration via command');
 
-    await interaction[0].reply('Starting Activity Report via command...');
+    await interaction.reply('Starting Activity Report via command...');
 
     await this.activityReportCronService.runReport();
   }

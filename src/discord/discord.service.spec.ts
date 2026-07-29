@@ -4,6 +4,7 @@ import { ConfigService } from '@nestjs/config';
 import { DiscordService } from './discord.service';
 import { TestBootstrapper } from '../test.bootstrapper';
 import { getChannel } from './discord.hacks';
+import { Client } from 'discord.js';
 
 describe('DiscordService', () => {
   let service: DiscordService;
@@ -17,7 +18,7 @@ describe('DiscordService', () => {
         DiscordService,
         ConfigService,
         {
-          provide: '__inject_discord_client__',
+          provide: Client,
           useValue: mockDiscordClient, // use mock instance
         },
       ],

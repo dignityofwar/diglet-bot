@@ -2,7 +2,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { ConfigService } from '@nestjs/config';
 
-import { ReflectMetadataProvider } from '@discord-nestjs/core';
 import { PS2MembersEntity } from '../../database/entities/ps2.members.entity';
 import { EntityManager } from '@mikro-orm/core';
 import { getRepositoryToken } from '@mikro-orm/nestjs';
@@ -37,7 +36,6 @@ describe('PS2GameScanningService', () => {
     const moduleRef: TestingModule = await Test.createTestingModule({
       providers: [
         PS2GameScanningService,
-        ReflectMetadataProvider,
         { provide: EntityManager, useValue: mockEntityManager },
         {
           provide: ConfigService,

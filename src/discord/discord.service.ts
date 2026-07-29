@@ -1,5 +1,4 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { InjectDiscordClient } from '@discord-nestjs/core';
 import {
   Client,
   Collection,
@@ -17,7 +16,7 @@ export class DiscordService {
   private readonly logger = new Logger(DiscordService.name);
 
   constructor(
-    @InjectDiscordClient() private readonly discordClient: Client,
+    private readonly discordClient: Client,
   ) {}
 
   async getGuild(guildId: string): Promise<Guild> {
