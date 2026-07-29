@@ -17,6 +17,7 @@
     "start:debug": "nest start --debug --watch",
     "start:prod": "mikro-orm migration:up && node dist/src/main",
     "test": "jest --coverage",
+    "typecheck": "tsc --noEmit -p tsconfig.json",
     "test:wsl": "jest --coverage --maxWorkers=4",
     "test:ci": "jest --ci --coverage",
     "test:watch": "jest --watch",
