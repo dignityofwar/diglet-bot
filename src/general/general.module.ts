@@ -11,6 +11,7 @@ import { DatabaseService } from '../database/services/database.service';
 import { VoiceStateEvents } from './events/voice.state.events';
 import { ActivityService } from './services/activity.service';
 import { GuildMemberEvents } from './events/guild.member.events';
+import { InteractionEvents } from './events/interaction.events';
 import { PurgeCronService } from './services/purge.cron.service';
 import { ActivityReportCronService } from './services/activity.report.cron.service';
 import { ActivityReportCommand } from './commands/activity.report.command';
@@ -44,6 +45,7 @@ import { HealthcheckService } from './services/healthcheck.service';
     MessageEvents,
     VoiceStateEvents,
     GuildMemberEvents,
+    InteractionEvents,
 
     // Cron Services
     PurgeCronService,
