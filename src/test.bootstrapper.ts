@@ -250,6 +250,10 @@ export class TestBootstrapper {
           send: jest.fn().mockReturnValue(TestBootstrapper.getMockDiscordMessage()),
         },
         reply: jest.fn(),
+        deferReply: jest.fn(),
+        editReply: jest.fn(),
+        deferred: false,
+        replied: false,
       },
     ];
   }
