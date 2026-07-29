@@ -11,6 +11,7 @@ describe('InteractionEvents', () => {
     isChatInputCommand: () => true,
     commandName: 'albion-scan',
     channelId: '1155997486318620746',
+    channel: { name: 'albion-scans' },
     user: { username: 'digletuser', id: '90078072660852736' },
     options: { data: [] },
     ...overrides,
@@ -40,7 +41,15 @@ describe('InteractionEvents', () => {
     it('should log the command, caller and channel when there are no arguments', () => {
       interactionEvents.onInteractionCreate([mockInteraction()]);
       expect(logSpy).toHaveBeenCalledWith(
-        '/albion-scan by digletuser (90078072660852736) in channel 1155997486318620746 args: none',
+        '/albion-scan by digletuser (90078072660852736) in #albion-scans (1155997486318620746) args: none',
+      );
+    });
+
+    // The channel can be uncached, and DM channels have no name at all.
+    it('should fall back to the bare channel id when the channel has no name', () => {
+      interactionEvents.onInteractionCreate([mockInteraction({ channel: null })]);
+      expect(logSpy).toHaveBeenCalledWith(
+        expect.stringContaining('in channel 1155997486318620746'),
       );
     });
 
