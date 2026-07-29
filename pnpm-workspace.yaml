@@ -1,10 +1,12 @@
 # These packages' install scripts are deliberately not run: @nestjs/core's and necord's are
-# OpenCollective donation banners, and the other two only *check* that a prebuilt native binary is
+# OpenCollective donation banners, and the others only *check* that a prebuilt native binary is
 # present — the binaries ship in the published tarballs. The production image installs with
 # --ignore-scripts anyway, so allowing them here would only diverge CI from what actually ships.
+# Sentry renamed the profiler package in 10.65.0; both names are listed to cover either version.
 allowBuilds:
   '@nestjs/core': false
   '@sentry-internal/node-cpu-profiler': false
+  '@sentry/node-cpu-profiler': false
   necord: false
   unrs-resolver: false
 minimumReleaseAgeExclude:
