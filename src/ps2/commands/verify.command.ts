@@ -26,6 +26,8 @@ export class PS2VerifyCommand {
     @Context() [interaction]: SlashCommandContext,
   ): Promise<string> {
     this.logger.debug(`Received PS2VerifyCommand with character ${dto.character}`);
+    // API and database work happens before the first reply, which blows Discord's 3s window.
+    await interaction.deferReply();
     // Check if the command came from the correct channel ID
     const verifyChannelId = this.config.get('discord.channels.ps2Verify');
 

@@ -23,6 +23,8 @@ export class PS2ScanCommand {
     @Context() [interaction]: SlashCommandContext,
   ): Promise<string> {
     this.logger.debug('Received PS2ScanCommand');
+    // API and database work happens before the first reply, which blows Discord's 3s window.
+    await interaction.deferReply();
     const dryRun = dto.dryRun ?? false;
 
     // Check if the command came from the correct channel ID

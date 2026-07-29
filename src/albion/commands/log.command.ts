@@ -1,6 +1,7 @@
 import { Context, SlashCommand, SlashCommandContext } from 'necord';
 import { Injectable, Logger } from '@nestjs/common';
 import { randomInt } from 'node:crypto';
+import { replyTo } from '../../discord/discord.hacks';
 
 @Injectable()
 export class AlbionLogCommand {
@@ -14,6 +15,9 @@ export class AlbionLogCommand {
     @Context() [interaction]: SlashCommandContext,
   ): Promise<void> {
     this.logger.debug('Received Albion Log Command');
+
+    // Both messages are sent to the channel, so the interaction itself was never acknowledged.
+    await interaction.deferReply();
 
     const images = [
       'https://cdn.discordapp.com/attachments/1039269706605002912/1159810488088154122/image.png?ex=653b9b30&is=65292630&hm=bd8a57e7667948ffad446b27f32a1b6e64733f4aa7929417e3afd78e1e53e993&',
@@ -31,5 +35,8 @@ The log is girthy, the log is big.
 The log will log our logs with speed.`);
     // crypto rather than Math.random purely to keep the SAST scanner quiet — see rule S2245.
     (await interaction.channel.send(images[randomInt(images.length)])).react('🪵');
+
+    // Without this the deferred "thinking..." state never resolves.
+    await replyTo(interaction, 'ALL HAIL THE LOG 🪵');
   }
 }

@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 
 import { PingCommand } from './commands/ping.command';
+import { HelloThereCommand } from './commands/hello.there.command';
 import { ConfigModule } from '../config/config.module';
 import { DiscordService } from '../discord/discord.service';
 import { MessageEvents } from './events/message.events';
@@ -34,6 +35,7 @@ import { HealthcheckService } from './services/healthcheck.service';
 
     // Commands
     ActivityReportCommand,
+    HelloThereCommand,
     PingCommand,
 
     // Events

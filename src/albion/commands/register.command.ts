@@ -25,6 +25,9 @@ export class AlbionRegisterCommand {
     @Options() dto: AlbionRegisterDto,
     @Context() [interaction]: SlashCommandContext,
   ): Promise<string> {
+    // The placeholder message is sent before the first reply, which blows Discord's 3s window.
+    await interaction.deferReply();
+
     // Check if the command came from the correct channel ID
     const registrationChannelId = this.config.get('discord.channels.albionRegistration');
 
