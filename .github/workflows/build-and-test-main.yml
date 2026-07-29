@@ -50,6 +50,11 @@ jobs:
       - name: Check if app builds properly
         run: pnpm build
 
+      # pnpm build uses tsconfig.build.json, which excludes *.spec.ts, and ts-jest transpiles
+      # without type checking. Without this step nothing in CI type checks the tests.
+      - name: Check types, including tests
+        run: pnpm typecheck
+
       - name: Run tests with coverage
         run: pnpm test:ci
 
