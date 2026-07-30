@@ -394,6 +394,117 @@ describe('AlbionRegistrationRetryCronService', () => {
     );
   });
 
+  describe('force queued attempts', () => {
+    const hardFailure = 'Registration failed for character "Char"!\nReason: Character **Char** does not seem to exist on the Europe server.';
+
+    const buildForceQueuedAttempt = (expiresAt = new Date(Date.now() + 1000 * 60 * 60)) => new AlbionRegistrationQueueEntity({
+      guildId: 'g1',
+      discordGuildId: 'dg1',
+      discordChannelId: 'dc1',
+      discordId: 'u1',
+      characterName: 'Char',
+      expiresAt,
+      forceQueued: true,
+    });
+
+    it('should keep the attempt pending when registration hard fails', async () => {
+      const attempt = buildForceQueuedAttempt();
+
+      queueRepo.find.mockResolvedValue([attempt]);
+      albionApiService.checkCharacterGuildMembership.mockResolvedValue(true);
+      albionRegistrationService.handleRegistration.mockRejectedValue(new Error(hardFailure));
+
+      await service.retryAlbionRegistrations();
+
+      expect(attempt.status).toBe(AlbionRegistrationQueueStatus.PENDING);
+      expect(attempt.lastError).toBe(hardFailure);
+      expect(registrationQueueChannel.send).toHaveBeenCalledWith(
+        `🔁 Force-queued attempt for **Char** failed, retrying until <t:${Math.floor(attempt.expiresAt.getTime() / 1000)}:f>.\n\nReason: ${hardFailure}`,
+      );
+      // The member must not be pinged with the same failure every hour.
+      expect(registrationChannel.send).not.toHaveBeenCalled();
+    });
+
+    it('should retry on subsequent runs after a hard failure, and succeed', async () => {
+      const attempt = buildForceQueuedAttempt();
+
+      queueRepo.find.mockResolvedValue([attempt]);
+      albionApiService.checkCharacterGuildMembership.mockResolvedValue(true);
+      albionRegistrationService.handleRegistration
+        .mockRejectedValueOnce(new Error(hardFailure))
+        .mockResolvedValueOnce(undefined);
+
+      await service.retryAlbionRegistrations();
+      expect(attempt.status).toBe(AlbionRegistrationQueueStatus.PENDING);
+
+      await service.retryAlbionRegistrations();
+
+      expect(albionRegistrationService.handleRegistration).toHaveBeenCalledTimes(2);
+      expect(attempt.status).toBe(AlbionRegistrationQueueStatus.SUCCEEDED);
+      expect(attempt.lastError).toBeNull();
+      expect(registrationQueueChannel.send).toHaveBeenCalledWith('✅ Registration successful for **Char**!');
+    });
+
+    it('should keep the attempt pending when the Discord member cannot be fetched', async () => {
+      const attempt = buildForceQueuedAttempt();
+
+      queueRepo.find.mockResolvedValue([attempt]);
+      discordService.getGuildMember = jest.fn().mockRejectedValue(new Error('Member not found'));
+
+      await service.retryAlbionRegistrations();
+
+      expect(attempt.status).toBe(AlbionRegistrationQueueStatus.PENDING);
+      expect(attempt.lastError).toBe('User is not currently in the Discord guild.');
+      expect(registrationQueueChannel.send).not.toHaveBeenCalledWith(
+        'Registration attempt for character **Char** has failed because the Discord member has left the server.',
+      );
+    });
+
+    it('should keep the attempt pending when the guild membership check throws', async () => {
+      const attempt = buildForceQueuedAttempt();
+
+      queueRepo.find.mockResolvedValue([attempt]);
+      albionApiService.checkCharacterGuildMembership.mockRejectedValue(new Error('bad response'));
+
+      await service.retryAlbionRegistrations();
+
+      expect(attempt.status).toBe(AlbionRegistrationQueueStatus.PENDING);
+      expect(attempt.attemptCount).toBe(1);
+      expect(attempt.lastError).toContain('Failed to fetch guild members');
+      expect(registrationChannel.send).not.toHaveBeenCalled();
+    });
+
+    it('should still expire, reporting the last error to the queue channel', async () => {
+      const attempt = buildForceQueuedAttempt(new Date(Date.now() - 1000));
+      attempt.lastError = hardFailure;
+
+      queueRepo.find.mockResolvedValue([attempt]);
+
+      await service.retryAlbionRegistrations();
+
+      expect(attempt.status).toBe(AlbionRegistrationQueueStatus.EXPIRED);
+      expect(registrationQueueChannel.send).toHaveBeenCalledWith(
+        `⏰ Force-queued attempt for **Char** has expired.\n\nLast error: ${hardFailure}`,
+      );
+      expect(registrationChannel.send).toHaveBeenCalledWith(
+        expect.stringContaining('<@u1> your registration attempt timed out'),
+      );
+    });
+
+    it('should mark force queued attempts in the retry summary', async () => {
+      const attempt = buildForceQueuedAttempt();
+
+      queueRepo.find.mockResolvedValue([attempt]);
+      albionApiService.checkCharacterGuildMembership.mockResolvedValue(false);
+
+      await service.retryAlbionRegistrations();
+
+      expect(registrationQueueChannel.send).toHaveBeenCalledWith(
+        `Albion registration queue retry attempt: checking 1 character(s):\n\n- **Char** (force queued, expires <t:${Math.floor(attempt.expiresAt.getTime() / 1000)}:f>)`,
+      );
+    });
+  });
+
   it('should log an error when retry summary cannot be sent', async () => {
     const attempt = new AlbionRegistrationQueueEntity({
       guildId: 'g1',

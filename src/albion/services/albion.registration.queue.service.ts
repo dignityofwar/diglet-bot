@@ -65,6 +65,7 @@ export class AlbionRegistrationQueueService {
       existing.attemptCount = 0;
       existing.expiresAt = expiresAt;
       existing.lastError = 'Force queued by staff.';
+      existing.forceQueued = true;
 
       // v7 no longer change-tracks scalar properties automatically, so persist explicitly.
       await this.albionRegistrationQueueRepository.getEntityManager().persist(existing).flush();
@@ -92,6 +93,7 @@ export class AlbionRegistrationQueueService {
       expiresAt,
       status: AlbionRegistrationQueueStatus.PENDING,
       lastError: 'Force queued by staff.',
+      forceQueued: true,
     });
     await this.albionRegistrationQueueRepository.upsert(entity);
 

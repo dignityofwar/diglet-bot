@@ -18,6 +18,7 @@ export interface AlbionRegistrationQueueEntityInterface {
   expiresAt: Date
   status?: AlbionRegistrationQueueStatus
   lastError?: string | null
+  forceQueued?: boolean
 }
 
 @Entity()
@@ -58,6 +59,10 @@ export class AlbionRegistrationQueueEntity extends BaseEntity {
 
   @Property({ nullable: true, default: null, length: 2000 })
   lastError: null | string = null;
+
+  // Staff forced this attempt in, so hard failures are retried instead of ending the attempt.
+  @Property({ nullable: false, default: false })
+  forceQueued = false;
 
   constructor(options: AlbionRegistrationQueueEntityInterface) {
     super();

@@ -508,6 +508,23 @@
           "enumItems": [],
           "mappedType": "datetime"
         },
+        "force_queued": {
+          "name": "force_queued",
+          "type": "tinyint(1)",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "unique": false,
+          "length": null,
+          "precision": 3,
+          "scale": 0,
+          "default": "false",
+          "comment": null,
+          "collation": null,
+          "enumItems": [],
+          "mappedType": "boolean"
+        },
         "guild_id": {
           "name": "guild_id",
           "type": "varchar(255)",
