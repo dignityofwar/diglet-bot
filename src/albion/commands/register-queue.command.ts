@@ -66,8 +66,18 @@ export class AlbionRegisterQueueCommand {
     try {
       const channel = await this.discordService.getTextChannel(registrationChannelId);
       await channel.send({
-        content: `<@${discordMemberId}> your registration for **${characterName}** has been manually queued by staff.\n\n## ⏳ We will automatically retry your registration attempt hourly until ${expiresDiscordTime}.\nYou don't need to do anything else, and running the registration command again won't speed it up.`,
+        content: `# 🔁 <@${discordMemberId}> you have been added to the Albion registration retry system!
+
+Staff have manually queued your character **${characterName}**, because our data source hasn't caught up with you yet.
+
+## ⏳ We will automatically attempt to register you **once every hour for the next 3 days** (until ${expiresDiscordTime}).
+
+* ✅ You don't need to do anything. You'll be pinged right here the moment it succeeds.
+* 🚫 Please **don't** run the registration command again — it won't speed this up.
+* ⚠️ If you are not actually a member of the guild in-game, this will keep failing until it expires.`,
         flags: MessageFlags.SuppressEmbeds,
+        // Staff-run command, so be explicit that the member really does get pinged.
+        allowedMentions: { users: [discordMemberId] },
       });
     }
     catch (err) {

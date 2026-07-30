@@ -112,15 +112,25 @@ describe('AlbionRegisterQueueCommand', () => {
     expect(result).toContain('has been re-queued for');
   });
 
-  it('should notify the member in the registration channel', async () => {
+  it('should ping the member in the registration channel', async () => {
     await command.onAlbionRegisterQueueCommand(dto, [interaction]);
 
     expect(discordService.getTextChannel).toHaveBeenCalledWith(registrationChannelId);
     expect(registrationChannel.send).toHaveBeenCalledWith(
       expect.objectContaining({
-        content: expect.stringContaining(`<@${discordMemberId}> your registration for **${characterName}** has been manually queued by staff.`),
+        content: expect.stringContaining(`<@${discordMemberId}> you have been added to the Albion registration retry system!`),
+        allowedMentions: { users: [discordMemberId] },
       }),
     );
+  });
+
+  it('should tell the member the retry cadence and expiry', async () => {
+    await command.onAlbionRegisterQueueCommand(dto, [interaction]);
+
+    const { content } = registrationChannel.send.mock.calls[0][0];
+    expect(content).toContain(`**${characterName}**`);
+    expect(content).toContain('**once every hour for the next 3 days**');
+    expect(content).toContain(expiresDiscordTime);
   });
 
   it('should still report success if the member notification fails', async () => {
