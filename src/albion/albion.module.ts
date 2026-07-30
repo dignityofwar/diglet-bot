@@ -14,6 +14,8 @@ import { AlbionDeregisterCommand } from './commands/deregistration.command';
 import { AlbionDeregistrationService } from './services/albion.deregistration.service';
 import { AlbionRegistrationRetryCronService } from './services/albion.registration.retry.cron.service';
 import { AlbionForceRetryCommand } from './commands/force-retry.command';
+import { AlbionRegisterQueueCommand } from './commands/register-queue.command';
+import { AlbionRegistrationQueueService } from './services/albion.registration.queue.service';
 
 @Module({
   imports: [ConfigModule, DatabaseModule, DiscordModule],
@@ -24,7 +26,9 @@ import { AlbionForceRetryCommand } from './commands/force-retry.command';
     AlbionDeregistrationService,
     AlbionLogCommand,
     AlbionRegisterCommand,
+    AlbionRegisterQueueCommand,
     AlbionForceRetryCommand,
+    AlbionRegistrationQueueService,
     AlbionRegistrationRetryCronService,
     AlbionRegistrationService,
     // AlbionReportsCommand,
