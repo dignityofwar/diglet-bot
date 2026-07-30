@@ -66,11 +66,9 @@ export class AlbionRegisterQueueCommand {
     try {
       const channel = await this.discordService.getTextChannel(registrationChannelId);
       await channel.send({
-        content: `# 🔁 <@${discordMemberId}> you have been added to the Albion registration retry system!
+        content: `# 🔁 You are in a registration retry queue
 
-Staff have manually queued your character **${characterName}**, because our data source hasn't caught up with you yet.
-
-## ⏳ We will automatically attempt to register you **once every hour for the next 3 days** (until ${expiresDiscordTime}).
+<@${discordMemberId}> Leadership have manually added you to a queue for **${characterName}**, since our data source appears to be lagging behind reality. The system will re-try your registration every hour until you are detected to be in the guild. This will keep going until ${expiresDiscordTime}.
 
 * ✅ You don't need to do anything. You'll be pinged right here the moment it succeeds.
 * 🚫 Please **don't** run the registration command again — it won't speed this up.

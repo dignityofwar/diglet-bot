@@ -118,7 +118,7 @@ describe('AlbionRegisterQueueCommand', () => {
     expect(discordService.getTextChannel).toHaveBeenCalledWith(registrationChannelId);
     expect(registrationChannel.send).toHaveBeenCalledWith(
       expect.objectContaining({
-        content: expect.stringContaining(`<@${discordMemberId}> you have been added to the Albion registration retry system!`),
+        content: expect.stringContaining(`<@${discordMemberId}> Leadership have manually added you to a queue`),
         allowedMentions: { users: [discordMemberId] },
       }),
     );
@@ -128,8 +128,9 @@ describe('AlbionRegisterQueueCommand', () => {
     await command.onAlbionRegisterQueueCommand(dto, [interaction]);
 
     const { content } = registrationChannel.send.mock.calls[0][0];
+    expect(content).toContain('# 🔁 You are in a registration retry queue');
     expect(content).toContain(`**${characterName}**`);
-    expect(content).toContain('**once every hour for the next 3 days**');
+    expect(content).toContain('re-try your registration every hour');
     expect(content).toContain(expiresDiscordTime);
   });
 
