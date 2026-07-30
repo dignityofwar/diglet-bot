@@ -96,6 +96,32 @@ describe('AlbionRegistrationQueueService', () => {
     expect(result.characterName).toBe(characterName);
   });
 
+  it('should flag a new attempt as force queued so the retry cron rides out failures', async () => {
+    await service.forceQueue(characterName, discordMemberId, discordGuildId);
+
+    expect(queueRepo.create).toHaveBeenCalledWith(
+      expect.objectContaining({ forceQueued: true }),
+    );
+  });
+
+  it('should flag an existing attempt as force queued when re-queued', async () => {
+    const existing = {
+      discordId: discordMemberId,
+      characterName: 'OldName',
+      attemptCount: 12,
+      expiresAt: new Date(0),
+      forceQueued: false,
+    } as any;
+
+    queueRepo.findOne
+      .mockResolvedValueOnce(null)
+      .mockResolvedValueOnce(existing);
+
+    await service.forceQueue(characterName, discordMemberId, discordGuildId);
+
+    expect(existing.forceQueued).toBe(true);
+  });
+
   it('should expire the queued attempt 72 hours from now', async () => {
     const before = Date.now();
 

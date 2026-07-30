@@ -1,6 +1,7 @@
 # Memory Index
 
 - [Albion registration is a critical pillar](albion-registration-critical-pillar.md) — daily cron strips roles for ex-guild members; must be very robust
+- [Albion search lags the guild member list](albion-api-search-lags-guild-members.md) — /search 404s characters /guilds/{id}/members already lists, so retries hard-fail on a lag
 - [Local dev/test environment](local-dev-test-environment.md) — nvm use 24.12.0 first (strict engines pin), pnpm test ~107s / 362 tests; test:wsl only needed on WSL
 - [Commit messages drive the version bump](commit-messages-drive-version-bump.md) — substring match on main: "feat" anywhere in a message forces a minor bump
 - [necord's @Options() drops DTO defaults](necord-options-drops-dto-defaults.md) — field initialisers are ignored; omitted options arrive as null, so default at the read site

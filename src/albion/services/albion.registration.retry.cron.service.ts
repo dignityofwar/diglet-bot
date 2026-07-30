@@ -96,6 +96,12 @@ export class AlbionRegistrationRetryCronService implements OnApplicationBootstra
     catch (err) {
       // Member not found - they've left the server
       this.logger.error(`Failed to get guild member for Discord ID ${attempt.discordId} during registration retry for character ${attempt.characterName}: ${err?.message ?? String(err)}`);
+
+      if (attempt.forceQueued) {
+        await this.retainForceQueued(attempt, 'User is not currently in the Discord guild.');
+        return;
+      }
+
       attempt.status = AlbionRegistrationQueueStatus.FAILED;
       attempt.lastError = 'User is no longer in the Discord guild.';
       // v7 no longer change-tracks scalar properties automatically, hence the explicit persist on every flush below.
@@ -161,6 +167,12 @@ export class AlbionRegistrationRetryCronService implements OnApplicationBootstra
         return;
       }
 
+      // Staff force-queued this precisely because the API is lagging, so a hard failure isn't final.
+      if (attempt.forceQueued) {
+        await this.retainForceQueued(attempt, message);
+        return;
+      }
+
       attempt.status = AlbionRegistrationQueueStatus.FAILED;
       await this.albionRegistrationQueueRepository.getEntityManager().persist(attempt).flush();
 
@@ -170,12 +182,25 @@ export class AlbionRegistrationRetryCronService implements OnApplicationBootstra
     }
   }
 
+  // Keeps a force-queued attempt alive after a failure the normal flow would give up on. Reported in
+  // the queue channel only, so the member isn't pinged with the same failure every hour.
+  private async retainForceQueued(attempt: AlbionRegistrationQueueEntity, message: string): Promise<void> {
+    attempt.status = AlbionRegistrationQueueStatus.PENDING;
+    attempt.lastError = message;
+    await this.albionRegistrationQueueRepository.getEntityManager().persist(attempt).flush();
+
+    this.logger.warn(`Force-queued attempt for ${attempt.characterName} failed but will be retried: ${message}`);
+
+    await this.registrationQueueSend(
+      `🔁 Force-queued attempt for **${attempt.characterName}** failed, retrying until ${this.discordTime(attempt.expiresAt)}.\n\nReason: ${message}`,
+    );
+  }
+
   private async postRetrySummary(attempts: AlbionRegistrationQueueEntity[]): Promise<void> {
     const characters = attempts
       .map((a) => {
-        const unixSeconds = Math.floor(a.expiresAt.getTime() / 1000);
-        const discordTime = `<t:${unixSeconds}:f>`;
-        return `- **${a.characterName}** (expires ${discordTime})`;
+        const forced = a.forceQueued ? 'force queued, ' : '';
+        return `- **${a.characterName}** (${forced}expires ${this.discordTime(a.expiresAt)})`;
       })
       .join('\n');
 
@@ -189,9 +214,20 @@ export class AlbionRegistrationRetryCronService implements OnApplicationBootstra
     attempt.status = AlbionRegistrationQueueStatus.EXPIRED;
     await this.albionRegistrationQueueRepository.getEntityManager().persist(attempt).flush();
 
+    // Force-queued attempts swallow their failures, so surface the last one to staff on the way out.
+    if (attempt.forceQueued) {
+      await this.registrationQueueSend(
+        `⏰ Force-queued attempt for **${attempt.characterName}** has expired.\n\nLast error: ${attempt.lastError ?? 'None recorded.'}`,
+      );
+    }
+
     await this.registrationSend(
       `⏰ <@${attempt.discordId}> your registration attempt timed out. You are either truly not in the guild, or there is another problem. If you are in the guild, you are recommended to play the game for at least 1 hour, then retry registration. If you are not in the guild, then... why are you trying? :P`,
     );
+  }
+
+  private discordTime(date: Date): string {
+    return `<t:${Math.floor(date.getTime() / 1000)}:f>`;
   }
 
   private async registrationSend(content: string): Promise<void> {
