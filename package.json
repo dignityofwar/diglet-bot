@@ -33,12 +33,12 @@
     "node": ">=24.12.0 <25.0.0"
   },
   "dependencies": {
-    "@mikro-orm/core": "7.1.6",
-    "@mikro-orm/decorators": "7.1.6",
-    "@mikro-orm/mariadb": "7.1.6",
-    "@mikro-orm/migrations": "7.1.6",
+    "@mikro-orm/core": "7.1.7",
+    "@mikro-orm/decorators": "7.1.7",
+    "@mikro-orm/mariadb": "7.1.7",
+    "@mikro-orm/migrations": "7.1.7",
     "@mikro-orm/nestjs": "^7.0.0",
-    "@mikro-orm/seeder": "7.1.6",
+    "@mikro-orm/seeder": "7.1.7",
     "@mikro-orm/sql-highlighter": "^1.0.1",
     "@nestjs/common": "11.1.28",
     "@nestjs/config": "4.0.4",
@@ -56,7 +56,7 @@
   },
   "devDependencies": {
     "@eslint/js": "10.0.1",
-    "@mikro-orm/cli": "7.1.6",
+    "@mikro-orm/cli": "7.1.7",
     "@nestjs/cli": "11.0.24",
     "@nestjs/schematics": "11.1.0",
     "@nestjs/testing": "^11.0.0",
