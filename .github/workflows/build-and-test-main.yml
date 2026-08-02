@@ -76,6 +76,11 @@ jobs:
           skip-commit: 'true'
           skip-tag: 'true'
           skip-push:  'true'
+          # Must match release.yml exactly, or Sonar labels a version the tag never becomes
+          major-wording: 'BUMP-MAJOR'
+          minor-wording: 'feat:,feat('
+          rc-wording: 'BUMP-RC'
+          default: patch
 
       - name: SonarCloud Scan with version attached
         uses: SonarSource/sonarqube-scan-action@v8.2.1

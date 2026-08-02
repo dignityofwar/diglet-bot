@@ -35,6 +35,14 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           target-branch: main
+          # The action substring-matches the whole commit message, body included, against these
+          # words - so prose drives the release. "majority" read as major and tried to tag 3.0.0,
+          # which has existed since April 2025, failing the job and skipping the deploy entirely.
+          # Explicit markers instead, and a conventional-commit prefix rather than bare "feat".
+          major-wording: 'BUMP-MAJOR'
+          minor-wording: 'feat:,feat('
+          rc-wording: 'BUMP-RC'
+          default: patch
 
       # GitHub's own generated notes only list merged pull requests, so anything pushed straight to
       # main left the release body as nothing but a compare link. This rolls up every conventional
