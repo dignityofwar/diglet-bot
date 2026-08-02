@@ -34,9 +34,15 @@ const DISCORD_UNKNOWN_MESSAGE = 10008;
 // which has already had the full voting period.
 export const PROVISIONAL_HOLD_MS = 60 * 60 * 1000;
 
-// The live score line plus any hold notice beneath it, rewritten in place on every recount.
-// Both are matched together so a stale hold notice can't survive the replacement.
-const SCORE_LINE = /^Current score:.*(?:\n⏳.*)?$/m;
+// The one definition of the score line, shared with the ballot builder. Kept together with the
+// regex below, which has to match whatever this writes.
+export const scoreHeading = (score: number, requiredScore: number): string =>
+  `## 📊 Current score: ${score} / ${requiredScore}`;
+
+// The live score line plus any hold notice beneath it, rewritten in place on every recount. Both
+// are matched together so a stale hold notice can't survive the replacement. Deliberately loose
+// about the heading so ballots posted before it was added keep updating.
+const SCORE_LINE = /^.*Current score:.*(?:\n⏳.*)?$/m;
 
 // Discord rate limits message edits, and a busy ballot recounts on every reaction
 const SCORE_EDIT_THROTTLE_MS = 5000;
@@ -237,7 +243,7 @@ export class AlbionRankUpVoteService {
   }
 
   scoreLine(vote: AlbionRankUpVoteEntity): string {
-    const base = `Current score: **${vote.score}** / ${vote.requiredScore}`;
+    const base = scoreHeading(vote.score, vote.requiredScore);
 
     if (!vote.provisionalStatus || !vote.provisionalSince) {
       return base;

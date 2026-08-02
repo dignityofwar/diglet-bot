@@ -12,7 +12,7 @@ import { AlbionUtilities } from '../utilities/albion.utilities';
 import { DiscordService } from '../../discord/discord.service';
 import { MemberActivityRollupService } from '../../general/services/member.activity.rollup.service';
 import { LeadershipPing } from '../../config/albion.app.config';
-import { AlbionRankUpVoteService, VOTE_REACTIONS } from './albion.rank.up.vote.service';
+import { AlbionRankUpVoteService, scoreHeading, VOTE_REACTIONS } from './albion.rank.up.vote.service';
 import { discordTime } from '../../helpers';
 
 const DAY_MS = 24 * 60 * 60 * 1000;
@@ -367,7 +367,7 @@ Eligible voters: ${electorateSize}
 Passes at a score of ${requiredScore}
 Voting closes ${discordTime(expiresAt, 'R')}
 
-Current score: **0** / ${requiredScore}
+${scoreHeading(0, requiredScore)}
 
 ${stats}`;
   }
