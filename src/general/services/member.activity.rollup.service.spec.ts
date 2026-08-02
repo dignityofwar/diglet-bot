@@ -15,6 +15,7 @@ describe('MemberActivityRollupService', () => {
 
   const repoWithConnection = (execute: jest.Mock) => ({
     find: jest.fn().mockResolvedValue([]),
+    findAll: jest.fn().mockResolvedValue([]),
     findOne: jest.fn().mockResolvedValue(null),
     getEntityManager: jest.fn().mockReturnValue({
       getConnection: jest.fn().mockReturnValue({ execute }),
@@ -158,16 +159,26 @@ describe('MemberActivityRollupService', () => {
 
   describe('getTrackingStartDate', () => {
     it('returns null when nothing has been recorded', async () => {
-      activityRepository.findOne.mockResolvedValue(null);
+      activityRepository.findAll.mockResolvedValue([]);
 
       expect(await service.getTrackingStartDate()).toBeNull();
     });
 
     it('returns the earliest recorded day', async () => {
       const date = new Date('2026-01-01T00:00:00Z');
-      activityRepository.findOne.mockResolvedValue({ date });
+      activityRepository.findAll.mockResolvedValue([{ date }]);
 
       expect(await service.getTrackingStartDate()).toBe(date);
+    });
+
+    // findOne({}) throws "empty 'where' parameter" in MikroORM, which took down the whole ballot
+    it('does not ask for every row without a where clause', async () => {
+      activityRepository.findAll.mockResolvedValue([]);
+
+      await service.getTrackingStartDate();
+
+      expect(activityRepository.findOne).not.toHaveBeenCalled();
+      expect(activityRepository.findAll).toHaveBeenCalledWith({ orderBy: { date: 'ASC' }, limit: 1 });
     });
   });
 });
