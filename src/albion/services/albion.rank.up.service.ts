@@ -176,6 +176,7 @@ export class AlbionRankUpService implements OnApplicationBootstrap {
     // Built before the row is claimed. Anything failing in here afterwards would strand a pending
     // ballot with no message, locking the member out of a vote nobody could ever see.
     const content = await this.buildBallot(member, registration, tier, anchor, electors.length, requiredScore, expiresAt);
+    const ping: LeadershipPing = this.config.get('albion.leadershipPing');
 
     const newBallot = () => new AlbionRankUpVoteEntity({
       channelId: this.judgementHall.id,
@@ -207,7 +208,6 @@ export class AlbionRankUpService implements OnApplicationBootstrap {
       return await this.refuse(member, registration, tier, RankUpRefusal.VOTE_ALREADY_OPEN);
     }
 
-    const ping: LeadershipPing = this.config.get('albion.leadershipPing');
     let message: Awaited<ReturnType<TextChannel['send']>>;
 
     try {
@@ -217,23 +217,37 @@ export class AlbionRankUpService implements OnApplicationBootstrap {
       });
     }
     catch (err) {
-      // Don't lock the member out behind a ballot that never went up
-      vote.status = 'abandoned' as AlbionRankUpVoteEntity['status'];
-      vote.pendingKey = null;
-      vote.resolutionNote = 'The ballot could not be posted';
-      await this.voteRepository.getEntityManager().persist(vote).flush();
-
       this.logger.error(`Failed to post rank up ballot for ${member.id}: ${err.message}`);
+
+      // Don't lock the member out behind a ballot that never went up. The cleanup gets its own
+      // guard because a failure here would escape and strand the claim it exists to release.
+      try {
+        vote.status = AlbionRankUpVoteStatus.ABANDONED;
+        vote.pendingKey = null;
+        vote.resolutionNote = 'The ballot could not be posted';
+        await this.voteRepository.getEntityManager().persist(vote).flush();
+      }
+      catch (cleanupErr) {
+        // The sweep will reclaim it, so this costs the member a wait rather than a lockout
+        this.logger.error(`Could not release the claim for ${member.id}: ${cleanupErr.message}`);
+      }
+
       return { ok: false, reply: '⛔ Could not post your rank up request. Please tell leadership.' };
     }
 
-    try {
-      vote.messageId = message.id;
-      await this.voteRepository.getEntityManager().persist(vote).flush();
-    }
-    catch (err) {
-      // The ballot is public and now untracked - the one case that needs a human
-      this.logger.error(`Rank up ballot ${message.id} is public but could not be tracked: ${err.message}`);
+    if (!await this.trackBallot(vote, message.id)) {
+      // The sweep reclaimed the claim while the send was in flight, so this ballot is an orphan
+      // nothing will ever resolve. Take it down rather than leave leadership voting on it.
+      this.logger.error(`Ballot ${message.id} for ${member.id} was reclaimed mid-post, removing it`);
+
+      try {
+        await message.delete();
+      }
+      catch (err) {
+        this.logger.error(`Could not remove orphaned ballot ${message.id}: ${err.message}`);
+      }
+
+      return { ok: false, reply: '⛔ Your rank up request could not be opened. Please try again.' };
     }
 
     for (const emoji of VOTE_REACTIONS) {
@@ -250,6 +264,36 @@ export class AlbionRankUpService implements OnApplicationBootstrap {
       ok: true,
       reply: `✅ Your rank up request has been sent to <#${this.judgementHall.id}>. Leadership will vote on it, and voting closes ${discordTime(expiresAt, 'R')}.`,
     };
+  }
+
+  // Conditional, because the reclaim sweep can decide a ballot is never going to appear while the
+  // send is still in flight. Losing that race means our post is an orphan, so the caller has to
+  // know rather than write a message ID onto a row somebody else already abandoned.
+  private async trackBallot(vote: AlbionRankUpVoteEntity, messageId: string): Promise<boolean> {
+    try {
+      const result = await this.voteRepository.getEntityManager().getConnection().execute(
+        `update albion_rank_up_vote_entity set message_id = ?, updated_at = ?
+          where id = ? and status = ? and message_id is null`,
+        [messageId, new Date(), vote.id, AlbionRankUpVoteStatus.PENDING],
+        'run',
+      );
+
+      return this.affectedRows(result) === 1;
+    }
+    catch (err) {
+      // Can't tell whether we still own it, and taking down a ballot leadership may already be
+      // voting on is the worse mistake. Leave it up and shout.
+      this.logger.error(`Rank up ballot ${messageId} is public but could not be tracked: ${err.message}`);
+      return true;
+    }
+  }
+
+  private affectedRows(result: unknown): number {
+    if (typeof result === 'number') {
+      return result;
+    }
+
+    return (result as { affectedRows?: number })?.affectedRows ?? 0;
   }
 
   // A unique violation can mean a live ballot, or a stranded claim from an attempt that died
@@ -270,6 +314,8 @@ export class AlbionRankUpService implements OnApplicationBootstrap {
         throw err;
       }
 
+      // Safe to reuse the entity manager: MikroORM drops the failed entity from the persist
+      // stack, so this flush inserts only the replacement. Verified against the container.
       const retry = newBallot();
       await this.voteRepository.getEntityManager().persist(retry).flush();
       return retry;
@@ -508,10 +554,6 @@ ${stats}`;
       'run',
     );
 
-    const affected = typeof result === 'number'
-      ? result
-      : (result as { affectedRows?: number })?.affectedRows ?? 0;
-
-    return affected === 1;
+    return this.affectedRows(result) === 1;
   }
 }

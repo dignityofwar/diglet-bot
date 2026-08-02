@@ -26,6 +26,7 @@ describe('AlbionRankUpService', () => {
   let voteService: any;
   let votePersist: jest.Mock;
   let voteFlush: jest.Mock;
+  let voteExecute: jest.Mock;
   let channelSend: jest.Mock;
   let registrationsExecute: jest.Mock;
   let ballotMessage: any;
@@ -58,7 +59,11 @@ describe('AlbionRankUpService', () => {
 
   beforeEach(async () => {
     channelSend = jest.fn().mockImplementation(async () => ballotMessage);
-    ballotMessage = { id: 'msg-1', react: jest.fn().mockResolvedValue(true) };
+    ballotMessage = {
+      id: 'msg-1',
+      react: jest.fn().mockResolvedValue(true),
+      delete: jest.fn().mockResolvedValue(true),
+    };
     registrationsExecute = jest.fn().mockResolvedValue({ affectedRows: 1 });
 
     registrationsRepository = {
@@ -72,12 +77,14 @@ describe('AlbionRankUpService', () => {
 
     votePersist = jest.fn().mockReturnThis();
     voteFlush = jest.fn().mockResolvedValue(true);
+    voteExecute = jest.fn().mockResolvedValue({ affectedRows: 1 });
 
     voteRepository = {
       findOne: jest.fn().mockResolvedValue(null),
       getEntityManager: jest.fn().mockReturnValue({
         persist: votePersist,
         flush: voteFlush,
+        getConnection: jest.fn().mockReturnValue({ execute: voteExecute }),
       }),
     };
 
@@ -495,6 +502,36 @@ describe('AlbionRankUpService', () => {
       const outcome = await service.handleRankUpRequest(member);
 
       expect(outcome.reply).toContain('already have a rank up vote open');
+    });
+
+    it('records the message ID only while it still owns the claim', async () => {
+      await service.handleRankUpRequest(member);
+
+      const track = voteExecute.mock.calls.find((c: any[]) => c[0].includes('set message_id = ?'));
+      expect(track[0]).toContain('message_id is null');
+      expect(track[2]).toBe('run');
+    });
+
+    // The sweep can reclaim a claim while the send is in flight. The post is then an orphan
+    // nothing will ever resolve, so it has to come back down rather than collect votes.
+    it('removes a ballot that was reclaimed while it was being posted', async () => {
+      voteExecute.mockResolvedValue({ affectedRows: 0 });
+
+      const outcome = await service.handleRankUpRequest(member);
+
+      expect(ballotMessage.delete).toHaveBeenCalled();
+      expect(outcome.ok).toBe(false);
+      expect(outcome.reply).toContain('try again');
+    });
+
+    it('leaves the ballot up when it cannot tell whether it still owns it', async () => {
+      voteExecute.mockRejectedValue(new Error('db unreachable'));
+
+      const outcome = await service.handleRankUpRequest(member);
+
+      // Taking down a ballot leadership may already be voting on is the worse mistake
+      expect(ballotMessage.delete).not.toHaveBeenCalled();
+      expect(outcome.ok).toBe(true);
     });
 
     // Anything failing after the row is claimed but before the send strands the member behind a

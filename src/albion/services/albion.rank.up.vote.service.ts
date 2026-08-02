@@ -41,9 +41,11 @@ const SCORE_LINE = /^Current score:.*(?:\n⏳.*)?$/m;
 // Discord rate limits message edits, and a busy ballot recounts on every reaction
 const SCORE_EDIT_THROTTLE_MS = 5000;
 
-// How long a claimed but unposted ballot is left alone before it is treated as dead. Long enough
-// that a publish still in flight is never reclaimed out from under itself.
-export const UNPOSTED_GRACE_MS = 60 * 1000;
+// How long a claimed but unposted ballot is left alone before it is treated as dead. A send can
+// stall far longer than it looks - discord.js queues behind rate limits - so this is a long way
+// past a normal post rather than a tight bound. It is not the only guard: trackBallot() writes the
+// message ID conditionally, so a publish that loses this race takes its own orphan back down.
+export const UNPOSTED_GRACE_MS = 5 * 60 * 1000;
 
 export interface VoteTally {
   score: number;
@@ -372,6 +374,23 @@ export class AlbionRankUpVoteService {
     }
     catch (err) {
       this.logger.error(`Failed to announce outcome for vote ${vote.id}: ${err.message}`);
+      await this.releaseAnnouncement(vote);
+    }
+  }
+
+  // Hands the claim back so reconcileUnannounced retries. Without this a Discord outage during
+  // the announcement suppresses it permanently - the sweep looks for announcedAt null and the
+  // claim has already been stamped. Both steps it retries are idempotent.
+  private async releaseAnnouncement(vote: AlbionRankUpVoteEntity): Promise<void> {
+    try {
+      await this.voteRepository.getEntityManager().getConnection().execute(
+        'update albion_rank_up_vote_entity set announced_at = null, updated_at = ? where id = ?',
+        [new Date(), vote.id],
+        'run',
+      );
+    }
+    catch (err) {
+      this.logger.error(`Could not release the announcement claim on vote ${vote.id}: ${err.message}`);
     }
   }
 
@@ -423,8 +442,14 @@ export class AlbionRankUpVoteService {
 
     try {
       const message = await this.fetchBallot(vote);
-      const header = this.outcomeHeader(vote);
-      await message.edit(`${header}\n\n${message.content}`);
+
+      // A retried announcement must not stack a second header. A ballot body never starts
+      // with a heading, so one already there is ours.
+      if (message.content.startsWith('# ')) {
+        return;
+      }
+
+      await message.edit(`${this.outcomeHeader(vote)}\n\n${message.content}`);
     }
     catch (err) {
       // An over long edit or a deleted ballot must not lose the outcome - postOutcome still runs

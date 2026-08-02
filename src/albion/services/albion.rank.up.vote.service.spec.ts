@@ -384,7 +384,9 @@ describe('AlbionRankUpVoteService', () => {
       expect(execute.mock.calls[0][0]).toContain('announced_at = ?');
     });
 
-    it('leaves a publish still in flight alone', async () => {
+    // Only bounds how recent a claim can be and still be reclaimed. It does not prove a
+    // concurrent publish is safe - trackBallot()'s conditional write is what does that.
+    it('only considers claims older than the grace window', async () => {
       await service.reclaimUnposted();
 
       const cutoff: Date = execute.mock.calls[0][1].at(-1);
@@ -408,6 +410,61 @@ describe('AlbionRankUpVoteService', () => {
       await service.reclaimUnposted();
 
       expect(execute.mock.calls[0][2]).toBe('run');
+    });
+  });
+
+  describe('announcement recovery', () => {
+    const passed = () => makeVote({ status: AlbionRankUpVoteStatus.PASSED, toRank: '@ALB/Adept' });
+    const releaseCall = () => execute.mock.calls.find((c: any[]) => c[0].includes('announced_at = null'));
+
+    const withBallot = (content = 'Current score: **4** / 4') => {
+      discordService.getTextChannel = jest.fn().mockResolvedValue({
+        id: 'chan-1',
+        send: channelSend,
+        messages: { fetch: jest.fn().mockResolvedValue(makeMessage({}, content)) },
+      });
+    };
+
+    beforeEach(() => withBallot());
+
+    // The claim is stamped before the Discord work. Without handing it back, a transient failure
+    // suppresses the outcome forever - reconcileUnannounced only looks for announcedAt null
+    it('hands the claim back when announcing fails', async () => {
+      channelSend.mockRejectedValue(new Error('discord is down'));
+
+      await service.announce(passed());
+
+      expect(releaseCall()).toBeDefined();
+      expect(releaseCall()[2]).toBe('run');
+    });
+
+    it('keeps the claim when announcing succeeds', async () => {
+      await service.announce(passed());
+
+      expect(releaseCall()).toBeUndefined();
+    });
+
+    it('does nothing when another caller already claimed the announcement', async () => {
+      execute.mockResolvedValue({ affectedRows: 0 });
+
+      await service.announce(passed());
+
+      expect(channelSend).not.toHaveBeenCalled();
+    });
+
+    // A retried announcement must not stack a second outcome header on the ballot
+    it('does not re-prepend a header the ballot already carries', async () => {
+      withBallot('# ✅ PASSED — score 4 / 4\n\nCurrent score: **4** / 4');
+
+      await service.announce(passed());
+
+      expect(messageEdit).not.toHaveBeenCalled();
+    });
+
+    it('prepends the header when the ballot does not have one', async () => {
+      await service.announce(passed());
+
+      expect(messageEdit).toHaveBeenCalledWith(expect.stringContaining('# ✅ PASSED'));
     });
   });
 
