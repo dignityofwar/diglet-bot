@@ -115,6 +115,66 @@ describe('AlbionRankProgressService', () => {
       expect(registration.graduateSince).toBe(original);
     });
 
+    const loseRole = async (roleId: string, registration: any) => {
+      registrationsRepository.findOne.mockResolvedValue(registration);
+      const before = memberWithRoles('member-1', [roleId]);
+      const after = memberWithRoles('member-1', []);
+      await service.onGuildMemberUpdate([before, after] as never);
+    };
+
+    it('clears graduateSince when the Graduate role is taken away', async () => {
+      const registration = makeRegistration({ graduateSince: new Date('2020-01-01T00:00:00Z') });
+
+      await loseRole(GRADUATE_ROLE, registration);
+
+      expect(registration.graduateSince).toBeNull();
+      expect(flush).toHaveBeenCalled();
+    });
+
+    it('clears adeptSince when the Adept role is taken away', async () => {
+      const registration = makeRegistration({ adeptSince: new Date('2020-01-01T00:00:00Z') });
+
+      await loseRole(ADEPT_ROLE, registration);
+
+      expect(registration.adeptSince).toBeNull();
+    });
+
+    // Demoting an Adept back to Graduate must not wipe the Graduate clock they still hold
+    it('leaves graduateSince alone when only Adept is removed', async () => {
+      const graduatedAt = new Date('2020-01-01T00:00:00Z');
+      const registration = makeRegistration({ graduateSince: graduatedAt, adeptSince: new Date() });
+      registrationsRepository.findOne.mockResolvedValue(registration);
+
+      const before = memberWithRoles('member-1', [GRADUATE_ROLE, ADEPT_ROLE]);
+      const after = memberWithRoles('member-1', [GRADUATE_ROLE]);
+      await service.onGuildMemberUpdate([before, after] as never);
+
+      expect(registration.adeptSince).toBeNull();
+      expect(registration.graduateSince).toBe(graduatedAt);
+    });
+
+    // The bug this guards: without clearing on demotion, a re-promoted member keeps their
+    // original date and clears the 28 day Adept gate instantly
+    it('restarts the clock when someone is demoted and later re-promoted', async () => {
+      const registration = makeRegistration({ graduateSince: new Date('2020-01-01T00:00:00Z') });
+
+      await loseRole(GRADUATE_ROLE, registration);
+      expect(registration.graduateSince).toBeNull();
+
+      await gainRole(GRADUATE_ROLE, registration);
+
+      expect(registration.graduateSince).toBeInstanceOf(Date);
+      expect(registration.graduateSince!.getFullYear()).toBeGreaterThan(2020);
+    });
+
+    it('does nothing when a date was already clear', async () => {
+      const registration = makeRegistration();
+
+      await loseRole(GRADUATE_ROLE, registration);
+
+      expect(flush).not.toHaveBeenCalled();
+    });
+
     it('does nothing when no rank role changed', async () => {
       registrationsRepository.findOne.mockResolvedValue(makeRegistration());
       const same = memberWithRoles('member-1', [GRADUATE_ROLE]);

@@ -10,6 +10,11 @@ import { DiscordService } from '../../discord/discord.service';
 
 type RankColumn = 'graduateSince' | 'adeptSince';
 
+const TRACKED_RANKS: Array<{ column: RankColumn, roleName: string }> = [
+  { column: 'graduateSince', roleName: '@ALB/Graduate' },
+  { column: 'adeptSince', roleName: '@ALB/Adept' },
+];
+
 @Injectable()
 export class AlbionRankProgressService implements OnApplicationBootstrap {
   private readonly logger = new Logger(AlbionRankProgressService.name);
@@ -44,15 +49,24 @@ export class AlbionRankProgressService implements OnApplicationBootstrap {
         return;
       }
 
-      const gained: Array<{ column: RankColumn, roleName: string }> = [
-        { column: 'graduateSince', roleName: '@ALB/Graduate' },
-        { column: 'adeptSince', roleName: '@ALB/Adept' },
-      ].filter(({ roleName }) => {
+      const changes = TRACKED_RANKS.map(({ column, roleName }) => {
         const role = this.findRole(roleName);
-        return role && !oldMember.roles.cache.has(role.discordRoleId) && newMember.roles.cache.has(role.discordRoleId);
-      }) as Array<{ column: RankColumn, roleName: string }>;
 
-      if (gained.length === 0) {
+        if (!role) {
+          return null;
+        }
+
+        const had = oldMember.roles.cache.has(role.discordRoleId);
+        const has = newMember.roles.cache.has(role.discordRoleId);
+
+        if (had === has) {
+          return null;
+        }
+
+        return { column, roleName, gained: has };
+      }).filter(Boolean);
+
+      if (changes.length === 0) {
         return;
       }
 
@@ -66,14 +80,35 @@ export class AlbionRankProgressService implements OnApplicationBootstrap {
         return;
       }
 
-      for (const { column, roleName } of gained) {
-        // Only ever fill a null, so a role removed and re-added doesn't reset the clock
+      let changed = false;
+
+      for (const { column, roleName, gained } of changes) {
+        // Losing the rank clears its date, so a later re-promotion starts the clock again
+        // rather than counting from the first time they held it.
+        if (!gained) {
+          if (!registration[column]) {
+            continue;
+          }
+
+          registration[column] = null;
+          changed = true;
+          this.logger.log(`Cleared ${column} for ${newMember.displayName} on losing ${roleName}`);
+          continue;
+        }
+
+        // Only ever fill a null, so a role removed and re-added within one event doesn't
+        // overwrite a date that is still valid
         if (registration[column]) {
           continue;
         }
 
         registration[column] = new Date();
+        changed = true;
         this.logger.log(`Stamped ${column} for ${newMember.displayName} on gaining ${roleName}`);
+      }
+
+      if (!changed) {
+        return;
       }
 
       await this.registrationsRepository.getEntityManager().persist(registration).flush();
