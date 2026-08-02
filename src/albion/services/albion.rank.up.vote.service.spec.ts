@@ -620,7 +620,7 @@ describe('AlbionRankUpVoteService', () => {
       expect(evaluate).toHaveBeenCalledTimes(1);
     });
 
-    // A reaction mid countdown extends it rather than starting a second ticker
+    // A reaction mid countdown replaces the countdown rather than starting a second ticker
     it('restarts the countdown when another reaction lands', async () => {
       withBallot();
       const vote = makeVote({ score: 2.5 });
@@ -639,6 +639,25 @@ describe('AlbionRankUpVoteService', () => {
       expect(evaluate).toHaveBeenCalledTimes(1);
     });
 
+    // The replaced ticker kept its own phase, so an extended countdown fired late and off-step
+    it('runs the replacement countdown from the reaction that replaced it', async () => {
+      withBallot();
+      const vote = makeVote({ score: 2.5 });
+      voteRepository.findOne.mockResolvedValue(vote);
+      const evaluate = jest.spyOn(service, 'evaluate').mockResolvedValue(undefined);
+
+      await service.scheduleRecount(vote);
+      await jest.advanceTimersByTimeAsync(RECALCULATING_TICK_MS * 3);
+      await service.scheduleRecount(vote);
+
+      // The original deadline has now passed, and must not be what fires
+      await jest.advanceTimersByTimeAsync(RECALCULATING_TICK_MS * 3);
+      expect(evaluate).not.toHaveBeenCalled();
+
+      await jest.advanceTimersByTimeAsync(RECALCULATING_TICK_MS * 2);
+      expect(evaluate).toHaveBeenCalledTimes(1);
+    });
+
     // One fetch per burst, not one per tick - the countdown must not cost a REST call a second
     it('fetches the ballot once for the whole countdown', async () => {
       withBallot();
@@ -647,6 +666,48 @@ describe('AlbionRankUpVoteService', () => {
 
       const channel = await discordService.getTextChannel();
       expect(channel.messages.fetch).toHaveBeenCalledTimes(1);
+    });
+
+    // Replacing must not cost a REST call either - the fetched ballot carries across
+    it('reuses the fetched ballot when the countdown is replaced', async () => {
+      withBallot();
+      const vote = makeVote({ score: 2.5 });
+
+      await service.scheduleRecount(vote);
+      await jest.advanceTimersByTimeAsync(RECALCULATING_TICK_MS * 3);
+      await service.scheduleRecount(vote);
+
+      const channel = await discordService.getTextChannel();
+      expect(channel.messages.fetch).toHaveBeenCalledTimes(1);
+    });
+
+    // Otherwise the old paint lands after the new one and the ballot shows the wrong time left
+    it('discards a paint from a countdown that was replaced mid flight', async () => {
+      const message = makeMessage({}, scoreHeading(2.5, 4));
+      messageEdit.mockImplementation(async (updated: string) => {
+        message.content = updated;
+        return message;
+      });
+
+      const waiting: Array<(m: any) => void> = [];
+      const slowFetch = jest.fn().mockImplementation(() => new Promise((resolve) => waiting.push(resolve)));
+      discordService.getTextChannel = jest.fn().mockResolvedValue({
+        id: 'chan-1', send: channelSend, messages: { fetch: slowFetch },
+      });
+
+      const vote = makeVote({ score: 2.5 });
+      const stalled = service.scheduleRecount(vote); // Blocks on its fetch
+      await Promise.resolve();
+      const replacement = service.scheduleRecount(vote); // Replaces it, blocks on its own
+      await Promise.resolve();
+
+      waiting[0](message); // The replaced countdown comes back first
+      await stalled;
+      expect(messageEdit).not.toHaveBeenCalled();
+
+      waiting[1](message);
+      await replacement;
+      expect(messageEdit).toHaveBeenCalledTimes(1);
     });
 
     it('clears the marker when the recount lands', async () => {
