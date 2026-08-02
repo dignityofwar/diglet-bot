@@ -136,9 +136,10 @@ export class MemberActivityRollupService {
       .sort((a, b) => b.minutes - a.minutes);
   }
 
-  // Powers the "tracking began" caveat, so a member predating the rollups isn't read as inactive
+  // Powers the "tracking began" caveat, so a member predating the rollups isn't read as inactive.
+  // findAll, not findOne({}) - MikroORM rejects an empty where outright rather than matching all.
   async getTrackingStartDate(): Promise<Date | null> {
-    const earliest = await this.activityRepository.findOne({}, { orderBy: { date: 'ASC' } });
+    const [earliest] = await this.activityRepository.findAll({ orderBy: { date: 'ASC' }, limit: 1 });
     return earliest?.date ?? null;
   }
 }

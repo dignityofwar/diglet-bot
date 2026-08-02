@@ -78,6 +78,13 @@ export class AlbionRankUpService implements OnApplicationBootstrap {
 
   async onApplicationBootstrap(): Promise<void> {
     const channelId = this.config.get('discord.channels.judgementHall');
+
+    // Checked before the fetch, which otherwise fails with "undefined is not a snowflake" -
+    // a Discord error for what is really a missing environment variable
+    if (!channelId) {
+      throw new Error('CHANNEL_ALBION_JUDGEMENT_HALL is not set, so rank up ballots cannot be posted');
+    }
+
     const channel = await this.discordService.getTextChannel(channelId);
 
     if (!channel) {
@@ -91,6 +98,16 @@ export class AlbionRankUpService implements OnApplicationBootstrap {
   }
 
   async handleRankUpRequest(member: GuildMember): Promise<RankUpOutcome> {
+    // A failed bootstrap only logs - Nest carries on booting - so without this every refusal is
+    // silently swallowed and every ballot dies on a TypeError deep inside publish()
+    if (!this.judgementHall) {
+      this.logger.error('Rank up requested but the Judgement Hall channel was never resolved at boot');
+      return {
+        ok: false,
+        reply: '⛔ Rank up requests are unavailable right now — the vote channel is not configured. Please tell leadership.',
+      };
+    }
+
     const guildId = this.config.get('albion.guildId');
 
     // Registration first, so an unregistered member holding a rank role still gets
