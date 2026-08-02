@@ -27,6 +27,7 @@ module.exports = {
     '!config/**', // Exclude config folder, mostly pointless to test
     '!**/*.module.ts', // Exclude module files, really hard to test with not much value
     '!main.ts', // Exclude main.ts, as it's the entrypoint to the app
+    '!scripts/**', // Exclude one-off operational scripts, they're entrypoints like main.ts
   ],
   coverageDirectory: '../coverage',
   coverageReporters: ['json-summary', 'text', 'lcov'],

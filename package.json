@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "nest start --watch",
     "build": "nest build",
+    "backfill:albion-ranks": "node dist/src/scripts/backfill.albion.rank.dates.js",
     "format": "prettier --write \"src/**/*.ts\"",
     "lint": "eslint \"{src,apps,libs,test}/**/*.ts\" --fix",
     "migration:create": "mikro-orm migration:create",
