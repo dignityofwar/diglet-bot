@@ -395,24 +395,37 @@ ${stats}`;
       lines.push(`**Graduate since:** ${discordTime(registration.graduateSince, 'D')} — ${graduateDays} days ago`);
     }
 
-    lines.push(`- ⚔️ **${albionName}: ${this.friendlyDuration(albionMinutes)}**`);
-
-    if (otherGames.length > 0) {
-      lines.push(`- 🎮 Other games: ${otherGames.join(', ')}`);
+    // No rows at all is not the same as a member who did nothing. Rendering zeroes and a red band
+    // would read as a damning report when it usually means they predate tracking.
+    if (rollup.length === 0 && gameTotals.length === 0) {
+      lines.push(
+        '',
+        '📭 **No activity data recorded for this member.**',
+        'That may mean they were inactive, or simply that nothing has been tracked for them yet — leadership will need to judge this one on what they know.',
+      );
     }
+    else {
+      lines.push(gameTotals.length > 0
+        ? `- ⚔️ **${albionName}: ${this.friendlyDuration(albionMinutes)}**`
+        : '- ⚔️ No game activity recorded');
 
-    lines.push(
-      `- 🎙️ Voice: **${this.friendlyDuration(voiceMinutes)}**`,
-      `- 💬 Messages: **${messages}** (${(messages / trackedDays).toFixed(1)}/day)`,
-      `- ⭐ Reactions: **${reactions}**`,
-      `- 📊 Active on **${activeDays}** of **${trackedDays}** days (${((activeDays / trackedDays) * 100).toFixed(0)}%) — ${this.activityBand(activeDays, trackedDays)}`,
-    );
+      if (otherGames.length > 0) {
+        lines.push(`- 🎮 Other games: ${otherGames.join(', ')}`);
+      }
+
+      lines.push(
+        `- 🎙️ Voice: **${this.friendlyDuration(voiceMinutes)}**`,
+        `- 💬 Messages: **${messages}** (${(messages / trackedDays).toFixed(1)}/day)`,
+        `- ⭐ Reactions: **${reactions}**`,
+        `- 📊 Active on **${activeDays}** of **${trackedDays}** days (${((activeDays / trackedDays) * 100).toFixed(0)}%) — ${this.activityBand(activeDays, trackedDays)}`,
+      );
+    }
 
     if (trackingStart) {
       lines.push(`\n-# Activity tracking began ${discordTime(trackingStart, 'D')}. Figures cover the ${trackedDays} days since.`);
     }
     else {
-      lines.push('\n-# No activity has been recorded yet, so these figures are all zero.');
+      lines.push('\n-# Activity tracking has not recorded anything yet, for anyone.');
     }
 
     lines.push('-# Game time is sampled from Discord presence — it only counts when the member has Discord open with game activity sharing enabled, so a low figure may reflect settings rather than inactivity.');

@@ -600,10 +600,46 @@ describe('AlbionRankUpService', () => {
       });
     });
 
-    it('always shows Albion Online even at zero', async () => {
+    it('shows Albion Online at zero when the member has some game data', async () => {
+      rollupService.getGameTotals.mockResolvedValue([{ gameName: 'Foxhole', minutes: 60 }]);
+
       await service.handleRankUpRequest(member);
 
       expect(lastSentContent()).toContain('Albion Online: 0h 0m');
+    });
+
+    // "0h 0m" reads as "played none", which is a different claim from "we recorded nothing"
+    it('says nothing was recorded rather than showing zero hours', async () => {
+      rollupService.getRollup.mockResolvedValue([{ messagesSent: 3, reactionsAdded: 0, voiceMinutes: 0 }]);
+      rollupService.getGameTotals.mockResolvedValue([]);
+
+      await service.handleRankUpRequest(member);
+      const content = lastSentContent();
+
+      expect(content).toContain('No game activity recorded');
+      expect(content).not.toContain('Albion Online: 0h 0m');
+    });
+
+    // A brand new member has no rows at all. Zeroes plus a red band would read as a verdict.
+    it('states there is no data rather than reporting a member as inactive', async () => {
+      rollupService.getRollup.mockResolvedValue([]);
+      rollupService.getGameTotals.mockResolvedValue([]);
+
+      await service.handleRankUpRequest(member);
+      const content = lastSentContent();
+
+      expect(content).toContain('No activity data recorded for this member');
+      expect(content).not.toContain('🔴 Low');
+      expect(content).not.toContain('Messages:');
+    });
+
+    it('still names the character and registration date when there is no activity data', async () => {
+      rollupService.getRollup.mockResolvedValue([]);
+      rollupService.getGameTotals.mockResolvedValue([]);
+
+      await service.handleRankUpRequest(member);
+
+      expect(lastSentContent()).toContain('**Character:** Testy');
     });
 
     it('shows the top three other games and omits the line when there are none', async () => {
