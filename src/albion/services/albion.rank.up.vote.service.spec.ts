@@ -8,8 +8,8 @@ import {
   majorityScore,
   PROVISIONAL_HOLD_MS,
   REACTION_DEBOUNCE_MS,
+  RECALCULATING_TICK_MS,
   scoreHeading,
-  UNPOSTED_GRACE_MS,
   VOTE_APPROVE,
   VOTE_DISAPPROVE,
   VOTE_SHRUG,
@@ -21,11 +21,13 @@ import {
 } from '../../database/entities/albion.rank.up.vote.entity';
 import { AlbionUtilities } from '../utilities/albion.utilities';
 import { DiscordService } from '../../discord/discord.service';
+import { AlbionRankUpService } from './albion.rank.up.service';
 import { TestBootstrapper } from '../../test.bootstrapper';
 
 describe('AlbionRankUpVoteService', () => {
   let service: AlbionRankUpVoteService;
   let voteRepository: any;
+  let rankUpService: any;
   let discordService: any;
   let albionUtilities: any;
   let execute: jest.Mock;
@@ -83,6 +85,7 @@ describe('AlbionRankUpVoteService', () => {
 
   beforeEach(async () => {
     execute = jest.fn().mockResolvedValue({ affectedRows: 1 });
+    rankUpService = { renderBallot: jest.fn().mockResolvedValue('RE-RENDERED BALLOT') };
     channelSend = jest.fn().mockResolvedValue({ id: 'outcome-1' });
     messageEdit = jest.fn().mockResolvedValue(true);
 
@@ -114,6 +117,7 @@ describe('AlbionRankUpVoteService', () => {
         { provide: DiscordService, useValue: discordService },
         { provide: AlbionUtilities, useValue: albionUtilities },
         { provide: getRepositoryToken(AlbionRankUpVoteEntity), useValue: voteRepository },
+        { provide: AlbionRankUpService, useValue: rankUpService },
       ],
     }).compile();
 
@@ -461,60 +465,190 @@ describe('AlbionRankUpVoteService', () => {
     });
   });
 
-  describe('flagging the score as recalculating', () => {
-    beforeEach(() => jest.useFakeTimers());
-    afterEach(() => jest.useRealTimers());
-
-    const withBallotContent = (content: string) => {
-      const message = makeMessage({}, content);
+  describe('re-rendering a live ballot', () => {
+    const withBallot = (content: string) => {
+      const message = makeMessage({ [VOTE_APPROVE]: ['e1', 'e2'] }, content);
       discordService.getTextChannel = jest.fn().mockResolvedValue({
         id: 'chan-1', send: channelSend, messages: { fetch: jest.fn().mockResolvedValue(message) },
       });
       return message;
     };
 
-    // The number is about to move, so it should look unsettled rather than quietly wrong
-    it('marks the score the moment a change is detected', async () => {
-      withBallotContent(scoreHeading(2.5, 4));
+    // A ballot posted under older wording is otherwise frozen in it for its whole five days
+    it('rewrites the whole ballot on a reaction driven recount', async () => {
+      withBallot('OLD FORMAT\nCurrent score: **0** / 4');
+      const vote = makeVote();
+      voteRepository.findOne.mockResolvedValue(vote);
 
-      await service.scheduleRecount(makeVote({ score: 2.5 }));
+      await service.evaluate(vote, true);
 
-      expect(messageEdit).toHaveBeenCalledWith(scoreHeading(2.5, 4, true));
+      expect(rankUpService.renderBallot).toHaveBeenCalledWith(vote, expect.stringContaining('Current score'));
+      expect(messageEdit).toHaveBeenCalledWith('RE-RENDERED BALLOT');
     });
 
-    it('keeps the last known score visible while it recalculates', async () => {
-      withBallotContent(scoreHeading(2.5, 4));
+    // The sweep runs every minute; rewriting every open ballot that often is a lot of edits
+    it('only touches the score line when the sweep drives it', async () => {
+      withBallot(scoreHeading(0, 4));
 
-      await service.scheduleRecount(makeVote({ score: 2.5 }));
+      await service.evaluate(makeVote());
 
-      expect(messageEdit.mock.calls[0][0]).toContain('2.5 / 4');
+      expect(rankUpService.renderBallot).not.toHaveBeenCalled();
+      expect(messageEdit).toHaveBeenCalledWith(scoreHeading(2, 4));
     });
 
-    it('marks it once for a whole burst, not once per reaction', async () => {
-      const message = withBallotContent(scoreHeading(2.5, 4));
-      messageEdit.mockImplementation(async (content: string) => {
-        message.content = content;
+    it('does not edit when the render matches what is already posted', async () => {
+      withBallot('RE-RENDERED BALLOT');
+
+      await service.evaluate(makeVote(), true);
+
+      expect(messageEdit).not.toHaveBeenCalled();
+    });
+
+    // Losing the render must not cost the score update as well
+    it('falls back to the score line when the render fails', async () => {
+      withBallot(scoreHeading(0, 4));
+      rankUpService.renderBallot.mockRejectedValue(new Error('registration lookup failed'));
+
+      await service.evaluate(makeVote(), true);
+
+      expect(messageEdit).toHaveBeenCalledWith(scoreHeading(2, 4));
+    });
+  });
+
+  describe('the hold notice', () => {
+    const held = (status: AlbionRankUpVoteStatus) => service.scoreLine(makeVote({
+      score: 4,
+      provisionalStatus: status,
+      provisionalSince: new Date(),
+    }));
+
+    // Which way the hold is going should read at a glance, not from the verb alone
+    it('marks a pending pass with a tick', () => {
+      expect(held(AlbionRankUpVoteStatus.PASSED)).toContain('**✅ pass**');
+    });
+
+    it('marks a pending veto with the veto emoji', () => {
+      expect(held(AlbionRankUpVoteStatus.VETOED)).toContain(`**${VOTE_VETO} be vetoed**`);
+    });
+
+    it('states the window and when it closes', () => {
+      const line = held(AlbionRankUpVoteStatus.PASSED);
+
+      expect(line).toContain('This vote will be locked in and');
+      expect(line).toContain('this is your window to change it');
+      expect(line).toMatch(/<t:\d+:R>/);
+    });
+
+    it('keeps the score heading above the notice', () => {
+      expect(held(AlbionRankUpVoteStatus.PASSED).split('\n')[0]).toBe(scoreHeading(4, 4));
+    });
+
+    it('says nothing extra when no hold is running', () => {
+      expect(service.scoreLine(makeVote({ score: 2 }))).toBe(scoreHeading(2, 4));
+    });
+  });
+
+  describe('the recalculating countdown', () => {
+    beforeEach(() => jest.useFakeTimers());
+    afterEach(() => jest.useRealTimers());
+
+    const withBallot = (content = scoreHeading(2.5, 4)) => {
+      const message = makeMessage({}, content);
+      messageEdit.mockImplementation(async (updated: string) => {
+        message.content = updated;
         return message;
       });
+      discordService.getTextChannel = jest.fn().mockResolvedValue({
+        id: 'chan-1', send: channelSend, messages: { fetch: jest.fn().mockResolvedValue(message) },
+      });
+      return message;
+    };
 
-      for (let i = 0; i < 4; i++) {
-        await service.scheduleRecount(makeVote({ score: 2.5 }));
-      }
+    const editedLines = () => messageEdit.mock.calls.map((c: any[]) => c[0]);
 
-      expect(messageEdit).toHaveBeenCalledTimes(1);
+    // The number is about to move, so it should look unsettled rather than quietly wrong
+    it('marks the score the moment a change is detected', async () => {
+      withBallot();
+
+      await service.scheduleRecount(makeVote({ score: 2.5 }));
+
+      expect(editedLines()[0]).toContain('recalculating');
+      expect(editedLines()[0]).toContain('2.5 / 4');
+    });
+
+    it('counts down once a second', async () => {
+      withBallot();
+      await service.scheduleRecount(makeVote({ score: 2.5 }));
+
+      await jest.advanceTimersByTimeAsync(RECALCULATING_TICK_MS * 3);
+
+      const seconds = editedLines()
+        .map((line: string) => line.match(/(\d+)s\)/)?.[1])
+        .filter(Boolean)
+        .map(Number);
+
+      expect(seconds.length).toBeGreaterThanOrEqual(3);
+      expect(seconds).toEqual([...seconds].sort((a, b) => b - a)); // strictly falling
+      expect(seconds[0]).toBe(REACTION_DEBOUNCE_MS / 1000);
+    });
+
+    it('recounts when the countdown runs out, and stops painting', async () => {
+      withBallot();
+      const vote = makeVote({ score: 2.5 });
+      voteRepository.findOne.mockResolvedValue(vote);
+      const evaluate = jest.spyOn(service, 'evaluate').mockResolvedValue(undefined);
+
+      await service.scheduleRecount(vote);
+      await jest.advanceTimersByTimeAsync(REACTION_DEBOUNCE_MS);
+      expect(evaluate).toHaveBeenCalledTimes(1);
+
+      const afterRecount = messageEdit.mock.calls.length;
+      await jest.advanceTimersByTimeAsync(RECALCULATING_TICK_MS * 5);
+
+      expect(messageEdit.mock.calls.length).toBe(afterRecount);
+      expect(evaluate).toHaveBeenCalledTimes(1);
+    });
+
+    // A reaction mid countdown extends it rather than starting a second ticker
+    it('restarts the countdown when another reaction lands', async () => {
+      withBallot();
+      const vote = makeVote({ score: 2.5 });
+      voteRepository.findOne.mockResolvedValue(vote);
+      const evaluate = jest.spyOn(service, 'evaluate').mockResolvedValue(undefined);
+
+      await service.scheduleRecount(vote);
+      await jest.advanceTimersByTimeAsync(RECALCULATING_TICK_MS * 3);
+      await service.scheduleRecount(vote);
+      await jest.advanceTimersByTimeAsync(RECALCULATING_TICK_MS * 3);
+
+      expect(evaluate).not.toHaveBeenCalled();
+
+      await jest.advanceTimersByTimeAsync(REACTION_DEBOUNCE_MS);
+
+      expect(evaluate).toHaveBeenCalledTimes(1);
+    });
+
+    // One fetch per burst, not one per tick - the countdown must not cost a REST call a second
+    it('fetches the ballot once for the whole countdown', async () => {
+      withBallot();
+      await service.scheduleRecount(makeVote({ score: 2.5 }));
+      await jest.advanceTimersByTimeAsync(RECALCULATING_TICK_MS * 3);
+
+      const channel = await discordService.getTextChannel();
+      expect(channel.messages.fetch).toHaveBeenCalledTimes(1);
     });
 
     it('clears the marker when the recount lands', async () => {
-      withBallotContent(scoreHeading(2.5, 4, true));
+      withBallot(scoreHeading(2.5, 4, 5));
       const vote = makeVote({ score: 2.5 });
       voteRepository.findOne.mockResolvedValue(vote);
 
       await service.recount(vote.id);
 
-      expect(messageEdit).toHaveBeenCalledWith(expect.not.stringContaining('recalculating'));
+      expect(editedLines().at(-1)).not.toContain('recalculating');
     });
 
-    it('does not let a failed marker edit stop the recount being scheduled', async () => {
+    it('does not let a failed repaint stop the recount', async () => {
       discordService.getTextChannel = jest.fn().mockRejectedValue(new Error('discord down'));
       const vote = makeVote();
       voteRepository.findOne.mockResolvedValue(vote);
@@ -579,57 +713,6 @@ describe('AlbionRankUpVoteService', () => {
 
     it('is a heading so it stands out from the ballot body', () => {
       expect(scoreHeading(2, 4).startsWith('## ')).toBe(true);
-    });
-  });
-
-  describe('reclaimUnposted', () => {
-    it('only touches pending rows that never got a message', async () => {
-      await service.reclaimUnposted();
-
-      expect(execute.mock.calls[0][0]).toContain('message_id is null');
-      expect(execute.mock.calls[0][0]).toContain('status = ?');
-      expect(execute.mock.calls[0][1]).toContain(AlbionRankUpVoteStatus.ABANDONED);
-    });
-
-    it('frees the pending key so the member can ask again', async () => {
-      await service.reclaimUnposted();
-
-      expect(execute.mock.calls[0][0]).toContain('pending_key = null');
-    });
-
-    // Otherwise the reconcile sweep would try to post an outcome for a ballot nobody ever saw
-    it('marks the row announced so nothing tries to post an outcome', async () => {
-      await service.reclaimUnposted();
-
-      expect(execute.mock.calls[0][0]).toContain('announced_at = ?');
-    });
-
-    // Only bounds how recent a claim can be and still be reclaimed. It does not prove a
-    // concurrent publish is safe - trackBallot()'s conditional write is what does that.
-    it('only considers claims older than the grace window', async () => {
-      await service.reclaimUnposted();
-
-      const cutoff: Date = execute.mock.calls[0][1].at(-1);
-      expect(Date.now() - cutoff.getTime()).toBeGreaterThanOrEqual(UNPOSTED_GRACE_MS);
-    });
-
-    it('narrows to one member when given a discord ID', async () => {
-      await service.reclaimUnposted('candidate');
-
-      expect(execute.mock.calls[0][0]).toContain('and discord_id = ?');
-      expect(execute.mock.calls[0][1].at(-1)).toBe('candidate');
-    });
-
-    it('reports how many it reclaimed', async () => {
-      execute.mockResolvedValue({ affectedRows: 2 });
-
-      expect(await service.reclaimUnposted()).toBe(2);
-    });
-
-    it('asks for the affected row count', async () => {
-      await service.reclaimUnposted();
-
-      expect(execute.mock.calls[0][2]).toBe('run');
     });
   });
 

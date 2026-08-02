@@ -3,6 +3,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { ConfigService } from '@nestjs/config';
 import { getRepositoryToken } from '@mikro-orm/nestjs';
 import { UniqueConstraintViolationException } from '@mikro-orm/core';
+import { UNPOSTED_GRACE_MS } from './albion.ballot.text';
 import { AlbionRankUpService, RankUpRefusal } from './albion.rank.up.service';
 import { AlbionRegistrationsEntity } from '../../database/entities/albion.registrations.entity';
 import {
@@ -12,7 +13,6 @@ import {
 import { AlbionUtilities } from '../utilities/albion.utilities';
 import { DiscordService } from '../../discord/discord.service';
 import { MemberActivityRollupService } from '../../general/services/member.activity.rollup.service';
-import { AlbionRankUpVoteService } from './albion.rank.up.vote.service';
 import { TestBootstrapper } from '../../test.bootstrapper';
 
 const DAY_MS = 24 * 60 * 60 * 1000;
@@ -23,7 +23,6 @@ describe('AlbionRankUpService', () => {
   let voteRepository: any;
   let albionUtilities: any;
   let rollupService: any;
-  let voteService: any;
   let votePersist: jest.Mock;
   let voteFlush: jest.Mock;
   let voteExecute: jest.Mock;
@@ -103,8 +102,6 @@ describe('AlbionRankUpService', () => {
       getTrackingStartDate: jest.fn().mockResolvedValue(daysAgo(10)),
     };
 
-    voteService = { reclaimUnposted: jest.fn().mockResolvedValue(0) };
-
     discordService = {
       getTextChannel: jest.fn().mockResolvedValue({
         id: 'judgement-hall',
@@ -120,7 +117,6 @@ describe('AlbionRankUpService', () => {
         { provide: DiscordService, useValue: discordService },
         { provide: AlbionUtilities, useValue: albionUtilities },
         { provide: MemberActivityRollupService, useValue: rollupService },
-        { provide: AlbionRankUpVoteService, useValue: voteService },
         { provide: getRepositoryToken(AlbionRegistrationsEntity), useValue: registrationsRepository },
         { provide: getRepositoryToken(AlbionRankUpVoteEntity), useValue: voteRepository },
       ],
@@ -406,6 +402,57 @@ describe('AlbionRankUpService', () => {
     });
   });
 
+  describe('reclaimUnposted', () => {
+    it('only touches pending rows that never got a message', async () => {
+      await service.reclaimUnposted();
+
+      expect(voteExecute.mock.calls[0][0]).toContain('message_id is null');
+      expect(voteExecute.mock.calls[0][0]).toContain('status = ?');
+      expect(voteExecute.mock.calls[0][1]).toContain(AlbionRankUpVoteStatus.ABANDONED);
+    });
+
+    it('frees the pending key so the member can ask again', async () => {
+      await service.reclaimUnposted();
+
+      expect(voteExecute.mock.calls[0][0]).toContain('pending_key = null');
+    });
+
+    // Otherwise the reconcile sweep would try to post an outcome for a ballot nobody ever saw
+    it('marks the row announced so nothing tries to post an outcome', async () => {
+      await service.reclaimUnposted();
+
+      expect(voteExecute.mock.calls[0][0]).toContain('announced_at = ?');
+    });
+
+    // Only bounds how recent a claim can be and still be reclaimed. It does not prove a
+    // concurrent publish is safe - trackBallot()'s conditional write is what does that.
+    it('only considers claims older than the grace window', async () => {
+      await service.reclaimUnposted();
+
+      const cutoff: Date = voteExecute.mock.calls[0][1].at(-1);
+      expect(Date.now() - cutoff.getTime()).toBeGreaterThanOrEqual(UNPOSTED_GRACE_MS);
+    });
+
+    it('narrows to one member when given a discord ID', async () => {
+      await service.reclaimUnposted('candidate');
+
+      expect(voteExecute.mock.calls[0][0]).toContain('and discord_id = ?');
+      expect(voteExecute.mock.calls[0][1].at(-1)).toBe('candidate');
+    });
+
+    it('reports how many it reclaimed', async () => {
+      voteExecute.mockResolvedValue({ affectedRows: 2 });
+
+      expect(await service.reclaimUnposted()).toBe(2);
+    });
+
+    it('asks for the affected row count', async () => {
+      await service.reclaimUnposted();
+
+      expect(voteExecute.mock.calls[0][2]).toBe('run');
+    });
+  });
+
   describe('denial notice throttle', () => {
     it('claims the throttle by conditional update before sending', async () => {
       registrationsRepository.findOne.mockResolvedValue(makeRegistration({ createdAt: daysAgo(2) }));
@@ -531,19 +578,21 @@ describe('AlbionRankUpService', () => {
     // A claim left behind by an attempt that died before posting is ours to clear, not a
     // reason to lock the member out of a ballot nobody ever saw
     it('reclaims a ballot that was never posted and retries', async () => {
+      const reclaimSpy = jest.spyOn(service, 'reclaimUnposted');
       voteFlush.mockRejectedValueOnce(duplicateKeyError());
-      voteService.reclaimUnposted.mockResolvedValue(1);
+      reclaimSpy.mockResolvedValue(1);
 
       const outcome = await service.handleRankUpRequest(member);
 
-      expect(voteService.reclaimUnposted).toHaveBeenCalledWith('candidate');
+      expect(reclaimSpy).toHaveBeenCalledWith('candidate');
       expect(outcome.ok).toBe(true);
       expect(lastSentContent()).toContain('wants to be ranked up');
     });
 
     it('refuses when there was nothing stranded to reclaim', async () => {
+      const reclaimSpy = jest.spyOn(service, 'reclaimUnposted');
       voteFlush.mockRejectedValue(duplicateKeyError());
-      voteService.reclaimUnposted.mockResolvedValue(0);
+      reclaimSpy.mockResolvedValue(0);
 
       const outcome = await service.handleRankUpRequest(member);
 
@@ -688,7 +737,7 @@ describe('AlbionRankUpService', () => {
       const content = lastSentContent();
       expect(content).toContain('wants to be ranked up');
       expect(content).toContain('Please react with the following');
-      expect(content).toContain('- ⛔ to put a veto on the rank up');
+      expect(content).toContain('- ⛔ veto the rank up (this action needs justification with proof), this will cause the vote to fail within 1 hour.');
     });
 
     it('bullets each reaction explainer but keeps the scoring on one line', async () => {
@@ -699,12 +748,12 @@ describe('AlbionRankUpService', () => {
         '- 👍 to approve the rank up',
         '- 🤷 to say "I don\'t know the person well enough"',
         '- 👎 to disapprove the rank up',
-        '- ⛔ to put a veto on the rank up',
+        '- ⛔ veto the rank up (this action needs justification with proof), this will cause the vote to fail within 1 hour.',
       ]) {
         expect(content).toContain(line);
       }
 
-      expect(content).toContain('👍 = 1 point · 🤷 = 0.5 points · 👎 = 0 points · ⛔ closes the vote whatever the score');
+      expect(content).toContain('Scoring: 👍 = 1 point · 🤷 = 0.5 points · 👎 = 0 points\n');
     });
 
     it('pings the leadership role and the candidate only', async () => {
@@ -728,7 +777,7 @@ describe('AlbionRankUpService', () => {
 
     // "0h 0m" reads as "played none", which is a different claim from "we recorded nothing"
     it('says nothing was recorded rather than showing zero hours', async () => {
-      rollupService.getRollup.mockResolvedValue([{ messagesSent: 3, reactionsAdded: 0, voiceMinutes: 0 }]);
+      rollupService.getRollup.mockResolvedValue([{ messagesSent: 3, reactionsAdded: 0, voiceMinutes: 0, date: daysAgo(1) }]);
       rollupService.getGameTotals.mockResolvedValue([]);
 
       await service.handleRankUpRequest(member);
@@ -747,7 +796,7 @@ describe('AlbionRankUpService', () => {
       const content = lastSentContent();
 
       expect(content).toContain('No activity data recorded for this member');
-      expect(content).not.toContain('🔴 Low');
+      expect(content).not.toContain('Activity all time');
       expect(content).not.toContain('Messages:');
     });
 
@@ -789,7 +838,7 @@ describe('AlbionRankUpService', () => {
     });
 
     it('heads the block Metrics and bullets the dates with the rest', async () => {
-      rollupService.getRollup.mockResolvedValue([{ messagesSent: 5, reactionsAdded: 2, voiceMinutes: 60 }]);
+      rollupService.getRollup.mockResolvedValue([{ messagesSent: 5, reactionsAdded: 2, voiceMinutes: 60, date: daysAgo(1) }]);
 
       await service.handleRankUpRequest(member);
       const content = lastSentContent();
@@ -798,9 +847,37 @@ describe('AlbionRankUpService', () => {
       expect(content).toMatch(/- 📅 Registered:.*30\*\* days ago/);
     });
 
+    // A year-long member absent for a fortnight and a brand new one look identical on a
+    // lifetime average, which is the figure leadership would otherwise vote on
+    it('reports activity all time and over the last two weeks', async () => {
+      rollupService.getRollup.mockResolvedValue([
+        { messagesSent: 5, reactionsAdded: 0, voiceMinutes: 0, date: daysAgo(1) },
+        { messagesSent: 3, reactionsAdded: 0, voiceMinutes: 0, date: daysAgo(40) },
+        { messagesSent: 0, reactionsAdded: 0, voiceMinutes: 0, date: daysAgo(41) },
+      ]);
+      rollupService.getTrackingStartDate.mockResolvedValue(daysAgo(60));
+
+      await service.handleRankUpRequest(member);
+      const content = lastSentContent();
+
+      expect(content).toContain('📊 Activity all time registered: **2** of');
+      expect(content).toContain('📈 Activity last 14 days: **1** of **14** days (7%)');
+    });
+
+    it('does not let the recent window claim more days than have been tracked', async () => {
+      rollupService.getRollup.mockResolvedValue([
+        { messagesSent: 5, reactionsAdded: 0, voiceMinutes: 0, date: daysAgo(1) },
+      ]);
+      rollupService.getTrackingStartDate.mockResolvedValue(daysAgo(3));
+
+      await service.handleRankUpRequest(member);
+
+      expect(lastSentContent()).toContain('📈 Activity last 14 days: **1** of **3** days');
+    });
+
     // The stats are server wide, and reading them as Albion-only would undercount everyone
     it('marks the server wide counters against their footnote', async () => {
-      rollupService.getRollup.mockResolvedValue([{ messagesSent: 5, reactionsAdded: 2, voiceMinutes: 60 }]);
+      rollupService.getRollup.mockResolvedValue([{ messagesSent: 5, reactionsAdded: 2, voiceMinutes: 60, date: daysAgo(1) }]);
 
       await service.handleRankUpRequest(member);
       const content = lastSentContent();

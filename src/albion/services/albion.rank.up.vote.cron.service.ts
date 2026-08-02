@@ -7,6 +7,7 @@ import {
   AlbionRankUpVoteStatus,
 } from '../../database/entities/albion.rank.up.vote.entity';
 import { AlbionRankUpVoteService } from './albion.rank.up.vote.service';
+import { AlbionRankUpService } from './albion.rank.up.service';
 
 @Injectable()
 export class AlbionRankUpVoteCronService implements OnApplicationBootstrap {
@@ -14,6 +15,7 @@ export class AlbionRankUpVoteCronService implements OnApplicationBootstrap {
 
   constructor(
     private readonly voteService: AlbionRankUpVoteService,
+    private readonly rankUpService: AlbionRankUpService,
     @InjectRepository(AlbionRankUpVoteEntity) private readonly voteRepository: EntityRepository<AlbionRankUpVoteEntity>,
   ) {}
 
@@ -41,7 +43,7 @@ export class AlbionRankUpVoteCronService implements OnApplicationBootstrap {
 
   async sweep(): Promise<void> {
     // First, so a stranded claim is cleared before expireOverdue can time it out
-    await this.voteService.reclaimUnposted();
+    await this.rankUpService.reclaimUnposted();
     await this.reconcileUnannounced();
     // Re-tallies every open ballot, which also commits any hold whose window has passed. A cron
     // rather than an in-process timer, so a restart mid-hold doesn't strand the ballot.
