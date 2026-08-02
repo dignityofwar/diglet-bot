@@ -114,6 +114,9 @@ export default () => ({
   pingLeaderRoles,
   leadershipPingRole,
   electorMaxPriority: ELECTOR_MAX_PRIORITY,
+  // Ranks the bot grants itself once a vote passes. Adept is deliberately absent: it is
+  // soft-leadership, so a human makes that call even after a successful vote.
+  autoAssignRanks: ['@ALB/Graduate'],
   gameActivityName: 'Albion Online', // As Discord reports it in presence data
   scanExcludedUsers: [], // Discord IDs
   guildLeaderRole: findRole('@ALB/Archmage'),

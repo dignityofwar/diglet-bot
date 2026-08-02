@@ -351,14 +351,129 @@ describe('AlbionRankUpVoteService', () => {
     });
   });
 
+  describe('granting the rank', () => {
+    let memberRoles: any;
+
+    beforeEach(() => {
+      memberRoles = {
+        add: jest.fn().mockResolvedValue(true),
+        remove: jest.fn().mockResolvedValue(true),
+        cache: new Collection<string, any>([['1218115269419995166', { id: '1218115269419995166' }]]),
+      };
+      discordService.getGuildMember = jest.fn().mockResolvedValue({ id: 'candidate', roles: memberRoles });
+      discordService.getRoleViaMember = jest.fn().mockImplementation(async (_m, id) => ({ id }));
+    });
+
+    it('grants Graduate when the vote passes', async () => {
+      const outcome = await service.grantRank(makeVote({ toRank: '@ALB/Graduate' }));
+
+      expect(outcome).toEqual({ attempted: true, granted: true });
+      expect(memberRoles.add).toHaveBeenCalledWith({ id: '1218115340009996339' });
+    });
+
+    // Disciple is keep:false, so leaving it would be flagged by the next daily scan
+    it('strips the Disciple role it replaces', async () => {
+      await service.grantRank(makeVote({ fromRank: '@ALB/Disciple', toRank: '@ALB/Graduate' }));
+
+      expect(memberRoles.remove).toHaveBeenCalledWith({ id: '1218115269419995166' });
+    });
+
+    // Adept is soft-leadership; a human grants it even after a passing vote
+    it('does not grant Adept', async () => {
+      const outcome = await service.grantRank(makeVote({ fromRank: '@ALB/Graduate', toRank: '@ALB/Adept' }));
+
+      expect(outcome).toEqual({ attempted: false, granted: false });
+      expect(memberRoles.add).not.toHaveBeenCalled();
+    });
+
+    it('reports the failure rather than throwing when the member has left', async () => {
+      discordService.getGuildMember.mockRejectedValue(new Error('Unknown Member'));
+
+      const outcome = await service.grantRank(makeVote({ toRank: '@ALB/Graduate' }));
+
+      expect(outcome.granted).toBe(false);
+      expect(outcome.error).toContain('Unknown Member');
+    });
+
+    it('does not strip a role marked keep', async () => {
+      memberRoles.cache = new Collection<string, any>([['1218115340009996339', { id: '1218115340009996339' }]]);
+
+      await service.grantRank(makeVote({ fromRank: '@ALB/Graduate', toRank: '@ALB/Graduate' }));
+
+      expect(memberRoles.remove).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('what is left to do', () => {
+    it('tells leadership only the in-game rank remains when the role was granted', () => {
+      const line = service.whatIsLeftToDo(makeVote({ toRank: '@ALB/Graduate' }), { attempted: true, granted: true });
+
+      expect(line).toContain('I have given them the **Graduate** role');
+      expect(line).toContain('in-game');
+    });
+
+    it('asks for both when the rank is not auto-assigned', () => {
+      const line = service.whatIsLeftToDo(makeVote({ toRank: '@ALB/Adept' }), { attempted: false, granted: false });
+
+      expect(line).toContain('Discord **and** in-game');
+    });
+
+    it('surfaces the error when granting failed', () => {
+      const line = service.whatIsLeftToDo(
+        makeVote({ toRank: '@ALB/Graduate' }),
+        { attempted: true, granted: false, error: 'Missing Permissions' },
+      );
+
+      expect(line).toContain('could not give them');
+      expect(line).toContain('Missing Permissions');
+      expect(line).toContain('by hand');
+    });
+  });
+
   describe('announce', () => {
     it('pings leadership only when the vote passed', async () => {
       await service.announce(makeVote({ status: AlbionRankUpVoteStatus.PASSED, score: 4 }));
 
       const payload = channelSend.mock.calls[0][0];
       expect(payload.content).toContain('passed');
-      expect(payload.content).toContain('needs changing');
       expect(payload.allowedMentions.roles).toHaveLength(1);
+    });
+
+    it('grants the role then tells leadership the in-game rank remains', async () => {
+      discordService.getGuildMember = jest.fn().mockResolvedValue({
+        id: 'candidate',
+        roles: {
+          add: jest.fn().mockResolvedValue(true),
+          remove: jest.fn().mockResolvedValue(true),
+          cache: new Collection<string, any>(),
+        },
+      });
+      discordService.getRoleViaMember = jest.fn().mockImplementation(async (_m, id) => ({ id }));
+
+      await service.announce(makeVote({ status: AlbionRankUpVoteStatus.PASSED, score: 4, toRank: '@ALB/Graduate' }));
+
+      const payload = channelSend.mock.calls[0][0];
+      expect(payload.content).toContain('I have given them the **Graduate** role');
+      expect(payload.content).toContain('in-game');
+    });
+
+    // A failed grant must still announce, and say plainly that it needs doing by hand
+    it('still announces when the role could not be granted', async () => {
+      discordService.getGuildMember = jest.fn().mockRejectedValue(new Error('Missing Permissions'));
+
+      await service.announce(makeVote({ status: AlbionRankUpVoteStatus.PASSED, score: 4, toRank: '@ALB/Graduate' }));
+
+      const payload = channelSend.mock.calls[0][0];
+      expect(payload.content).toContain('could not give them');
+      expect(payload.content).toContain('Missing Permissions');
+    });
+
+    it('never grants a role on a veto, fail or timeout', async () => {
+      const grantRank = jest.spyOn(service, 'grantRank');
+
+      await service.announce(makeVote({ status: AlbionRankUpVoteStatus.VETOED }));
+
+      expect(grantRank).not.toHaveBeenCalled();
     });
 
     it('does not ping on a veto, fail or timeout', async () => {

@@ -442,6 +442,7 @@ export class TestBootstrapper {
       ],
       leadershipPingRole: '1421034165356331070',
       electorMaxPriority: 3,
+      autoAssignRanks: ['@ALB/Graduate'],
       gameActivityName: 'Albion Online',
     },
     discord: {

@@ -9,6 +9,7 @@ import {
   AlbionRankUpVoteStatus,
 } from '../../database/entities/albion.rank.up.vote.entity';
 import { AlbionUtilities } from '../utilities/albion.utilities';
+import { AlbionRoleMapInterface } from '../../config/albion.app.config';
 import { DiscordService } from '../../discord/discord.service';
 import { resolvePartialReaction } from '../../discord/discord.hacks';
 import { discordTime } from '../../helpers';
@@ -44,6 +45,12 @@ export interface VoteTally {
   score: number;
   electorsVoted: number;
   vetoedBy: string | null;
+}
+
+export interface GrantOutcome {
+  attempted: boolean; // False when the rank isn't one the bot grants itself
+  granted: boolean;
+  error?: string;
 }
 
 @Injectable()
@@ -315,11 +322,57 @@ export class AlbionRankUpVoteService {
     }
 
     try {
+      // Grant the new rank before announcing, so the message can report what actually happened
+      const granted = vote.status === AlbionRankUpVoteStatus.PASSED
+        ? await this.grantRank(vote)
+        : null;
+
       await this.editBallot(vote);
-      await this.postOutcome(vote);
+      await this.postOutcome(vote, granted);
     }
     catch (err) {
       this.logger.error(`Failed to announce outcome for vote ${vote.id}: ${err.message}`);
+    }
+  }
+
+  // Applies the new rank in Discord, for the ranks configured as auto-assignable. Adept is not
+  // one of them - it is soft-leadership, so a human grants it even after a vote passes.
+  // The in-game rank is always a human's job; the bot has no way to do it.
+  async grantRank(vote: AlbionRankUpVoteEntity): Promise<GrantOutcome> {
+    const autoAssign: string[] = this.config.get('albion.autoAssignRanks') ?? [];
+
+    if (!autoAssign.includes(vote.toRank)) {
+      return { attempted: false, granted: false };
+    }
+
+    const roleMap: AlbionRoleMapInterface[] = this.config.get('albion.roleMap');
+    const target = roleMap.find((role) => role.name === vote.toRank);
+    const previous = roleMap.find((role) => role.name === vote.fromRank);
+
+    if (!target) {
+      return { attempted: true, granted: false, error: `no role configured for ${vote.toRank}` };
+    }
+
+    try {
+      const member = await this.discordService.getGuildMember(
+        this.config.get('discord.guildId'),
+        vote.discordId,
+      );
+
+      await member.roles.add(await this.discordService.getRoleViaMember(member, target.discordRoleId));
+
+      // The old rank is stripped when it is not marked "keep", matching what the daily scan
+      // would otherwise flag as an inconsistency the next time it runs.
+      if (previous && !previous.keep && member.roles.cache.has(previous.discordRoleId)) {
+        await member.roles.remove(await this.discordService.getRoleViaMember(member, previous.discordRoleId));
+      }
+
+      this.logger.log(`Granted ${vote.toRank} to ${vote.discordId} after a passed vote`);
+      return { attempted: true, granted: true };
+    }
+    catch (err) {
+      this.logger.error(`Could not grant ${vote.toRank} to ${vote.discordId}: ${err.message}`);
+      return { attempted: true, granted: false, error: err.message };
     }
   }
 
@@ -356,7 +409,7 @@ export class AlbionRankUpVoteService {
     }
   }
 
-  private async postOutcome(vote: AlbionRankUpVoteEntity): Promise<void> {
+  private async postOutcome(vote: AlbionRankUpVoteEntity, granted?: GrantOutcome | null): Promise<void> {
     const channel = await this.discordService.getTextChannel(vote.channelId);
     const link = `https://discord.com/channels/${this.config.get('discord.guildId')}/${vote.channelId}/${vote.messageId}`;
 
@@ -364,7 +417,12 @@ export class AlbionRankUpVoteService {
       const pingRole = this.config.get('albion.leadershipPingRole');
 
       await channel.send({
-        content: `<@&${pingRole}> Rank up vote **passed** for <@${vote.discordId}> (${vote.characterName}) — **${this.friendlyRank(vote.fromRank)} → ${this.friendlyRank(vote.toRank)}**, score ${vote.score}/${vote.requiredScore}.\n\nTheir rank now needs changing in Discord and in-game.\n${link}`,
+        content: [
+          `<@&${pingRole}> Rank up vote **passed** for <@${vote.discordId}> (${vote.characterName}) — **${this.friendlyRank(vote.fromRank)} → ${this.friendlyRank(vote.toRank)}**, score ${vote.score}/${vote.requiredScore}.`,
+          '',
+          this.whatIsLeftToDo(vote, granted),
+          link,
+        ].join('\n'),
         allowedMentions: { roles: [pingRole], users: [vote.discordId] },
       });
       return;
@@ -375,6 +433,21 @@ export class AlbionRankUpVoteService {
       content: `${this.outcomeHeader(vote)}\nRank up request for <@${vote.discordId}> (${vote.characterName}) — ${this.friendlyRank(vote.fromRank)} → ${this.friendlyRank(vote.toRank)}.\n${link}`,
       allowedMentions: { users: [] },
     });
+  }
+
+  // The in-game rank always needs a human; only the Discord half can be automated
+  whatIsLeftToDo(vote: AlbionRankUpVoteEntity, granted?: GrantOutcome | null): string {
+    const rank = this.friendlyRank(vote.toRank);
+
+    if (granted?.granted) {
+      return `✅ I have given them the **${rank}** role in Discord.\n⚠️ Their rank still needs changing **in-game**.`;
+    }
+
+    if (granted?.attempted) {
+      return `⚠️ I could not give them the **${rank}** role: ${granted.error}\nIt needs adding by hand, along with the in-game rank.`;
+    }
+
+    return 'Their rank needs changing in Discord **and** in-game.';
   }
 
   friendlyRank(roleName: string): string {
