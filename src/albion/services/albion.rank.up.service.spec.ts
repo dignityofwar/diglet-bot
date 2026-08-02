@@ -168,6 +168,33 @@ describe('AlbionRankUpService', () => {
       expect(outcome.reply).toContain('not been with us long enough');
     });
 
+    // The whole point of the refusal is telling them when to come back, rendered in the
+    // reader's own timezone rather than a date we have to format ourselves
+    it('tells them exactly when they become eligible, as a Discord timestamp', async () => {
+      const registeredAt = daysAgo(13);
+      registrationsRepository.findOne.mockResolvedValue(makeRegistration({ createdAt: registeredAt }));
+
+      const outcome = await service.handleRankUpRequest(member);
+
+      const eligibleAt = Math.floor((registeredAt.getTime() + 14 * DAY_MS) / 1000);
+      expect(outcome.reply).toContain(`<t:${eligibleAt}:R>`); // "in 24 hours"
+      expect(outcome.reply).toContain(`<t:${eligibleAt}:F>`); // "Sunday, 16 August 2026 14:32"
+    });
+
+    it('gives the same eligibility date on the tier 2 gate', async () => {
+      albionUtilities.getHighestAlbionRole.mockReturnValue(graduate);
+      const graduatedAt = daysAgo(27);
+      registrationsRepository.findOne.mockResolvedValue(
+        makeRegistration({ createdAt: daysAgo(300), graduateSince: graduatedAt }),
+      );
+
+      const outcome = await service.handleRankUpRequest(member);
+
+      const eligibleAt = Math.floor((graduatedAt.getTime() + 28 * DAY_MS) / 1000);
+      expect(outcome.reply).toContain(`<t:${eligibleAt}:R>`);
+      expect(outcome.reply).toContain(`<t:${eligibleAt}:F>`);
+    });
+
     it('accepts on day 14', async () => {
       registrationsRepository.findOne.mockResolvedValue(makeRegistration({ createdAt: daysAgo(14) }));
 

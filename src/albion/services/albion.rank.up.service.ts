@@ -348,7 +348,7 @@ ${stats}`;
       case RankUpRefusal.TOO_NEW:
         return `⛔ You have not been with us long enough yet. You can request a rank up ${discordTime(date, 'R')} (${discordTime(date, 'F')}).`;
       case RankUpRefusal.COOLDOWN:
-        return `⛔ You have already requested a rank up recently. You can try again ${discordTime(date, 'R')}.`;
+        return `⛔ You have already requested a rank up recently. You can try again ${discordTime(date, 'R')} (${discordTime(date, 'F')}).`;
       case RankUpRefusal.NO_GRADUATE_DATE:
         return '⛔ We do not have a record of when you became a Graduate, so we cannot check the 4 week requirement. Please ask leadership.';
       case RankUpRefusal.VOTE_ALREADY_OPEN:
