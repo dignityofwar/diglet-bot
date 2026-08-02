@@ -5,7 +5,6 @@ import { getRepositoryToken } from '@mikro-orm/nestjs';
 import { Collection } from 'discord.js';
 import { AlbionRankProgressService } from './albion.rank.progress.service';
 import { AlbionRegistrationsEntity } from '../../database/entities/albion.registrations.entity';
-import { DiscordService } from '../../discord/discord.service';
 import { TestBootstrapper } from '../../test.bootstrapper';
 
 const GRADUATE_ROLE = '1218115340009996339';
@@ -14,7 +13,6 @@ const ADEPT_ROLE = '1218115422029873153';
 describe('AlbionRankProgressService', () => {
   let service: AlbionRankProgressService;
   let registrationsRepository: any;
-  let discordService: any;
   let flush: jest.Mock;
 
   const makeRegistration = (overrides: any = {}) => ({
@@ -46,18 +44,10 @@ describe('AlbionRankProgressService', () => {
       }),
     };
 
-    discordService = {
-      getGuild: jest.fn().mockResolvedValue({
-        id: 'guild-1',
-        members: { fetch: jest.fn().mockResolvedValue(true), cache: new Collection<string, any>() },
-      }),
-    };
-
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         AlbionRankProgressService,
         ConfigService,
-        { provide: DiscordService, useValue: discordService },
         { provide: getRepositoryToken(AlbionRegistrationsEntity), useValue: registrationsRepository },
       ],
     }).compile();
@@ -65,23 +55,6 @@ describe('AlbionRankProgressService', () => {
     TestBootstrapper.setupConfig(module);
     service = module.get<AlbionRankProgressService>(AlbionRankProgressService);
   });
-
-  const withGuildMembers = (members: any[]) => {
-    const cache = new Collection<string, any>(members.map((m) => [m.id, m]));
-    // The service clears the cache then refetches, so restore it on fetch
-    const restore = new Collection<string, any>(cache);
-
-    discordService.getGuild.mockResolvedValue({
-      id: 'guild-1',
-      members: {
-        fetch: jest.fn().mockImplementation(async () => {
-          restore.forEach((v, k) => cache.set(k, v));
-          return cache;
-        }),
-        cache,
-      },
-    });
-  };
 
   it('should be defined', () => {
     expect(service).toBeDefined();
@@ -112,14 +85,16 @@ describe('AlbionRankProgressService', () => {
       expect(registration.adeptSince).toBeInstanceOf(Date);
     });
 
-    // Removing and re-adding a role must not reset someone's clock
-    it('never overwrites a date that is already set', async () => {
-      const original = new Date('2020-01-01T00:00:00Z');
-      const registration = makeRegistration({ graduateSince: original });
+    // The migration stamps every registration including Disciples, so a promoted Disciple
+    // must get their real promotion date rather than keeping the migration's placeholder
+    it('overwrites the migration placeholder when the role is actually gained', async () => {
+      const placeholder = new Date('2020-01-01T00:00:00Z');
+      const registration = makeRegistration({ graduateSince: placeholder });
 
       await gainRole(GRADUATE_ROLE, registration);
 
-      expect(registration.graduateSince).toBe(original);
+      expect(registration.graduateSince).not.toBe(placeholder);
+      expect(registration.graduateSince!.getFullYear()).toBeGreaterThan(2020);
     });
 
     const loseRole = async (roleId: string, registration: any) => {
@@ -207,132 +182,6 @@ describe('AlbionRankProgressService', () => {
       await service.onGuildMemberUpdate([before, after] as never);
 
       expect(registrationsRepository.findOne).not.toHaveBeenCalled();
-    });
-  });
-
-  describe('one-off backfill', () => {
-    it('cache busts before reading roles, so a stale cache cannot stamp the wrong people', async () => {
-      const registration = makeRegistration();
-      registrationsRepository.find.mockResolvedValue([registration]);
-      withGuildMembers([memberWithRoles('member-1', [GRADUATE_ROLE])]);
-
-      const guild = await discordService.getGuild();
-      const clear = jest.spyOn(guild.members.cache, 'clear');
-
-      await service.seedExistingRanks();
-
-      expect(clear).toHaveBeenCalled();
-      expect(guild.members.fetch).toHaveBeenCalled();
-    });
-
-    it('reports what it did', async () => {
-      registrationsRepository.find.mockResolvedValue([
-        makeRegistration({ discordId: 'grad' }),
-        makeRegistration({ discordId: 'adept' }),
-        makeRegistration({ discordId: 'done', graduateSince: new Date('2020-01-01T00:00:00Z') }),
-        makeRegistration({ discordId: 'gone' }),
-      ]);
-      withGuildMembers([
-        memberWithRoles('grad', [GRADUATE_ROLE]),
-        memberWithRoles('adept', [ADEPT_ROLE]),
-        memberWithRoles('done', [GRADUATE_ROLE]),
-      ]);
-
-      const result = await service.seedExistingRanks();
-
-      expect(result).toEqual({
-        registrations: 4,
-        graduates: 2, // the graduate, plus the adept's implied graduate date
-        adepts: 1,
-        alreadySet: 1,
-        notInServer: 1,
-        dryRun: false,
-      });
-    });
-
-    it('writes nothing on a dry run', async () => {
-      const registration = makeRegistration();
-      registrationsRepository.find.mockResolvedValue([registration]);
-      withGuildMembers([memberWithRoles('member-1', [GRADUATE_ROLE])]);
-
-      const result = await service.seedExistingRanks(true);
-
-      expect(result.graduates).toBe(1);
-      expect(result.dryRun).toBe(true);
-      expect(flush).not.toHaveBeenCalled();
-    });
-
-    it('handles an empty guild without touching Discord', async () => {
-      registrationsRepository.find.mockResolvedValue([]);
-
-      const result = await service.seedExistingRanks();
-
-      expect(result.registrations).toBe(0);
-      expect(discordService.getGuild).not.toHaveBeenCalled();
-    });
-  });
-
-  describe('backfill rules', () => {
-    it('seeds a current Graduate with today', async () => {
-      const registration = makeRegistration();
-      registrationsRepository.find.mockResolvedValue([registration]);
-      withGuildMembers([memberWithRoles('member-1', [GRADUATE_ROLE])]);
-
-      await service.seedExistingRanks();
-
-      expect(registration.graduateSince).toBeInstanceOf(Date);
-      expect(registration.adeptSince).toBeNull();
-    });
-
-    // Disciple to Adept isn't a legal path, so an Adept was necessarily a Graduate first
-    it('seeds an Adept with both dates', async () => {
-      const registration = makeRegistration();
-      registrationsRepository.find.mockResolvedValue([registration]);
-      withGuildMembers([memberWithRoles('member-1', [ADEPT_ROLE])]);
-
-      await service.seedExistingRanks();
-
-      expect(registration.adeptSince).toBeInstanceOf(Date);
-      expect(registration.graduateSince).toBeInstanceOf(Date);
-    });
-
-    it('only fills nulls, so repeat boots are idempotent', async () => {
-      const original = new Date('2020-01-01T00:00:00Z');
-      const registration = makeRegistration({ graduateSince: original });
-      registrationsRepository.find.mockResolvedValue([registration]);
-      withGuildMembers([memberWithRoles('member-1', [GRADUATE_ROLE])]);
-
-      await service.seedExistingRanks();
-
-      expect(registration.graduateSince).toBe(original);
-      expect(flush).not.toHaveBeenCalled();
-    });
-
-    it('leaves a Disciple alone', async () => {
-      const registration = makeRegistration();
-      registrationsRepository.find.mockResolvedValue([registration]);
-      withGuildMembers([memberWithRoles('member-1', ['1218115269419995166'])]);
-
-      await service.seedExistingRanks();
-
-      expect(registration.graduateSince).toBeNull();
-    });
-
-    it('skips registrations whose member has left the server', async () => {
-      const registration = makeRegistration();
-      registrationsRepository.find.mockResolvedValue([registration]);
-      withGuildMembers([]);
-
-      await service.seedExistingRanks();
-
-      expect(registration.graduateSince).toBeNull();
-    });
-
-    // Surfaced to whoever ran the command rather than swallowed
-    it('propagates a failure so the command can report it', async () => {
-      registrationsRepository.find.mockRejectedValue(new Error('db down'));
-
-      await expect(service.seedExistingRanks()).rejects.toThrow('db down');
     });
   });
 });

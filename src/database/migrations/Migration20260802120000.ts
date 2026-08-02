@@ -35,6 +35,16 @@ export class Migration20260802120000 extends Migration {
     this.addSql('alter table `albion_rank_up_vote_entity` add unique `albion_rank_up_vote_entity_pending_key_unique`(`pending_key`);');
 
     this.addSql('alter table `albion_registrations_entity` add `graduate_since` datetime null default null, add `adept_since` datetime null default null, add `last_denial_notice_at` datetime null default null;');
+
+    // Backfill: every existing registration gets today as its graduate date. We have no record
+    // of when anyone was actually promoted, and SQL cannot ask Discord who currently holds the
+    // role, so this stamps everyone including Disciples.
+    //
+    // That is safe because gaining the Graduate role overwrites this date with the real one
+    // (see AlbionRankProgressService) - a Disciple promoted next month gets next month's date,
+    // not this one. For members who are already Graduates the stamp stands, which is the
+    // intended "we don't know, so start the clock now".
+    this.addSql('update `albion_registrations_entity` set `graduate_since` = now();');
   }
 
   override down(): void | Promise<void> {

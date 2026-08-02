@@ -21,7 +21,6 @@ import { AlbionRankUpService } from './services/albion.rank.up.service';
 import { AlbionRankProgressService } from './services/albion.rank.progress.service';
 import { AlbionRankUpVoteService } from './services/albion.rank.up.vote.service';
 import { AlbionRankUpVoteCronService } from './services/albion.rank.up.vote.cron.service';
-import { AlbionSeedRankDatesCommand } from './commands/seed-rank-dates.command';
 import { GeneralModule } from '../general/general.module';
 
 @Module({
@@ -37,7 +36,6 @@ import { GeneralModule } from '../general/general.module';
     AlbionRankUpService,
     AlbionRankUpVoteCronService,
     AlbionRankUpVoteService,
-    AlbionSeedRankDatesCommand,
     AlbionRegisterCommand,
     AlbionRegisterQueueCommand,
     AlbionForceRetryCommand,
