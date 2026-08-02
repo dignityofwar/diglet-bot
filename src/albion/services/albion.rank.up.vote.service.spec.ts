@@ -5,7 +5,9 @@ import { getRepositoryToken } from '@mikro-orm/nestjs';
 import { Collection } from 'discord.js';
 import {
   AlbionRankUpVoteService,
+  majorityScore,
   PROVISIONAL_HOLD_MS,
+  REACTION_DEBOUNCE_MS,
   scoreHeading,
   UNPOSTED_GRACE_MS,
   VOTE_APPROVE,
@@ -363,6 +365,192 @@ describe('AlbionRankUpVoteService', () => {
     });
   });
 
+  describe('majorityScore', () => {
+    // Strictly more than half. An even electorate needs half plus 0.5, not a whole extra vote.
+    it.each([
+      [1, 1],
+      [2, 1.5],
+      [4, 2.5],
+      [5, 3],
+      [6, 3.5],
+      [7, 4],
+      [8, 4.5],
+    ])('%i voters pass at %d', (electors, expected) => {
+      expect(majorityScore(electors)).toBe(expected);
+    });
+
+    it('is always more than half the electorate', () => {
+      for (let n = 1; n <= 20; n++) {
+        expect(majorityScore(n)).toBeGreaterThan(n / 2);
+      }
+    });
+  });
+
+  describe('debouncing a burst of reactions', () => {
+    beforeEach(() => jest.useFakeTimers());
+    afterEach(() => jest.useRealTimers());
+
+    it('recounts once the burst has settled', async () => {
+      const vote = makeVote();
+      voteRepository.findOne.mockResolvedValue(vote);
+      const evaluate = jest.spyOn(service, 'evaluate').mockResolvedValue(undefined);
+
+      await service.scheduleRecount(vote);
+      expect(evaluate).not.toHaveBeenCalled();
+
+      await jest.advanceTimersByTimeAsync(REACTION_DEBOUNCE_MS);
+
+      expect(evaluate).toHaveBeenCalledTimes(1);
+    });
+
+    // The whole point: five electors reacting together produce one tally, not five racing ones
+    it('collapses rapid changes into a single recount', async () => {
+      const vote = makeVote();
+      voteRepository.findOne.mockResolvedValue(vote);
+      const evaluate = jest.spyOn(service, 'evaluate').mockResolvedValue(undefined);
+
+      for (let i = 0; i < 5; i++) {
+        await service.scheduleRecount(vote);
+        await jest.advanceTimersByTimeAsync(REACTION_DEBOUNCE_MS / 2);
+      }
+
+      expect(evaluate).not.toHaveBeenCalled();
+
+      await jest.advanceTimersByTimeAsync(REACTION_DEBOUNCE_MS);
+
+      expect(evaluate).toHaveBeenCalledTimes(1);
+    });
+
+    it('debounces each ballot separately', async () => {
+      voteRepository.findOne.mockImplementation(async ({ id }: any) => makeVote({ id }));
+      const evaluate = jest.spyOn(service, 'evaluate').mockResolvedValue(undefined);
+
+      await service.scheduleRecount(makeVote({ id: 1 }));
+      await service.scheduleRecount(makeVote({ id: 2 }));
+      await jest.advanceTimersByTimeAsync(REACTION_DEBOUNCE_MS);
+
+      expect(evaluate).toHaveBeenCalledTimes(2);
+    });
+
+    // The wait is long enough for the vote to have been resolved by the cron underneath it
+    it('does nothing when the vote resolved while it waited', async () => {
+      voteRepository.findOne.mockResolvedValue(null);
+      const evaluate = jest.spyOn(service, 'evaluate');
+
+      await service.scheduleRecount(makeVote({ id: 1 }));
+      await jest.advanceTimersByTimeAsync(REACTION_DEBOUNCE_MS);
+
+      expect(evaluate).not.toHaveBeenCalled();
+    });
+
+    it('only ever looks at ballots that are still pending', async () => {
+      voteRepository.findOne.mockResolvedValue(null);
+
+      await service.recount(1);
+
+      expect(voteRepository.findOne).toHaveBeenCalledWith({
+        id: 1,
+        status: AlbionRankUpVoteStatus.PENDING,
+      });
+    });
+
+    it('does not let a failed recount escape', async () => {
+      voteRepository.findOne.mockRejectedValue(new Error('db down'));
+
+      await expect(service.recount(1)).resolves.toBeUndefined();
+    });
+  });
+
+  describe('flagging the score as recalculating', () => {
+    beforeEach(() => jest.useFakeTimers());
+    afterEach(() => jest.useRealTimers());
+
+    const withBallotContent = (content: string) => {
+      const message = makeMessage({}, content);
+      discordService.getTextChannel = jest.fn().mockResolvedValue({
+        id: 'chan-1', send: channelSend, messages: { fetch: jest.fn().mockResolvedValue(message) },
+      });
+      return message;
+    };
+
+    // The number is about to move, so it should look unsettled rather than quietly wrong
+    it('marks the score the moment a change is detected', async () => {
+      withBallotContent(scoreHeading(2.5, 4));
+
+      await service.scheduleRecount(makeVote({ score: 2.5 }));
+
+      expect(messageEdit).toHaveBeenCalledWith(scoreHeading(2.5, 4, true));
+    });
+
+    it('keeps the last known score visible while it recalculates', async () => {
+      withBallotContent(scoreHeading(2.5, 4));
+
+      await service.scheduleRecount(makeVote({ score: 2.5 }));
+
+      expect(messageEdit.mock.calls[0][0]).toContain('2.5 / 4');
+    });
+
+    it('marks it once for a whole burst, not once per reaction', async () => {
+      const message = withBallotContent(scoreHeading(2.5, 4));
+      messageEdit.mockImplementation(async (content: string) => {
+        message.content = content;
+        return message;
+      });
+
+      for (let i = 0; i < 4; i++) {
+        await service.scheduleRecount(makeVote({ score: 2.5 }));
+      }
+
+      expect(messageEdit).toHaveBeenCalledTimes(1);
+    });
+
+    it('clears the marker when the recount lands', async () => {
+      withBallotContent(scoreHeading(2.5, 4, true));
+      const vote = makeVote({ score: 2.5 });
+      voteRepository.findOne.mockResolvedValue(vote);
+
+      await service.recount(vote.id);
+
+      expect(messageEdit).toHaveBeenCalledWith(expect.not.stringContaining('recalculating'));
+    });
+
+    it('does not let a failed marker edit stop the recount being scheduled', async () => {
+      discordService.getTextChannel = jest.fn().mockRejectedValue(new Error('discord down'));
+      const vote = makeVote();
+      voteRepository.findOne.mockResolvedValue(vote);
+      const evaluate = jest.spyOn(service, 'evaluate').mockResolvedValue(undefined);
+
+      await service.scheduleRecount(vote);
+      await jest.advanceTimersByTimeAsync(REACTION_DEBOUNCE_MS);
+
+      expect(evaluate).toHaveBeenCalled();
+    });
+  });
+
+  describe('resyncPending', () => {
+    // The debounce timer is in process, so a restart loses any recount it was holding
+    it('re-evaluates every open ballot that was posted', async () => {
+      const votes = [makeVote({ id: 1 }), makeVote({ id: 2 })];
+      voteRepository.find.mockResolvedValue(votes);
+      const evaluate = jest.spyOn(service, 'evaluate').mockResolvedValue(undefined);
+
+      await service.resyncPending();
+
+      expect(evaluate).toHaveBeenCalledTimes(2);
+    });
+
+    it('skips ballots that were never posted', async () => {
+      voteRepository.find.mockResolvedValue([]);
+
+      await service.resyncPending();
+
+      expect(voteRepository.find).toHaveBeenCalledWith({
+        status: AlbionRankUpVoteStatus.PENDING,
+        messageId: { $ne: null },
+      });
+    });
+  });
+
   describe('the live score line', () => {
     // The regex that rewrites it has to match what the ballot builder wrote. If they drift, the
     // score silently stops updating and nothing errors.
@@ -662,42 +850,52 @@ describe('AlbionRankUpVoteService', () => {
 
     const userReacting = (id: string, bot = false) => ({ partial: false, id, bot } as any);
 
-    it('evaluates the vote a tracked ballot belongs to', async () => {
+    it('schedules a recount for the ballot the reaction belongs to', async () => {
       const vote = makeVote();
       voteRepository.findOne.mockResolvedValue(vote);
+      const schedule = jest.spyOn(service, 'scheduleRecount').mockImplementation(() => undefined);
+
+      await service.onReactionAdd([reactionOn('msg-1'), userReacting('e1')] as never);
+
+      expect(schedule).toHaveBeenCalledWith(vote);
+    });
+
+    // Tallying on each event lands a count taken mid-change; the burst has to settle first
+    it('does not recount straight away', async () => {
+      voteRepository.findOne.mockResolvedValue(makeVote());
       const evaluate = jest.spyOn(service, 'evaluate').mockResolvedValue(undefined);
 
       await service.onReactionAdd([reactionOn('msg-1'), userReacting('e1')] as never);
 
-      expect(evaluate).toHaveBeenCalledWith(vote);
+      expect(evaluate).not.toHaveBeenCalled();
     });
 
     it('ignores reactions on messages that are not ballots', async () => {
       voteRepository.findOne.mockResolvedValue(null);
-      const evaluate = jest.spyOn(service, 'evaluate');
+      const schedule = jest.spyOn(service, 'scheduleRecount');
 
       await service.onReactionAdd([reactionOn('some-other-message'), userReacting('e1')] as never);
 
-      expect(evaluate).not.toHaveBeenCalled();
+      expect(schedule).not.toHaveBeenCalled();
     });
 
     it('ignores the bot reacting to itself', async () => {
-      const evaluate = jest.spyOn(service, 'evaluate');
+      const schedule = jest.spyOn(service, 'scheduleRecount');
 
       await service.onReactionAdd([reactionOn('msg-1'), userReacting('bot', true)] as never);
 
       expect(voteRepository.findOne).not.toHaveBeenCalled();
-      expect(evaluate).not.toHaveBeenCalled();
+      expect(schedule).not.toHaveBeenCalled();
     });
 
     it('re-evaluates when a reaction is removed', async () => {
       const vote = makeVote();
       voteRepository.findOne.mockResolvedValue(vote);
-      const evaluate = jest.spyOn(service, 'evaluate').mockResolvedValue(undefined);
+      const schedule = jest.spyOn(service, 'scheduleRecount').mockImplementation(() => undefined);
 
       await service.onReactionRemove([reactionOn('msg-1'), userReacting('e1')] as never);
 
-      expect(evaluate).toHaveBeenCalledWith(vote);
+      expect(schedule).toHaveBeenCalledWith(vote);
     });
 
     it('does not let a scoring failure escape into the gateway handler', async () => {

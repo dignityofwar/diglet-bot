@@ -649,12 +649,36 @@ describe('AlbionRankUpService', () => {
   });
 
   describe('the ballot', () => {
+    // An even electorate is where the majority rule bites: 6 passes at 3.5, not 4
+    it('sets the bar at a true majority for an even electorate', async () => {
+      albionUtilities.getElectors.mockResolvedValue(
+        ['e1', 'e2', 'e3', 'e4', 'e5', 'e6'].map((id) => ({ id })),
+      );
+
+      await service.handleRankUpRequest(member);
+      const content = lastSentContent();
+
+      expect(content).toContain('Eligible voters: 6');
+      expect(content).toContain('Passes at a score of **3.5** — a majority of 6 (6 ÷ 2 + 0.5)');
+      expect(content).toContain('## 📊 Current score: 0 / 3.5');
+    });
+
+    it('freezes the majority on the row, not just the message', async () => {
+      albionUtilities.getElectors.mockResolvedValue(
+        ['e1', 'e2', 'e3', 'e4', 'e5', 'e6'].map((id) => ({ id })),
+      );
+
+      await service.handleRankUpRequest(member);
+
+      expect(votePersist.mock.calls[0][0].requiredScore).toBe(3.5);
+    });
+
     it('states the electorate, threshold and starting score', async () => {
       await service.handleRankUpRequest(member);
 
       const content = lastSentContent();
       expect(content).toContain('Eligible voters: 7');
-      expect(content).toContain('Passes at a score of 4');
+      expect(content).toContain('Passes at a score of **4** — a majority of 7 (7 ÷ 2 + 0.5)');
       expect(content).toContain('## 📊 Current score: 0 / 4');
     });
 
@@ -716,16 +740,26 @@ describe('AlbionRankUpService', () => {
       rollupService.getGameTotals.mockResolvedValue([]);
 
       await service.handleRankUpRequest(member);
+      const content = lastSentContent();
 
-      expect(lastSentContent()).toContain('**Character:** Testy');
+      expect(content).toContain('Guildmember **Testy** (<@candidate>)');
+      expect(content).toContain('📅 Registered:');
     });
 
-    it('shows the top three other games and omits the line when there are none', async () => {
+    // The character is the thing leadership recognises, so it leads rather than sitting in stats
+    it('names the character and the member on the opening line', async () => {
+      await service.handleRankUpRequest(member);
+      const content = lastSentContent();
+
+      expect(content).toContain('Guildmember **Testy** (<@candidate>) wants to be ranked up');
+      expect(content).not.toContain('**Character:**');
+    });
+
+    // The vote is about Albion. Listing what else someone plays invites judging them on it.
+    it('reports Albion only, never the other games recorded', async () => {
       rollupService.getGameTotals.mockResolvedValue([
         { gameName: 'Albion Online', minutes: 600 },
         { gameName: 'Foxhole', minutes: 300 },
-        { gameName: 'Deep Rock', minutes: 120 },
-        { gameName: 'Factorio', minutes: 60 },
         { gameName: 'Noita', minutes: 30 },
       ]);
 
@@ -733,14 +767,42 @@ describe('AlbionRankUpService', () => {
       const content = lastSentContent();
 
       expect(content).toContain('Albion Online: 10h 0m');
-      expect(content).toContain('Foxhole 5h');
+      expect(content).not.toContain('Foxhole');
       expect(content).not.toContain('Noita');
+      expect(content).not.toContain('Other games');
     });
 
-    it('omits the other games line entirely when there are none', async () => {
-      await service.handleRankUpRequest(member);
+    it('heads the block Metrics and bullets the dates with the rest', async () => {
+      rollupService.getRollup.mockResolvedValue([{ messagesSent: 5, reactionsAdded: 2, voiceMinutes: 60 }]);
 
-      expect(lastSentContent()).not.toContain('Other games');
+      await service.handleRankUpRequest(member);
+      const content = lastSentContent();
+
+      expect(content).toContain('### Metrics');
+      expect(content).toMatch(/- 📅 Registered:.*30\*\* days ago/);
+    });
+
+    // The stats are server wide, and reading them as Albion-only would undercount everyone
+    it('marks the server wide counters against their footnote', async () => {
+      rollupService.getRollup.mockResolvedValue([{ messagesSent: 5, reactionsAdded: 2, voiceMinutes: 60 }]);
+
+      await service.handleRankUpRequest(member);
+      const content = lastSentContent();
+
+      expect(content).toMatch(/🎙️ Voice:.*²/);
+      expect(content).toMatch(/💬 Messages:.*²/);
+      expect(content).toMatch(/⭐ Reactions:.*²/);
+      expect(content).toContain('² Monitored across the entire DIG server, not filtered by Albion section.');
+    });
+
+    it('marks the game figures against the presence footnote', async () => {
+      rollupService.getGameTotals.mockResolvedValue([{ gameName: 'Albion Online', minutes: 120 }]);
+
+      await service.handleRankUpRequest(member);
+      const content = lastSentContent();
+
+      expect(content).toMatch(/⚔️.*¹/);
+      expect(content).toContain('¹ Game time is sampled from Discord presence');
     });
 
     it('carries both the tracking and presence caveats', async () => {

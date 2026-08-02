@@ -6,7 +6,7 @@ import {
   AlbionRankUpVoteEntity,
   AlbionRankUpVoteStatus,
 } from '../../database/entities/albion.rank.up.vote.entity';
-import { AlbionRankUpVoteService, PROVISIONAL_HOLD_MS } from './albion.rank.up.vote.service';
+import { AlbionRankUpVoteService } from './albion.rank.up.vote.service';
 
 @Injectable()
 export class AlbionRankUpVoteCronService implements OnApplicationBootstrap {
@@ -43,23 +43,10 @@ export class AlbionRankUpVoteCronService implements OnApplicationBootstrap {
     // First, so a stranded claim is cleared before expireOverdue can time it out
     await this.voteService.reclaimUnposted();
     await this.reconcileUnannounced();
-    await this.commitElapsedHolds();
+    // Re-tallies every open ballot, which also commits any hold whose window has passed. A cron
+    // rather than an in-process timer, so a restart mid-hold doesn't strand the ballot.
+    await this.voteService.resyncPending();
     await this.expireOverdue();
-  }
-
-  // Commits early results whose cooling off window has passed. This is the mechanism rather
-  // than an in-process timer, so a restart mid-hold doesn't strand the ballot.
-  async commitElapsedHolds(): Promise<void> {
-    const held = await this.voteRepository.find({
-      status: AlbionRankUpVoteStatus.PENDING,
-      provisionalSince: { $lte: new Date(Date.now() - PROVISIONAL_HOLD_MS) },
-    });
-
-    for (const vote of held) {
-      // Re-tally rather than trusting the stored result, in case reactions changed while
-      // the bot was down and the hold silently became wrong
-      await this.voteService.evaluate(vote);
-    }
   }
 
   // The crash-in-between case: resolved in the database, never posted to Discord

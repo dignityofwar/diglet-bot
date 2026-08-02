@@ -12,7 +12,13 @@ import { AlbionUtilities } from '../utilities/albion.utilities';
 import { DiscordService } from '../../discord/discord.service';
 import { MemberActivityRollupService } from '../../general/services/member.activity.rollup.service';
 import { LeadershipPing } from '../../config/albion.app.config';
-import { AlbionRankUpVoteService, scoreHeading, VOTE_REACTIONS } from './albion.rank.up.vote.service';
+import {
+  AlbionRankUpVoteService,
+  majorityScore,
+  PROVISIONAL_HOLD_MS,
+  scoreHeading,
+  VOTE_REACTIONS,
+} from './albion.rank.up.vote.service';
 import { discordTime } from '../../helpers';
 
 const DAY_MS = 24 * 60 * 60 * 1000;
@@ -30,8 +36,10 @@ const LOCKOUT_STATUSES = [
   AlbionRankUpVoteStatus.VETOED,
 ];
 const VOTE_DURATION_DAYS = 5;
+
+// Stated on the ballot, so it is read from the hold itself rather than written down twice
+const HOLD_HOURS = Math.round(PROVISIONAL_HOLD_MS / (60 * 60 * 1000));
 const MAX_CHARACTER_NAME = 32;
-const MAX_GAME_NAME = 48;
 
 export enum RankUpRefusal {
   NOT_REGISTERED = 'NOT_REGISTERED',
@@ -179,14 +187,14 @@ export class AlbionRankUpService implements OnApplicationBootstrap {
   ): Promise<RankUpOutcome> {
     const electors = await this.albionUtilities.getElectors(member.guild);
 
-    // floor(0/2)+1 is 1, which would post a ballot any single reaction could pass.
+    // An empty electorate would set the bar at half a point, which a single shrug clears.
     // That's a configuration fault, not a vote.
     if (electors.length === 0) {
       this.logger.error('Refusing to open a rank up ballot: no electors found in the guild');
       return await this.refuse(member, registration, tier, RankUpRefusal.NO_ELECTORATE);
     }
 
-    const requiredScore = Math.floor(electors.length / 2) + 1;
+    const requiredScore = majorityScore(electors.length);
     const expiresAt = new Date(Date.now() + VOTE_DURATION_DAYS * DAY_MS);
     const characterName = registration.characterName.slice(0, MAX_CHARACTER_NAME);
 
@@ -353,7 +361,7 @@ export class AlbionRankUpService implements OnApplicationBootstrap {
 
     return `${ping.mention}
 
-Guildmember <@${member.id}> wants to be ranked up from **${this.friendlyRank(tier.from)}** to **${this.friendlyRank(tier.to)}**.
+Guildmember **${registration.characterName.slice(0, MAX_CHARACTER_NAME)}** (<@${member.id}>) wants to be ranked up from **${this.friendlyRank(tier.from)}** to **${this.friendlyRank(tier.to)}**.
 Please react with the following:
 
 👍 - to approve the rank up
@@ -361,11 +369,13 @@ Please react with the following:
 👎 - to disapprove the rank up
 ⛔ - to put a veto on the rank up (this action needs justification with proof)
 
-👍 = 1 point · 🤷 = 0.5 points · 👎 = 0 points · ⛔ ends the vote immediately
+👍 = 1 point · 🤷 = 0.5 points · 👎 = 0 points · ⛔ closes the vote whatever the score
 
 Eligible voters: ${electorateSize}
-Passes at a score of ${requiredScore}
+Passes at a score of **${requiredScore}** — a majority of ${electorateSize} (${electorateSize} ÷ 2 + 0.5)
 Voting closes ${discordTime(expiresAt, 'R')}
+
+-# Every outcome, a veto included, is held for ${HOLD_HOURS} hour${HOLD_HOURS === 1 ? '' : 's'} before it locks in. Lift a veto inside that window and the vote carries on.
 
 ${scoreHeading(0, requiredScore)}
 
@@ -395,21 +405,18 @@ ${stats}`;
     const registeredDays = Math.floor((Date.now() - registration.createdAt.getTime()) / DAY_MS);
 
     const albionName = this.config.get('albion.gameActivityName');
+    // Only Albion is reported. Other games are still recorded, but they are not what this
+    // vote is about and listing them invites judging people on what else they play.
     const albionMinutes = gameTotals.find((game) => game.gameName === albionName)?.minutes ?? 0;
-    const otherGames = gameTotals
-      .filter((game) => game.gameName !== albionName)
-      .slice(0, 3)
-      .map((game) => `${game.gameName.slice(0, MAX_GAME_NAME)} ${Math.round(game.minutes / 60)}h`);
 
     const lines = [
-      '### Activity',
-      `**Character:** ${registration.characterName}`,
-      `**Registered:** ${discordTime(registration.createdAt, 'D')} — ${registeredDays} days ago`,
+      '### Metrics',
+      `- 📅 Registered: ${discordTime(registration.createdAt, 'D')} — **${registeredDays}** days ago`,
     ];
 
     if (tier.to === '@ALB/Adept' && registration.graduateSince) {
       const graduateDays = Math.floor((Date.now() - registration.graduateSince.getTime()) / DAY_MS);
-      lines.push(`**Graduate since:** ${discordTime(registration.graduateSince, 'D')} — ${graduateDays} days ago`);
+      lines.push(`- 🎓 Graduate since: ${discordTime(registration.graduateSince, 'D')} — **${graduateDays}** days ago`);
     }
 
     // No rows at all is not the same as a member who did nothing. Rendering zeroes and a red band
@@ -423,17 +430,13 @@ ${stats}`;
     }
     else {
       lines.push(gameTotals.length > 0
-        ? `- ⚔️ **${albionName}: ${this.friendlyDuration(albionMinutes)}**`
-        : '- ⚔️ No game activity recorded');
-
-      if (otherGames.length > 0) {
-        lines.push(`- 🎮 Other games: ${otherGames.join(', ')}`);
-      }
+        ? `- ⚔️ **${albionName}: ${this.friendlyDuration(albionMinutes)}** ¹`
+        : '- ⚔️ No game activity recorded ¹');
 
       lines.push(
-        `- 🎙️ Voice: **${this.friendlyDuration(voiceMinutes)}**`,
-        `- 💬 Messages: **${messages}** (${(messages / trackedDays).toFixed(1)}/day)`,
-        `- ⭐ Reactions: **${reactions}**`,
+        `- 🎙️ Voice: **${this.friendlyDuration(voiceMinutes)}** ²`,
+        `- 💬 Messages: **${messages}** (${(messages / trackedDays).toFixed(1)}/day) ²`,
+        `- ⭐ Reactions: **${reactions}** ²`,
         `- 📊 Active on **${activeDays}** of **${trackedDays}** days (${((activeDays / trackedDays) * 100).toFixed(0)}%) — ${this.activityBand(activeDays, trackedDays)}`,
       );
     }
@@ -445,7 +448,10 @@ ${stats}`;
       lines.push('\n-# Activity tracking has not recorded anything yet, for anyone.');
     }
 
-    lines.push('-# Game time is sampled from Discord presence — it only counts when the member has Discord open with game activity sharing enabled, so a low figure may reflect settings rather than inactivity.');
+    lines.push(
+      '-# ¹ Game time is sampled from Discord presence — it only counts when the member has Discord open with game activity sharing enabled, so a low figure may reflect settings rather than inactivity.',
+      '-# ² Monitored across the entire DIG server, not filtered by Albion section.',
+    );
 
     return lines.join('\n');
   }
