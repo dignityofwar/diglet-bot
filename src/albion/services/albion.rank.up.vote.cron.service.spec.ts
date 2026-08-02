@@ -2,7 +2,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@mikro-orm/nestjs';
 import { AlbionRankUpVoteCronService } from './albion.rank.up.vote.cron.service';
-import { AlbionRankUpVoteService, PROVISIONAL_HOLD_MS } from './albion.rank.up.vote.service';
+import { AlbionRankUpVoteService } from './albion.rank.up.vote.service';
 import {
   AlbionRankUpVoteEntity,
   AlbionRankUpVoteStatus,
@@ -34,6 +34,7 @@ describe('AlbionRankUpVoteCronService', () => {
 
     voteService = {
       reclaimUnposted: jest.fn().mockResolvedValue(0),
+      resyncPending: jest.fn().mockResolvedValue(undefined),
       evaluate: jest.fn().mockResolvedValue(undefined),
       resolve: jest.fn().mockResolvedValue(true),
       announce: jest.fn().mockResolvedValue(undefined),
@@ -69,29 +70,6 @@ describe('AlbionRankUpVoteCronService', () => {
       await service.reconcileUnannounced();
 
       expect(voteService.announce).not.toHaveBeenCalled();
-    });
-  });
-
-  describe('commitElapsedHolds', () => {
-    it('re-evaluates a hold whose window has passed', async () => {
-      const vote = makeVote({
-        provisionalStatus: AlbionRankUpVoteStatus.PASSED,
-        provisionalSince: new Date(Date.now() - PROVISIONAL_HOLD_MS - 1000),
-      });
-      voteRepository.find.mockResolvedValueOnce([vote]);
-
-      await service.commitElapsedHolds();
-
-      // Re-tallied rather than trusting the stored result, in case reactions changed
-      expect(voteService.evaluate).toHaveBeenCalledWith(vote);
-    });
-
-    it('queries only holds older than the window', async () => {
-      await service.commitElapsedHolds();
-
-      const query = voteRepository.find.mock.calls[0][0];
-      expect(query.status).toBe(AlbionRankUpVoteStatus.PENDING);
-      expect(query.provisionalSince.$lte).toBeInstanceOf(Date);
     });
   });
 
@@ -162,13 +140,16 @@ describe('AlbionRankUpVoteCronService', () => {
         order.push('reclaim');
         return 0;
       });
+      voteService.resyncPending.mockImplementation(async () => {
+        order.push('resync');
+      });
       jest.spyOn(service, 'expireOverdue').mockImplementation(async () => {
         order.push('expire');
       });
 
       await service.sweep();
 
-      expect(order).toEqual(['reclaim', 'expire']);
+      expect(order).toEqual(['reclaim', 'resync', 'expire']);
     });
   });
 

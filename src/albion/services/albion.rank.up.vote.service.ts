@@ -34,10 +34,19 @@ const DISCORD_UNKNOWN_MESSAGE = 10008;
 // which has already had the full voting period.
 export const PROVISIONAL_HOLD_MS = 60 * 60 * 1000;
 
+// A majority is strictly more than half. Shrugs are worth 0.5, so half a point is a real
+// increment and an even electorate needs half plus 0.5 rather than a whole extra vote:
+// 6 voters pass at 3.5, not 4. Odd counts are unchanged - 7 still passes at 4.
+export const majorityScore = (electorateSize: number): number => electorateSize / 2 + 0.5;
+
+// Shown the moment a change is detected, so a number that is about to move looks visibly
+// unsettled rather than silently wrong while the burst finishes
+export const RECALCULATING = '*(recalculating…)*';
+
 // The one definition of the score line, shared with the ballot builder. Kept together with the
 // regex below, which has to match whatever this writes.
-export const scoreHeading = (score: number, requiredScore: number): string =>
-  `## 📊 Current score: ${score} / ${requiredScore}`;
+export const scoreHeading = (score: number, requiredScore: number, recalculating = false): string =>
+  `## 📊 Current score: ${score} / ${requiredScore}${recalculating ? ` ${RECALCULATING}` : ''}`;
 
 // The live score line plus any hold notice beneath it, rewritten in place on every recount. Both
 // are matched together so a stale hold notice can't survive the replacement. Deliberately loose
@@ -46,6 +55,11 @@ const SCORE_LINE = /^.*Current score:.*(?:\n⏳.*)?$/m;
 
 // Discord rate limits message edits, and a busy ballot recounts on every reaction
 const SCORE_EDIT_THROTTLE_MS = 5000;
+
+// Reactions arrive in bursts: changing your mind fires a remove and an add, and electors tend to
+// vote together. Recounting on each event races Discord's own state and lands a tally taken
+// mid-change. Waiting for the burst to settle means one recount against a settled ballot.
+export const REACTION_DEBOUNCE_MS = 10 * 1000;
 
 // How long a claimed but unposted ballot is left alone before it is treated as dead. A send can
 // stall far longer than it looks - discord.js queues behind rate limits - so this is a long way
@@ -69,6 +83,7 @@ export interface GrantOutcome {
 export class AlbionRankUpVoteService {
   private readonly logger = new Logger(AlbionRankUpVoteService.name);
   private readonly lastScoreEdit = new Map<number, number>();
+  private readonly pendingRecounts = new Map<number, NodeJS.Timeout>();
 
   constructor(
     private readonly config: ConfigService,
@@ -107,10 +122,67 @@ export class AlbionRankUpVoteService {
         return;
       }
 
-      await this.evaluate(vote);
+      await this.scheduleRecount(vote);
     }
     catch (err) {
       this.logger.error(`Error handling rank up vote reaction: ${err.message}`);
+    }
+  }
+
+  // Each new reaction pushes the recount back, so a burst produces one tally once it settles.
+  // The timer is in process and lost on restart; resyncPending() in the sweep is the backstop.
+  async scheduleRecount(vote: AlbionRankUpVoteEntity): Promise<void> {
+    clearTimeout(this.pendingRecounts.get(vote.id));
+
+    const timer = setTimeout(() => {
+      this.pendingRecounts.delete(vote.id);
+      void this.recount(vote.id);
+    }, REACTION_DEBOUNCE_MS);
+
+    timer.unref?.(); // Must not hold the process open on shutdown
+    this.pendingRecounts.set(vote.id, timer);
+
+    await this.markRecalculating(vote);
+  }
+
+  // Flags the score as unsettled straight away. Deliberately outside the edit throttle - it is
+  // the one edit that has to land immediately - but only ever once per burst.
+  private async markRecalculating(vote: AlbionRankUpVoteEntity): Promise<void> {
+    try {
+      const message = await this.fetchBallot(vote);
+
+      if (message.content.includes(RECALCULATING)) {
+        return;
+      }
+
+      const updated = message.content.replace(SCORE_LINE, this.scoreLine(vote, true));
+
+      if (updated !== message.content) {
+        await message.edit(updated);
+      }
+    }
+    catch (err) {
+      // Cosmetic: the recount rewrites the line properly in a few seconds regardless
+      this.logger.warn(`Could not flag ballot ${vote.messageId} as recalculating: ${err.message}`);
+    }
+  }
+
+  async recount(voteId: number): Promise<void> {
+    try {
+      // Re-read rather than reusing the entity - the vote may have resolved while we waited
+      const vote = await this.voteRepository.findOne({
+        id: voteId,
+        status: AlbionRankUpVoteStatus.PENDING,
+      });
+
+      if (!vote) {
+        return;
+      }
+
+      await this.evaluate(vote);
+    }
+    catch (err) {
+      this.logger.error(`Failed the debounced recount for vote ${voteId}: ${err.message}`);
     }
   }
 
@@ -242,8 +314,8 @@ export class AlbionRankUpVoteService {
     return Date.now() - vote.provisionalSince.getTime() >= PROVISIONAL_HOLD_MS;
   }
 
-  scoreLine(vote: AlbionRankUpVoteEntity): string {
-    const base = scoreHeading(vote.score, vote.requiredScore);
+  scoreLine(vote: AlbionRankUpVoteEntity, recalculating = false): string {
+    const base = scoreHeading(vote.score, vote.requiredScore, recalculating);
 
     if (!vote.provisionalStatus || !vote.provisionalSince) {
       return base;
@@ -264,6 +336,8 @@ export class AlbionRankUpVoteService {
   private async refreshScoreLine(vote: AlbionRankUpVoteEntity, message: Message): Promise<void> {
     const lastEdit = this.lastScoreEdit.get(vote.id) ?? 0;
 
+    // Dropped rather than deferred, so a burst of reactions leaves the displayed number behind.
+    // resyncPending() in the sweep is what catches up, within a minute.
     if (Date.now() - lastEdit < SCORE_EDIT_THROTTLE_MS) {
       return;
     }
@@ -286,6 +360,21 @@ export class AlbionRankUpVoteService {
   private async fetchBallot(vote: AlbionRankUpVoteEntity): Promise<Message> {
     const channel = await this.discordService.getTextChannel(vote.channelId) as TextChannel;
     return await channel.messages.fetch(vote.messageId);
+  }
+
+  // Re-tallies every open ballot. Two things leave a displayed score stale with nothing to correct
+  // it: reactions cast while the bot was down are invisible until something recounts, and a
+  // throttled score edit is dropped rather than deferred. Also commits any hold that has elapsed,
+  // since evaluate() does that itself.
+  async resyncPending(): Promise<void> {
+    const open = await this.voteRepository.find({
+      status: AlbionRankUpVoteStatus.PENDING,
+      messageId: { $ne: null },
+    });
+
+    for (const vote of open) {
+      await this.evaluate(vote);
+    }
   }
 
   // A pending row with no messageId is a ballot that was never posted: the insert claimed the
