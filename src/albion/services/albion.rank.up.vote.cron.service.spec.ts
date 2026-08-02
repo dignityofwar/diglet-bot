@@ -33,6 +33,7 @@ describe('AlbionRankUpVoteCronService', () => {
     };
 
     voteService = {
+      reclaimUnposted: jest.fn().mockResolvedValue(0),
       evaluate: jest.fn().mockResolvedValue(undefined),
       resolve: jest.fn().mockResolvedValue(true),
       announce: jest.fn().mockResolvedValue(undefined),
@@ -149,6 +150,25 @@ describe('AlbionRankUpVoteCronService', () => {
         2,
         expect.stringContaining('elapsed'),
       );
+    });
+  });
+
+  describe('sweep', () => {
+    // Before expireOverdue, or a ballot that was never posted gets timed out instead of
+    // reclaimed - which would also lock the member out for the failed vote period
+    it('reclaims unposted ballots before anything else', async () => {
+      const order: string[] = [];
+      voteService.reclaimUnposted.mockImplementation(async () => {
+        order.push('reclaim');
+        return 0;
+      });
+      jest.spyOn(service, 'expireOverdue').mockImplementation(async () => {
+        order.push('expire');
+      });
+
+      await service.sweep();
+
+      expect(order).toEqual(['reclaim', 'expire']);
     });
   });
 

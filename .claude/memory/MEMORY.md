@@ -13,5 +13,7 @@
 - [Local-midnight date keys are wrong here](local-midnight-date-keys-are-wrong.md) — forceUtcTimezone means setHours(0,0,0,0) splits a day across BST; use utcMidnight()
 - [A nullable unique key enforces one open row](nullable-unique-key-enforces-one-open-row.md) — beats a read-before-write check, which races
 - [Queue status flips collide with history](queue-status-unique-key-collides-with-history.md) — the unique key is on (guild, member, status), so an old succeeded row blocks the new one
+- [execute() needs 'run' for affectedRows](mikro-orm-execute-needs-run-mode.md) — the default returns rows, so every conditional-update election silently reads as lost
+- [A claimed row can strand](claimed-row-before-side-effect-can-strand.md) — anything fallible between the claim and the side effect locks the member behind a ballot nobody saw
 
 Note: this memory lives in the repo at `.claude/memory/` (wired via `autoMemoryDirectory` in `.claude/settings.json`) so it's shared via git across machines and collaborators. See README "Claude Code memory".

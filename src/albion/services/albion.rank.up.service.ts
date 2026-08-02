@@ -1,7 +1,7 @@
 import { Injectable, Logger, OnApplicationBootstrap } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { InjectRepository } from '@mikro-orm/nestjs';
-import { EntityRepository } from '@mikro-orm/core';
+import { EntityRepository, UniqueConstraintViolationException } from '@mikro-orm/core';
 import { GuildMember, TextChannel } from 'discord.js';
 import { AlbionRegistrationsEntity } from '../../database/entities/albion.registrations.entity';
 import {
@@ -11,7 +11,8 @@ import {
 import { AlbionUtilities } from '../utilities/albion.utilities';
 import { DiscordService } from '../../discord/discord.service';
 import { MemberActivityRollupService } from '../../general/services/member.activity.rollup.service';
-import { VOTE_REACTIONS } from './albion.rank.up.vote.service';
+import { LeadershipPing } from '../../config/albion.app.config';
+import { AlbionRankUpVoteService, VOTE_REACTIONS } from './albion.rank.up.vote.service';
 import { discordTime } from '../../helpers';
 
 const DAY_MS = 24 * 60 * 60 * 1000;
@@ -70,6 +71,7 @@ export class AlbionRankUpService implements OnApplicationBootstrap {
     private readonly discordService: DiscordService,
     private readonly albionUtilities: AlbionUtilities,
     private readonly rollupService: MemberActivityRollupService,
+    private readonly voteService: AlbionRankUpVoteService,
     @InjectRepository(AlbionRegistrationsEntity) private readonly registrationsRepository: EntityRepository<AlbionRegistrationsEntity>,
     @InjectRepository(AlbionRankUpVoteEntity) private readonly voteRepository: EntityRepository<AlbionRankUpVoteEntity>,
   ) {}
@@ -171,57 +173,81 @@ export class AlbionRankUpService implements OnApplicationBootstrap {
     const expiresAt = new Date(Date.now() + VOTE_DURATION_DAYS * DAY_MS);
     const characterName = registration.characterName.slice(0, MAX_CHARACTER_NAME);
 
+    // Built before the row is claimed. Anything failing in here afterwards would strand a pending
+    // ballot with no message, locking the member out of a vote nobody could ever see.
+    const content = await this.buildBallot(member, registration, tier, anchor, electors.length, requiredScore, expiresAt);
+    const ping: LeadershipPing = this.config.get('albion.leadershipPing');
+
+    const newBallot = () => new AlbionRankUpVoteEntity({
+      channelId: this.judgementHall.id,
+      discordId: member.id,
+      pendingKey: member.id, // Unique, so the database rejects a second open ballot
+      characterName,
+      fromRank: tier.from,
+      toRank: tier.to,
+      requiredScore,
+      electorateSize: electors.length,
+      expiresAt,
+    });
+
     // The row goes in before the Discord post. Posting first means a flush failure leaves a
     // public ballot nothing tracks and nothing will ever resolve.
     let vote: AlbionRankUpVoteEntity;
 
     try {
-      vote = new AlbionRankUpVoteEntity({
-        channelId: this.judgementHall.id,
-        discordId: member.id,
-        pendingKey: member.id, // Unique, so the database rejects a second open ballot
-        characterName,
-        fromRank: tier.from,
-        toRank: tier.to,
-        requiredScore,
-        electorateSize: electors.length,
-        expiresAt,
-      });
-      await this.voteRepository.getEntityManager().persist(vote).flush();
+      vote = await this.claimBallot(newBallot);
     }
     catch (err) {
+      if (!(err instanceof UniqueConstraintViolationException)) {
+        // Anything that isn't the duplicate guard is a fault, not a member doing something wrong
+        this.logger.error(`Could not open a rank up ballot for ${member.id}: ${err.message}`);
+        return { ok: false, reply: '⛔ Something went wrong opening your rank up request. Please tell leadership.' };
+      }
+
       this.logger.warn(`Refused a duplicate rank up ballot for ${member.id}: ${err.message}`);
       return await this.refuse(member, registration, tier, RankUpRefusal.VOTE_ALREADY_OPEN);
     }
 
-    const content = await this.buildBallot(member, registration, tier, anchor, electors.length, requiredScore, expiresAt);
-    const pingRole = this.config.get('albion.leadershipPingRole');
     let message: Awaited<ReturnType<TextChannel['send']>>;
 
     try {
       message = await this.judgementHall.send({
         content,
-        allowedMentions: { roles: [pingRole], users: [member.id] },
+        allowedMentions: { roles: ping.roles, users: [...ping.users, member.id] },
       });
     }
     catch (err) {
-      // Don't lock the member out behind a ballot that never went up
-      vote.status = 'abandoned' as AlbionRankUpVoteEntity['status'];
-      vote.pendingKey = null;
-      vote.resolutionNote = 'The ballot could not be posted';
-      await this.voteRepository.getEntityManager().persist(vote).flush();
-
       this.logger.error(`Failed to post rank up ballot for ${member.id}: ${err.message}`);
+
+      // Don't lock the member out behind a ballot that never went up. The cleanup gets its own
+      // guard because a failure here would escape and strand the claim it exists to release.
+      try {
+        vote.status = AlbionRankUpVoteStatus.ABANDONED;
+        vote.pendingKey = null;
+        vote.resolutionNote = 'The ballot could not be posted';
+        await this.voteRepository.getEntityManager().persist(vote).flush();
+      }
+      catch (cleanupErr) {
+        // The sweep will reclaim it, so this costs the member a wait rather than a lockout
+        this.logger.error(`Could not release the claim for ${member.id}: ${cleanupErr.message}`);
+      }
+
       return { ok: false, reply: '⛔ Could not post your rank up request. Please tell leadership.' };
     }
 
-    try {
-      vote.messageId = message.id;
-      await this.voteRepository.getEntityManager().persist(vote).flush();
-    }
-    catch (err) {
-      // The ballot is public and now untracked - the one case that needs a human
-      this.logger.error(`Rank up ballot ${message.id} is public but could not be tracked: ${err.message}`);
+    if (!await this.trackBallot(vote, message.id)) {
+      // The sweep reclaimed the claim while the send was in flight, so this ballot is an orphan
+      // nothing will ever resolve. Take it down rather than leave leadership voting on it.
+      this.logger.error(`Ballot ${message.id} for ${member.id} was reclaimed mid-post, removing it`);
+
+      try {
+        await message.delete();
+      }
+      catch (err) {
+        this.logger.error(`Could not remove orphaned ballot ${message.id}: ${err.message}`);
+      }
+
+      return { ok: false, reply: '⛔ Your rank up request could not be opened. Please try again.' };
     }
 
     for (const emoji of VOTE_REACTIONS) {
@@ -240,6 +266,62 @@ export class AlbionRankUpService implements OnApplicationBootstrap {
     };
   }
 
+  // Conditional, because the reclaim sweep can decide a ballot is never going to appear while the
+  // send is still in flight. Losing that race means our post is an orphan, so the caller has to
+  // know rather than write a message ID onto a row somebody else already abandoned.
+  private async trackBallot(vote: AlbionRankUpVoteEntity, messageId: string): Promise<boolean> {
+    try {
+      const result = await this.voteRepository.getEntityManager().getConnection().execute(
+        `update albion_rank_up_vote_entity set message_id = ?, updated_at = ?
+          where id = ? and status = ? and message_id is null`,
+        [messageId, new Date(), vote.id, AlbionRankUpVoteStatus.PENDING],
+        'run',
+      );
+
+      return this.affectedRows(result) === 1;
+    }
+    catch (err) {
+      // Can't tell whether we still own it, and taking down a ballot leadership may already be
+      // voting on is the worse mistake. Leave it up and shout.
+      this.logger.error(`Rank up ballot ${messageId} is public but could not be tracked: ${err.message}`);
+      return true;
+    }
+  }
+
+  private affectedRows(result: unknown): number {
+    if (typeof result === 'number') {
+      return result;
+    }
+
+    return (result as { affectedRows?: number })?.affectedRows ?? 0;
+  }
+
+  // A unique violation can mean a live ballot, or a stranded claim from an attempt that died
+  // before it posted. Clearing the latter is the difference between a retry and a lockout.
+  private async claimBallot(newBallot: () => AlbionRankUpVoteEntity): Promise<AlbionRankUpVoteEntity> {
+    const ballot = newBallot();
+
+    try {
+      await this.voteRepository.getEntityManager().persist(ballot).flush();
+      return ballot;
+    }
+    catch (err) {
+      if (!(err instanceof UniqueConstraintViolationException)) {
+        throw err;
+      }
+
+      if (await this.voteService.reclaimUnposted(ballot.discordId) === 0) {
+        throw err;
+      }
+
+      // Safe to reuse the entity manager: MikroORM drops the failed entity from the persist
+      // stack, so this flush inserts only the replacement. Verified against the container.
+      const retry = newBallot();
+      await this.voteRepository.getEntityManager().persist(retry).flush();
+      return retry;
+    }
+  }
+
   private async buildBallot(
     member: GuildMember,
     registration: AlbionRegistrationsEntity,
@@ -249,10 +331,10 @@ export class AlbionRankUpService implements OnApplicationBootstrap {
     requiredScore: number,
     expiresAt: Date,
   ): Promise<string> {
-    const pingRole = this.config.get('albion.leadershipPingRole');
+    const ping: LeadershipPing = this.config.get('albion.leadershipPing');
     const stats = await this.buildActivityBlock(member.id, anchor, registration, tier);
 
-    return `<@&${pingRole}>
+    return `${ping.mention}
 
 Guildmember <@${member.id}> wants to be ranked up from **${this.friendlyRank(tier.from)}** to **${this.friendlyRank(tier.to)}**.
 Please react with the following:
@@ -313,24 +395,37 @@ ${stats}`;
       lines.push(`**Graduate since:** ${discordTime(registration.graduateSince, 'D')} — ${graduateDays} days ago`);
     }
 
-    lines.push(`- ⚔️ **${albionName}: ${this.friendlyDuration(albionMinutes)}**`);
-
-    if (otherGames.length > 0) {
-      lines.push(`- 🎮 Other games: ${otherGames.join(', ')}`);
+    // No rows at all is not the same as a member who did nothing. Rendering zeroes and a red band
+    // would read as a damning report when it usually means they predate tracking.
+    if (rollup.length === 0 && gameTotals.length === 0) {
+      lines.push(
+        '',
+        '📭 **No activity data recorded for this member.**',
+        'That may mean they were inactive, or simply that nothing has been tracked for them yet — leadership will need to judge this one on what they know.',
+      );
     }
+    else {
+      lines.push(gameTotals.length > 0
+        ? `- ⚔️ **${albionName}: ${this.friendlyDuration(albionMinutes)}**`
+        : '- ⚔️ No game activity recorded');
 
-    lines.push(
-      `- 🎙️ Voice: **${this.friendlyDuration(voiceMinutes)}**`,
-      `- 💬 Messages: **${messages}** (${(messages / trackedDays).toFixed(1)}/day)`,
-      `- ⭐ Reactions: **${reactions}**`,
-      `- 📊 Active on **${activeDays}** of **${trackedDays}** days (${((activeDays / trackedDays) * 100).toFixed(0)}%) — ${this.activityBand(activeDays, trackedDays)}`,
-    );
+      if (otherGames.length > 0) {
+        lines.push(`- 🎮 Other games: ${otherGames.join(', ')}`);
+      }
+
+      lines.push(
+        `- 🎙️ Voice: **${this.friendlyDuration(voiceMinutes)}**`,
+        `- 💬 Messages: **${messages}** (${(messages / trackedDays).toFixed(1)}/day)`,
+        `- ⭐ Reactions: **${reactions}**`,
+        `- 📊 Active on **${activeDays}** of **${trackedDays}** days (${((activeDays / trackedDays) * 100).toFixed(0)}%) — ${this.activityBand(activeDays, trackedDays)}`,
+      );
+    }
 
     if (trackingStart) {
       lines.push(`\n-# Activity tracking began ${discordTime(trackingStart, 'D')}. Figures cover the ${trackedDays} days since.`);
     }
     else {
-      lines.push('\n-# No activity has been recorded yet, so these figures are all zero.');
+      lines.push('\n-# Activity tracking has not recorded anything yet, for anyone.');
     }
 
     lines.push('-# Game time is sampled from Discord presence — it only counts when the member has Discord open with game activity sharing enabled, so a low figure may reflect settings rather than inactivity.');
@@ -459,6 +554,8 @@ ${stats}`;
 
   // Claimed before sending, so two simultaneous refusals can't both post. A failed send then
   // costs at most one suppressed notice, which is the right way round for a rate limit.
+  // 'run' is required: execute() otherwise returns rows, so an UPDATE comes back as [] and this
+  // would always read as "somebody else claimed it" and never post a notice at all.
   private async claimDenialNotice(registration: AlbionRegistrationsEntity): Promise<boolean> {
     const threshold = new Date(Date.now() - DENIAL_NOTICE_THROTTLE_HOURS * 60 * 60 * 1000);
     const connection = this.registrationsRepository.getEntityManager().getConnection();
@@ -467,12 +564,9 @@ ${stats}`;
       `update albion_registrations_entity set last_denial_notice_at = ?, updated_at = ?
         where id = ? and (last_denial_notice_at is null or last_denial_notice_at < ?)`,
       [new Date(), new Date(), registration.id, threshold],
+      'run',
     );
 
-    const affected = typeof result === 'number'
-      ? result
-      : (result as { affectedRows?: number })?.affectedRows ?? 0;
-
-    return affected === 1;
+    return this.affectedRows(result) === 1;
   }
 }
