@@ -30,6 +30,8 @@ describe('AlbionRankUpService', () => {
   let channelSend: jest.Mock;
   let registrationsExecute: jest.Mock;
   let ballotMessage: any;
+  let configService: ConfigService;
+  let discordService: any;
 
   const daysAgo = (days: number) => new Date(Date.now() - days * DAY_MS);
 
@@ -103,20 +105,19 @@ describe('AlbionRankUpService', () => {
 
     voteService = { reclaimUnposted: jest.fn().mockResolvedValue(0) };
 
+    discordService = {
+      getTextChannel: jest.fn().mockResolvedValue({
+        id: 'judgement-hall',
+        isTextBased: () => true,
+        send: channelSend,
+      }),
+    };
+
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         AlbionRankUpService,
         ConfigService,
-        {
-          provide: DiscordService,
-          useValue: {
-            getTextChannel: jest.fn().mockResolvedValue({
-              id: 'judgement-hall',
-              isTextBased: () => true,
-              send: channelSend,
-            }),
-          },
-        },
+        { provide: DiscordService, useValue: discordService },
         { provide: AlbionUtilities, useValue: albionUtilities },
         { provide: MemberActivityRollupService, useValue: rollupService },
         { provide: AlbionRankUpVoteService, useValue: voteService },
@@ -126,6 +127,7 @@ describe('AlbionRankUpService', () => {
     }).compile();
 
     TestBootstrapper.setupConfig(module);
+    configService = module.get<ConfigService>(ConfigService);
     service = module.get<AlbionRankUpService>(AlbionRankUpService);
     await service.onApplicationBootstrap();
   });
@@ -134,6 +136,50 @@ describe('AlbionRankUpService', () => {
 
   it('should be defined', () => {
     expect(service).toBeDefined();
+  });
+
+  describe('bootstrap', () => {
+    // getTextChannel(undefined) fails with "undefined is not a snowflake", which is a Discord
+    // error for what is really a missing environment variable
+    it('names the environment variable when the channel is not configured', async () => {
+      jest.spyOn(configService, 'get').mockImplementation((key: string) =>
+        (key === 'discord.channels.judgementHall' ? undefined : TestBootstrapper.mockConfig.discord.channels));
+
+      await expect(service.onApplicationBootstrap())
+        .rejects.toThrow('CHANNEL_ALBION_JUDGEMENT_HALL is not set');
+    });
+
+    it('refuses when the channel ID does not resolve to a channel', async () => {
+      discordService.getTextChannel.mockResolvedValue(null);
+
+      await expect(service.onApplicationBootstrap()).rejects.toThrow('Could not find the Judgement Hall channel');
+    });
+
+    it('refuses when the channel is not text based', async () => {
+      discordService.getTextChannel.mockResolvedValue({ id: 'x', isTextBased: () => false });
+
+      await expect(service.onApplicationBootstrap()).rejects.toThrow('is not a text channel');
+    });
+  });
+
+  // A failed bootstrap only logs - Nest carries on booting - so the service stays half built
+  describe('when the Judgement Hall channel never resolved', () => {
+    beforeEach(() => {
+      (service as any).judgementHall = undefined;
+    });
+
+    it('refuses with a message naming the cause', async () => {
+      const outcome = await service.handleRankUpRequest(member);
+
+      expect(outcome.ok).toBe(false);
+      expect(outcome.reply).toContain('vote channel is not configured');
+    });
+
+    it('does not reach the database', async () => {
+      await service.handleRankUpRequest(member);
+
+      expect(registrationsRepository.findOne).not.toHaveBeenCalled();
+    });
   });
 
   describe('registration gate', () => {
@@ -502,6 +548,38 @@ describe('AlbionRankUpService', () => {
       const outcome = await service.handleRankUpRequest(member);
 
       expect(outcome.reply).toContain('already have a rank up vote open');
+    });
+
+    it('releases the claim when the ballot cannot be posted', async () => {
+      channelSend.mockRejectedValue(new Error('missing permissions'));
+
+      const outcome = await service.handleRankUpRequest(member);
+
+      const ballot = votePersist.mock.calls.at(-1)[0];
+      expect(ballot.status).toBe(AlbionRankUpVoteStatus.ABANDONED);
+      expect(ballot.pendingKey).toBeNull();
+      expect(outcome.reply).toContain('Could not post your rank up request');
+    });
+
+    // The cleanup escaping would strand the very claim it exists to release
+    it('does not throw when releasing the claim also fails', async () => {
+      channelSend.mockRejectedValue(new Error('missing permissions'));
+      voteFlush.mockResolvedValueOnce(true).mockRejectedValue(new Error('db unreachable'));
+
+      const outcome = await service.handleRankUpRequest(member);
+
+      expect(outcome.ok).toBe(false);
+      expect(outcome.reply).toContain('Could not post your rank up request');
+    });
+
+    it('still refuses when the orphaned ballot cannot be removed', async () => {
+      voteExecute.mockResolvedValue({ affectedRows: 0 });
+      ballotMessage.delete.mockRejectedValue(new Error('already gone'));
+
+      const outcome = await service.handleRankUpRequest(member);
+
+      expect(outcome.ok).toBe(false);
+      expect(outcome.reply).toContain('try again');
     });
 
     it('records the message ID only while it still owns the claim', async () => {
