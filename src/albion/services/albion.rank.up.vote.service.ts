@@ -13,13 +13,31 @@ import { AlbionRoleMapInterface, LeadershipPing } from '../../config/albion.app.
 import { DiscordService } from '../../discord/discord.service';
 import { resolvePartialReaction } from '../../discord/discord.hacks';
 import { discordTime } from '../../helpers';
+import { AlbionRankUpService } from './albion.rank.up.service';
+import {
+  PROVISIONAL_HOLD_MS,
+  RECALCULATING_TICK_MS,
+  scoreHeading,
+  VOTE_APPROVE,
+  VOTE_DISAPPROVE,
+  VOTE_SHRUG,
+  VOTE_VETO,
+} from './albion.ballot.text';
 
-export const VOTE_APPROVE = '👍';
-export const VOTE_SHRUG = '🤷';
-export const VOTE_DISAPPROVE = '👎';
-export const VOTE_VETO = '⛔';
-
-export const VOTE_REACTIONS = [VOTE_APPROVE, VOTE_SHRUG, VOTE_DISAPPROVE, VOTE_VETO];
+// Re-exported so callers have one place to import ballot vocabulary from
+export {
+  majorityScore,
+  UNPOSTED_GRACE_MS,
+  PROVISIONAL_HOLD_MS,
+  RECALCULATING,
+  RECALCULATING_TICK_MS,
+  scoreHeading,
+  VOTE_APPROVE,
+  VOTE_DISAPPROVE,
+  VOTE_REACTIONS,
+  VOTE_SHRUG,
+  VOTE_VETO,
+} from './albion.ballot.text';
 
 const REACTION_SCORES: Record<string, number> = {
   [VOTE_APPROVE]: 1,
@@ -28,25 +46,6 @@ const REACTION_SCORES: Record<string, number> = {
 };
 
 const DISCORD_UNKNOWN_MESSAGE = 10008;
-
-// An early result is held this long before it is committed, so an elector who changes their mind
-// flips the outcome rather than arriving after it was announced. Does not apply to a timeout,
-// which has already had the full voting period.
-export const PROVISIONAL_HOLD_MS = 60 * 60 * 1000;
-
-// A majority is strictly more than half. Shrugs are worth 0.5, so half a point is a real
-// increment and an even electorate needs half plus 0.5 rather than a whole extra vote:
-// 6 voters pass at 3.5, not 4. Odd counts are unchanged - 7 still passes at 4.
-export const majorityScore = (electorateSize: number): number => electorateSize / 2 + 0.5;
-
-// Shown the moment a change is detected, so a number that is about to move looks visibly
-// unsettled rather than silently wrong while the burst finishes
-export const RECALCULATING = '*(recalculating…)*';
-
-// The one definition of the score line, shared with the ballot builder. Kept together with the
-// regex below, which has to match whatever this writes.
-export const scoreHeading = (score: number, requiredScore: number, recalculating = false): string =>
-  `## 📊 Current score: ${score} / ${requiredScore}${recalculating ? ` ${RECALCULATING}` : ''}`;
 
 // The live score line plus any hold notice beneath it, rewritten in place on every recount. Both
 // are matched together so a stale hold notice can't survive the replacement. Deliberately loose
@@ -59,13 +58,13 @@ const SCORE_EDIT_THROTTLE_MS = 5000;
 // Reactions arrive in bursts: changing your mind fires a remove and an add, and electors tend to
 // vote together. Recounting on each event races Discord's own state and lands a tally taken
 // mid-change. Waiting for the burst to settle means one recount against a settled ballot.
-export const REACTION_DEBOUNCE_MS = 10 * 1000;
+export const REACTION_DEBOUNCE_MS = 5 * 1000;
 
-// How long a claimed but unposted ballot is left alone before it is treated as dead. A send can
-// stall far longer than it looks - discord.js queues behind rate limits - so this is a long way
-// past a normal post rather than a tight bound. It is not the only guard: trackBallot() writes the
-// message ID conditionally, so a publish that loses this race takes its own orphan back down.
-export const UNPOSTED_GRACE_MS = 5 * 60 * 1000;
+interface PendingRecount {
+  deadline: number;
+  timer: NodeJS.Timeout;
+  message?: Message;
+}
 
 export interface VoteTally {
   score: number;
@@ -83,13 +82,14 @@ export interface GrantOutcome {
 export class AlbionRankUpVoteService {
   private readonly logger = new Logger(AlbionRankUpVoteService.name);
   private readonly lastScoreEdit = new Map<number, number>();
-  private readonly pendingRecounts = new Map<number, NodeJS.Timeout>();
+  private readonly pendingRecounts = new Map<number, PendingRecount>();
 
   constructor(
     private readonly config: ConfigService,
     private readonly discordService: DiscordService,
     private readonly albionUtilities: AlbionUtilities,
     @InjectRepository(AlbionRankUpVoteEntity) private readonly voteRepository: EntityRepository<AlbionRankUpVoteEntity>,
+    private readonly rankUpService: AlbionRankUpService,
   ) {}
 
   @On('messageReactionAdd')
@@ -129,41 +129,62 @@ export class AlbionRankUpVoteService {
     }
   }
 
-  // Each new reaction pushes the recount back, so a burst produces one tally once it settles.
+  // Each new reaction pushes the deadline back, so a burst produces one tally once it settles.
+  // A reaction arriving mid countdown extends it rather than starting a second one.
   // The timer is in process and lost on restart; resyncPending() in the sweep is the backstop.
   async scheduleRecount(vote: AlbionRankUpVoteEntity): Promise<void> {
-    clearTimeout(this.pendingRecounts.get(vote.id));
+    const deadline = Date.now() + REACTION_DEBOUNCE_MS;
+    const pending = this.pendingRecounts.get(vote.id);
 
-    const timer = setTimeout(() => {
-      this.pendingRecounts.delete(vote.id);
-      void this.recount(vote.id);
-    }, REACTION_DEBOUNCE_MS);
+    if (pending) {
+      pending.deadline = deadline;
+      await this.paintCountdown(vote, pending);
+      return;
+    }
 
+    const timer = setInterval(() => void this.tick(vote), RECALCULATING_TICK_MS);
     timer.unref?.(); // Must not hold the process open on shutdown
-    this.pendingRecounts.set(vote.id, timer);
 
-    await this.markRecalculating(vote);
+    const started: PendingRecount = { deadline, timer };
+    this.pendingRecounts.set(vote.id, started);
+
+    // Painted immediately rather than waiting a tick, so the ballot reacts at once
+    await this.paintCountdown(vote, started);
   }
 
-  // Flags the score as unsettled straight away. Deliberately outside the edit throttle - it is
-  // the one edit that has to land immediately - but only ever once per burst.
-  private async markRecalculating(vote: AlbionRankUpVoteEntity): Promise<void> {
+  private async tick(vote: AlbionRankUpVoteEntity): Promise<void> {
+    const pending = this.pendingRecounts.get(vote.id);
+
+    if (!pending) {
+      return;
+    }
+
+    if (Date.now() >= pending.deadline) {
+      clearInterval(pending.timer);
+      this.pendingRecounts.delete(vote.id);
+      await this.recount(vote.id);
+      return;
+    }
+
+    await this.paintCountdown(vote, pending);
+  }
+
+  // Repaints the score line with the time left. The ballot is fetched once per burst and reused,
+  // so a countdown costs one fetch and a handful of edits rather than a fetch per tick.
+  private async paintCountdown(vote: AlbionRankUpVoteEntity, pending: PendingRecount): Promise<void> {
     try {
-      const message = await this.fetchBallot(vote);
+      pending.message ??= await this.fetchBallot(vote);
 
-      if (message.content.includes(RECALCULATING)) {
-        return;
-      }
+      const secondsLeft = (pending.deadline - Date.now()) / 1000;
+      const updated = pending.message.content.replace(SCORE_LINE, this.scoreLine(vote, secondsLeft));
 
-      const updated = message.content.replace(SCORE_LINE, this.scoreLine(vote, true));
-
-      if (updated !== message.content) {
-        await message.edit(updated);
+      if (updated !== pending.message.content) {
+        pending.message = await pending.message.edit(updated);
       }
     }
     catch (err) {
-      // Cosmetic: the recount rewrites the line properly in a few seconds regardless
-      this.logger.warn(`Could not flag ballot ${vote.messageId} as recalculating: ${err.message}`);
+      // Cosmetic: the recount rewrites the line properly when the countdown ends regardless
+      this.logger.warn(`Could not paint the countdown on ballot ${vote.messageId}: ${err.message}`);
     }
   }
 
@@ -179,7 +200,8 @@ export class AlbionRankUpVoteService {
         return;
       }
 
-      await this.evaluate(vote);
+      // Reaction driven, so this is where a ballot picks up any change to the wording
+      await this.evaluate(vote, true);
     }
     catch (err) {
       this.logger.error(`Failed the debounced recount for vote ${voteId}: ${err.message}`);
@@ -234,7 +256,10 @@ export class AlbionRankUpVoteService {
     };
   }
 
-  async evaluate(vote: AlbionRankUpVoteEntity): Promise<void> {
+  // rerender rewrites the whole ballot rather than just the score line, so a vote posted under an
+  // older wording is brought onto the current one. Reaction-driven only: the sweep runs every
+  // minute and rewriting every open ballot that often would be a lot of edits for nothing.
+  async evaluate(vote: AlbionRankUpVoteEntity, rerender = false): Promise<void> {
     let message: Message;
 
     try {
@@ -262,7 +287,7 @@ export class AlbionRankUpVoteService {
       vote.provisionalSince = null;
       vote.provisionalNote = null;
       await this.voteRepository.getEntityManager().persist(vote).flush();
-      await this.refreshScoreLine(vote, message);
+      await this.repaint(vote, message, rerender);
       return;
     }
 
@@ -280,7 +305,28 @@ export class AlbionRankUpVoteService {
       return;
     }
 
-    await this.refreshScoreLine(vote, message);
+    await this.repaint(vote, message, rerender);
+  }
+
+  private async repaint(vote: AlbionRankUpVoteEntity, message: Message, rerender: boolean): Promise<void> {
+    if (!rerender) {
+      await this.refreshScoreLine(vote, message);
+      return;
+    }
+
+    try {
+      const content = await this.rankUpService.renderBallot(vote, this.scoreLine(vote));
+
+      if (content !== message.content) {
+        this.lastScoreEdit.set(vote.id, Date.now());
+        await message.edit(content);
+      }
+    }
+    catch (err) {
+      // Falling back keeps the score correct even when a full render cannot be produced
+      this.logger.warn(`Could not re-render ballot ${vote.messageId}, updating the score only: ${err.message}`);
+      await this.refreshScoreLine(vote, message);
+    }
   }
 
   determineOutcome(
@@ -314,17 +360,18 @@ export class AlbionRankUpVoteService {
     return Date.now() - vote.provisionalSince.getTime() >= PROVISIONAL_HOLD_MS;
   }
 
-  scoreLine(vote: AlbionRankUpVoteEntity, recalculating = false): string {
-    const base = scoreHeading(vote.score, vote.requiredScore, recalculating);
+  scoreLine(vote: AlbionRankUpVoteEntity, secondsLeft?: number): string {
+    const base = scoreHeading(vote.score, vote.requiredScore, secondsLeft);
 
     if (!vote.provisionalStatus || !vote.provisionalSince) {
       return base;
     }
 
     const locksAt = new Date(vote.provisionalSince.getTime() + PROVISIONAL_HOLD_MS);
+    // Carries the outcome's own emoji, so which way the hold is going reads at a glance
     const verb = {
-      [AlbionRankUpVoteStatus.PASSED]: 'pass',
-      [AlbionRankUpVoteStatus.VETOED]: 'be vetoed',
+      [AlbionRankUpVoteStatus.PASSED]: '✅ pass',
+      [AlbionRankUpVoteStatus.VETOED]: `${VOTE_VETO} be vetoed`,
       [AlbionRankUpVoteStatus.FAILED]: 'fail',
     }[vote.provisionalStatus] ?? 'close';
 
@@ -375,40 +422,6 @@ export class AlbionRankUpVoteService {
     for (const vote of open) {
       await this.evaluate(vote);
     }
-  }
-
-  // A pending row with no messageId is a ballot that was never posted: the insert claimed the
-  // member's slot and something failed before the send. Nothing else ever clears it, so the member
-  // stays locked out and is eventually timed out for a vote nobody could see.
-  // announcedAt is stamped alongside resolvedAt so the reconcile sweep doesn't try to post an
-  // outcome for a message that never existed.
-  async reclaimUnposted(discordId?: string): Promise<number> {
-    const connection = this.voteRepository.getEntityManager().getConnection();
-    const now = new Date();
-    const cutoff = new Date(Date.now() - UNPOSTED_GRACE_MS);
-
-    const result = await connection.execute(
-      `update albion_rank_up_vote_entity
-          set status = ?, pending_key = null, resolved_at = ?, announced_at = ?,
-              resolution_note = ?, updated_at = ?
-        where status = ? and message_id is null and created_at <= ?
-          ${discordId ? 'and discord_id = ?' : ''}`,
-      [
-        AlbionRankUpVoteStatus.ABANDONED, now, now,
-        'The ballot was never posted', now,
-        AlbionRankUpVoteStatus.PENDING, cutoff,
-        ...(discordId ? [discordId] : []),
-      ],
-      'run',
-    );
-
-    const reclaimed = this.affectedRows(result);
-
-    if (reclaimed > 0) {
-      this.logger.warn(`Reclaimed ${reclaimed} rank up ballot(s) that were never posted`);
-    }
-
-    return reclaimed;
   }
 
   // Elects a single winner in the database. Re-reading the row and checking it is still pending

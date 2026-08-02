@@ -13,12 +13,12 @@ import { DiscordService } from '../../discord/discord.service';
 import { MemberActivityRollupService } from '../../general/services/member.activity.rollup.service';
 import { LeadershipPing } from '../../config/albion.app.config';
 import {
-  AlbionRankUpVoteService,
   majorityScore,
   PROVISIONAL_HOLD_MS,
   scoreHeading,
+  UNPOSTED_GRACE_MS,
   VOTE_REACTIONS,
-} from './albion.rank.up.vote.service';
+} from './albion.ballot.text';
 import { discordTime } from '../../helpers';
 
 const DAY_MS = 24 * 60 * 60 * 1000;
@@ -36,6 +36,10 @@ const LOCKOUT_STATUSES = [
   AlbionRankUpVoteStatus.VETOED,
 ];
 const VOTE_DURATION_DAYS = 5;
+
+// A second, recent window alongside the all-time one. Someone active for a year but absent for the
+// last fortnight and someone who just arrived read identically on a lifetime average.
+const RECENT_WINDOW_DAYS = 14;
 
 // Stated on the ballot, so it is read from the hold itself rather than written down twice
 const HOLD_HOURS = Math.round(PROVISIONAL_HOLD_MS / (60 * 60 * 1000));
@@ -79,7 +83,6 @@ export class AlbionRankUpService implements OnApplicationBootstrap {
     private readonly discordService: DiscordService,
     private readonly albionUtilities: AlbionUtilities,
     private readonly rollupService: MemberActivityRollupService,
-    private readonly voteService: AlbionRankUpVoteService,
     @InjectRepository(AlbionRegistrationsEntity) private readonly registrationsRepository: EntityRepository<AlbionRegistrationsEntity>,
     @InjectRepository(AlbionRankUpVoteEntity) private readonly voteRepository: EntityRepository<AlbionRankUpVoteEntity>,
   ) {}
@@ -156,7 +159,7 @@ export class AlbionRankUpService implements OnApplicationBootstrap {
       return await this.refuse(member, registration, tier, RankUpRefusal.RECENT_FAILED_VOTE, lockoutUntil);
     }
 
-    return await this.publish(member, registration, tier, anchor);
+    return await this.publish(member, registration, tier);
   }
 
   // Returns when they may ask again, or null if nothing is holding them back
@@ -183,7 +186,6 @@ export class AlbionRankUpService implements OnApplicationBootstrap {
     member: GuildMember,
     registration: AlbionRegistrationsEntity,
     tier: Tier,
-    anchor: Date,
   ): Promise<RankUpOutcome> {
     const electors = await this.albionUtilities.getElectors(member.guild);
 
@@ -198,9 +200,6 @@ export class AlbionRankUpService implements OnApplicationBootstrap {
     const expiresAt = new Date(Date.now() + VOTE_DURATION_DAYS * DAY_MS);
     const characterName = registration.characterName.slice(0, MAX_CHARACTER_NAME);
 
-    // Built before the row is claimed. Anything failing in here afterwards would strand a pending
-    // ballot with no message, locking the member out of a vote nobody could ever see.
-    const content = await this.buildBallot(member, registration, tier, anchor, electors.length, requiredScore, expiresAt);
     const ping: LeadershipPing = this.config.get('albion.leadershipPing');
 
     const newBallot = () => new AlbionRankUpVoteEntity({
@@ -214,6 +213,10 @@ export class AlbionRankUpService implements OnApplicationBootstrap {
       electorateSize: electors.length,
       expiresAt,
     });
+
+    // Rendered before the row is claimed. Anything failing in here afterwards would strand a
+    // pending ballot with no message, locking the member out of a vote nobody could ever see.
+    const content = await this.renderBallot(newBallot(), scoreHeading(0, requiredScore));
 
     // The row goes in before the Discord post. Posting first means a flush failure leaves a
     // public ballot nothing tracks and nothing will ever resolve.
@@ -321,6 +324,40 @@ export class AlbionRankUpService implements OnApplicationBootstrap {
     return (result as { affectedRows?: number })?.affectedRows ?? 0;
   }
 
+  // A pending row with no messageId is a ballot that was never posted: the insert claimed the
+  // member's slot and something failed before the send. Nothing else ever clears it, so the member
+  // stays locked out and is eventually timed out for a vote nobody could see.
+  // announcedAt is stamped alongside resolvedAt so the reconcile sweep doesn't try to post an
+  // outcome for a message that never existed.
+  async reclaimUnposted(discordId?: string): Promise<number> {
+    const connection = this.voteRepository.getEntityManager().getConnection();
+    const now = new Date();
+    const cutoff = new Date(Date.now() - UNPOSTED_GRACE_MS);
+
+    const result = await connection.execute(
+      `update albion_rank_up_vote_entity
+          set status = ?, pending_key = null, resolved_at = ?, announced_at = ?,
+              resolution_note = ?, updated_at = ?
+        where status = ? and message_id is null and created_at <= ?
+          ${discordId ? 'and discord_id = ?' : ''}`,
+      [
+        AlbionRankUpVoteStatus.ABANDONED, now, now,
+        'The ballot was never posted', now,
+        AlbionRankUpVoteStatus.PENDING, cutoff,
+        ...(discordId ? [discordId] : []),
+      ],
+      'run',
+    );
+
+    const reclaimed = this.affectedRows(result);
+
+    if (reclaimed > 0) {
+      this.logger.warn(`Reclaimed ${reclaimed} rank up ballot(s) that were never posted`);
+    }
+
+    return reclaimed;
+  }
+
   // A unique violation can mean a live ballot, or a stranded claim from an attempt that died
   // before it posted. Clearing the latter is the difference between a retry and a lockout.
   private async claimBallot(newBallot: () => AlbionRankUpVoteEntity): Promise<AlbionRankUpVoteEntity> {
@@ -335,7 +372,7 @@ export class AlbionRankUpService implements OnApplicationBootstrap {
         throw err;
       }
 
-      if (await this.voteService.reclaimUnposted(ballot.discordId) === 0) {
+      if (await this.reclaimUnposted(ballot.discordId) === 0) {
         throw err;
       }
 
@@ -347,29 +384,33 @@ export class AlbionRankUpService implements OnApplicationBootstrap {
     }
   }
 
-  private async buildBallot(
-    member: GuildMember,
-    registration: AlbionRegistrationsEntity,
-    tier: Tier,
-    anchor: Date,
-    electorateSize: number,
-    requiredScore: number,
-    expiresAt: Date,
-  ): Promise<string> {
+  // Renders the whole ballot from the row, so a live vote can be re-rendered onto the current
+  // wording rather than being frozen in whatever format it was posted under. Everything it needs
+  // is either on the row or re-read here, which is why it takes no other arguments.
+  async renderBallot(vote: AlbionRankUpVoteEntity, scoreLine: string): Promise<string> {
     const ping: LeadershipPing = this.config.get('albion.leadershipPing');
-    const stats = await this.buildActivityBlock(member.id, anchor, registration, tier);
+    const registration = await this.registrationsRepository.findOne({
+      guildId: this.config.get('albion.guildId'),
+      discordId: vote.discordId,
+    });
+    const { electorateSize, requiredScore, expiresAt } = vote;
+
+    // Deregistered mid vote: the ballot still has to render, just without the history
+    const stats = registration
+      ? await this.buildActivityBlock(vote, registration)
+      : '### Metrics\n📭 **This member is no longer registered with the Albion guild.**';
 
     return `${ping.mention}
 
-Guildmember **${registration.characterName.slice(0, MAX_CHARACTER_NAME)}** (<@${member.id}>) wants to be ranked up from **${this.friendlyRank(tier.from)}** to **${this.friendlyRank(tier.to)}**.
+Guildmember **${vote.characterName}** (<@${vote.discordId}>) wants to be ranked up from **${this.friendlyRank(vote.fromRank)}** to **${this.friendlyRank(vote.toRank)}**.
 Please react with the following:
 
 - 👍 to approve the rank up
 - 🤷 to say "I don't know the person well enough"
 - 👎 to disapprove the rank up
-- ⛔ to put a veto on the rank up (this action needs justification with proof)
+- ⛔ veto the rank up (this action needs justification with proof), this will cause the vote to fail within ${HOLD_HOURS} hour${HOLD_HOURS === 1 ? '' : 's'}.
 
-👍 = 1 point · 🤷 = 0.5 points · 👎 = 0 points · ⛔ closes the vote whatever the score
+Scoring: 👍 = 1 point · 🤷 = 0.5 points · 👎 = 0 points
 
 Eligible voters: ${electorateSize}
 Passes at a score of **${requiredScore}** — a majority of ${electorateSize} (${electorateSize} ÷ 2 + 0.5)
@@ -377,17 +418,20 @@ Voting closes ${discordTime(expiresAt, 'R')}
 
 -# Every outcome, a veto included, is held for ${HOLD_HOURS} hour${HOLD_HOURS === 1 ? '' : 's'} before it locks in. Lift a veto inside that window and the vote carries on.
 
-${scoreHeading(0, requiredScore)}
+${scoreLine}
 
 ${stats}`;
   }
 
   private async buildActivityBlock(
-    discordId: string,
-    anchor: Date,
+    vote: AlbionRankUpVoteEntity,
     registration: AlbionRegistrationsEntity,
-    tier: Tier,
   ): Promise<string> {
+    // The window the figures cover. Tier 2 measures from the graduate date, tier 1 from
+    // registration - the same anchor the eligibility gate used.
+    const anchor = (vote.toRank === '@ALB/Adept' ? registration.graduateSince : registration.createdAt)
+      ?? registration.createdAt;
+    const discordId = vote.discordId;
     const trackingStart = await this.rollupService.getTrackingStartDate();
     const since = trackingStart && trackingStart > anchor ? trackingStart : anchor;
 
@@ -397,9 +441,14 @@ ${stats}`;
     const messages = rollup.reduce((total, row) => total + row.messagesSent, 0);
     const reactions = rollup.reduce((total, row) => total + row.reactionsAdded, 0);
     const voiceMinutes = rollup.reduce((total, row) => total + row.voiceMinutes, 0);
-    const activeDays = rollup.filter(
-      (row) => row.messagesSent > 0 || row.reactionsAdded > 0 || row.voiceMinutes > 0,
-    ).length;
+    const isActive = (row: { messagesSent: number, reactionsAdded: number, voiceMinutes: number }) =>
+      row.messagesSent > 0 || row.reactionsAdded > 0 || row.voiceMinutes > 0;
+
+    const activeDays = rollup.filter(isActive).length;
+
+    // Filtered from the rows already fetched rather than queried again
+    const recentFrom = Date.now() - RECENT_WINDOW_DAYS * DAY_MS;
+    const recentActiveDays = rollup.filter((row) => row.date.getTime() >= recentFrom && isActive(row)).length;
 
     const trackedDays = Math.max(1, Math.ceil((Date.now() - since.getTime()) / DAY_MS));
     const registeredDays = Math.floor((Date.now() - registration.createdAt.getTime()) / DAY_MS);
@@ -414,7 +463,7 @@ ${stats}`;
       `- 📅 Registered: ${discordTime(registration.createdAt, 'D')} — **${registeredDays}** days ago`,
     ];
 
-    if (tier.to === '@ALB/Adept' && registration.graduateSince) {
+    if (vote.toRank === '@ALB/Adept' && registration.graduateSince) {
       const graduateDays = Math.floor((Date.now() - registration.graduateSince.getTime()) / DAY_MS);
       lines.push(`- 🎓 Graduate since: ${discordTime(registration.graduateSince, 'D')} — **${graduateDays}** days ago`);
     }
@@ -437,7 +486,8 @@ ${stats}`;
         `- 🎙️ Voice: **${this.friendlyDuration(voiceMinutes)}** ²`,
         `- 💬 Messages: **${messages}** (${(messages / trackedDays).toFixed(1)}/day) ²`,
         `- ⭐ Reactions: **${reactions}** ²`,
-        `- 📊 Active on **${activeDays}** of **${trackedDays}** days (${((activeDays / trackedDays) * 100).toFixed(0)}%) — ${this.activityBand(activeDays, trackedDays)}`,
+        this.activityLine('📊 Activity all time registered', activeDays, trackedDays),
+        this.activityLine(`📈 Activity last ${RECENT_WINDOW_DAYS} days`, recentActiveDays, Math.min(RECENT_WINDOW_DAYS, trackedDays)),
       );
     }
 
@@ -454,6 +504,13 @@ ${stats}`;
     );
 
     return lines.join('\n');
+  }
+
+  activityLine(label: string, activeDays: number, trackedDays: number): string {
+    const days = Math.max(1, trackedDays);
+    const percent = ((activeDays / days) * 100).toFixed(0);
+
+    return `- ${label}: **${activeDays}** of **${days}** days (${percent}%) — ${this.activityBand(activeDays, days)}`;
   }
 
   activityBand(activeDays: number, trackedDays: number): string {

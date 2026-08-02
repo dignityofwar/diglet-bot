@@ -3,6 +3,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@mikro-orm/nestjs';
 import { AlbionRankUpVoteCronService } from './albion.rank.up.vote.cron.service';
 import { AlbionRankUpVoteService } from './albion.rank.up.vote.service';
+import { AlbionRankUpService } from './albion.rank.up.service';
 import {
   AlbionRankUpVoteEntity,
   AlbionRankUpVoteStatus,
@@ -12,6 +13,7 @@ describe('AlbionRankUpVoteCronService', () => {
   let service: AlbionRankUpVoteCronService;
   let voteRepository: any;
   let voteService: any;
+  let rankUpService: any;
 
   const makeVote = (overrides: any = {}) => ({
     id: 1,
@@ -32,8 +34,9 @@ describe('AlbionRankUpVoteCronService', () => {
       findOne: jest.fn().mockResolvedValue(null),
     };
 
+    rankUpService = { reclaimUnposted: jest.fn().mockResolvedValue(0) };
+
     voteService = {
-      reclaimUnposted: jest.fn().mockResolvedValue(0),
       resyncPending: jest.fn().mockResolvedValue(undefined),
       evaluate: jest.fn().mockResolvedValue(undefined),
       resolve: jest.fn().mockResolvedValue(true),
@@ -44,6 +47,7 @@ describe('AlbionRankUpVoteCronService', () => {
       providers: [
         AlbionRankUpVoteCronService,
         { provide: AlbionRankUpVoteService, useValue: voteService },
+        { provide: AlbionRankUpService, useValue: rankUpService },
         { provide: getRepositoryToken(AlbionRankUpVoteEntity), useValue: voteRepository },
       ],
     }).compile();
@@ -136,7 +140,7 @@ describe('AlbionRankUpVoteCronService', () => {
     // reclaimed - which would also lock the member out for the failed vote period
     it('reclaims unposted ballots before anything else', async () => {
       const order: string[] = [];
-      voteService.reclaimUnposted.mockImplementation(async () => {
+      rankUpService.reclaimUnposted.mockImplementation(async () => {
         order.push('reclaim');
         return 0;
       });
