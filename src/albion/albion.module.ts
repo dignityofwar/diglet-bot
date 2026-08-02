@@ -14,6 +14,8 @@ import { AlbionDeregisterCommand } from './commands/deregistration.command';
 import { AlbionDeregistrationService } from './services/albion.deregistration.service';
 import { AlbionRegistrationRetryCronService } from './services/albion.registration.retry.cron.service';
 import { AlbionForceRetryCommand } from './commands/force-retry.command';
+import { AlbionForceRegisterCommand } from './commands/force-register.command';
+import { AlbionForceRegistrationService } from './services/albion.force.registration.service';
 import { AlbionRegisterQueueCommand } from './commands/register-queue.command';
 import { AlbionRegistrationQueueService } from './services/albion.registration.queue.service';
 import { AlbionRankUpCommand } from './commands/rank-up.command';
@@ -30,6 +32,8 @@ import { GeneralModule } from '../general/general.module';
     AlbionCronService,
     AlbionDeregisterCommand,
     AlbionDeregistrationService,
+    AlbionForceRegisterCommand,
+    AlbionForceRegistrationService,
     AlbionLogCommand,
     AlbionRankProgressService,
     AlbionRankUpCommand,
