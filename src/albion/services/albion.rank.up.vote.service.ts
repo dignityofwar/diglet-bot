@@ -15,6 +15,7 @@ import { resolvePartialReaction } from '../../discord/discord.hacks';
 import { discordTime } from '../../helpers';
 import { AlbionRankUpService } from './albion.rank.up.service';
 import {
+  COUNTDOWN_MARKS,
   PROVISIONAL_HOLD_MS,
   RECALCULATING_TICK_MS,
   scoreHeading,
@@ -26,6 +27,7 @@ import {
 
 // Re-exported so callers have one place to import ballot vocabulary from
 export {
+  COUNTDOWN_MARKS,
   majorityScore,
   UNPOSTED_GRACE_MS,
   PROVISIONAL_HOLD_MS,
@@ -63,6 +65,7 @@ export const REACTION_DEBOUNCE_MS = 5 * 1000;
 interface PendingRecount {
   deadline: number;
   timer: NodeJS.Timeout;
+  painted: Set<number>; // Marks already shown, so a mark costs one edit however often we tick
   message?: Message;
 }
 
@@ -138,18 +141,19 @@ export class AlbionRankUpVoteService {
 
     if (pending) {
       pending.deadline = deadline;
-      await this.paintCountdown(vote, pending);
+      pending.painted.clear(); // The clock restarted, so the marks are due again
+      await this.paintCountdown(vote, pending, REACTION_DEBOUNCE_MS / 1000);
       return;
     }
 
     const timer = setInterval(() => void this.tick(vote), RECALCULATING_TICK_MS);
     timer.unref?.(); // Must not hold the process open on shutdown
 
-    const started: PendingRecount = { deadline, timer };
+    const started: PendingRecount = { deadline, timer, painted: new Set() };
     this.pendingRecounts.set(vote.id, started);
 
     // Painted immediately rather than waiting a tick, so the ballot reacts at once
-    await this.paintCountdown(vote, started);
+    await this.paintCountdown(vote, started, REACTION_DEBOUNCE_MS / 1000);
   }
 
   private async tick(vote: AlbionRankUpVoteEntity): Promise<void> {
@@ -166,16 +170,25 @@ export class AlbionRankUpVoteService {
       return;
     }
 
-    await this.paintCountdown(vote, pending);
+    // Crossed rather than equalled: a tick that runs late must still paint the mark it stepped
+    // over, or timer jitter silently drops it and the countdown appears to stall.
+    const secondsLeft = (pending.deadline - Date.now()) / 1000;
+    const due = COUNTDOWN_MARKS.find(mark => secondsLeft <= mark && !pending.painted.has(mark));
+
+    if (due === undefined) {
+      return;
+    }
+
+    pending.painted.add(due);
+    await this.paintCountdown(vote, pending, due);
   }
 
   // Repaints the score line with the time left. The ballot is fetched once per burst and reused,
-  // so a countdown costs one fetch and a handful of edits rather than a fetch per tick.
-  private async paintCountdown(vote: AlbionRankUpVoteEntity, pending: PendingRecount): Promise<void> {
+  // so a countdown costs one fetch and one edit per mark rather than a fetch per tick.
+  private async paintCountdown(vote: AlbionRankUpVoteEntity, pending: PendingRecount, secondsLeft: number): Promise<void> {
     try {
       pending.message ??= await this.fetchBallot(vote);
 
-      const secondsLeft = (pending.deadline - Date.now()) / 1000;
       const updated = pending.message.content.replace(SCORE_LINE, this.scoreLine(vote, secondsLeft));
 
       if (updated !== pending.message.content) {

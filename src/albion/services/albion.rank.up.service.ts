@@ -413,7 +413,7 @@ Please react with the following:
 Scoring: 👍 = 1 point · 🤷 = 0.5 points · 👎 = 0 points
 
 Eligible voters: ${electorateSize}
-Passes at a score of **${requiredScore}** — a majority of ${electorateSize} (${electorateSize} ÷ 2 + 0.5)
+Passes at a score of **${requiredScore}** — a majority of ${electorateSize} (${electorateSize} ÷ 2 = ${electorateSize / 2}) + 0.5
 Voting closes ${discordTime(expiresAt, 'R')}
 
 -# Every outcome, a veto included, is held for ${HOLD_HOURS} hour${HOLD_HOURS === 1 ? '' : 's'} before it locks in. Lift a veto inside that window and the vote carries on.

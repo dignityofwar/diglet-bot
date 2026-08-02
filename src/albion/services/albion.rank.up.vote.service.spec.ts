@@ -8,6 +8,7 @@ import {
   majorityScore,
   PROVISIONAL_HOLD_MS,
   REACTION_DEBOUNCE_MS,
+  COUNTDOWN_MARKS,
   RECALCULATING_TICK_MS,
   scoreHeading,
   VOTE_APPROVE,
@@ -576,20 +577,30 @@ describe('AlbionRankUpVoteService', () => {
       expect(editedLines()[0]).toContain('2.5 / 4');
     });
 
-    it('counts down once a second', async () => {
+    // A per-second countdown queued behind Discord's edit limit and lagged the whole burst
+    it('spends one edit per countdown mark, not one per second', async () => {
       withBallot();
       await service.scheduleRecount(makeVote({ score: 2.5 }));
 
-      await jest.advanceTimersByTimeAsync(RECALCULATING_TICK_MS * 3);
+      await jest.advanceTimersByTimeAsync(REACTION_DEBOUNCE_MS - RECALCULATING_TICK_MS);
 
       const seconds = editedLines()
         .map((line: string) => line.match(/(\d+)s\)/)?.[1])
         .filter(Boolean)
         .map(Number);
 
-      expect(seconds.length).toBeGreaterThanOrEqual(3);
-      expect(seconds).toEqual([...seconds].sort((a, b) => b - a)); // strictly falling
-      expect(seconds[0]).toBe(REACTION_DEBOUNCE_MS / 1000);
+      expect(seconds).toEqual([REACTION_DEBOUNCE_MS / 1000, ...COUNTDOWN_MARKS]);
+    });
+
+    // Jitter must not drop a mark: a tick running late steps over it rather than landing on it
+    it('paints a mark the ticker stepped over', async () => {
+      withBallot();
+      await service.scheduleRecount(makeVote({ score: 2.5 }));
+
+      jest.setSystemTime(Date.now() + REACTION_DEBOUNCE_MS - 1500);
+      await jest.advanceTimersByTimeAsync(RECALCULATING_TICK_MS);
+
+      expect(editedLines().at(-1)).toContain(`${Math.max(...COUNTDOWN_MARKS)}s)`);
     });
 
     it('recounts when the countdown runs out, and stops painting', async () => {
