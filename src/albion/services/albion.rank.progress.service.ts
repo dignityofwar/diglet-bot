@@ -1,4 +1,4 @@
-import { Injectable, Logger, OnApplicationBootstrap } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { Context, ContextOf, On } from 'necord';
 import { ConfigService } from '@nestjs/config';
 import { InjectRepository } from '@mikro-orm/nestjs';
@@ -15,8 +15,17 @@ const TRACKED_RANKS: Array<{ column: RankColumn, roleName: string }> = [
   { column: 'adeptSince', roleName: '@ALB/Adept' },
 ];
 
+export interface RankSeedResult {
+  registrations: number;
+  graduates: number;
+  adepts: number;
+  alreadySet: number;
+  notInServer: number;
+  dryRun: boolean;
+}
+
 @Injectable()
-export class AlbionRankProgressService implements OnApplicationBootstrap {
+export class AlbionRankProgressService {
   private readonly logger = new Logger(AlbionRankProgressService.name);
 
   constructor(
@@ -24,16 +33,6 @@ export class AlbionRankProgressService implements OnApplicationBootstrap {
     private readonly discordService: DiscordService,
     @InjectRepository(AlbionRegistrationsEntity) private readonly registrationsRepository: EntityRepository<AlbionRegistrationsEntity>,
   ) {}
-
-  async onApplicationBootstrap(): Promise<void> {
-    try {
-      await this.seedExistingRanks();
-    }
-    catch (err) {
-      // Seeding is best effort - a failure here must not stop the bot booting
-      this.logger.error(`Failed to seed existing Albion rank dates: ${err.message}`);
-    }
-  }
 
   private findRole(name: string): AlbionRoleMapInterface | undefined {
     const roleMap: AlbionRoleMapInterface[] = this.config.get('albion.roleMap');
@@ -118,9 +117,14 @@ export class AlbionRankProgressService implements OnApplicationBootstrap {
     }
   }
 
-  // Fills rank dates for members who already held the rank when this feature shipped.
-  // Only ever writes nulls, so it is idempotent and safe on every boot.
-  async seedExistingRanks(): Promise<void> {
+  // One-off backfill for members who already held a rank when this shipped. We have no record
+  // of when they were actually promoted, so everyone gets today's date.
+  //
+  // Run explicitly rather than at boot: DiscordService.getGuild reads the client's guild cache,
+  // which is still empty during onApplicationBootstrap because the gateway has not sent READY,
+  // so a boot-time seed would throw and silently do nothing. Only ever fills nulls, so it is
+  // safe to re-run.
+  async seedExistingRanks(dryRun = false): Promise<RankSeedResult> {
     const guildId = this.config.get('albion.guildId');
     const graduateRole = this.findRole('@ALB/Graduate');
     const adeptRole = this.findRole('@ALB/Adept');
@@ -130,60 +134,74 @@ export class AlbionRankProgressService implements OnApplicationBootstrap {
     }
 
     const registrations = await this.registrationsRepository.find({ guildId });
+    const result: RankSeedResult = {
+      registrations: registrations.length,
+      graduates: 0,
+      adepts: 0,
+      alreadySet: 0,
+      notInServer: 0,
+      dryRun,
+    };
 
     if (registrations.length === 0) {
-      return;
+      return result;
     }
 
-    const members = await this.fetchMembers(registrations.map((registration) => registration.discordId));
+    const members = await this.fetchMembers();
     const now = new Date();
-    let seeded = 0;
 
     for (const registration of registrations) {
       const member = members.get(registration.discordId);
 
       if (!member) {
+        result.notInServer++;
         continue;
       }
 
       const isAdept = member.roles.cache.has(adeptRole.discordRoleId);
       const isGraduate = member.roles.cache.has(graduateRole.discordRoleId);
 
+      if (!isAdept && !isGraduate) {
+        continue;
+      }
+
+      if (
+        (isAdept && registration.adeptSince && registration.graduateSince)
+        || (!isAdept && registration.graduateSince)
+      ) {
+        result.alreadySet++;
+        continue;
+      }
+
       if (isAdept && !registration.adeptSince) {
         registration.adeptSince = now;
-        seeded++;
+        result.adepts++;
       }
 
       // An Adept was necessarily a Graduate first - Disciple to Adept isn't a legal path -
       // so leaving graduateSince null would misreport their history.
       if ((isGraduate || isAdept) && !registration.graduateSince) {
         registration.graduateSince = now;
-        seeded++;
+        result.graduates++;
       }
     }
 
-    if (seeded === 0) {
-      return;
+    if (!dryRun && (result.graduates > 0 || result.adepts > 0)) {
+      await this.registrationsRepository.getEntityManager().persist(registrations).flush();
+      this.logger.log(`Backfilled ${result.graduates} graduate and ${result.adepts} adept date(s)`);
     }
 
-    await this.registrationsRepository.getEntityManager().persist(registrations).flush();
-    this.logger.log(`Seeded ${seeded} Albion rank date(s) for existing members`);
+    return result;
   }
 
-  private async fetchMembers(discordIds: string[]): Promise<Map<string, GuildMember>> {
+  // Cache busted deliberately: a stale member cache would mean stamping the wrong people,
+  // and this only runs once.
+  private async fetchMembers(): Promise<Map<string, GuildMember>> {
     const guild = await this.discordService.getGuild(this.config.get('discord.guildId'));
-    const members = new Map<string, GuildMember>();
 
+    guild.members.cache.clear();
     await guild.members.fetch();
 
-    for (const discordId of discordIds) {
-      const member = guild.members.cache.get(discordId);
-
-      if (member) {
-        members.set(discordId, member);
-      }
-    }
-
-    return members;
+    return new Map(guild.members.cache.map((member) => [member.id, member]));
   }
 }
