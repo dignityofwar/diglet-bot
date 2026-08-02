@@ -655,7 +655,7 @@ describe('AlbionRankUpService', () => {
       const content = lastSentContent();
       expect(content).toContain('Eligible voters: 7');
       expect(content).toContain('Passes at a score of 4');
-      expect(content).toContain('Current score: **0** / 4');
+      expect(content).toContain('## 📊 Current score: 0 / 4');
     });
 
     it('keeps the wording leadership already use', async () => {

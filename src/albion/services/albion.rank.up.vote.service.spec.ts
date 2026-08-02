@@ -6,6 +6,7 @@ import { Collection } from 'discord.js';
 import {
   AlbionRankUpVoteService,
   PROVISIONAL_HOLD_MS,
+  scoreHeading,
   UNPOSTED_GRACE_MS,
   VOTE_APPROVE,
   VOTE_DISAPPROVE,
@@ -49,7 +50,7 @@ describe('AlbionRankUpVoteService', () => {
   });
 
   // Builds a message whose reactions resolve to the given voters
-  const makeMessage = (reactions: Record<string, string[]>, content = 'Current score: **0** / 4') => {
+  const makeMessage = (reactions: Record<string, string[]>, content = '## 📊 Current score: 0 / 4') => {
     const cache = new Collection<string, any>();
 
     for (const [emoji, userIds] of Object.entries(reactions)) {
@@ -311,7 +312,7 @@ describe('AlbionRankUpVoteService', () => {
 
       const line = service.scoreLine(vote);
 
-      expect(line).toContain('Current score: **4** / 4');
+      expect(line).toContain('## 📊 Current score: 4 / 4');
       expect(line).toContain('locked in');
       expect(line).toContain('pass');
       expect(line).toContain('window to change it');
@@ -320,7 +321,7 @@ describe('AlbionRankUpVoteService', () => {
     it('shows only the score when nothing is being held', () => {
       const line = service.scoreLine(makeVote({ score: 2 }));
 
-      expect(line).toBe('Current score: **2** / 4');
+      expect(line).toBe('## 📊 Current score: 2 / 4');
       expect(line).not.toContain('locked in');
     });
   });
@@ -359,6 +360,37 @@ describe('AlbionRankUpVoteService', () => {
       for (const call of execute.mock.calls) {
         expect(call[2]).toBe('run');
       }
+    });
+  });
+
+  describe('the live score line', () => {
+    // The regex that rewrites it has to match what the ballot builder wrote. If they drift, the
+    // score silently stops updating and nothing errors.
+    it('rewrites the heading the ballot builder produces', async () => {
+      const message = makeMessage({ [VOTE_APPROVE]: ['e1', 'e2'] }, scoreHeading(0, 4));
+      discordService.getTextChannel = jest.fn().mockResolvedValue({
+        id: 'chan-1', send: channelSend, messages: { fetch: jest.fn().mockResolvedValue(message) },
+      });
+
+      await service.evaluate(makeVote());
+
+      expect(messageEdit).toHaveBeenCalledWith(scoreHeading(2, 4));
+    });
+
+    // A ballot posted before the heading existed must keep updating across the deploy
+    it('still rewrites a ballot posted without the heading', async () => {
+      const message = makeMessage({ [VOTE_APPROVE]: ['e1', 'e2'] }, 'Current score: **0** / 4');
+      discordService.getTextChannel = jest.fn().mockResolvedValue({
+        id: 'chan-1', send: channelSend, messages: { fetch: jest.fn().mockResolvedValue(message) },
+      });
+
+      await service.evaluate(makeVote());
+
+      expect(messageEdit).toHaveBeenCalledWith(scoreHeading(2, 4));
+    });
+
+    it('is a heading so it stands out from the ballot body', () => {
+      expect(scoreHeading(2, 4).startsWith('## ')).toBe(true);
     });
   });
 
@@ -417,7 +449,7 @@ describe('AlbionRankUpVoteService', () => {
     const passed = () => makeVote({ status: AlbionRankUpVoteStatus.PASSED, toRank: '@ALB/Adept' });
     const releaseCall = () => execute.mock.calls.find((c: any[]) => c[0].includes('announced_at = null'));
 
-    const withBallot = (content = 'Current score: **4** / 4') => {
+    const withBallot = (content = '## 📊 Current score: 4 / 4') => {
       discordService.getTextChannel = jest.fn().mockResolvedValue({
         id: 'chan-1',
         send: channelSend,
@@ -454,7 +486,7 @@ describe('AlbionRankUpVoteService', () => {
 
     // A retried announcement must not stack a second outcome header on the ballot
     it('does not re-prepend a header the ballot already carries', async () => {
-      withBallot('# ✅ PASSED — score 4 / 4\n\nCurrent score: **4** / 4');
+      withBallot('# ✅ PASSED — score 4 / 4\n\n## 📊 Current score: 4 / 4');
 
       await service.announce(passed());
 
