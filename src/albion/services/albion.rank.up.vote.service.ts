@@ -132,24 +132,27 @@ export class AlbionRankUpVoteService {
     }
   }
 
-  // Each new reaction pushes the deadline back, so a burst produces one tally once it settles.
-  // A reaction arriving mid countdown extends it rather than starting a second one.
+  // A burst produces one tally once it settles: each reaction replaces the countdown outright
+  // rather than pushing the old one's deadline back. The ticker closes over the vote row and
+  // keeps whatever phase it started on, so an extended countdown paints a stale score and fires
+  // late. The fetched ballot carries across, so replacing costs no extra REST call.
   // The timer is in process and lost on restart; resyncPending() in the sweep is the backstop.
   async scheduleRecount(vote: AlbionRankUpVoteEntity): Promise<void> {
-    const deadline = Date.now() + REACTION_DEBOUNCE_MS;
-    const pending = this.pendingRecounts.get(vote.id);
+    const previous = this.pendingRecounts.get(vote.id);
 
-    if (pending) {
-      pending.deadline = deadline;
-      pending.painted.clear(); // The clock restarted, so the marks are due again
-      await this.paintCountdown(vote, pending, REACTION_DEBOUNCE_MS / 1000);
-      return;
+    if (previous) {
+      clearInterval(previous.timer);
     }
 
     const timer = setInterval(() => void this.tick(vote), RECALCULATING_TICK_MS);
     timer.unref?.(); // Must not hold the process open on shutdown
 
-    const started: PendingRecount = { deadline, timer, painted: new Set() };
+    const started: PendingRecount = {
+      deadline: Date.now() + REACTION_DEBOUNCE_MS,
+      timer,
+      painted: new Set(),
+      message: previous?.message,
+    };
     this.pendingRecounts.set(vote.id, started);
 
     // Painted immediately rather than waiting a tick, so the ballot reacts at once
@@ -188,6 +191,12 @@ export class AlbionRankUpVoteService {
   private async paintCountdown(vote: AlbionRankUpVoteEntity, pending: PendingRecount, secondsLeft: number): Promise<void> {
     try {
       pending.message ??= await this.fetchBallot(vote);
+
+      // Discarded if this countdown was replaced while the fetch was in flight - otherwise a
+      // paint from the old one lands after the new one and the ballot shows the wrong time left
+      if (this.pendingRecounts.get(vote.id) !== pending) {
+        return;
+      }
 
       const updated = pending.message.content.replace(SCORE_LINE, this.scoreLine(vote, secondsLeft));
 
