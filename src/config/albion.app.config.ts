@@ -93,14 +93,31 @@ const rolesToRankDevelopment: AlbionRoleMapInterface[] = [
     keep: true,
   },
 ];
-const roleMap = process.env.ENVIRONMENT === 'production' ? rolesToRankProduction : rolesToRankDevelopment;
+const isProduction = process.env.ENVIRONMENT === 'production';
+const roleMap = isProduction ? rolesToRankProduction : rolesToRankDevelopment;
 const findRole = (roleName: string) => roleMap.filter((role) => role.name === roleName)[0];
 const pingLeaderRoles = [findRole('@ALB/Archmage').discordRoleId, findRole('@ALB/Magister').discordRoleId];
+
+// The rank up ballot pings this role. No dev equivalent exists yet, so dev falls back to
+// Archmage so the mention still resolves locally.
+const leadershipPingRole = isProduction
+  ? '1421034165356331070'
+  : findRole('@ALB/Archmage').discordRoleId;
+
+// Everyone who may vote on a rank up: Eldritch Mage and above, per the guild ranks wiki.
+// Filtered on priority rather than name because production spells tier 3 "EldritchMager".
+const ELECTOR_MAX_PRIORITY = 3;
 
 export default () => ({
   guildId: '0_zTfLfASD2Wtw6Tc-yckA',
   roleMap,
   pingLeaderRoles,
+  leadershipPingRole,
+  electorMaxPriority: ELECTOR_MAX_PRIORITY,
+  // Ranks the bot grants itself once a vote passes. Adept is deliberately absent: it is
+  // soft-leadership, so a human makes that call even after a successful vote.
+  autoAssignRanks: ['@ALB/Graduate'],
+  gameActivityName: 'Albion Online', // As Discord reports it in presence data
   scanExcludedUsers: [], // Discord IDs
   guildLeaderRole: findRole('@ALB/Archmage'),
   guildOfficerRole: findRole('@ALB/Magister'),

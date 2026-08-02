@@ -4,6 +4,7 @@ import { MessageEvents } from './message.events';
 import { DatabaseService } from '../../database/services/database.service';
 import { TestBootstrapper } from '../../test.bootstrapper';
 import { RecRolePingService } from '../services/rec.role.ping.service';
+import { MemberActivityRollupService } from '../services/member.activity.rollup.service';
 
 jest.mock('../../database/services/database.service');
 
@@ -11,6 +12,7 @@ describe('MessageEvents', () => {
   let messageEvents: MessageEvents;
   let databaseService: any;
   let recRolePingService: RecRolePingService;
+  let rollupService: any;
 
   let mockMessage: any;
   let mockUser: any;
@@ -36,12 +38,19 @@ describe('MessageEvents', () => {
             onMessage: jest.fn(),
           },
         },
+        {
+          provide: MemberActivityRollupService,
+          useValue: {
+            increment: jest.fn(),
+          },
+        },
       ],
     }).compile();
 
     messageEvents = module.get<MessageEvents>(MessageEvents);
     databaseService = module.get<DatabaseService>(DatabaseService);
     recRolePingService = module.get<RecRolePingService>(RecRolePingService);
+    rollupService = module.get<MemberActivityRollupService>(MemberActivityRollupService);
 
     // Mocking Discord.js objects
     mockUser = TestBootstrapper.getMockDiscordUser();
@@ -116,6 +125,34 @@ describe('MessageEvents', () => {
           expect(databaseService.updateActivity).not.toHaveBeenCalled();
         }
       });
+    });
+  });
+
+  describe('daily rollup counters', () => {
+    it('counts a created message', async () => {
+      await messageEvents.handleMessageEvent(mockMessage, 'create');
+
+      expect(rollupService.increment).toHaveBeenCalledWith([mockMessage.member.id], 'messagesSent');
+    });
+
+    // Edits and deletions would otherwise inflate the count
+    it.each(['update', 'delete'])('does not count a %s', async (type) => {
+      await messageEvents.handleMessageEvent(mockMessage, type);
+
+      expect(rollupService.increment).not.toHaveBeenCalled();
+    });
+
+    it('counts an added reaction', async () => {
+      await messageEvents.handleMessageReaction(mockMessageReaction, mockUser, 'add');
+
+      expect(rollupService.increment).toHaveBeenCalledWith([expect.any(String)], 'reactionsAdded');
+    });
+
+    // An engagement signal, not a ledger - removals aren't decremented
+    it('does not count a removed reaction', async () => {
+      await messageEvents.handleMessageReaction(mockMessageReaction, mockUser, 'remove');
+
+      expect(rollupService.increment).not.toHaveBeenCalled();
     });
   });
 

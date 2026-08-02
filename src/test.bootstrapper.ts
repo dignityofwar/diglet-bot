@@ -6,7 +6,7 @@ import { TestingModule } from '@nestjs/testing';
 import { MikroORM } from '@mikro-orm/core';
 import { PS2MembersEntity } from './database/entities/ps2.members.entity';
 import { PS2RankMapInterface } from './config/ps2.app.config';
-import { Collection, Role, Snowflake } from 'discord.js';
+import { ChannelType, Collection, Role, Snowflake } from 'discord.js';
 
 const guildLeaderRole = '64354579789809089';
 const guildOfficerRole = '66343435879886';
@@ -280,11 +280,34 @@ export class TestBootstrapper {
     };
   }
 
-  static getMockDiscordVoiceChannel() {
+  static getMockDiscordVoiceChannel(
+    id = '1234567890',
+    members: any[] = [],
+    type: number = ChannelType.GuildVoice,
+  ) {
     return {
-      id: '1234567890', // A mock channel ID
+      id, // A mock channel ID
       name: 'Test Voice Channel', // A mock channel name
-    };
+      type,
+      // Voice scanning reads this collection, so it has to behave like one
+      members: new Collection<string, any>(members.map((member) => [member.id, member])),
+    } as any;
+  }
+
+  // A member whose Discord presence reports the given activities. Pass ActivityType values
+  // so a test can prove custom statuses and Spotify are ignored.
+  static getMockDiscordMemberWithPresence(
+    id: string,
+    activities: Array<{ name: string, type: number }>,
+    isBot = false,
+  ) {
+    return {
+      id,
+      displayName: `member-${id}`,
+      user: { id, username: `member-${id}`, bot: isBot },
+      presence: { activities },
+      roles: { cache: new Collection<string, any>() },
+    } as any;
   }
 
   static getMockDiscordVoiceState(member, channel) {
@@ -392,7 +415,35 @@ export class TestBootstrapper {
           priority: 2,
           keep: false,
         },
+        {
+          name: '@ALB/EldritchMage',
+          discordRoleId: '1218115480426905641',
+          priority: 3,
+          keep: false,
+        },
+        {
+          name: '@ALB/Adept',
+          discordRoleId: '1218115422029873153',
+          priority: 4,
+          keep: false,
+        },
+        {
+          name: '@ALB/Graduate',
+          discordRoleId: '1218115340009996339',
+          priority: 5,
+          keep: true,
+        },
+        {
+          name: '@ALB/Disciple',
+          discordRoleId: '1218115269419995166',
+          priority: 6,
+          keep: false,
+        },
       ],
+      leadershipPingRole: '1421034165356331070',
+      electorMaxPriority: 3,
+      autoAssignRanks: ['@ALB/Graduate'],
+      gameActivityName: 'Albion Online',
     },
     discord: {
       guildId: '657687978899',
@@ -403,6 +454,7 @@ export class TestBootstrapper {
         albionRoles: '657687978899',
         albionAnnouncements: '6655756786797',
         albionScans: '4858696849494',
+        judgementHall: '1218220866270396497',
         ps2Verify: '558787980890809',
         ps2Private: '9705950678045896095',
         ps2HowToRankUp: '84594873574837596',

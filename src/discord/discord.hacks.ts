@@ -1,4 +1,12 @@
-import { ChatInputCommandInteraction, GuildTextBasedChannel, Message } from 'discord.js';
+import {
+  ChatInputCommandInteraction,
+  GuildTextBasedChannel,
+  Message,
+  MessageReaction,
+  PartialMessageReaction,
+  PartialUser,
+  User,
+} from 'discord.js';
 
 // Type re-case to stop discord.js from complaining about the type. We only ever use Guild Text Channels anyway.
 export const getChannel = (message: Message): GuildTextBasedChannel => {
@@ -19,4 +27,17 @@ export const replyTo = async (
     await interaction.reply(content);
   }
   return content;
+};
+
+// Reactions and users arrive partial when the message predates the cache, which is the norm
+// for anything older than a restart. Resolves only the event's own pair - a full recount of
+// every reactor needs reaction.users.fetch() as well.
+export const resolvePartialReaction = async (
+  reaction: MessageReaction | PartialMessageReaction,
+  user: User | PartialUser,
+): Promise<{ reaction: MessageReaction, user: User }> => {
+  const realReaction = reaction.partial ? await reaction.fetch() : reaction as MessageReaction;
+  const realUser = user.partial ? await user.fetch() : user as User;
+
+  return { reaction: realReaction, user: realUser };
 };

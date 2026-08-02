@@ -35,6 +35,26 @@ The engines are enforced via `package.json`, you'll know if it's wrong as no com
 ## MikroORM & Database
 This project uses [MikroORM](https://mikro-orm.io/) which is a TS native ORM. We use MariaDB (the same as in the `docker-compose.yaml`) both in local dev and production.
 
+## One-off scripts
+
+Some data changes can't be expressed as a migration because they need to ask Discord something. Those live in `src/scripts/` and are run by hand — nothing invokes them automatically.
+
+### `backfill:albion-ranks`
+
+**Run once after the Albion rank-up feature is first deployed.**
+
+```sh
+pnpm build
+pnpm backfill:albion-ranks --dry-run   # preview, writes nothing
+pnpm backfill:albion-ranks             # write
+```
+
+Fills `graduate_since` / `adept_since` on `albion_registrations_entity`. It queries every registration, force-fetches each member from Discord to see which rank they actually hold, and stamps today's date on current Graduates and Adepts — we have no record of when anyone was really promoted.
+
+**Until this runs, Graduates cannot request a rank up to Adept**: the bot has no graduate date for them, so it refuses rather than guessing (falling back to their registration date would clear the 4-week gate instantly). Once run, ongoing promotions and demotions are tracked automatically and this never needs running again.
+
+Only fills blanks, so re-running is harmless.
+
 # WSL compatability
 While this project is designed for a Mac ecosystem, it can be run on WSL, but you need to make the following bodges:
 1. Rather than running `pnpm install`, you need to run `npm install`, as `pnpm` creates symlinks that winblows doesn't understand, thus your IDE will likely break. Grab a brew, it will take fecking forever to install everything with npm.

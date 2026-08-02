@@ -1,5 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import {
+  ChannelType,
   Client,
   Collection,
   Guild,
@@ -8,6 +9,7 @@ import {
   Role,
   Snowflake,
   TextChannel,
+  VoiceBasedChannel,
 } from 'discord.js';
 import { getChannel } from './discord.hacks';
 
@@ -137,6 +139,32 @@ export class DiscordService {
     catch (err) {
       this.logger.error(`Failed to send DM to member ${member.id}`, err);
     }
+  }
+
+  // Distinct non-bot members currently in any voice channel except the AFK channel.
+  // Derived from cached voice state - Discord has no REST endpoint for this, so a cold cache
+  // after a restart undercounts and no amount of fetching fixes it.
+  async getVoiceChannelMembers(guildId: string): Promise<GuildMember[]> {
+    const guild = await this.getGuild(guildId);
+    const members = new Map<string, GuildMember>();
+
+    for (const channel of guild.channels.cache.values()) {
+      if (channel.type !== ChannelType.GuildVoice && channel.type !== ChannelType.GuildStageVoice) {
+        continue;
+      }
+      if (channel.id === guild.afkChannelId) {
+        continue;
+      }
+
+      for (const member of (channel as VoiceBasedChannel).members.values()) {
+        if (member.user.bot) {
+          continue;
+        }
+        members.set(member.id, member);
+      }
+    }
+
+    return [...members.values()];
   }
 
   async getAllRolesFromGuild(guild: Guild): Promise<Collection<Snowflake, Role>> {
