@@ -4,7 +4,10 @@ import { ConfigService } from '@nestjs/config';
 import { getRepositoryToken } from '@mikro-orm/nestjs';
 import { AlbionRankUpService, RankUpRefusal } from './albion.rank.up.service';
 import { AlbionRegistrationsEntity } from '../../database/entities/albion.registrations.entity';
-import { AlbionRankUpVoteEntity } from '../../database/entities/albion.rank.up.vote.entity';
+import {
+  AlbionRankUpVoteEntity,
+  AlbionRankUpVoteStatus,
+} from '../../database/entities/albion.rank.up.vote.entity';
 import { AlbionUtilities } from '../utilities/albion.utilities';
 import { DiscordService } from '../../discord/discord.service';
 import { MemberActivityRollupService } from '../../general/services/member.activity.rollup.service';
@@ -33,7 +36,6 @@ describe('AlbionRankUpService', () => {
     createdAt: daysAgo(30),
     graduateSince: null,
     adeptSince: null,
-    lastRankUpRequestAt: null,
     lastDenialNoticeAt: null,
     ...overrides,
   });
@@ -252,35 +254,86 @@ describe('AlbionRankUpService', () => {
     });
   });
 
-  describe('cooldown', () => {
-    it('refuses inside seven days', async () => {
-      registrationsRepository.findOne.mockResolvedValue(
-        makeRegistration({ lastRankUpRequestAt: daysAgo(3) }),
-      );
+  describe('failed vote lockout', () => {
+    const resolvedVote = (status: AlbionRankUpVoteStatus, resolvedAt: Date) => ({
+      id: 9,
+      discordId: 'candidate',
+      status,
+      resolvedAt,
+    });
+
+    it.each([
+      AlbionRankUpVoteStatus.FAILED,
+      AlbionRankUpVoteStatus.TIMED_OUT,
+      AlbionRankUpVoteStatus.VETOED,
+    ])('locks out for a week after a %s vote', async (status) => {
+      voteRepository.findOne.mockResolvedValue(resolvedVote(status, daysAgo(3)));
 
       const outcome = await service.handleRankUpRequest(member);
 
-      expect(outcome.reply).toContain('already requested a rank up recently');
+      expect(outcome.ok).toBe(false);
+      expect(outcome.reply).toContain('did not pass');
     });
 
-    it('allows outside seven days', async () => {
-      registrationsRepository.findOne.mockResolvedValue(
-        makeRegistration({ lastRankUpRequestAt: daysAgo(8) }),
-      );
+    it('gives the exact date they may ask again as a Discord timestamp', async () => {
+      const resolvedAt = daysAgo(3);
+      voteRepository.findOne.mockResolvedValue(resolvedVote(AlbionRankUpVoteStatus.FAILED, resolvedAt));
+
+      const outcome = await service.handleRankUpRequest(member);
+
+      const nextAllowed = Math.floor((resolvedAt.getTime() + 7 * DAY_MS) / 1000);
+      expect(outcome.reply).toContain(`<t:${nextAllowed}:R>`);
+      expect(outcome.reply).toContain(`<t:${nextAllowed}:F>`);
+    });
+
+    it('allows a new request once the week is up', async () => {
+      // The query itself filters on resolvedAt, so an expired lockout returns nothing
+      voteRepository.findOne.mockResolvedValue(null);
 
       const outcome = await service.handleRankUpRequest(member);
 
       expect(outcome.ok).toBe(true);
     });
 
-    // Would otherwise double-punish someone refused for being too new
-    it('a denial does not start the request cooldown', async () => {
-      const registration = makeRegistration({ createdAt: daysAgo(2) });
-      registrationsRepository.findOne.mockResolvedValue(registration);
-
+    it('only looks at outcomes that went against them, inside the window', async () => {
       await service.handleRankUpRequest(member);
 
-      expect(registration.lastRankUpRequestAt).toBeNull();
+      const query = voteRepository.findOne.mock.calls[0][0];
+      expect(query.discordId).toBe('candidate');
+      expect(query.status.$in).toEqual([
+        AlbionRankUpVoteStatus.FAILED,
+        AlbionRankUpVoteStatus.TIMED_OUT,
+        AlbionRankUpVoteStatus.VETOED,
+      ]);
+      expect(query.resolvedAt.$gte).toBeInstanceOf(Date);
+    });
+
+    // A ballot that vanished or could not be posted is our problem, not the candidate's
+    it('does not lock out after an abandoned ballot', async () => {
+      expect([
+        AlbionRankUpVoteStatus.FAILED,
+        AlbionRankUpVoteStatus.TIMED_OUT,
+        AlbionRankUpVoteStatus.VETOED,
+      ]).not.toContain(AlbionRankUpVoteStatus.ABANDONED);
+    });
+
+    // Keyed off the vote's resolution, so a first-time candidate can never be caught by it
+    it('never delays a first request on the day they become eligible', async () => {
+      registrationsRepository.findOne.mockResolvedValue(makeRegistration({ createdAt: daysAgo(14) }));
+      voteRepository.findOne.mockResolvedValue(null);
+
+      const outcome = await service.handleRankUpRequest(member);
+
+      expect(outcome.ok).toBe(true);
+    });
+
+    it('tells them they are too new before mentioning a lockout', async () => {
+      registrationsRepository.findOne.mockResolvedValue(makeRegistration({ createdAt: daysAgo(2) }));
+      voteRepository.findOne.mockResolvedValue(resolvedVote(AlbionRankUpVoteStatus.FAILED, daysAgo(1)));
+
+      const outcome = await service.handleRankUpRequest(member);
+
+      expect(outcome.reply).toContain('not been with us long enough');
     });
   });
 
@@ -304,6 +357,45 @@ describe('AlbionRankUpService', () => {
       expect(outcome.ok).toBe(false);
       expect(outcome.reply).toContain('not been with us long enough');
       expect(channelSend).not.toHaveBeenCalled();
+    });
+
+    // Ineligible, locked out and already-open all go through the same throttle
+    it.each([
+      ['ineligible', () => {
+        registrationsRepository.findOne.mockResolvedValue(makeRegistration({ createdAt: daysAgo(2) }));
+      }],
+      ['locked out', () => {
+        voteRepository.findOne.mockResolvedValue({
+          id: 9, discordId: 'candidate', status: AlbionRankUpVoteStatus.FAILED, resolvedAt: daysAgo(1),
+        });
+      }],
+      ['already open', () => {
+        voteRepository.getEntityManager.mockReturnValue({
+          persist: jest.fn().mockReturnThis(),
+          flush: jest.fn().mockRejectedValue(new Error('Duplicate entry for key pending_key')),
+        });
+      }],
+    ])('still answers a %s member privately while suppressing the repeat post', async (_label, setup) => {
+      setup();
+      registrationsExecute.mockResolvedValue({ affectedRows: 0 });
+
+      const outcome = await service.handleRankUpRequest(member);
+
+      expect(outcome.ok).toBe(false);
+      expect(outcome.reply).not.toBe('');
+      expect(channelSend).not.toHaveBeenCalled();
+    });
+
+    // No registration row means no column to throttle against, so this is held in memory
+    it('throttles the unregistered case too', async () => {
+      registrationsRepository.findOne.mockResolvedValue(null);
+
+      const first = await service.handleRankUpRequest(member);
+      const second = await service.handleRankUpRequest(member);
+
+      expect(first.reply).toContain('not registered');
+      expect(second.reply).toContain('not registered');
+      expect(channelSend).toHaveBeenCalledTimes(1);
     });
   });
 

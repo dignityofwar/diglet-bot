@@ -1289,23 +1289,6 @@
           "enumItems": [],
           "mappedType": "datetime"
         },
-        "last_rank_up_request_at": {
-          "name": "last_rank_up_request_at",
-          "type": "datetime",
-          "unsigned": false,
-          "autoincrement": false,
-          "primary": false,
-          "nullable": true,
-          "unique": false,
-          "length": null,
-          "precision": null,
-          "scale": null,
-          "default": null,
-          "comment": null,
-          "collation": null,
-          "enumItems": [],
-          "mappedType": "datetime"
-        },
         "manual": {
           "name": "manual",
           "type": "tinyint(1)",

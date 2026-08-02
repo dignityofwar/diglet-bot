@@ -34,11 +34,11 @@ export class Migration20260802120000 extends Migration {
     // any number of resolved rows
     this.addSql('alter table `albion_rank_up_vote_entity` add unique `albion_rank_up_vote_entity_pending_key_unique`(`pending_key`);');
 
-    this.addSql('alter table `albion_registrations_entity` add `graduate_since` datetime null default null, add `adept_since` datetime null default null, add `last_rank_up_request_at` datetime null default null, add `last_denial_notice_at` datetime null default null;');
+    this.addSql('alter table `albion_registrations_entity` add `graduate_since` datetime null default null, add `adept_since` datetime null default null, add `last_denial_notice_at` datetime null default null;');
   }
 
   override down(): void | Promise<void> {
-    this.addSql('alter table `albion_registrations_entity` drop column `graduate_since`, drop column `adept_since`, drop column `last_rank_up_request_at`, drop column `last_denial_notice_at`;');
+    this.addSql('alter table `albion_registrations_entity` drop column `graduate_since`, drop column `adept_since`, drop column `last_denial_notice_at`;');
     this.addSql('drop table if exists `albion_rank_up_vote_entity`;');
     this.addSql('drop table if exists `member_daily_game_activity_entity`;');
     this.addSql('drop table if exists `member_daily_activity_entity`;');

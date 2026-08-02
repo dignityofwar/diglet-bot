@@ -11,7 +11,6 @@ export interface AlbionRegistrationsEntityInterface {
   manualCreatedByDiscordName?: string;
   graduateSince?: Date | null;
   adeptSince?: Date | null;
-  lastRankUpRequestAt?: Date | null;
   lastDenialNoticeAt?: Date | null;
 }
 
@@ -78,15 +77,8 @@ export class AlbionRegistrationsEntity extends BaseEntity {
   })
   adeptSince: null | Date = null;
 
-  // 7 day cooldown between rank up requests
-  @Property({
-    nullable: true,
-    default: null,
-  })
-  lastRankUpRequestAt: null | Date = null;
-
-  // 24 hour throttle on the public denial notice, kept separate so a denial never
-  // triggers the request cooldown above
+  // 24 hour throttle on the public denial notice only. The member still gets their private
+  // answer every time, and nothing gates how often they may request.
   @Property({
     nullable: true,
     default: null,

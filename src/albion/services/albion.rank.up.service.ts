@@ -4,7 +4,10 @@ import { InjectRepository } from '@mikro-orm/nestjs';
 import { EntityRepository } from '@mikro-orm/core';
 import { GuildMember, TextChannel } from 'discord.js';
 import { AlbionRegistrationsEntity } from '../../database/entities/albion.registrations.entity';
-import { AlbionRankUpVoteEntity } from '../../database/entities/albion.rank.up.vote.entity';
+import {
+  AlbionRankUpVoteEntity,
+  AlbionRankUpVoteStatus,
+} from '../../database/entities/albion.rank.up.vote.entity';
 import { AlbionUtilities } from '../utilities/albion.utilities';
 import { DiscordService } from '../../discord/discord.service';
 import { MemberActivityRollupService } from '../../general/services/member.activity.rollup.service';
@@ -12,8 +15,19 @@ import { VOTE_REACTIONS } from './albion.rank.up.vote.service';
 import { discordTime } from '../../helpers';
 
 const DAY_MS = 24 * 60 * 60 * 1000;
-const REQUEST_COOLDOWN_DAYS = 7;
 const DENIAL_NOTICE_THROTTLE_HOURS = 24;
+
+// How long a member waits after a vote goes against them before they may ask again.
+// Keyed off the vote's outcome, not the request, so it can never delay a first attempt.
+const FAILED_VOTE_LOCKOUT_DAYS = 7;
+
+// Outcomes that start the lockout. ABANDONED is excluded deliberately - the ballot vanished or
+// could not be posted, which is our problem rather than the candidate's.
+const LOCKOUT_STATUSES = [
+  AlbionRankUpVoteStatus.FAILED,
+  AlbionRankUpVoteStatus.TIMED_OUT,
+  AlbionRankUpVoteStatus.VETOED,
+];
 const VOTE_DURATION_DAYS = 5;
 const MAX_CHARACTER_NAME = 32;
 const MAX_GAME_NAME = 48;
@@ -22,7 +36,7 @@ export enum RankUpRefusal {
   NOT_REGISTERED = 'NOT_REGISTERED',
   RANK_NOT_ELIGIBLE = 'RANK_NOT_ELIGIBLE',
   TOO_NEW = 'TOO_NEW',
-  COOLDOWN = 'COOLDOWN',
+  RECENT_FAILED_VOTE = 'RECENT_FAILED_VOTE',
   NO_GRADUATE_DATE = 'NO_GRADUATE_DATE',
   VOTE_ALREADY_OPEN = 'VOTE_ALREADY_OPEN',
   NO_ELECTORATE = 'NO_ELECTORATE',
@@ -49,6 +63,7 @@ export interface RankUpOutcome {
 export class AlbionRankUpService implements OnApplicationBootstrap {
   private readonly logger = new Logger(AlbionRankUpService.name);
   private judgementHall: TextChannel;
+  private readonly unregisteredNotices = new Map<string, number>();
 
   constructor(
     private readonly config: ConfigService,
@@ -91,14 +106,6 @@ export class AlbionRankUpService implements OnApplicationBootstrap {
       return await this.refuse(member, registration, null, RankUpRefusal.RANK_NOT_ELIGIBLE);
     }
 
-    if (registration.lastRankUpRequestAt) {
-      const nextAllowed = new Date(registration.lastRankUpRequestAt.getTime() + REQUEST_COOLDOWN_DAYS * DAY_MS);
-
-      if (nextAllowed > new Date()) {
-        return await this.refuse(member, registration, tier, RankUpRefusal.COOLDOWN, nextAllowed);
-      }
-    }
-
     // Never fall back to the registration date. Someone who registered months ago but only just
     // became a Graduate would clear the 28 day gate instantly, which is what it exists to stop.
     const anchor = tier.to === '@ALB/Adept' ? registration.graduateSince : registration.createdAt;
@@ -113,7 +120,36 @@ export class AlbionRankUpService implements OnApplicationBootstrap {
       return await this.refuse(member, registration, tier, RankUpRefusal.TOO_NEW, eligibleAt);
     }
 
+    // A vote that went against them locks them out for a week. Checked after the time gate so a
+    // newcomer always gets the more useful "not long enough yet" answer, and keyed off the vote's
+    // resolution rather than the request, so it can never delay a first attempt.
+    const lockoutUntil = await this.failedVoteLockout(member.id);
+
+    if (lockoutUntil) {
+      return await this.refuse(member, registration, tier, RankUpRefusal.RECENT_FAILED_VOTE, lockoutUntil);
+    }
+
     return await this.publish(member, registration, tier, anchor);
+  }
+
+  // Returns when they may ask again, or null if nothing is holding them back
+  async failedVoteLockout(discordId: string): Promise<Date | null> {
+    const since = new Date(Date.now() - FAILED_VOTE_LOCKOUT_DAYS * DAY_MS);
+
+    const lastFailure = await this.voteRepository.findOne(
+      {
+        discordId,
+        status: { $in: LOCKOUT_STATUSES },
+        resolvedAt: { $gte: since },
+      },
+      { orderBy: { resolvedAt: 'DESC' } },
+    );
+
+    if (!lastFailure?.resolvedAt) {
+      return null;
+    }
+
+    return new Date(lastFailure.resolvedAt.getTime() + FAILED_VOTE_LOCKOUT_DAYS * DAY_MS);
   }
 
   private async publish(
@@ -181,8 +217,7 @@ export class AlbionRankUpService implements OnApplicationBootstrap {
 
     try {
       vote.messageId = message.id;
-      registration.lastRankUpRequestAt = new Date();
-      await this.voteRepository.getEntityManager().persist(vote).persist(registration).flush();
+      await this.voteRepository.getEntityManager().persist(vote).flush();
     }
     catch (err) {
       // The ballot is public and now untracked - the one case that needs a human
@@ -347,8 +382,8 @@ ${stats}`;
         return '⛔ This command does not apply to your current rank. Only Disciples and Graduates can request a rank up.';
       case RankUpRefusal.TOO_NEW:
         return `⛔ You have not been with us long enough yet. You can request a rank up ${discordTime(date, 'R')} (${discordTime(date, 'F')}).`;
-      case RankUpRefusal.COOLDOWN:
-        return `⛔ You have already requested a rank up recently. You can try again ${discordTime(date, 'R')} (${discordTime(date, 'F')}).`;
+      case RankUpRefusal.RECENT_FAILED_VOTE:
+        return `⛔ Your last rank up vote did not pass. You can request another ${discordTime(date, 'R')} (${discordTime(date, 'F')}).`;
       case RankUpRefusal.NO_GRADUATE_DATE:
         return '⛔ We do not have a record of when you became a Graduate, so we cannot check the 4 week requirement. Please ask leadership.';
       case RankUpRefusal.VOTE_ALREADY_OPEN:
@@ -372,7 +407,7 @@ ${stats}`;
       [RankUpRefusal.NOT_REGISTERED]: 'they have no Albion registration',
       [RankUpRefusal.RANK_NOT_ELIGIBLE]: 'their current rank cannot request a rank up',
       [RankUpRefusal.TOO_NEW]: date ? `they are too new (eligible ${discordTime(date, 'R')})` : 'they are too new',
-      [RankUpRefusal.COOLDOWN]: date ? `they requested one recently (next allowed ${discordTime(date, 'R')})` : 'they requested one recently',
+      [RankUpRefusal.RECENT_FAILED_VOTE]: date ? `their last vote did not pass (next allowed ${discordTime(date, 'R')})` : 'their last vote did not pass',
       [RankUpRefusal.NO_GRADUATE_DATE]: 'we have no record of when they became a Graduate',
       [RankUpRefusal.VOTE_ALREADY_OPEN]: 'they already have a vote open',
       [RankUpRefusal.NO_ELECTORATE]: 'no electors were found to vote',
@@ -389,7 +424,12 @@ ${stats}`;
     date?: Date,
   ): Promise<void> {
     try {
-      if (registration && !await this.claimDenialNotice(registration)) {
+      const claimed = registration
+        ? await this.claimDenialNotice(registration)
+        : this.claimUnregisteredNotice(member.id);
+
+      // The member always gets their ephemeral answer; only the public line is throttled
+      if (!claimed) {
         return;
       }
 
@@ -401,6 +441,20 @@ ${stats}`;
     catch (err) {
       this.logger.error(`Failed to post denial notice for ${member.id}: ${err.message}`);
     }
+  }
+
+  // An unregistered member has no row to throttle against, so this is held in memory. Losing it
+  // on restart is fine - the worst case is one extra line in Judgement Hall.
+  private claimUnregisteredNotice(discordId: string): boolean {
+    const threshold = Date.now() - DENIAL_NOTICE_THROTTLE_HOURS * 60 * 60 * 1000;
+    const last = this.unregisteredNotices.get(discordId) ?? 0;
+
+    if (last > threshold) {
+      return false;
+    }
+
+    this.unregisteredNotices.set(discordId, Date.now());
+    return true;
   }
 
   // Claimed before sending, so two simultaneous refusals can't both post. A failed send then
