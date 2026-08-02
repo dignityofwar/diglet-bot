@@ -9,6 +9,10 @@ export interface AlbionRegistrationsEntityInterface {
   manual: boolean;
   manualCreatedByDiscordId?: string;
   manualCreatedByDiscordName?: string;
+  graduateSince?: Date | null;
+  adeptSince?: Date | null;
+  lastRankUpRequestAt?: Date | null;
+  lastDenialNoticeAt?: Date | null;
 }
 
 @Entity()
@@ -60,6 +64,34 @@ export class AlbionRegistrationsEntity extends BaseEntity {
     default: null,
   })
   manualCreatedByDiscordName: null | string = null;
+
+  // Rank tenure. Stamped on role gain, or seeded at boot for members who already held the rank.
+  @Property({
+    nullable: true,
+    default: null,
+  })
+  graduateSince: null | Date = null;
+
+  @Property({
+    nullable: true,
+    default: null,
+  })
+  adeptSince: null | Date = null;
+
+  // 7 day cooldown between rank up requests
+  @Property({
+    nullable: true,
+    default: null,
+  })
+  lastRankUpRequestAt: null | Date = null;
+
+  // 24 hour throttle on the public denial notice, kept separate so a denial never
+  // triggers the request cooldown above
+  @Property({
+    nullable: true,
+    default: null,
+  })
+  lastDenialNoticeAt: null | Date = null;
 
   constructor(options: AlbionRegistrationsEntityInterface) {
     super();

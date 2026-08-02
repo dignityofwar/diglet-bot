@@ -9,6 +9,8 @@ import {
 } from 'discord.js';
 import { DatabaseService } from '../../database/services/database.service';
 import { RecRolePingService } from '../services/rec.role.ping.service';
+import { MemberActivityRollupService } from '../services/member.activity.rollup.service';
+import { resolvePartialReaction } from '../../discord/discord.hacks';
 
 @Injectable()
 export class MessageEvents {
@@ -17,6 +19,7 @@ export class MessageEvents {
   constructor(
     private readonly databaseService: DatabaseService,
     private readonly recRolePingService: RecRolePingService,
+    private readonly rollupService: MemberActivityRollupService,
   ) {}
 
   async handleMessageEvent(message: Message, type: string): Promise<void> {
@@ -39,6 +42,7 @@ export class MessageEvents {
 
     // Create only, otherwise edits and deletions re-send the reminder.
     if (type === 'create') {
+      await this.rollupService.increment([message.member.id], 'messagesSent');
       await this.recRolePingService.onMessage(message);
     }
   }
@@ -62,39 +66,24 @@ export class MessageEvents {
       return;
     }
     await this.databaseService.updateActivity(guildMember);
+
+    // Adds only. Removals aren't decremented - this is an engagement signal, not a ledger.
+    if (type === 'add') {
+      await this.rollupService.increment([guildMember.id], 'reactionsAdded');
+    }
   }
 
   async handlePartialReactions(
     reaction: MessageReaction | PartialMessageReaction,
     user: User | PartialUser,
   ): Promise<{ reaction: MessageReaction, user: User }> {
-    let realReaction = reaction as MessageReaction;
-    if (reaction.partial) {
-      try {
-        realReaction = await reaction.fetch();
-      }
-      catch (error) {
-        this.logger.error(`Error fetching reaction: ${error.message}`);
-        throw error;
-      }
+    try {
+      return await resolvePartialReaction(reaction, user);
     }
-
-    let realUser = user as User;
-
-    if (user.partial) {
-      try {
-        realUser = await user.fetch();
-      }
-      catch (error) {
-        this.logger.error(`Error fetching user "${user.displayName}": ${error.message}`);
-        throw error;
-      }
+    catch (error) {
+      this.logger.error(`Error resolving partial reaction: ${error.message}`);
+      throw error;
     }
-
-    return {
-      reaction: realReaction,
-      user: realUser,
-    };
   }
 
   // Annoyingly, these events are not additive and have to be defined every time.

@@ -16,15 +16,26 @@ import { AlbionRegistrationRetryCronService } from './services/albion.registrati
 import { AlbionForceRetryCommand } from './commands/force-retry.command';
 import { AlbionRegisterQueueCommand } from './commands/register-queue.command';
 import { AlbionRegistrationQueueService } from './services/albion.registration.queue.service';
+import { AlbionRankUpCommand } from './commands/rank-up.command';
+import { AlbionRankUpService } from './services/albion.rank.up.service';
+import { AlbionRankProgressService } from './services/albion.rank.progress.service';
+import { AlbionRankUpVoteService } from './services/albion.rank.up.vote.service';
+import { AlbionRankUpVoteCronService } from './services/albion.rank.up.vote.cron.service';
+import { GeneralModule } from '../general/general.module';
 
 @Module({
-  imports: [ConfigModule, DatabaseModule, DiscordModule],
+  imports: [ConfigModule, DatabaseModule, DiscordModule, GeneralModule],
   providers: [
     AlbionApiService,
     AlbionCronService,
     AlbionDeregisterCommand,
     AlbionDeregistrationService,
     AlbionLogCommand,
+    AlbionRankProgressService,
+    AlbionRankUpCommand,
+    AlbionRankUpService,
+    AlbionRankUpVoteCronService,
+    AlbionRankUpVoteService,
     AlbionRegisterCommand,
     AlbionRegisterQueueCommand,
     AlbionForceRetryCommand,

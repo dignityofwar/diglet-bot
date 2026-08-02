@@ -10,5 +10,7 @@
 - [allowBuilds breaks on dependency renames](pnpm-allowbuilds-breaks-on-renames.md) — an unlisted ignored build script fails pnpm install outright, killing CI before lint/test
 - [Lock file maintenance bypasses Renovate's age gate](lockfile-maintenance-bypasses-renovate-age-gate.md) — the 14-day wait doesn't cover it; pnpm's own minimumReleaseAge is the only guard
 - [Renovate freezes PRs under minimumReleaseAge](renovate-freezes-prs-under-minimum-release-age.md) — forced PRs never rebase, and the rebase checkbox can't unstick them
+- [Local-midnight date keys are wrong here](local-midnight-date-keys-are-wrong.md) — forceUtcTimezone means setHours(0,0,0,0) splits a day across BST; use utcMidnight()
+- [A nullable unique key enforces one open row](nullable-unique-key-enforces-one-open-row.md) — beats a read-before-write check, which races
 
 Note: this memory lives in the repo at `.claude/memory/` (wired via `autoMemoryDirectory` in `.claude/settings.json`) so it's shared via git across machines and collaborators. See README "Claude Code memory".

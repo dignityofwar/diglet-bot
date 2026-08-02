@@ -17,6 +17,8 @@ import { JoinerLeaverService } from './services/joinerleaver.service';
 import { RoleMetricsService } from './services/role.metrics.service';
 import { RecRolePingService } from './services/rec.role.ping.service';
 import { HealthcheckService } from './services/healthcheck.service';
+import { MemberActivityRollupService } from './services/member.activity.rollup.service';
+import { MemberPresenceCronService } from './services/member.presence.cron.service';
 
 @Module({
   imports: [
@@ -30,6 +32,7 @@ import { HealthcheckService } from './services/healthcheck.service';
     DiscordService,
     HealthcheckService,
     JoinerLeaverService,
+    MemberActivityRollupService,
     RecRolePingService,
     RoleMetricsService,
 
@@ -46,6 +49,8 @@ import { HealthcheckService } from './services/healthcheck.service';
 
     // Cron Services
     ActivityReportCronService,
+    MemberPresenceCronService,
   ],
+  exports: [MemberActivityRollupService],
 })
 export class GeneralModule {}
