@@ -12,5 +12,6 @@
 - [Renovate freezes PRs under minimumReleaseAge](renovate-freezes-prs-under-minimum-release-age.md) — forced PRs never rebase, and the rebase checkbox can't unstick them
 - [Local-midnight date keys are wrong here](local-midnight-date-keys-are-wrong.md) — forceUtcTimezone means setHours(0,0,0,0) splits a day across BST; use utcMidnight()
 - [A nullable unique key enforces one open row](nullable-unique-key-enforces-one-open-row.md) — beats a read-before-write check, which races
+- [Queue status flips collide with history](queue-status-unique-key-collides-with-history.md) — the unique key is on (guild, member, status), so an old succeeded row blocks the new one
 
 Note: this memory lives in the repo at `.claude/memory/` (wired via `autoMemoryDirectory` in `.claude/settings.json`) so it's shared via git across machines and collaborators. See README "Claude Code memory".
