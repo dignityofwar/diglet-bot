@@ -364,10 +364,10 @@ export class AlbionRankUpService implements OnApplicationBootstrap {
 Guildmember **${registration.characterName.slice(0, MAX_CHARACTER_NAME)}** (<@${member.id}>) wants to be ranked up from **${this.friendlyRank(tier.from)}** to **${this.friendlyRank(tier.to)}**.
 Please react with the following:
 
-👍 - to approve the rank up
-🤷 - to say "I don't know the person well enough"
-👎 - to disapprove the rank up
-⛔ - to put a veto on the rank up (this action needs justification with proof)
+- 👍 to approve the rank up
+- 🤷 to say "I don't know the person well enough"
+- 👎 to disapprove the rank up
+- ⛔ to put a veto on the rank up (this action needs justification with proof)
 
 👍 = 1 point · 🤷 = 0.5 points · 👎 = 0 points · ⛔ closes the vote whatever the score
 
