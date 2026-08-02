@@ -9,10 +9,14 @@ import { TestBootstrapper } from '../../test.bootstrapper';
 const guildId = TestBootstrapper.mockConfig.discord.guildId;
 const counts = {
   ranks: [
-    { name: '@ALB/Archmage', discordRoleId: '1', priority: 1, count: 1 },
-    { name: '@ALB/Disciple', discordRoleId: '2', priority: 6, count: 42 },
+    { name: '@ALB/Archmage', discordRoleId: '1', count: 1 },
+    { name: '@ALB/Disciple', discordRoleId: '2', count: 42 },
+  ],
+  content: [
+    { name: 'ALB/Dungeons', discordRoleId: '3', count: 20 },
   ],
   anyRank: 43,
+  registered: 40,
 };
 
 const createInteraction = () => ({
@@ -22,6 +26,7 @@ const createInteraction = () => ({
   deferReply: jest.fn().mockResolvedValue(undefined),
   editReply: jest.fn().mockResolvedValue(undefined),
   reply: jest.fn().mockResolvedValue(undefined),
+  followUp: jest.fn().mockResolvedValue(undefined),
 }) as any;
 
 describe('AlbionRankCountsCommand', () => {
@@ -32,7 +37,8 @@ describe('AlbionRankCountsCommand', () => {
   beforeEach(async () => {
     rankCountsService = {
       getRankCounts: jest.fn().mockResolvedValue(counts),
-      formatReport: jest.fn().mockReturnValue('## 📊 Albion rank numbers'),
+      formatReport: jest.fn().mockReturnValue('## 📊 Albion role numbers'),
+      chunkReport: jest.fn().mockImplementation((report: string) => [report]),
     };
 
     const moduleRef = await Test.createTestingModule({
@@ -70,8 +76,26 @@ describe('AlbionRankCountsCommand', () => {
 
     expect(rankCountsService.getRankCounts).toHaveBeenCalledWith(guildId);
     expect(rankCountsService.formatReport).toHaveBeenCalledWith(counts);
-    expect(result).toBe('## 📊 Albion rank numbers');
-    expect(interaction.editReply).toHaveBeenCalledWith('## 📊 Albion rank numbers');
+    expect(result).toBe('## 📊 Albion role numbers');
+    expect(interaction.editReply).toHaveBeenCalledWith('## 📊 Albion role numbers');
+    expect(interaction.followUp).not.toHaveBeenCalled();
+  });
+
+  it('should follow up ephemerally with the rest of an oversized report', async () => {
+    rankCountsService.chunkReport.mockReturnValue(['first chunk', 'second chunk', 'third chunk']);
+
+    await command.onAlbionRankCountsCommand([interaction]);
+
+    expect(interaction.editReply).toHaveBeenCalledWith('first chunk');
+    expect(interaction.followUp).toHaveBeenCalledTimes(2);
+    expect(interaction.followUp).toHaveBeenNthCalledWith(1, {
+      content: 'second chunk',
+      flags: MessageFlags.Ephemeral,
+    });
+    expect(interaction.followUp).toHaveBeenNthCalledWith(2, {
+      content: 'third chunk',
+      flags: MessageFlags.Ephemeral,
+    });
   });
 
   it('should report the error when the counts cannot be gathered', async () => {

@@ -16,7 +16,7 @@ export class AlbionRankCountsCommand {
 
   @SlashCommand({
     name: 'albion-ranks',
-    description: 'Show how many members hold each Albion rank role',
+    description: 'Show how many members hold each Albion rank and content role',
   })
   async onAlbionRankCountsCommand(
     @Context() [interaction]: SlashCommandContext,
@@ -29,7 +29,18 @@ export class AlbionRankCountsCommand {
 
     try {
       const counts = await this.albionRankCountsService.getRankCounts(this.config.get('discord.guildId'));
-      return replyTo(interaction, this.albionRankCountsService.formatReport(counts));
+      const report = this.albionRankCountsService.formatReport(counts);
+
+      // Enough content roles will outgrow Discord's message limit, so the report may arrive split
+      const [firstChunk, ...restChunks] = this.albionRankCountsService.chunkReport(report);
+
+      await replyTo(interaction, firstChunk);
+
+      for (const chunk of restChunks) {
+        await interaction.followUp({ content: chunk, flags: MessageFlags.Ephemeral });
+      }
+
+      return report;
     }
     catch (err) {
       this.logger.error(`Error getting Albion rank counts: ${err.message}`);
