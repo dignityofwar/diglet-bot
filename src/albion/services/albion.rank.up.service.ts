@@ -1,7 +1,7 @@
 import { Injectable, Logger, OnApplicationBootstrap } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { InjectRepository } from '@mikro-orm/nestjs';
-import { EntityRepository } from '@mikro-orm/core';
+import { EntityRepository, UniqueConstraintViolationException } from '@mikro-orm/core';
 import { GuildMember, TextChannel } from 'discord.js';
 import { AlbionRegistrationsEntity } from '../../database/entities/albion.registrations.entity';
 import {
@@ -11,7 +11,8 @@ import {
 import { AlbionUtilities } from '../utilities/albion.utilities';
 import { DiscordService } from '../../discord/discord.service';
 import { MemberActivityRollupService } from '../../general/services/member.activity.rollup.service';
-import { VOTE_REACTIONS } from './albion.rank.up.vote.service';
+import { LeadershipPing } from '../../config/albion.app.config';
+import { AlbionRankUpVoteService, VOTE_REACTIONS } from './albion.rank.up.vote.service';
 import { discordTime } from '../../helpers';
 
 const DAY_MS = 24 * 60 * 60 * 1000;
@@ -70,6 +71,7 @@ export class AlbionRankUpService implements OnApplicationBootstrap {
     private readonly discordService: DiscordService,
     private readonly albionUtilities: AlbionUtilities,
     private readonly rollupService: MemberActivityRollupService,
+    private readonly voteService: AlbionRankUpVoteService,
     @InjectRepository(AlbionRegistrationsEntity) private readonly registrationsRepository: EntityRepository<AlbionRegistrationsEntity>,
     @InjectRepository(AlbionRankUpVoteEntity) private readonly voteRepository: EntityRepository<AlbionRankUpVoteEntity>,
   ) {}
@@ -171,37 +173,47 @@ export class AlbionRankUpService implements OnApplicationBootstrap {
     const expiresAt = new Date(Date.now() + VOTE_DURATION_DAYS * DAY_MS);
     const characterName = registration.characterName.slice(0, MAX_CHARACTER_NAME);
 
+    // Built before the row is claimed. Anything failing in here afterwards would strand a pending
+    // ballot with no message, locking the member out of a vote nobody could ever see.
+    const content = await this.buildBallot(member, registration, tier, anchor, electors.length, requiredScore, expiresAt);
+
+    const newBallot = () => new AlbionRankUpVoteEntity({
+      channelId: this.judgementHall.id,
+      discordId: member.id,
+      pendingKey: member.id, // Unique, so the database rejects a second open ballot
+      characterName,
+      fromRank: tier.from,
+      toRank: tier.to,
+      requiredScore,
+      electorateSize: electors.length,
+      expiresAt,
+    });
+
     // The row goes in before the Discord post. Posting first means a flush failure leaves a
     // public ballot nothing tracks and nothing will ever resolve.
     let vote: AlbionRankUpVoteEntity;
 
     try {
-      vote = new AlbionRankUpVoteEntity({
-        channelId: this.judgementHall.id,
-        discordId: member.id,
-        pendingKey: member.id, // Unique, so the database rejects a second open ballot
-        characterName,
-        fromRank: tier.from,
-        toRank: tier.to,
-        requiredScore,
-        electorateSize: electors.length,
-        expiresAt,
-      });
-      await this.voteRepository.getEntityManager().persist(vote).flush();
+      vote = await this.claimBallot(newBallot);
     }
     catch (err) {
+      if (!(err instanceof UniqueConstraintViolationException)) {
+        // Anything that isn't the duplicate guard is a fault, not a member doing something wrong
+        this.logger.error(`Could not open a rank up ballot for ${member.id}: ${err.message}`);
+        return { ok: false, reply: '⛔ Something went wrong opening your rank up request. Please tell leadership.' };
+      }
+
       this.logger.warn(`Refused a duplicate rank up ballot for ${member.id}: ${err.message}`);
       return await this.refuse(member, registration, tier, RankUpRefusal.VOTE_ALREADY_OPEN);
     }
 
-    const content = await this.buildBallot(member, registration, tier, anchor, electors.length, requiredScore, expiresAt);
-    const pingRole = this.config.get('albion.leadershipPingRole');
+    const ping: LeadershipPing = this.config.get('albion.leadershipPing');
     let message: Awaited<ReturnType<TextChannel['send']>>;
 
     try {
       message = await this.judgementHall.send({
         content,
-        allowedMentions: { roles: [pingRole], users: [member.id] },
+        allowedMentions: { roles: ping.roles, users: [...ping.users, member.id] },
       });
     }
     catch (err) {
@@ -240,6 +252,30 @@ export class AlbionRankUpService implements OnApplicationBootstrap {
     };
   }
 
+  // A unique violation can mean a live ballot, or a stranded claim from an attempt that died
+  // before it posted. Clearing the latter is the difference between a retry and a lockout.
+  private async claimBallot(newBallot: () => AlbionRankUpVoteEntity): Promise<AlbionRankUpVoteEntity> {
+    const ballot = newBallot();
+
+    try {
+      await this.voteRepository.getEntityManager().persist(ballot).flush();
+      return ballot;
+    }
+    catch (err) {
+      if (!(err instanceof UniqueConstraintViolationException)) {
+        throw err;
+      }
+
+      if (await this.voteService.reclaimUnposted(ballot.discordId) === 0) {
+        throw err;
+      }
+
+      const retry = newBallot();
+      await this.voteRepository.getEntityManager().persist(retry).flush();
+      return retry;
+    }
+  }
+
   private async buildBallot(
     member: GuildMember,
     registration: AlbionRegistrationsEntity,
@@ -249,10 +285,10 @@ export class AlbionRankUpService implements OnApplicationBootstrap {
     requiredScore: number,
     expiresAt: Date,
   ): Promise<string> {
-    const pingRole = this.config.get('albion.leadershipPingRole');
+    const ping: LeadershipPing = this.config.get('albion.leadershipPing');
     const stats = await this.buildActivityBlock(member.id, anchor, registration, tier);
 
-    return `<@&${pingRole}>
+    return `${ping.mention}
 
 Guildmember <@${member.id}> wants to be ranked up from **${this.friendlyRank(tier.from)}** to **${this.friendlyRank(tier.to)}**.
 Please react with the following:
@@ -459,6 +495,8 @@ ${stats}`;
 
   // Claimed before sending, so two simultaneous refusals can't both post. A failed send then
   // costs at most one suppressed notice, which is the right way round for a rate limit.
+  // 'run' is required: execute() otherwise returns rows, so an UPDATE comes back as [] and this
+  // would always read as "somebody else claimed it" and never post a notice at all.
   private async claimDenialNotice(registration: AlbionRegistrationsEntity): Promise<boolean> {
     const threshold = new Date(Date.now() - DENIAL_NOTICE_THROTTLE_HOURS * 60 * 60 * 1000);
     const connection = this.registrationsRepository.getEntityManager().getConnection();
@@ -467,6 +505,7 @@ ${stats}`;
       `update albion_registrations_entity set last_denial_notice_at = ?, updated_at = ?
         where id = ? and (last_denial_notice_at is null or last_denial_notice_at < ?)`,
       [new Date(), new Date(), registration.id, threshold],
+      'run',
     );
 
     const affected = typeof result === 'number'

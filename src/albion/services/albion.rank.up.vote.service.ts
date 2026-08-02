@@ -9,7 +9,7 @@ import {
   AlbionRankUpVoteStatus,
 } from '../../database/entities/albion.rank.up.vote.entity';
 import { AlbionUtilities } from '../utilities/albion.utilities';
-import { AlbionRoleMapInterface } from '../../config/albion.app.config';
+import { AlbionRoleMapInterface, LeadershipPing } from '../../config/albion.app.config';
 import { DiscordService } from '../../discord/discord.service';
 import { resolvePartialReaction } from '../../discord/discord.hacks';
 import { discordTime } from '../../helpers';
@@ -40,6 +40,10 @@ const SCORE_LINE = /^Current score:.*(?:\n⏳.*)?$/m;
 
 // Discord rate limits message edits, and a busy ballot recounts on every reaction
 const SCORE_EDIT_THROTTLE_MS = 5000;
+
+// How long a claimed but unposted ballot is left alone before it is treated as dead. Long enough
+// that a publish still in flight is never reclaimed out from under itself.
+export const UNPOSTED_GRACE_MS = 60 * 1000;
 
 export interface VoteTally {
   score: number;
@@ -276,6 +280,40 @@ export class AlbionRankUpVoteService {
     return await channel.messages.fetch(vote.messageId);
   }
 
+  // A pending row with no messageId is a ballot that was never posted: the insert claimed the
+  // member's slot and something failed before the send. Nothing else ever clears it, so the member
+  // stays locked out and is eventually timed out for a vote nobody could see.
+  // announcedAt is stamped alongside resolvedAt so the reconcile sweep doesn't try to post an
+  // outcome for a message that never existed.
+  async reclaimUnposted(discordId?: string): Promise<number> {
+    const connection = this.voteRepository.getEntityManager().getConnection();
+    const now = new Date();
+    const cutoff = new Date(Date.now() - UNPOSTED_GRACE_MS);
+
+    const result = await connection.execute(
+      `update albion_rank_up_vote_entity
+          set status = ?, pending_key = null, resolved_at = ?, announced_at = ?,
+              resolution_note = ?, updated_at = ?
+        where status = ? and message_id is null and created_at <= ?
+          ${discordId ? 'and discord_id = ?' : ''}`,
+      [
+        AlbionRankUpVoteStatus.ABANDONED, now, now,
+        'The ballot was never posted', now,
+        AlbionRankUpVoteStatus.PENDING, cutoff,
+        ...(discordId ? [discordId] : []),
+      ],
+      'run',
+    );
+
+    const reclaimed = this.affectedRows(result);
+
+    if (reclaimed > 0) {
+      this.logger.warn(`Reclaimed ${reclaimed} rank up ballot(s) that were never posted`);
+    }
+
+    return reclaimed;
+  }
+
   // Elects a single winner in the database. Re-reading the row and checking it is still pending
   // is itself a race - two reactions landing together would both resolve and both announce.
   async resolve(
@@ -292,6 +330,7 @@ export class AlbionRankUpVoteService {
               provisional_status = null, provisional_since = null, provisional_note = null, updated_at = ?
         where id = ? and status = ?`,
       [status, score, new Date(), note ?? null, new Date(), vote.id, AlbionRankUpVoteStatus.PENDING],
+      'run',
     );
 
     if (this.affectedRows(result) !== 1) {
@@ -315,6 +354,7 @@ export class AlbionRankUpVoteService {
       `update albion_rank_up_vote_entity set announced_at = ?, updated_at = ?
         where id = ? and announced_at is null`,
       [new Date(), new Date(), vote.id],
+      'run',
     );
 
     if (this.affectedRows(claim) !== 1) {
@@ -414,16 +454,16 @@ export class AlbionRankUpVoteService {
     const link = `https://discord.com/channels/${this.config.get('discord.guildId')}/${vote.channelId}/${vote.messageId}`;
 
     if (vote.status === AlbionRankUpVoteStatus.PASSED) {
-      const pingRole = this.config.get('albion.leadershipPingRole');
+      const ping: LeadershipPing = this.config.get('albion.leadershipPing');
 
       await channel.send({
         content: [
-          `<@&${pingRole}> Rank up vote **passed** for <@${vote.discordId}> (${vote.characterName}) — **${this.friendlyRank(vote.fromRank)} → ${this.friendlyRank(vote.toRank)}**, score ${vote.score}/${vote.requiredScore}.`,
+          `${ping.mention} Rank up vote **passed** for <@${vote.discordId}> (${vote.characterName}) — **${this.friendlyRank(vote.fromRank)} → ${this.friendlyRank(vote.toRank)}**, score ${vote.score}/${vote.requiredScore}.`,
           '',
           this.whatIsLeftToDo(vote, granted),
           link,
         ].join('\n'),
-        allowedMentions: { roles: [pingRole], users: [vote.discordId] },
+        allowedMentions: { roles: ping.roles, users: [...ping.users, vote.discordId] },
       });
       return;
     }
@@ -454,6 +494,8 @@ export class AlbionRankUpVoteService {
     return roleName.replace('@ALB/', '');
   }
 
+  // Every caller must pass 'run' to execute(). The default returns rows, so an UPDATE comes back
+  // as [] and every election here would silently read as "somebody else won".
   private affectedRows(result: unknown): number {
     if (typeof result === 'number') {
       return result;

@@ -6,6 +6,7 @@ import { Collection } from 'discord.js';
 import {
   AlbionRankUpVoteService,
   PROVISIONAL_HOLD_MS,
+  UNPOSTED_GRACE_MS,
   VOTE_APPROVE,
   VOTE_DISAPPROVE,
   VOTE_SHRUG,
@@ -348,6 +349,65 @@ describe('AlbionRankUpVoteService', () => {
       await service.resolve(makeVote(), AlbionRankUpVoteStatus.FAILED, 1);
 
       expect(execute.mock.calls[0][0]).toContain('pending_key = null');
+    });
+
+    // Without 'run' the driver returns rows, so an UPDATE comes back as [] and every election
+    // reads as lost - votes would resolve in the database and never announce
+    it('asks for the affected row count', async () => {
+      await service.resolve(makeVote(), AlbionRankUpVoteStatus.PASSED, 4);
+
+      for (const call of execute.mock.calls) {
+        expect(call[2]).toBe('run');
+      }
+    });
+  });
+
+  describe('reclaimUnposted', () => {
+    it('only touches pending rows that never got a message', async () => {
+      await service.reclaimUnposted();
+
+      expect(execute.mock.calls[0][0]).toContain('message_id is null');
+      expect(execute.mock.calls[0][0]).toContain('status = ?');
+      expect(execute.mock.calls[0][1]).toContain(AlbionRankUpVoteStatus.ABANDONED);
+    });
+
+    it('frees the pending key so the member can ask again', async () => {
+      await service.reclaimUnposted();
+
+      expect(execute.mock.calls[0][0]).toContain('pending_key = null');
+    });
+
+    // Otherwise the reconcile sweep would try to post an outcome for a ballot nobody ever saw
+    it('marks the row announced so nothing tries to post an outcome', async () => {
+      await service.reclaimUnposted();
+
+      expect(execute.mock.calls[0][0]).toContain('announced_at = ?');
+    });
+
+    it('leaves a publish still in flight alone', async () => {
+      await service.reclaimUnposted();
+
+      const cutoff: Date = execute.mock.calls[0][1].at(-1);
+      expect(Date.now() - cutoff.getTime()).toBeGreaterThanOrEqual(UNPOSTED_GRACE_MS);
+    });
+
+    it('narrows to one member when given a discord ID', async () => {
+      await service.reclaimUnposted('candidate');
+
+      expect(execute.mock.calls[0][0]).toContain('and discord_id = ?');
+      expect(execute.mock.calls[0][1].at(-1)).toBe('candidate');
+    });
+
+    it('reports how many it reclaimed', async () => {
+      execute.mockResolvedValue({ affectedRows: 2 });
+
+      expect(await service.reclaimUnposted()).toBe(2);
+    });
+
+    it('asks for the affected row count', async () => {
+      await service.reclaimUnposted();
+
+      expect(execute.mock.calls[0][2]).toBe('run');
     });
   });
 

@@ -440,7 +440,11 @@ export class TestBootstrapper {
           keep: false,
         },
       ],
-      leadershipPingRole: '1421034165356331070',
+      leadershipPing: {
+        mention: '<@&1421034165356331070>',
+        roles: ['1421034165356331070'],
+        users: [],
+      },
       electorMaxPriority: 3,
       autoAssignRanks: ['@ALB/Graduate'],
       gameActivityName: 'Albion Online',

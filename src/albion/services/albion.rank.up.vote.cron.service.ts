@@ -40,6 +40,8 @@ export class AlbionRankUpVoteCronService implements OnApplicationBootstrap {
   }
 
   async sweep(): Promise<void> {
+    // First, so a stranded claim is cleared before expireOverdue can time it out
+    await this.voteService.reclaimUnposted();
     await this.reconcileUnannounced();
     await this.commitElapsedHolds();
     await this.expireOverdue();

@@ -2,6 +2,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { ConfigService } from '@nestjs/config';
 import { getRepositoryToken } from '@mikro-orm/nestjs';
+import { UniqueConstraintViolationException } from '@mikro-orm/core';
 import { AlbionRankUpService, RankUpRefusal } from './albion.rank.up.service';
 import { AlbionRegistrationsEntity } from '../../database/entities/albion.registrations.entity';
 import {
@@ -11,6 +12,7 @@ import {
 import { AlbionUtilities } from '../utilities/albion.utilities';
 import { DiscordService } from '../../discord/discord.service';
 import { MemberActivityRollupService } from '../../general/services/member.activity.rollup.service';
+import { AlbionRankUpVoteService } from './albion.rank.up.vote.service';
 import { TestBootstrapper } from '../../test.bootstrapper';
 
 const DAY_MS = 24 * 60 * 60 * 1000;
@@ -21,11 +23,19 @@ describe('AlbionRankUpService', () => {
   let voteRepository: any;
   let albionUtilities: any;
   let rollupService: any;
+  let voteService: any;
+  let votePersist: jest.Mock;
+  let voteFlush: jest.Mock;
   let channelSend: jest.Mock;
   let registrationsExecute: jest.Mock;
   let ballotMessage: any;
 
   const daysAgo = (days: number) => new Date(Date.now() - days * DAY_MS);
+
+  // What MikroORM actually throws when the pendingKey index rejects a second open ballot
+  const duplicateKeyError = () => new UniqueConstraintViolationException(
+    new Error('Duplicate entry \'candidate\' for key \'albion_rank_up_vote_entity_pending_key_unique\''),
+  );
 
   const makeRegistration = (overrides: any = {}) => ({
     id: 1,
@@ -60,11 +70,14 @@ describe('AlbionRankUpService', () => {
       }),
     };
 
+    votePersist = jest.fn().mockReturnThis();
+    voteFlush = jest.fn().mockResolvedValue(true);
+
     voteRepository = {
       findOne: jest.fn().mockResolvedValue(null),
       getEntityManager: jest.fn().mockReturnValue({
-        persist: jest.fn().mockReturnThis(),
-        flush: jest.fn().mockResolvedValue(true),
+        persist: votePersist,
+        flush: voteFlush,
       }),
     };
 
@@ -80,6 +93,8 @@ describe('AlbionRankUpService', () => {
       getGameTotals: jest.fn().mockResolvedValue([]),
       getTrackingStartDate: jest.fn().mockResolvedValue(daysAgo(10)),
     };
+
+    voteService = { reclaimUnposted: jest.fn().mockResolvedValue(0) };
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -97,6 +112,7 @@ describe('AlbionRankUpService', () => {
         },
         { provide: AlbionUtilities, useValue: albionUtilities },
         { provide: MemberActivityRollupService, useValue: rollupService },
+        { provide: AlbionRankUpVoteService, useValue: voteService },
         { provide: getRepositoryToken(AlbionRegistrationsEntity), useValue: registrationsRepository },
         { provide: getRepositoryToken(AlbionRankUpVoteEntity), useValue: voteRepository },
       ],
@@ -347,6 +363,16 @@ describe('AlbionRankUpService', () => {
       expect(channelSend).toHaveBeenCalledTimes(1);
     });
 
+    // Without 'run' the driver returns rows, so the UPDATE comes back as [] and the claim always
+    // reads as lost - no denial notice would ever reach Judgement Hall
+    it('asks for the affected row count', async () => {
+      registrationsRepository.findOne.mockResolvedValue(makeRegistration({ createdAt: daysAgo(2) }));
+
+      await service.handleRankUpRequest(member);
+
+      expect(registrationsExecute.mock.calls[0][2]).toBe('run');
+    });
+
     it('stays silent when the claim matches no rows', async () => {
       registrationsExecute.mockResolvedValue({ affectedRows: 0 });
       registrationsRepository.findOne.mockResolvedValue(makeRegistration({ createdAt: daysAgo(2) }));
@@ -417,14 +443,67 @@ describe('AlbionRankUpService', () => {
     });
 
     it('refuses when a ballot is already open', async () => {
-      voteRepository.getEntityManager.mockReturnValue({
-        persist: jest.fn().mockReturnThis(),
-        flush: jest.fn().mockRejectedValue(new Error('Duplicate entry for key pending_key')),
-      });
+      voteFlush.mockRejectedValue(duplicateKeyError());
 
       const outcome = await service.handleRankUpRequest(member);
 
       expect(outcome.reply).toContain('already have a rank up vote open');
+      expect(channelSend).not.toHaveBeenCalledWith(expect.objectContaining({
+        content: expect.stringContaining('wants to be ranked up'),
+      }));
+    });
+
+    // The bug this replaced: any insert failure was reported as an open ballot, so a missing
+    // table or a bad column read as "you already have a vote" with nothing in the table
+    it('does not claim a ballot is open when the insert failed for another reason', async () => {
+      voteFlush.mockRejectedValue(new Error('Table albion_rank_up_vote_entity does not exist'));
+
+      const outcome = await service.handleRankUpRequest(member);
+
+      expect(outcome.ok).toBe(false);
+      expect(outcome.reply).not.toContain('already have a rank up vote open');
+      expect(outcome.reply).toContain('Something went wrong');
+    });
+
+    it('does not post a ballot when the insert failed for another reason', async () => {
+      voteFlush.mockRejectedValue(new Error('Table albion_rank_up_vote_entity does not exist'));
+
+      await service.handleRankUpRequest(member);
+
+      expect(channelSend).not.toHaveBeenCalledWith(expect.objectContaining({
+        content: expect.stringContaining('wants to be ranked up'),
+      }));
+    });
+
+    // A claim left behind by an attempt that died before posting is ours to clear, not a
+    // reason to lock the member out of a ballot nobody ever saw
+    it('reclaims a ballot that was never posted and retries', async () => {
+      voteFlush.mockRejectedValueOnce(duplicateKeyError());
+      voteService.reclaimUnposted.mockResolvedValue(1);
+
+      const outcome = await service.handleRankUpRequest(member);
+
+      expect(voteService.reclaimUnposted).toHaveBeenCalledWith('candidate');
+      expect(outcome.ok).toBe(true);
+      expect(lastSentContent()).toContain('wants to be ranked up');
+    });
+
+    it('refuses when there was nothing stranded to reclaim', async () => {
+      voteFlush.mockRejectedValue(duplicateKeyError());
+      voteService.reclaimUnposted.mockResolvedValue(0);
+
+      const outcome = await service.handleRankUpRequest(member);
+
+      expect(outcome.reply).toContain('already have a rank up vote open');
+    });
+
+    // Anything failing after the row is claimed but before the send strands the member behind a
+    // ballot that was never posted, so the report has to be built first
+    it('does not claim a ballot when the activity report cannot be built', async () => {
+      rollupService.getRollup.mockRejectedValue(new Error('activity table is missing'));
+
+      await expect(service.handleRankUpRequest(member)).rejects.toThrow('activity table is missing');
+      expect(votePersist).not.toHaveBeenCalled();
     });
 
     it('adds all four reactions in order', async () => {
