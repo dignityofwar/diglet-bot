@@ -688,7 +688,23 @@ describe('AlbionRankUpService', () => {
       const content = lastSentContent();
       expect(content).toContain('wants to be ranked up');
       expect(content).toContain('Please react with the following');
-      expect(content).toContain('⛔ - to put a veto on the rank up');
+      expect(content).toContain('- ⛔ to put a veto on the rank up');
+    });
+
+    it('bullets each reaction explainer but keeps the scoring on one line', async () => {
+      await service.handleRankUpRequest(member);
+      const content = lastSentContent();
+
+      for (const line of [
+        '- 👍 to approve the rank up',
+        '- 🤷 to say "I don\'t know the person well enough"',
+        '- 👎 to disapprove the rank up',
+        '- ⛔ to put a veto on the rank up',
+      ]) {
+        expect(content).toContain(line);
+      }
+
+      expect(content).toContain('👍 = 1 point · 🤷 = 0.5 points · 👎 = 0 points · ⛔ closes the vote whatever the score');
     });
 
     it('pings the leadership role and the candidate only', async () => {
