@@ -708,7 +708,7 @@ describe('AlbionRankUpService', () => {
       const content = lastSentContent();
 
       expect(content).toContain('Eligible voters: 6');
-      expect(content).toContain('Passes at a score of **3.5** — a majority of 6 (6 ÷ 2 + 0.5)');
+      expect(content).toContain('Passes at a score of **3.5** — a majority of 6 (6 ÷ 2 = 3) + 0.5');
       expect(content).toContain('## 📊 Current score: 0 / 3.5');
     });
 
@@ -727,7 +727,7 @@ describe('AlbionRankUpService', () => {
 
       const content = lastSentContent();
       expect(content).toContain('Eligible voters: 7');
-      expect(content).toContain('Passes at a score of **4** — a majority of 7 (7 ÷ 2 + 0.5)');
+      expect(content).toContain('Passes at a score of **4** — a majority of 7 (7 ÷ 2 = 3.5) + 0.5');
       expect(content).toContain('## 📊 Current score: 0 / 4');
     });
 

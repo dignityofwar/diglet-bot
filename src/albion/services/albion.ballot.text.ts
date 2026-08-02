@@ -23,10 +23,13 @@ export const majorityScore = (electorateSize: number): number => electorateSize 
 // looks visibly unsettled rather than silently wrong while the burst finishes
 export const RECALCULATING = 'recalculating';
 
-// How often the countdown is repainted. Every tick is a message edit, so a burst costs one edit
-// per second of the debounce. Concurrent ballots share Discord's edit budget and discord.js
-// queues rather than failing, so the worst case is a countdown that lags, not a lost update.
+// How often the countdown is checked. Cheap - a tick only edits when it crosses a mark below.
 export const RECALCULATING_TICK_MS = 1000;
+
+// Seconds-remaining marks that actually cost an edit. A per-second countdown queued behind
+// Discord's edit limit and the whole burst visibly lagged, so the countdown shows the full
+// debounce, one step, then the recount rewrites it.
+export const COUNTDOWN_MARKS = [2];
 
 // The one definition of the score line, shared with the ballot builder. Kept together with the
 // regex in the vote service, which has to match whatever this writes.
