@@ -50,10 +50,17 @@ export class ActivityCommand {
 
       await replyTo(interaction, summary);
 
-      // Each message carries its own 2000 character budget, so the game list can't cost
-      // the summary its place. Sent in order rather than in parallel. A follow-up does not
-      // inherit the reply's privacy, so the flag has to be repeated or the games go public.
+      // Each message carries its own 2000 character budget, so the game list can't cost the
+      // summary its place. Sent in order rather than in parallel.
       for (const message of rest) {
+        // Posted as its own message rather than chained onto the reply. A private report has
+        // no such option - only a follow-up can stay private, and it needs the flag repeated
+        // because it does not inherit the reply's.
+        if (showInChannel && interaction.channel?.isSendable()) {
+          await interaction.channel.send(message);
+          continue;
+        }
+
         await interaction.followUp({ content: message, ...privately });
       }
 
