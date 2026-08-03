@@ -19,7 +19,7 @@ import {
   UNPOSTED_GRACE_MS,
   VOTE_REACTIONS,
 } from './albion.ballot.text';
-import { discordTime } from '../../helpers';
+import { activityBand, discordTime, friendlyDuration } from '../../helpers';
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 const DENIAL_NOTICE_THROTTLE_HOURS = 24;
@@ -514,21 +514,11 @@ ${stats}`;
   }
 
   activityBand(activeDays: number, trackedDays: number): string {
-    if (trackedDays <= 0) {
-      return '🔴 Low';
-    }
-
-    const ratio = activeDays / trackedDays;
-
-    if (ratio >= 0.75) return '🟢 Very active';
-    if (ratio >= 0.5) return '🟡 Active';
-    if (ratio >= 0.25) return '🟠 Occasional';
-    return '🔴 Low';
+    return activityBand(activeDays, trackedDays);
   }
 
   friendlyDuration(minutes: number): string {
-    const hours = Math.floor(minutes / 60);
-    return `${hours}h ${minutes % 60}m`;
+    return friendlyDuration(minutes);
   }
 
   friendlyRank(roleName: string): string {
