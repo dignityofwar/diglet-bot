@@ -26,7 +26,11 @@ export class ActivityCommand {
     // Private unless asked for, so running one on someone doesn't put it in front of the channel
     // by accident. necord ignores DTO field initialisers, so an omitted option arrives as null.
     const showInChannel = dto.showInChannel ?? false;
-    const privately = showInChannel ? {} : { flags: MessageFlags.Ephemeral };
+    // Typed, not inferred: a ternary through a const widens the flag to MessageFlags, and both
+    // call sites want the narrower Ephemeral-only union
+    const privately: { flags?: MessageFlags.Ephemeral } = showInChannel
+      ? {}
+      : { flags: MessageFlags.Ephemeral };
 
     // Deferred because the report hits the database several times, which blows Discord's 3s window
     await interaction.deferReply(privately);
