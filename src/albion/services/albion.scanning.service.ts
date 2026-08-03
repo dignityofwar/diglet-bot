@@ -10,6 +10,7 @@ import { AlbionRoleMapInterface } from '../../config/albion.app.config';
 import { AlbionUtilities } from '../utilities/albion.utilities';
 import { getChannel } from '../../discord/discord.hacks';
 import { AlbionDeregistrationService } from './albion.deregistration.service';
+import { AlbionContentRoleService } from './albion.content.role.service';
 
 export interface RoleInconsistencyResult {
   id: string,
@@ -27,6 +28,7 @@ export class AlbionScanningService {
     private readonly albionApiService: AlbionApiService,
     private readonly config: ConfigService,
     private readonly albionDeregistrationService: AlbionDeregistrationService,
+    private readonly albionContentRoleService: AlbionContentRoleService,
     private readonly albionUtilities: AlbionUtilities,
     @InjectRepository(AlbionRegistrationsEntity) private readonly albionRegistrationsRepository: EntityRepository<AlbionRegistrationsEntity>,
   ) {}
@@ -53,7 +55,7 @@ export class AlbionScanningService {
     let actionRequired = false;
 
     try {
-      await message.edit(`# ${emoji} Task: [1/4] Gathering ${length} characters from the ALB API...`);
+      await message.edit(`# ${emoji} Task: [1/5] Gathering ${length} characters from the ALB API...`);
       characters = await this.gatherCharacters(guildMembers, message, 0);
     }
     catch (err) {
@@ -68,19 +70,23 @@ export class AlbionScanningService {
     }
 
     try {
-      await message.edit(`# ${emoji} Task: [2/4] Checking ${length} characters for membership status...`);
+      await message.edit(`# ${emoji} Task: [2/5] Checking ${length} characters for membership status...`);
       if (await this.removeLeavers(characters, message, dryRun)) {
         actionRequired = true;
       }
 
       // Check if members have roles they shouldn't have
-      await message.edit(`# ${emoji} Task: [3/4] Performing reverse role scan...`);
+      await message.edit(`# ${emoji} Task: [3/5] Performing reverse role scan...`);
       await this.reverseRoleScan(message, dryRun);
 
-      await message.edit(`# ${emoji} Task: [4/4] Checking for role inconsistencies...`);
+      await message.edit(`# ${emoji} Task: [4/5] Checking for role inconsistencies...`);
       if (await this.roleInconsistencies(message, dryRun)) {
         actionRequired = true;
       }
+
+      // Runs after the leaver pass so it sees the registrations that pass has just removed
+      await message.edit(`# ${emoji} Task: [5/5] Sweeping content roles...`);
+      await this.albionContentRoleService.reconcile(message, dryRun);
     }
     catch (err) {
       await message.edit(`## ${emoji} ❌ An error occurred while scanning!`);

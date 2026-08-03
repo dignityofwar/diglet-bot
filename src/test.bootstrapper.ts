@@ -310,6 +310,92 @@ export class TestBootstrapper {
     } as any;
   }
 
+  // Content role IDs and the embed that names them. The pings message is the only source of
+  // truth for which ALB/ roles are content roles, so most content role tests start here.
+  static readonly mockContentRoleIds = {
+    factionWarfare: '9000000000000001',
+    mist: '9000000000000002',
+    arena: '9000000000000003',
+  };
+
+  static getMockContentRoleCollection() {
+    return new Collection<Snowflake, Role>()
+      .set(this.mockContentRoleIds.factionWarfare, { id: this.mockContentRoleIds.factionWarfare, name: 'ALB/FactionWarfare' } as Role)
+      .set(this.mockContentRoleIds.mist, { id: this.mockContentRoleIds.mist, name: 'ALB/Mist' } as Role)
+      .set(this.mockContentRoleIds.arena, { id: this.mockContentRoleIds.arena, name: 'ALB/Arena' } as Role);
+  }
+
+  static getMockContentPingsEmbedDescription() {
+    return [
+      'These Pings can be used by guildmembers to look for a group to play with.',
+      '**Content List**',
+      '⚔️ ALB/FactionWarfare - for all Faction Warfare related things',
+      '☁️ ALB/Mist - to seek for a partner for Duo Mists',
+      '🏟️ ALB/Arena - to find people for the arenas',
+    ].join('\n');
+  }
+
+  // A reaction whose users.fetch() honours Discord's paging contract, so a test can prove the
+  // sweep pages past the first 100 users.
+  static getMockContentReaction(emojiName: string, userIds: string[], botIds: string[] = []) {
+    const allIds = [...userIds, ...botIds];
+    return {
+      emoji: { name: emojiName, id: null },
+      count: allIds.length,
+      users: {
+        fetch: jest.fn().mockImplementation(async ({ limit = 100, after } = {} as any) => {
+          const start = after ? allIds.indexOf(after) + 1 : 0;
+          const page = allIds.slice(start, start + limit);
+          return new Collection<string, any>(
+            page.map((id) => [id, { id, bot: botIds.includes(id) }]),
+          );
+        }),
+        remove: jest.fn().mockResolvedValue(true),
+      },
+    } as any;
+  }
+
+  static getMockContentPingsMessage(reactions: any[] = []) {
+    return {
+      id: this.mockConfig.albion.contentPingsMessageId,
+      content: '',
+      embeds: [
+        {
+          title: 'Albion Content Pings',
+          description: this.getMockContentPingsEmbedDescription(),
+          fields: [],
+        },
+      ],
+      reactions: {
+        cache: new Collection<string, any>(reactions.map((reaction, index) => [String(index), reaction])),
+      },
+    } as any;
+  }
+
+  // A member whose role cache answers honestly rather than with a blanket jest.fn(), which
+  // every role sweep depends on to tell holders from non-holders.
+  static getMockGuildMemberWithRoles(
+    id: string,
+    roleIds: string[] = [],
+    isBot = false,
+    guild: any = undefined,
+  ) {
+    const roles = new Set(roleIds);
+    return {
+      id,
+      displayName: `member-${id}`,
+      user: { id, username: `member-${id}`, bot: isBot },
+      guild: guild ?? this.getMockGuild('123456789'),
+      roles: {
+        add: jest.fn(),
+        remove: jest.fn().mockResolvedValue(true),
+        cache: {
+          has: jest.fn().mockImplementation((roleId: string) => roles.has(roleId)),
+        },
+      },
+    } as any;
+  }
+
   static getMockDiscordVoiceState(member, channel) {
     return {
       member: member, // The GuildMember object, mocked separately
@@ -448,6 +534,8 @@ export class TestBootstrapper {
       electorMaxPriority: 3,
       autoAssignRanks: ['@ALB/Graduate'],
       gameActivityName: 'Albion Online',
+      contentPingsMessageId: '1401401401401401401',
+      contentRoleExemptRoles: ['7070707070707070'],
     },
     discord: {
       guildId: '657687978899',

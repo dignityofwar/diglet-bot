@@ -11,6 +11,7 @@ import { AlbionApiService } from './albion.api.service';
 import { AlbionUtilities } from '../utilities/albion.utilities';
 import { TestBootstrapper } from '../../test.bootstrapper';
 import { AlbionDeregistrationService } from './albion.deregistration.service';
+import { AlbionContentRoleService } from './albion.content.role.service';
 
 const mockDevUserId = TestBootstrapper.mockConfig.discord.devUserId;
 const mockScanUserId = '1337';
@@ -33,6 +34,7 @@ describe('AlbionScanningService', () => {
   let service: AlbionScanningService;
   let albionApiService: AlbionApiService;
   let albionDeregistrationService: AlbionDeregistrationService;
+  let albionContentRoleService: jest.Mocked<AlbionContentRoleService>;
 
   let mockDiscordUser: any;
   let mockDiscordMessage: any;
@@ -84,6 +86,12 @@ describe('AlbionScanningService', () => {
           },
         },
         {
+          provide: AlbionContentRoleService,
+          useValue: {
+            reconcile: jest.fn().mockResolvedValue(false),
+          },
+        },
+        {
           provide: getRepositoryToken(AlbionRegistrationsEntity),
           useValue: mockAlbionRegistrationsRepository,
         },
@@ -93,6 +101,7 @@ describe('AlbionScanningService', () => {
     service = moduleRef.get<AlbionScanningService>(AlbionScanningService);
     albionApiService = moduleRef.get<AlbionApiService>(AlbionApiService);
     albionDeregistrationService = moduleRef.get<AlbionDeregistrationService>(AlbionDeregistrationService);
+    albionContentRoleService = moduleRef.get(AlbionContentRoleService) as any;
 
     const albionMerged = {
       ...TestBootstrapper.mockConfig.albion,
@@ -220,10 +229,11 @@ describe('AlbionScanningService', () => {
       await service.startScan(mockDiscordMessage, false);
 
       expect(mockDiscordMessage.edit).toHaveBeenCalledWith('# 🇪🇺 Starting scan...');
-      expect(mockDiscordMessage.edit).toHaveBeenCalledWith('# 🇪🇺 Task: [1/4] Gathering 1 characters from the ALB API...');
-      expect(mockDiscordMessage.edit).toHaveBeenCalledWith('# 🇪🇺 Task: [2/4] Checking 1 characters for membership status...');
-      expect(mockDiscordMessage.edit).toHaveBeenCalledWith('# 🇪🇺 Task: [3/4] Performing reverse role scan...');
-      expect(mockDiscordMessage.edit).toHaveBeenCalledWith('# 🇪🇺 Task: [4/4] Checking for role inconsistencies...');
+      expect(mockDiscordMessage.edit).toHaveBeenCalledWith('# 🇪🇺 Task: [1/5] Gathering 1 characters from the ALB API...');
+      expect(mockDiscordMessage.edit).toHaveBeenCalledWith('# 🇪🇺 Task: [2/5] Checking 1 characters for membership status...');
+      expect(mockDiscordMessage.edit).toHaveBeenCalledWith('# 🇪🇺 Task: [3/5] Performing reverse role scan...');
+      expect(mockDiscordMessage.edit).toHaveBeenCalledWith('# 🇪🇺 Task: [4/5] Checking for role inconsistencies...');
+      expect(mockDiscordMessage.edit).toHaveBeenCalledWith('# 🇪🇺 Task: [5/5] Sweeping content roles...');
       expect(mockDiscordMessage.channel.send).toHaveBeenCalledWith('## 🇪🇺 Scan complete!');
       expect(mockDiscordMessage.channel.send).toHaveBeenCalledWith('------------------------------------------');
       expect(mockDiscordMessage.delete).toHaveBeenCalled();
@@ -243,6 +253,19 @@ describe('AlbionScanningService', () => {
       expect(service.removeLeavers).toHaveBeenCalledTimes(1);
       expect(service.reverseRoleScan).toHaveBeenCalledTimes(1);
       expect(service.roleInconsistencies).toHaveBeenCalledTimes(1);
+      expect(albionContentRoleService.reconcile).toHaveBeenCalledTimes(1);
+    });
+
+    it('should pass the dry run flag through to the content role sweep', async () => {
+      mockAlbionRegistrationsRepository.find = jest.fn().mockResolvedValueOnce([mockRegisteredMember]);
+      service.gatherCharacters = jest.fn().mockResolvedValueOnce([mockCharacter]);
+      service.removeLeavers = jest.fn().mockResolvedValueOnce([]);
+      service.reverseRoleScan = jest.fn().mockResolvedValueOnce([]);
+      service.roleInconsistencies = jest.fn().mockResolvedValueOnce([]);
+
+      await service.startScan(mockDiscordMessage, true);
+
+      expect(albionContentRoleService.reconcile).toHaveBeenCalledWith(mockDiscordMessage, true);
     });
 
     it('should properly ping the correct leaders when action is required', async () => {

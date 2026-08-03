@@ -119,6 +119,13 @@ const leadershipPing = isProduction
 // Filtered on priority rather than name because production spells tier 3 "EldritchMager".
 const ELECTOR_MAX_PRIORITY = 3;
 
+// Roles that keep their content roles without a registration, e.g. the alliance role. Alliance
+// members use the pings but never register with DIG, so the sweep would otherwise strip them.
+const contentRoleExemptRoles = (process.env.ALBION_CONTENT_ROLE_EXEMPT_ROLES ?? '')
+  .split(',')
+  .map((roleId) => roleId.trim())
+  .filter((roleId) => roleId.length > 0);
+
 export default () => ({
   guildId: '0_zTfLfASD2Wtw6Tc-yckA',
   roleMap,
@@ -129,6 +136,10 @@ export default () => ({
   // soft-leadership, so a human makes that call even after a successful vote.
   autoAssignRanks: ['@ALB/Graduate'],
   gameActivityName: 'Albion Online', // As Discord reports it in presence data
+  // The content pings embed is the source of truth for which ALB/ roles are content roles.
+  // Rank roles share the prefix, so the name alone can't tell the two apart.
+  contentPingsMessageId: process.env.MESSAGE_ALBION_CONTENT_PINGS,
+  contentRoleExemptRoles,
   scanExcludedUsers: [], // Discord IDs
   guildLeaderRole: findRole('@ALB/Archmage'),
   guildOfficerRole: findRole('@ALB/Magister'),
