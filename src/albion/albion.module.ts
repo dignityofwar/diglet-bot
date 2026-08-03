@@ -18,6 +18,8 @@ import { AlbionForceRegisterCommand } from './commands/force-register.command';
 import { AlbionForceRegistrationService } from './services/albion.force.registration.service';
 import { AlbionRegisterQueueCommand } from './commands/register-queue.command';
 import { AlbionRegistrationQueueService } from './services/albion.registration.queue.service';
+import { AlbionRankCountsCommand } from './commands/rank-counts.command';
+import { AlbionRankCountsService } from './services/albion.rank.counts.service';
 import { AlbionRankUpCommand } from './commands/rank-up.command';
 import { AlbionRankUpService } from './services/albion.rank.up.service';
 import { AlbionRankProgressService } from './services/albion.rank.progress.service';
@@ -35,6 +37,8 @@ import { GeneralModule } from '../general/general.module';
     AlbionForceRegisterCommand,
     AlbionForceRegistrationService,
     AlbionLogCommand,
+    AlbionRankCountsCommand,
+    AlbionRankCountsService,
     AlbionRankProgressService,
     AlbionRankUpCommand,
     AlbionRankUpService,
