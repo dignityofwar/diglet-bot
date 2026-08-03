@@ -1,6 +1,6 @@
 import { Context, Options, SlashCommand, SlashCommandContext } from 'necord';
 import { Injectable, Logger } from '@nestjs/common';
-import { GuildMember } from 'discord.js';
+import { GuildMember, MessageFlags } from 'discord.js';
 import { ActivityDto } from '../dto/activity.dto';
 import { MemberActivityReportService } from '../services/member.activity.report.service';
 import { replyTo } from '../../discord/discord.hacks';
@@ -23,9 +23,13 @@ export class ActivityCommand {
   ): Promise<string> {
     this.logger.log(`Received Activity Command for ${dto.member.id}`);
 
-    // Deliberately public - the whole point is that the report is visible to the channel.
-    // Deferred because the report hits the database several times, which blows Discord's 3s window.
-    await interaction.deferReply();
+    // Private unless asked for, so running one on someone doesn't put it in front of the channel
+    // by accident. necord ignores DTO field initialisers, so an omitted option arrives as null.
+    const showInChannel = dto.showInChannel ?? false;
+    const privately = showInChannel ? {} : { flags: MessageFlags.Ephemeral };
+
+    // Deferred because the report hits the database several times, which blows Discord's 3s window
+    await interaction.deferReply(privately);
 
     // A leaver still has an activity record worth reading, so a missing member is not an error
     let member: GuildMember | null = null;
@@ -43,9 +47,10 @@ export class ActivityCommand {
       await replyTo(interaction, summary);
 
       // Each message carries its own 2000 character budget, so the game list can't cost
-      // the summary its place. Sent in order rather than in parallel.
+      // the summary its place. Sent in order rather than in parallel. A follow-up does not
+      // inherit the reply's privacy, so the flag has to be repeated or the games go public.
       for (const message of rest) {
-        await interaction.followUp(message);
+        await interaction.followUp({ content: message, ...privately });
       }
 
       return summary;

@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { Test } from '@nestjs/testing';
+import { MessageFlags } from 'discord.js';
 import { TestBootstrapper } from '../../test.bootstrapper';
 import { ActivityCommand } from './activity.command';
 import { MemberActivityReportService } from '../services/member.activity.report.service';
@@ -34,12 +35,11 @@ describe('ActivityCommand', () => {
     dto = { member: mockDiscordUser.user };
   });
 
-  it('replies publicly with the summary and follows up with the games', async () => {
+  it('replies with the summary and follows up with the games', async () => {
     const result = await command.onActivityCommand(dto, mockInteraction);
 
-    expect(mockInteraction[0].deferReply).toHaveBeenCalledWith();
     expect(mockInteraction[0].editReply).toHaveBeenCalledWith('the summary');
-    expect(mockInteraction[0].followUp).toHaveBeenCalledWith('the games');
+    expect(mockInteraction[0].followUp).toHaveBeenCalledWith(expect.objectContaining({ content: 'the games' }));
     expect(result).toBe('the summary');
   });
 
@@ -48,8 +48,34 @@ describe('ActivityCommand', () => {
 
     await command.onActivityCommand(dto, mockInteraction);
 
-    expect(mockInteraction[0].followUp).toHaveBeenNthCalledWith(1, 'two');
-    expect(mockInteraction[0].followUp).toHaveBeenNthCalledWith(2, 'three');
+    expect(mockInteraction[0].followUp).toHaveBeenNthCalledWith(1, expect.objectContaining({ content: 'two' }));
+    expect(mockInteraction[0].followUp).toHaveBeenNthCalledWith(2, expect.objectContaining({ content: 'three' }));
+  });
+
+  describe('visibility', () => {
+    // A follow-up does not inherit the reply's privacy, so both have to carry the flag
+    it('keeps the whole report private when show-in-channel is not set', async () => {
+      await command.onActivityCommand(dto, mockInteraction);
+
+      expect(mockInteraction[0].deferReply).toHaveBeenCalledWith({ flags: MessageFlags.Ephemeral });
+      expect(mockInteraction[0].followUp).toHaveBeenCalledWith({
+        content: 'the games',
+        flags: MessageFlags.Ephemeral,
+      });
+    });
+
+    it('posts the whole report to the channel when show-in-channel is true', async () => {
+      await command.onActivityCommand({ ...dto, showInChannel: true }, mockInteraction);
+
+      expect(mockInteraction[0].deferReply).toHaveBeenCalledWith({});
+      expect(mockInteraction[0].followUp).toHaveBeenCalledWith({ content: 'the games' });
+    });
+
+    it('stays private when the option is explicitly false', async () => {
+      await command.onActivityCommand({ ...dto, showInChannel: false }, mockInteraction);
+
+      expect(mockInteraction[0].deferReply).toHaveBeenCalledWith({ flags: MessageFlags.Ephemeral });
+    });
   });
 
   it('passes the resolved guild member to the report', async () => {
