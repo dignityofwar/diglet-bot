@@ -85,8 +85,9 @@ export class AlbionScanningService {
       }
 
       // Runs after the leaver pass so it sees the registrations that pass has just removed
-      await message.edit(`# ${emoji} Task: [5/5] Sweeping content roles...`);
-      await this.albionContentRoleService.reconcile(message, dryRun);
+      const sweepHeading = `# ${emoji} Task: [5/5] Sweeping content roles...`;
+      await message.edit(sweepHeading);
+      await this.albionContentRoleService.reconcile(message, dryRun, sweepHeading);
     }
     catch (err) {
       await message.edit(`## ${emoji} ❌ An error occurred while scanning!`);

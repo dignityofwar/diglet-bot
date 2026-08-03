@@ -265,7 +265,11 @@ describe('AlbionScanningService', () => {
 
       await service.startScan(mockDiscordMessage, true);
 
-      expect(albionContentRoleService.reconcile).toHaveBeenCalledWith(mockDiscordMessage, true);
+      expect(albionContentRoleService.reconcile).toHaveBeenCalledWith(
+        mockDiscordMessage,
+        true,
+        expect.stringContaining('Sweeping content roles'),
+      );
     });
 
     it('should properly ping the correct leaders when action is required', async () => {

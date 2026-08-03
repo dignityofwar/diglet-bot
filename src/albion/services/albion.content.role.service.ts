@@ -32,6 +32,9 @@ const MAX_REACTION_PAGES = 50;
 // over is picked up by the next run rather than hammering the API in one go.
 export const MAX_REACTION_REMOVALS_PER_RUN = 500;
 
+// Progress edits cost an API call of their own, on the tightest bucket in the sweep
+export const PROGRESS_EDIT_INTERVAL_MS = 2000;
+
 export interface ContentRoleSet {
   roles: Collection<Snowflake, Role>;
   // Role names in the embed that match no Discord role. Reported rather than dropped, since
@@ -311,6 +314,7 @@ export class AlbionContentRoleService {
   async reconcile(
     scanMessage: Message,
     dryRun = false,
+    heading = `# ${ALBION_GUILD_EMOJI} Sweeping content roles...`,
   ): Promise<boolean> {
     const emoji = ALBION_GUILD_EMOJI;
     const guild = scanMessage.guild;
@@ -360,9 +364,16 @@ export class AlbionContentRoleService {
     const errors: string[] = [];
     let reactionsRemoved = 0;
     let capped = 0;
+    let processed = 0;
+
+    const progress = this.progressReporter(scanMessage, heading, candidates.size);
 
     for (const discordId of candidates) {
       const member = members.get(discordId) ?? null;
+
+      // Reports what is finished, before starting this one - so the counts never run ahead
+      await progress.update(processed, reactionsRemoved);
+      processed++;
 
       if (member?.user.bot) {
         continue;
@@ -402,9 +413,48 @@ export class AlbionContentRoleService {
       );
     }
 
+    await progress.finish(processed, reactionsRemoved);
+
     await this.report(scanMessage, changes, errors, capped, contentRoles, members, dryRun);
 
     return changes.length > 0;
+  }
+
+  // Editing the scan message as it goes, so a sweep clearing hundreds of reactions doesn't look
+  // hung. Throttled, and the clock starts before the first member, so a short sweep edits nothing.
+  private progressReporter(scanMessage: Message, heading: string, total: number) {
+    let lastEditAt = Date.now();
+    let emitted = false;
+
+    const edit = async (processed: number, reactionsRemoved: number): Promise<void> => {
+      const percent = total > 0 ? Math.floor((processed / total) * 100) : 100;
+
+      try {
+        await scanMessage.edit(`${heading} [${processed}/${total}] (${percent}%) — ${reactionsRemoved} reaction(s) removed`);
+      }
+      catch (err) {
+        // A failed progress edit must never take the sweep down with it
+        this.logger.warn(`Content Roles: Failed to update sweep progress. Err: ${err.message}`);
+      }
+    };
+
+    return {
+      update: async (processed: number, reactionsRemoved: number): Promise<void> => {
+        if (Date.now() - lastEditAt < PROGRESS_EDIT_INTERVAL_MS) {
+          return;
+        }
+
+        lastEditAt = Date.now();
+        emitted = true;
+        await edit(processed, reactionsRemoved);
+      },
+      // Only when progress was reported at all, otherwise the heading is still accurate
+      finish: async (processed: number, reactionsRemoved: number): Promise<void> => {
+        if (emitted) {
+          await edit(processed, reactionsRemoved);
+        }
+      },
+    };
   }
 
   private async report(

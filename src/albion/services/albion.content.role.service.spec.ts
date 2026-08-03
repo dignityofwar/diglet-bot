@@ -3,7 +3,11 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { ConfigService } from '@nestjs/config';
 import { getRepositoryToken } from '@mikro-orm/nestjs';
 import { Collection } from 'discord.js';
-import { AlbionContentRoleService, MAX_REACTION_REMOVALS_PER_RUN } from './albion.content.role.service';
+import {
+  AlbionContentRoleService,
+  MAX_REACTION_REMOVALS_PER_RUN,
+  PROGRESS_EDIT_INTERVAL_MS,
+} from './albion.content.role.service';
 import { AlbionRegistrationsEntity } from '../../database/entities/albion.registrations.entity';
 import { DiscordService } from '../../discord/discord.service';
 import { TestBootstrapper } from '../../test.bootstrapper';
@@ -659,6 +663,49 @@ describe('AlbionContentRoleService', () => {
       await service.reconcile(scanMessage);
 
       expect(sentMessages().join()).toContain(`Discord says no Pinging <@${devUserId}>!`);
+    });
+
+    describe('progress reporting', () => {
+      const addLeavers = (count: number) => {
+        for (let index = 0; index < count; index++) {
+          members.set(`leaver-${index}`, TestBootstrapper.getMockGuildMemberWithRoles(`leaver-${index}`, [contentRoleIds.mist]));
+        }
+      };
+
+      afterEach(() => {
+        jest.restoreAllMocks();
+      });
+
+      it('should not edit the scan message when the sweep is quick', async () => {
+        addLeavers(3);
+
+        await service.reconcile(scanMessage);
+
+        expect(scanMessage.edit).not.toHaveBeenCalled();
+      });
+
+      it('should report progress against the heading it was given once the interval passes', async () => {
+        addLeavers(3);
+        // Every check of the clock reads two seconds later, so each member trips the throttle
+        let clock = Date.now();
+        jest.spyOn(Date, 'now').mockImplementation(() => (clock += PROGRESS_EDIT_INTERVAL_MS));
+
+        await service.reconcile(scanMessage, false, '# Sweeping content roles...');
+
+        const progressEdits = (scanMessage.edit as jest.Mock).mock.calls.map((call) => call[0]);
+        expect(progressEdits[0]).toContain('# Sweeping content roles... [0/3] (0%)');
+        // The last edit is the finishing one, so it always reads as complete
+        expect(progressEdits[progressEdits.length - 1]).toContain('[3/3] (100%)');
+      });
+
+      it('should carry on when a progress edit fails', async () => {
+        addLeavers(3);
+        let clock = Date.now();
+        jest.spyOn(Date, 'now').mockImplementation(() => (clock += PROGRESS_EDIT_INTERVAL_MS));
+        scanMessage.edit.mockRejectedValue(new Error('Unknown Message'));
+
+        expect(await service.reconcile(scanMessage)).toBe(true);
+      });
     });
 
     it('should sweep a member who reacted but holds no content role', async () => {
