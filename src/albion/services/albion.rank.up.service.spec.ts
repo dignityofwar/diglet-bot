@@ -865,6 +865,11 @@ describe('AlbionRankUpService', () => {
     });
 
     it('does not let the recent window claim more days than have been tracked', async () => {
+      // Frozen: tracking starting exactly three days ago rounds up to four the moment any
+      // time passes between the mock being set and the service reading the clock
+      const frozen = Date.now();
+      const clock = jest.spyOn(Date, 'now').mockReturnValue(frozen);
+
       rollupService.getRollup.mockResolvedValue([
         { messagesSent: 5, reactionsAdded: 0, voiceMinutes: 0, date: daysAgo(1) },
       ]);
@@ -873,6 +878,8 @@ describe('AlbionRankUpService', () => {
       await service.handleRankUpRequest(member);
 
       expect(lastSentContent()).toContain('📈 Activity last 14 days: **1** of **3** days');
+
+      clock.mockRestore();
     });
 
     // The stats are server wide, and reading them as Albion-only would undercount everyone

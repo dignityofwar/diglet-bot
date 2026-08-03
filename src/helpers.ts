@@ -17,6 +17,25 @@ export const utcMidnight = (date: Date = new Date()): Date => {
 export const discordTime = (date: Date, format: 'f' | 'F' | 'D' | 'R' = 'f'): string =>
   `<t:${Math.floor(date.getTime() / 1000)}:${format}>`;
 
+export const friendlyDuration = (minutes: number): string => {
+  const hours = Math.floor(minutes / 60);
+  return `${hours}h ${minutes % 60}m`;
+};
+
+// Shared by the rank up ballot and /activity so the same ratio always reads the same way
+export const activityBand = (activeDays: number, trackedDays: number): string => {
+  if (trackedDays <= 0) {
+    return '🔴 Low';
+  }
+
+  const ratio = activeDays / trackedDays;
+
+  if (ratio >= 0.75) return '🟢 Very active';
+  if (ratio >= 0.5) return '🟡 Active';
+  if (ratio >= 0.25) return '🟠 Occasional';
+  return '🔴 Low';
+};
+
 export const generateDateInPast = (daysAgo: number): Date => {
   const now = new Date();
   // Subtract daysAgo (which may be fractional) in milliseconds

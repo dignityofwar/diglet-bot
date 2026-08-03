@@ -18,7 +18,9 @@ import { RoleMetricsService } from './services/role.metrics.service';
 import { RecRolePingService } from './services/rec.role.ping.service';
 import { HealthcheckService } from './services/healthcheck.service';
 import { MemberActivityRollupService } from './services/member.activity.rollup.service';
+import { MemberActivityReportService } from './services/member.activity.report.service';
 import { MemberPresenceCronService } from './services/member.presence.cron.service';
+import { ActivityCommand } from './commands/activity.command';
 
 @Module({
   imports: [
@@ -32,11 +34,13 @@ import { MemberPresenceCronService } from './services/member.presence.cron.servi
     DiscordService,
     HealthcheckService,
     JoinerLeaverService,
+    MemberActivityReportService,
     MemberActivityRollupService,
     RecRolePingService,
     RoleMetricsService,
 
     // Commands
+    ActivityCommand,
     ActivityReportCommand,
     HelloThereCommand,
     PingCommand,
