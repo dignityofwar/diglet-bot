@@ -32,10 +32,11 @@ describe('ActivityCommand', () => {
     mockInteraction = TestBootstrapper.getMockDiscordInteraction('123456789', mockDiscordUser);
     mockInteraction[0].deferred = true;
     mockInteraction[0].followUp = jest.fn();
+    mockInteraction[0].channel.isSendable = jest.fn().mockReturnValue(true);
     dto = { member: mockDiscordUser.user };
   });
 
-  it('replies with the summary and follows up with the games', async () => {
+  it('replies with the summary and sends the games after it', async () => {
     const result = await command.onActivityCommand(dto, mockInteraction);
 
     expect(mockInteraction[0].editReply).toHaveBeenCalledWith('the summary');
@@ -64,10 +65,22 @@ describe('ActivityCommand', () => {
       });
     });
 
-    it('posts the whole report to the channel when show-in-channel is true', async () => {
+    // Standalone, so the games don't hang off the reply as a chained message
+    it('sends the games as their own message when show-in-channel is true', async () => {
       await command.onActivityCommand({ ...dto, showInChannel: true }, mockInteraction);
 
       expect(mockInteraction[0].deferReply).toHaveBeenCalledWith({});
+      expect(mockInteraction[0].channel.send).toHaveBeenCalledWith('the games');
+      expect(mockInteraction[0].followUp).not.toHaveBeenCalled();
+    });
+
+    // Only a follow-up can stay private, so a private report cannot use a plain send
+    it('falls back to a follow-up when the channel cannot be sent to', async () => {
+      mockInteraction[0].channel.isSendable.mockReturnValue(false);
+
+      await command.onActivityCommand({ ...dto, showInChannel: true }, mockInteraction);
+
+      expect(mockInteraction[0].channel.send).not.toHaveBeenCalled();
       expect(mockInteraction[0].followUp).toHaveBeenCalledWith({ content: 'the games' });
     });
 
