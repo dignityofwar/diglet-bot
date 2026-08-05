@@ -4,6 +4,10 @@ import { DiscordService } from '../../discord/discord.service';
 import { ConfigService } from '@nestjs/config';
 import { Cron } from '@nestjs/schedule';
 
+// Rec+ games have their own role trees and sit outside the rec ping flow entirely. Matched on
+// the bare name as well as the prefix, so the parent role goes with its children.
+const REC_PLUS_FAMILIES = ['rec/ps2', 'rec/foxhole'];
+
 @Injectable()
 export class RecRolePingService implements OnApplicationBootstrap {
   private readonly logger = new Logger(RecRolePingService.name);
@@ -42,12 +46,16 @@ export class RecRolePingService implements OnApplicationBootstrap {
       return;
     }
 
-    // Find the rec game roles, exclude any roles that start with Rec/PS2/
+    // Find the rec game roles, excluding the Rec+ families
     const recGameRoles = roles.filter(role => {
       // Convert to lowercase
       const roleName = role.name.toLowerCase();
 
-      return roleName.startsWith('rec/') && !roleName.startsWith('rec/ps2/');
+      if (!roleName.startsWith('rec/')) {
+        return false;
+      }
+
+      return !REC_PLUS_FAMILIES.some(family => roleName === family || roleName.startsWith(`${family}/`));
     });
 
     if (!recGameRoles.size) {
