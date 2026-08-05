@@ -14,6 +14,7 @@ import { AlbionRegistrationQueueEntity } from './entities/albion.registration.qu
 import { AlbionRankUpVoteEntity } from './entities/albion.rank.up.vote.entity';
 import { MemberDailyActivityEntity } from './entities/member.daily.activity.entity';
 import { MemberDailyGameActivityEntity } from './entities/member.daily.game.activity.entity';
+import { OnboardingNudgeEntity } from './entities/onboarding.nudge.entity';
 
 @Module({
   imports: [
@@ -29,6 +30,7 @@ import { MemberDailyGameActivityEntity } from './entities/member.daily.game.acti
         JoinerLeaverStatisticsEntity,
         MemberDailyActivityEntity,
         MemberDailyGameActivityEntity,
+        OnboardingNudgeEntity,
         PS2MembersEntity,
         PS2VerificationAttemptEntity,
         RoleMetricsEntity,
