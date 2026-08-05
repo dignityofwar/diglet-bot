@@ -247,18 +247,52 @@ describe('OnboardingNudgeCronService', () => {
     it('reports without posting or recording on a dry run', async () => {
       setMembers([mockMember({ id: 'todo' })]);
 
-      const summary = await service.run(true);
+      const [summary] = await service.run(true);
 
-      expect(summary).toContain('[DRY RUN] 1 member(s) eligible');
+      expect(summary).toContain('**[DRY RUN]** 1 member(s) are sat on only the Onboarded role');
       expect(summary).toContain('nick-todo');
       expect(chitChatChannel.send).not.toHaveBeenCalled();
       expect(execute).not.toHaveBeenCalled();
     });
 
+    it('lists everyone eligible as well as the batch that would go now', async () => {
+      setMembers(Array.from({ length: 8 }, (_, index) => mockMember({ id: `m${index}`, joinedAt: daysAgo(20 + index) })));
+
+      const report = (await service.run(true)).join('\n');
+
+      expect(report).toContain('Would be nudged now (5, 3 left over):');
+      expect(report).toContain('Everyone eligible (8), longest waiting first:');
+
+      // The five oldest appear twice, once per section; the other three only in the full list
+      expect(report.match(/nick-m7/g)).toHaveLength(2);
+      expect(report.match(/nick-m0/g)).toHaveLength(1);
+
+      // Every eligible member is named, and each carries their ID and how long they have waited
+      for (let index = 0; index < 8; index++) {
+        expect(report).toContain(`**nick-m${index}** (\`m${index}\`) — joined <t:`);
+      }
+    });
+
+    it('names people without mentioning them, so the report cannot become the nudge', async () => {
+      setMembers([mockMember({ id: 'todo' })]);
+
+      expect((await service.run(true)).join('\n')).not.toContain('<@');
+    });
+
+    it('splits a long roster across messages and says what it dropped', async () => {
+      setMembers(Array.from({ length: 400 }, (_, index) => mockMember({ id: `m${index}`, joinedAt: daysAgo(400 - index) })));
+
+      const messages = await service.run(true);
+
+      expect(messages).toHaveLength(4);
+      expect(messages.every(message => message.length <= 2000)).toBe(true);
+      expect(messages.at(-1)).toMatch(/…and \d+ more not shown\./);
+    });
+
     it('posts one message with an explicit mention allowlist, then records and logs it', async () => {
       setMembers([mockMember({ id: 'a', joinedAt: daysAgo(20) }), mockMember({ id: 'b', joinedAt: daysAgo(10) })]);
 
-      const summary = await service.run();
+      const [summary] = await service.run();
 
       expect(chitChatChannel.send).toHaveBeenCalledTimes(1);
       const payload = chitChatChannel.send.mock.calls[0][0];
@@ -285,14 +319,14 @@ describe('OnboardingNudgeCronService', () => {
     it('nudges at most five members per run and says how many are left', async () => {
       setMembers(Array.from({ length: 8 }, (_, index) => mockMember({ id: `m${index}`, joinedAt: daysAgo(20 + index) })));
 
-      const summary = await service.run();
+      const [summary] = await service.run();
 
       expect(chitChatChannel.send.mock.calls[0][0].allowedMentions.users).toHaveLength(5);
       expect(summary).toContain('3 still waiting');
     });
 
     it('posts nothing when nobody is eligible', async () => {
-      const summary = await service.run();
+      const [summary] = await service.run();
 
       expect(summary).toBe('No members are sat on only the Onboarded role right now.');
       expect(chitChatChannel.send).not.toHaveBeenCalled();
@@ -303,7 +337,7 @@ describe('OnboardingNudgeCronService', () => {
       setMembers([mockMember({ id: 'a' })]);
       execute.mockRejectedValue(new Error('Deadlock found'));
 
-      const summary = await service.run();
+      const [summary] = await service.run();
 
       expect(summary).toContain('failed to record it');
       expect(botJobsChannel.send).toHaveBeenCalled();
@@ -315,7 +349,7 @@ describe('OnboardingNudgeCronService', () => {
       execute.mockRejectedValue(new Error('Deadlock found'));
 
       await service.run();
-      const summary = await service.run();
+      const [summary] = await service.run();
 
       // The repeat ping is exactly what standing down exists to stop, so prove it happens twice
       expect(chitChatChannel.send).toHaveBeenCalledTimes(2);
@@ -323,7 +357,7 @@ describe('OnboardingNudgeCronService', () => {
       expect(summary).toContain('Standing the job down');
 
       // ...and then stops, including for a manual run
-      expect(await service.run()).toContain('stood down');
+      expect((await service.run())[0]).toContain('stood down');
       expect(chitChatChannel.send).toHaveBeenCalledTimes(2);
     });
 
@@ -331,7 +365,7 @@ describe('OnboardingNudgeCronService', () => {
       setMembers([mockMember({ id: 'a' })]);
       service['consecutiveFailures'] = 2;
 
-      expect(await service.run(true)).toContain('[DRY RUN]');
+      expect((await service.run(true))[0]).toContain('[DRY RUN]');
       expect(chitChatChannel.send).not.toHaveBeenCalled();
     });
 
@@ -347,7 +381,7 @@ describe('OnboardingNudgeCronService', () => {
     it('refuses to overlap another run', async () => {
       service['isRunning'] = true;
 
-      expect(await service.run()).toContain('already in progress');
+      expect((await service.run())[0]).toContain('already in progress');
       expect(chitChatChannel.send).not.toHaveBeenCalled();
     });
 
