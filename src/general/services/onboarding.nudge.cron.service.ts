@@ -79,11 +79,6 @@ export class OnboardingNudgeCronService implements OnApplicationBootstrap {
       return;
     }
 
-    if (this.consecutiveFailures >= this.maxConsecutiveFailures) {
-      this.logger.warn('Onboarding nudge job stood down after repeated failures to record nudges');
-      return;
-    }
-
     try {
       this.logger.log(await this.run());
     }
@@ -93,9 +88,14 @@ export class OnboardingNudgeCronService implements OnApplicationBootstrap {
     }
   }
 
-  // Guarded here rather than in the cron so a manual run can't overlap a scheduled one and
-  // ping the same batch twice.
+  // Both guards live here rather than in the cron so a manual run can't overlap a scheduled one,
+  // or hand-restart the ping loop the job stood down to avoid. A dry run posts nothing, so it
+  // stays available for working out why.
   async run(dryRun = false): Promise<string> {
+    if (!dryRun && this.consecutiveFailures >= this.maxConsecutiveFailures) {
+      return '🛑 The onboarding nudge job has stood down after repeatedly failing to record nudges. Restart the bot once the database is healthy.';
+    }
+
     if (this.isRunning) {
       return '⏳ An onboarding nudge run is already in progress, skipping this one.';
     }

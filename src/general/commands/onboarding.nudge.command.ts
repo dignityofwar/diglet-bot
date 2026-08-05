@@ -1,6 +1,7 @@
 import { Context, Options, SlashCommand, SlashCommandContext } from 'necord';
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { PermissionFlagsBits } from 'discord.js';
 import { OnboardingNudgeDto } from '../dto/onboarding.nudge.dto';
 import { OnboardingNudgeCronService } from '../services/onboarding.nudge.cron.service';
 import { replyTo } from '../../discord/discord.hacks';
@@ -14,9 +15,12 @@ export class OnboardingNudgeCommand {
     private readonly onboardingNudgeCronService: OnboardingNudgeCronService,
   ) {}
 
+  // A live run mentions real members in a public channel, so the channel check alone is too
+  // thin a gate for it - Discord hides the command outright from anyone without the permission.
   @SlashCommand({
     name: 'onboarding-nudge',
     description: 'Report who is sat on only the Onboarded role, and optionally nudge them now.',
+    defaultMemberPermissions: PermissionFlagsBits.ManageRoles,
   })
   async onOnboardingNudgeCommand(
     @Options() dto: OnboardingNudgeDto,

@@ -269,6 +269,10 @@ describe('OnboardingNudgeCronService', () => {
       expect(execute).toHaveBeenCalledTimes(1);
       expect(execute.mock.calls[0][1]).toEqual(expect.arrayContaining(['a', 'nick-a', 'b', 'nick-b']));
 
+      // Recording before sending would mark people nudged and then never nudge them
+      expect(chitChatChannel.send.mock.invocationCallOrder[0])
+        .toBeLessThan(execute.mock.invocationCallOrder[0]);
+
       // The audit log names people, so it must not be able to ping them a second time
       expect(botJobsChannel.send).toHaveBeenCalledWith({
         content: summary,
@@ -313,8 +317,22 @@ describe('OnboardingNudgeCronService', () => {
       await service.run();
       const summary = await service.run();
 
+      // The repeat ping is exactly what standing down exists to stop, so prove it happens twice
+      expect(chitChatChannel.send).toHaveBeenCalledTimes(2);
       expect(service['consecutiveFailures']).toBe(2);
       expect(summary).toContain('Standing the job down');
+
+      // ...and then stops, including for a manual run
+      expect(await service.run()).toContain('stood down');
+      expect(chitChatChannel.send).toHaveBeenCalledTimes(2);
+    });
+
+    it('still allows a dry run once the job has stood down', async () => {
+      setMembers([mockMember({ id: 'a' })]);
+      service['consecutiveFailures'] = 2;
+
+      expect(await service.run(true)).toContain('[DRY RUN]');
+      expect(chitChatChannel.send).not.toHaveBeenCalled();
     });
 
     it('clears the failure count once a recording succeeds', async () => {
