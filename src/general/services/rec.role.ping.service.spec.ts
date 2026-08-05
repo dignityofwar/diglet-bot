@@ -142,6 +142,43 @@ describe('RecRolePingService', () => {
 
       expect(result).toEqual(['1337', '3', '6']);
     });
+
+    it('should exclude the Rec+ families, parent roles included', async () => {
+      const mockRoles = new Collection<string, any>(new Collection([
+        ['1', { id: '1', name: 'Rec/PS2' }],
+        ['2', { id: '2', name: 'Rec/PS2/Leader' }],
+        ['3', { id: '3', name: 'Rec/Foxhole' }],
+        ['4', { id: '4', name: 'Rec/Foxhole/Logi' }],
+        ['5', { id: '5', name: 'Rec/Satisfactory' }],
+      ]));
+
+      const mockGuild = {
+        roles: {
+          fetch: jest.fn().mockResolvedValue(mockRoles),
+        },
+      } as any;
+
+      const result = await service.gatherRoles(mockGuild);
+
+      expect(result).toEqual(['5']);
+    });
+
+    it('should not exclude a role that merely starts like a Rec+ family', async () => {
+      const mockRoles = new Collection<string, any>(new Collection([
+        ['1', { id: '1', name: 'Rec/PS2Clone' }],
+        ['2', { id: '2', name: 'Rec/FoxholeLike' }],
+      ]));
+
+      const mockGuild = {
+        roles: {
+          fetch: jest.fn().mockResolvedValue(mockRoles),
+        },
+      } as any;
+
+      const result = await service.gatherRoles(mockGuild);
+
+      expect(result).toEqual(['1', '2']);
+    });
   });
 
   describe('onMessage', () => {
