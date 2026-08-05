@@ -4,9 +4,7 @@ export default () => ({
   channels: {
     albionRegistration: process.env.CHANNEL_ALBION_REGISTRATION,
     albionRegistrationQueue: process.env.CHANNEL_ALBION_REGISTRATION_QUEUE,
-    albionUSRoles: process.env.CHANNEL_ALBION_US_ROLES,
     albionRoles: process.env.CHANNEL_ALBION_EU_ROLES,
-    albionUSAnnouncements: process.env.CHANNEL_ALBION_US_ANNOUNCEMENTS,
     albionAnnouncements: process.env.CHANNEL_ALBION_EU_ANNOUNCEMENTS,
     albionScans: process.env.CHANNEL_ALBION_SCANS,
     botJobs: process.env.CHANNEL_BOT_JOBS,
@@ -18,11 +16,8 @@ export default () => ({
     judgementHall: process.env.CHANNEL_ALBION_JUDGEMENT_HALL,
   },
   roles: {
-    albionUSMember: process.env.ROLE_ALBION_US_MEMBER,
     albionMember: process.env.ROLE_ALBION_EU_MEMBER,
-    albionUSRegistered: process.env.ROLE_ALBION_US_REGISTERED,
     albionRegistered: process.env.ROLE_ALBION_EU_REGISTERED,
-    albionUSAnnouncements: process.env.ROLE_ALBION_US_ANNOUNCEMENTS,
     albionAnnouncements: process.env.ROLE_ALBION_EU_ANNOUNCEMENTS,
     ps2Verified: process.env.ROLE_PS2_VERIFIED,
     ps2Zealot: process.env.ROLE_PS2_ZEALOT,
