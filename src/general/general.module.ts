@@ -21,6 +21,8 @@ import { MemberActivityRollupService } from './services/member.activity.rollup.s
 import { MemberActivityReportService } from './services/member.activity.report.service';
 import { MemberPresenceCronService } from './services/member.presence.cron.service';
 import { ActivityCommand } from './commands/activity.command';
+import { OnboardingNudgeCronService } from './services/onboarding.nudge.cron.service';
+import { OnboardingNudgeCommand } from './commands/onboarding.nudge.command';
 
 @Module({
   imports: [
@@ -43,6 +45,7 @@ import { ActivityCommand } from './commands/activity.command';
     ActivityCommand,
     ActivityReportCommand,
     HelloThereCommand,
+    OnboardingNudgeCommand,
     PingCommand,
 
     // Events
@@ -54,6 +57,7 @@ import { ActivityCommand } from './commands/activity.command';
     // Cron Services
     ActivityReportCronService,
     MemberPresenceCronService,
+    OnboardingNudgeCronService,
   ],
   exports: [MemberActivityRollupService],
 })
