@@ -12,6 +12,8 @@ import { discordTime, generateDateInPast } from '../../helpers';
 const MAX_MESSAGE_LENGTH = 1900;
 // A backlog of hundreds would otherwise bury the channel in follow-ups
 const MAX_REPORT_MESSAGES = 4;
+// Discord's allowedMentions list tops out at 100 users; well under it keeps a ping block readable
+const MAX_MENTIONS_PER_MESSAGE = 25;
 
 @Injectable()
 export class OnboardingNudgeCronService implements OnApplicationBootstrap {
@@ -98,7 +100,9 @@ export class OnboardingNudgeCronService implements OnApplicationBootstrap {
   // or hand-restart the ping loop the job stood down to avoid. A dry run posts nothing, so it
   // stays available for working out why.
   // Returns one message per Discord send - a dry run's roster can outrun the 2000 character limit.
-  async run(dryRun = false): Promise<string[]> {
+  // `all` clears the whole backlog in one go instead of draining it five every three hours, which
+  // for a first run against a real backlog would otherwise take days.
+  async run(dryRun = false, all = false): Promise<string[]> {
     if (!dryRun && this.consecutiveFailures >= this.maxConsecutiveFailures) {
       return ['🛑 The onboarding nudge job has stood down after repeatedly failing to record nudges. Restart the bot once the database is healthy.'];
     }
@@ -110,14 +114,14 @@ export class OnboardingNudgeCronService implements OnApplicationBootstrap {
     this.isRunning = true;
 
     try {
-      return await this.execute(dryRun);
+      return await this.execute(dryRun, all);
     }
     finally {
       this.isRunning = false;
     }
   }
 
-  private async execute(dryRun: boolean): Promise<string[]> {
+  private async execute(dryRun: boolean, all: boolean): Promise<string[]> {
     if (!this.enabled) {
       throw new Error('The onboarding nudge job is not configured. Check CHANNEL_CHIT_CHAT, CHANNEL_BOT_JOBS and CHANNEL_ROLES are set.');
     }
@@ -128,30 +132,90 @@ export class OnboardingNudgeCronService implements OnApplicationBootstrap {
       return ['No members are sat on only the Onboarded role right now.'];
     }
 
-    const batch = candidates.slice(0, this.maxPerRun);
-    const names = batch.map(member => member.displayName).join(', ');
-    const waiting = candidates.length - batch.length;
+    const targets = all ? candidates : candidates.slice(0, this.maxPerRun);
+    const groups = this.groupForSending(targets);
 
     if (dryRun) {
-      return this.buildDryRunReport(candidates, batch);
+      return this.buildDryRunReport(candidates, targets, groups.length);
     }
 
-    // The allowlist is explicit so a later edit to the wording can't turn this into a role or
-    // @everyone ping in a public channel.
-    await this.chitChatChannel.send({
-      content: `👋 ${batch.map(member => `<@${member.id}>`).join(' ')} — you've onboarded but haven't picked any game roles yet! Grab some from <#${this.roleSelectionChannelId}> so the channels for the games you play show up, and you get to hear when people are playing! You can opt out at any time should the pings become annoying by un-reacting from the role. We ask you do this before muting the server.\n\nThis is a one time notification.`,
-      allowedMentions: { users: batch.map(member => member.id) },
-    });
+    const sent: GuildMember[] = [];
+    let recorded = 0;
+    let halted = '';
 
-    const recorded = await this.recordNudges(batch);
+    for (const group of groups) {
+      try {
+        // The allowlist is explicit so a later edit to the wording can't turn this into a role
+        // or @everyone ping in a public channel.
+        await this.chitChatChannel.send({
+          content: this.nudgeMessage(group),
+          allowedMentions: { users: group.map(member => member.id) },
+        });
+      }
+      catch (err) {
+        halted = `Discord refused the message: ${err.message}`;
+        break;
+      }
 
-    const summary = recorded
-      ? `Nudged ${batch.length} member(s) in <#${this.chitChatChannel.id}>: ${names}. ${waiting} still waiting.`
-      : `⚠️ Nudged ${batch.length} member(s) (${names}) but failed to record it, so they are due to be nudged again.${this.consecutiveFailures >= this.maxConsecutiveFailures ? ' Standing the job down until the bot restarts.' : ''}`;
+      sent.push(...group);
+
+      // Stop rather than keep pinging into a database that can't remember it happened - the
+      // whole backlog would otherwise be nudged again on the next run.
+      if (!await this.recordNudges(group)) {
+        halted = 'the nudge could not be recorded';
+        break;
+      }
+
+      recorded += group.length;
+    }
+
+    const summary = this.summarise(candidates.length, sent, recorded, groups.length, halted);
 
     await this.log(summary);
 
     return [summary];
+  }
+
+  private nudgeMessage(members: GuildMember[]): string {
+    return `👋 ${members.map(member => `<@${member.id}>`).join(' ')} — you've onboarded but haven't picked any game roles yet! Grab some from <#${this.roleSelectionChannelId}> so the channels for the games you play show up, and you get to hear when people are playing! You can opt out at any time should the pings become annoying by un-reacting from the role. We ask you do this before muting the server.\n\nThis is a one time notification.`;
+  }
+
+  // A whole backlog cannot go in one message - Discord caps a message at 2000 characters and
+  // allowedMentions at 100 users, and silently dropping either end would leave members pinged
+  // in the copy but not notified, or recorded as nudged without being named.
+  private groupForSending(members: GuildMember[]): GuildMember[][] {
+    const groups: GuildMember[][] = [];
+    let current: GuildMember[] = [];
+
+    for (const member of members) {
+      const next = [...current, member];
+
+      if (current.length > 0 && (next.length > MAX_MENTIONS_PER_MESSAGE || this.nudgeMessage(next).length > MAX_MESSAGE_LENGTH)) {
+        groups.push(current);
+        current = [member];
+        continue;
+      }
+
+      current = next;
+    }
+
+    if (current.length > 0) {
+      groups.push(current);
+    }
+
+    return groups;
+  }
+
+  private summarise(eligible: number, sent: GuildMember[], recorded: number, groups: number, halted: string): string {
+    if (halted) {
+      return `⚠️ Nudged ${sent.length} of ${eligible} member(s) and stopped because ${halted}. ${sent.length - recorded} of those failed to record it, so they are due to be nudged again.${this.consecutiveFailures >= this.maxConsecutiveFailures ? ' Standing the job down until the bot restarts.' : ''}`;
+    }
+
+    const across = groups > 1 ? ` across ${groups} messages` : '';
+    // Named only when the list is short enough to be worth reading - a cleared backlog is not
+    const who = sent.length <= this.maxPerRun ? `: ${sent.map(member => member.displayName).join(', ')}` : '';
+
+    return `Nudged ${sent.length} member(s) in <#${this.chitChatChannel.id}>${across}${who}. ${eligible - sent.length} still waiting.`;
   }
 
   // Plain names and IDs, never mentions - a report of who hasn't picked roles must not become
@@ -160,19 +224,28 @@ export class OnboardingNudgeCronService implements OnApplicationBootstrap {
     return `- **${member.displayName}** (\`${member.id}\`) — joined ${discordTime(member.joinedAt, 'R')}`;
   }
 
-  private buildDryRunReport(candidates: GuildMember[], batch: GuildMember[]): string[] {
-    const waiting = candidates.length - batch.length;
+  private buildDryRunReport(candidates: GuildMember[], targets: GuildMember[], groups: number): string[] {
+    const waiting = candidates.length - targets.length;
+    const across = groups > 1 ? ` across ${groups} messages` : '';
+    const header = `**[DRY RUN]** ${candidates.length} member(s) are sat on only the Onboarded role. Nothing has been posted.`;
 
-    const header = [
-      `**[DRY RUN]** ${candidates.length} member(s) are sat on only the Onboarded role. Nothing has been posted.`,
-      '',
-      `**Would be nudged now (${batch.length}, ${waiting} left over):**`,
-      ...batch.map(member => this.describe(member)),
-      '',
-      `**Everyone eligible (${candidates.length}), longest waiting first:**`,
-    ].join('\n');
+    // With the whole backlog in the batch the two sections would be the same list printed twice
+    const lines = waiting === 0
+      ? [
+        '',
+        `**All ${targets.length} would be nudged now${across}**, longest waiting first:`,
+        ...targets.map(member => this.describe(member)),
+      ]
+      : [
+        '',
+        `**Would be nudged now (${targets.length}${across}, ${waiting} left over):**`,
+        ...targets.map(member => this.describe(member)),
+        '',
+        `**Everyone eligible (${candidates.length}), longest waiting first:**`,
+        ...candidates.map(member => this.describe(member)),
+      ];
 
-    return this.paginate(header, candidates.map(member => this.describe(member)));
+    return this.paginate(header, lines);
   }
 
   // Discord caps a message at 2000 characters, and a first run against a real backlog will blow
@@ -190,7 +263,7 @@ export class OnboardingNudgeCronService implements OnApplicationBootstrap {
       messages.push(current);
 
       if (messages.length === MAX_REPORT_MESSAGES) {
-        return [...messages.slice(0, -1), `${messages.at(-1)}\n…and ${lines.length - index} more not shown.`];
+        return [...messages.slice(0, -1), `${messages.at(-1)}\n…and ${lines.length - index} more lines not shown.`];
       }
 
       current = line;

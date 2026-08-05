@@ -34,6 +34,7 @@ export class OnboardingNudgeCommand {
     // necord ignores DTO field initialisers, so an omitted option arrives as null. Defaulting
     // to a dry run keeps a bare invocation from calling real people out in public.
     const dryRun = dto.dryRun ?? true;
+    const all = dto.all ?? false;
 
     const botJobsChannelId = this.config.get('discord.channels.botJobs');
 
@@ -42,7 +43,7 @@ export class OnboardingNudgeCommand {
     }
 
     try {
-      const [summary, ...rest] = await this.onboardingNudgeCronService.run(dryRun);
+      const [summary, ...rest] = await this.onboardingNudgeCronService.run(dryRun, all);
 
       await replyTo(interaction, summary);
 

@@ -9,7 +9,7 @@ import { OnboardingNudgeDto } from '../dto/onboarding.nudge.dto';
 const botJobsId = 'channel-bot-jobs';
 
 // necord hands omitted boolean options over as null, which the DTO's type doesn't admit
-const dto = (dryRun: boolean | null): OnboardingNudgeDto => ({ dryRun }) as OnboardingNudgeDto;
+const dto = (dryRun: boolean | null, all: boolean | null = null): OnboardingNudgeDto => ({ dryRun, all }) as OnboardingNudgeDto;
 
 interface MockInteraction {
   channelId: string;
@@ -63,7 +63,7 @@ describe('OnboardingNudgeCommand', () => {
   it('defaults to a dry run when the option is omitted', async () => {
     expect(await command.onOnboardingNudgeCommand(dto(null), context())).toBe('Summary');
 
-    expect(service.run).toHaveBeenCalledWith(true);
+    expect(service.run).toHaveBeenCalledWith(true, false);
     expect(interaction.editReply).toHaveBeenCalledWith('Summary');
   });
 
@@ -87,7 +87,13 @@ describe('OnboardingNudgeCommand', () => {
   it('runs live when dry-run is explicitly false', async () => {
     await command.onOnboardingNudgeCommand(dto(false), context());
 
-    expect(service.run).toHaveBeenCalledWith(false);
+    expect(service.run).toHaveBeenCalledWith(false, false);
+  });
+
+  it('passes the all flag through so a backlog can be cleared in one go', async () => {
+    await command.onOnboardingNudgeCommand(dto(false, true), context());
+
+    expect(service.run).toHaveBeenCalledWith(false, true);
   });
 
   it('refuses to run outside the bot jobs channel', async () => {

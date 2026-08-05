@@ -280,13 +280,13 @@ describe('OnboardingNudgeCronService', () => {
     });
 
     it('splits a long roster across messages and says what it dropped', async () => {
-      setMembers(Array.from({ length: 400 }, (_, index) => mockMember({ id: `m${index}`, joinedAt: daysAgo(400 - index) })));
+      setMembers(Array.from({ length: 400 }, (_, index) => mockMember({ id: `m${index}`, joinedAt: daysAgo(410 - index) })));
 
       const messages = await service.run(true);
 
       expect(messages).toHaveLength(4);
       expect(messages.every(message => message.length <= 2000)).toBe(true);
-      expect(messages.at(-1)).toMatch(/…and \d+ more not shown\./);
+      expect(messages.at(-1)).toMatch(/…and \d+ more lines not shown\./);
     });
 
     it('posts one message with an explicit mention allowlist, then records and logs it', async () => {
@@ -325,6 +325,67 @@ describe('OnboardingNudgeCronService', () => {
       expect(summary).toContain('3 still waiting');
     });
 
+    it('clears the whole backlog when told to send them all', async () => {
+      setMembers(Array.from({ length: 8 }, (_, index) => mockMember({ id: `m${index}`, joinedAt: daysAgo(20 + index) })));
+
+      const [summary] = await service.run(false, true);
+
+      expect(chitChatChannel.send).toHaveBeenCalledTimes(1);
+      expect(chitChatChannel.send.mock.calls[0][0].allowedMentions.users).toHaveLength(8);
+      expect(summary).toContain('Nudged 8 member(s)');
+      expect(summary).toContain('0 still waiting');
+    });
+
+    it('splits a backlog too big for one message, recording each block as it goes', async () => {
+      setMembers(Array.from({ length: 60 }, (_, index) => mockMember({ id: `m${index}`, joinedAt: daysAgo(70 - index) })));
+
+      const [summary] = await service.run(false, true);
+
+      // 25 mentions a message, so 60 members is three sends and three recordings
+      expect(chitChatChannel.send).toHaveBeenCalledTimes(3);
+      expect(execute).toHaveBeenCalledTimes(3);
+      expect(chitChatChannel.send.mock.calls.every(([payload]) => payload.content.length <= 2000)).toBe(true);
+      expect(chitChatChannel.send.mock.calls.flatMap(([payload]) => payload.allowedMentions.users)).toHaveLength(60);
+      expect(summary).toContain('across 3 messages');
+      expect(summary).toContain('0 still waiting');
+    });
+
+    it('stops sending the moment a block cannot be recorded', async () => {
+      setMembers(Array.from({ length: 60 }, (_, index) => mockMember({ id: `m${index}`, joinedAt: daysAgo(70 - index) })));
+      execute.mockRejectedValueOnce(new Error('Deadlock found'));
+
+      const [summary] = await service.run(false, true);
+
+      // Otherwise a broken database means the whole backlog is pinged and none of it remembered
+      expect(chitChatChannel.send).toHaveBeenCalledTimes(1);
+      expect(summary).toContain('Nudged 25 of 60 member(s)');
+      expect(summary).toContain('stopped because the nudge could not be recorded');
+    });
+
+    it('stops sending when Discord refuses a block, keeping what it already recorded', async () => {
+      setMembers(Array.from({ length: 60 }, (_, index) => mockMember({ id: `m${index}`, joinedAt: daysAgo(70 - index) })));
+      chitChatChannel.send
+        .mockResolvedValueOnce({})
+        .mockRejectedValueOnce(new Error('Missing Permissions'));
+
+      const [summary] = await service.run(false, true);
+
+      expect(execute).toHaveBeenCalledTimes(1);
+      expect(summary).toContain('Nudged 25 of 60 member(s)');
+      expect(summary).toContain('Discord refused the message: Missing Permissions');
+    });
+
+    it('shows one combined list on a dry run that would clear the backlog', async () => {
+      setMembers(Array.from({ length: 8 }, (_, index) => mockMember({ id: `m${index}`, joinedAt: daysAgo(20 + index) })));
+
+      const report = (await service.run(true, true)).join('\n');
+
+      expect(report).toContain('**All 8 would be nudged now**, longest waiting first:');
+      expect(report).not.toContain('Everyone eligible');
+      // Named once, not once per section
+      expect(report.match(/nick-m7/g)).toHaveLength(1);
+    });
+
     it('posts nothing when nobody is eligible', async () => {
       const [summary] = await service.run();
 
@@ -340,6 +401,7 @@ describe('OnboardingNudgeCronService', () => {
       const [summary] = await service.run();
 
       expect(summary).toContain('failed to record it');
+      expect(summary).toContain('stopped because the nudge could not be recorded');
       expect(botJobsChannel.send).toHaveBeenCalled();
       expect(service['consecutiveFailures']).toBe(1);
     });
