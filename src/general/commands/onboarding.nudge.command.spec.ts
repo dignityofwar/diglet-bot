@@ -18,6 +18,7 @@ interface MockInteraction {
   deferReply: jest.Mock;
   reply: jest.Mock;
   editReply: jest.Mock;
+  followUp: jest.Mock;
 }
 
 describe('OnboardingNudgeCommand', () => {
@@ -37,6 +38,7 @@ describe('OnboardingNudgeCommand', () => {
       }),
       reply: jest.fn(),
       editReply: jest.fn(),
+      followUp: jest.fn(),
     };
 
     const module: TestingModule = await Test.createTestingModule({
@@ -44,7 +46,7 @@ describe('OnboardingNudgeCommand', () => {
         OnboardingNudgeCommand,
         {
           provide: OnboardingNudgeCronService,
-          useValue: { run: jest.fn().mockResolvedValue('Summary') },
+          useValue: { run: jest.fn().mockResolvedValue(['Summary']) },
         },
         {
           provide: ConfigService,
@@ -63,6 +65,23 @@ describe('OnboardingNudgeCommand', () => {
 
     expect(service.run).toHaveBeenCalledWith(true);
     expect(interaction.editReply).toHaveBeenCalledWith('Summary');
+  });
+
+  it('posts the rest of a paginated roster as follow-ups, with mentions off', async () => {
+    (service.run as jest.Mock).mockResolvedValue(['Summary', 'Page two', 'Page three']);
+
+    await command.onOnboardingNudgeCommand(dto(true), context());
+
+    expect(interaction.editReply).toHaveBeenCalledWith('Summary');
+    expect(interaction.followUp).toHaveBeenCalledTimes(2);
+    expect(interaction.followUp).toHaveBeenNthCalledWith(1, { content: 'Page two', allowedMentions: { users: [] } });
+    expect(interaction.followUp).toHaveBeenNthCalledWith(2, { content: 'Page three', allowedMentions: { users: [] } });
+  });
+
+  it('sends no follow-ups when the report is a single message', async () => {
+    await command.onOnboardingNudgeCommand(dto(true), context());
+
+    expect(interaction.followUp).not.toHaveBeenCalled();
   });
 
   it('runs live when dry-run is explicitly false', async () => {

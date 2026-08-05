@@ -6,7 +6,12 @@ import { ConfigService } from '@nestjs/config';
 import { Cron } from '@nestjs/schedule';
 import { DiscordService } from '../../discord/discord.service';
 import { OnboardingNudgeEntity } from '../../database/entities/onboarding.nudge.entity';
-import { generateDateInPast } from '../../helpers';
+import { discordTime, generateDateInPast } from '../../helpers';
+
+// Discord's hard limit is 2000; the headroom absorbs a long display name on the final line
+const MAX_MESSAGE_LENGTH = 1900;
+// A backlog of hundreds would otherwise bury the channel in follow-ups
+const MAX_REPORT_MESSAGES = 4;
 
 @Injectable()
 export class OnboardingNudgeCronService implements OnApplicationBootstrap {
@@ -80,7 +85,8 @@ export class OnboardingNudgeCronService implements OnApplicationBootstrap {
     }
 
     try {
-      this.logger.log(await this.run());
+      // A live run only ever produces the one summary line
+      this.logger.log((await this.run()).join('\n'));
     }
     catch (err) {
       this.logger.error(`Onboarding nudge run failed: ${err.message}`);
@@ -91,13 +97,14 @@ export class OnboardingNudgeCronService implements OnApplicationBootstrap {
   // Both guards live here rather than in the cron so a manual run can't overlap a scheduled one,
   // or hand-restart the ping loop the job stood down to avoid. A dry run posts nothing, so it
   // stays available for working out why.
-  async run(dryRun = false): Promise<string> {
+  // Returns one message per Discord send - a dry run's roster can outrun the 2000 character limit.
+  async run(dryRun = false): Promise<string[]> {
     if (!dryRun && this.consecutiveFailures >= this.maxConsecutiveFailures) {
-      return '🛑 The onboarding nudge job has stood down after repeatedly failing to record nudges. Restart the bot once the database is healthy.';
+      return ['🛑 The onboarding nudge job has stood down after repeatedly failing to record nudges. Restart the bot once the database is healthy.'];
     }
 
     if (this.isRunning) {
-      return '⏳ An onboarding nudge run is already in progress, skipping this one.';
+      return ['⏳ An onboarding nudge run is already in progress, skipping this one.'];
     }
 
     this.isRunning = true;
@@ -110,7 +117,7 @@ export class OnboardingNudgeCronService implements OnApplicationBootstrap {
     }
   }
 
-  private async execute(dryRun: boolean): Promise<string> {
+  private async execute(dryRun: boolean): Promise<string[]> {
     if (!this.enabled) {
       throw new Error('The onboarding nudge job is not configured. Check CHANNEL_CHIT_CHAT, CHANNEL_BOT_JOBS and CHANNEL_ROLES are set.');
     }
@@ -118,7 +125,7 @@ export class OnboardingNudgeCronService implements OnApplicationBootstrap {
     const candidates = await this.findCandidates();
 
     if (candidates.length === 0) {
-      return 'No members are sat on only the Onboarded role right now.';
+      return ['No members are sat on only the Onboarded role right now.'];
     }
 
     const batch = candidates.slice(0, this.maxPerRun);
@@ -126,7 +133,7 @@ export class OnboardingNudgeCronService implements OnApplicationBootstrap {
     const waiting = candidates.length - batch.length;
 
     if (dryRun) {
-      return `[DRY RUN] ${candidates.length} member(s) eligible. A real run would nudge ${batch.length} now: ${names}`;
+      return this.buildDryRunReport(candidates, batch);
     }
 
     // The allowlist is explicit so a later edit to the wording can't turn this into a role or
@@ -144,7 +151,52 @@ export class OnboardingNudgeCronService implements OnApplicationBootstrap {
 
     await this.log(summary);
 
-    return summary;
+    return [summary];
+  }
+
+  // Plain names and IDs, never mentions - a report of who hasn't picked roles must not become
+  // the nudge itself, and it is read in a staff channel where pinging them would be noise.
+  private describe(member: GuildMember): string {
+    return `- **${member.displayName}** (\`${member.id}\`) — joined ${discordTime(member.joinedAt, 'R')}`;
+  }
+
+  private buildDryRunReport(candidates: GuildMember[], batch: GuildMember[]): string[] {
+    const waiting = candidates.length - batch.length;
+
+    const header = [
+      `**[DRY RUN]** ${candidates.length} member(s) are sat on only the Onboarded role. Nothing has been posted.`,
+      '',
+      `**Would be nudged now (${batch.length}, ${waiting} left over):**`,
+      ...batch.map(member => this.describe(member)),
+      '',
+      `**Everyone eligible (${candidates.length}), longest waiting first:**`,
+    ].join('\n');
+
+    return this.paginate(header, candidates.map(member => this.describe(member)));
+  }
+
+  // Discord caps a message at 2000 characters, and a first run against a real backlog will blow
+  // through that. Splits across messages, and says so rather than silently dropping the tail.
+  private paginate(header: string, lines: string[]): string[] {
+    const messages: string[] = [];
+    let current = header;
+
+    for (const [index, line] of lines.entries()) {
+      if (current.length + line.length + 1 <= MAX_MESSAGE_LENGTH) {
+        current = `${current}\n${line}`;
+        continue;
+      }
+
+      messages.push(current);
+
+      if (messages.length === MAX_REPORT_MESSAGES) {
+        return [...messages.slice(0, -1), `${messages.at(-1)}\n…and ${lines.length - index} more not shown.`];
+      }
+
+      current = line;
+    }
+
+    return [...messages, current];
   }
 
   async findCandidates(): Promise<GuildMember[]> {

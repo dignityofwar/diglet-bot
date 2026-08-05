@@ -42,7 +42,18 @@ export class OnboardingNudgeCommand {
     }
 
     try {
-      return replyTo(interaction, await this.onboardingNudgeCronService.run(dryRun));
+      const [summary, ...rest] = await this.onboardingNudgeCronService.run(dryRun);
+
+      await replyTo(interaction, summary);
+
+      // The roster can run past Discord's 2000 character limit, so it arrives as follow-ups.
+      // Sent in order rather than in parallel, and with mentions off in case a display name
+      // ever resolves to one.
+      for (const page of rest) {
+        await interaction.followUp({ content: page, allowedMentions: { users: [] } });
+      }
+
+      return summary;
     }
     catch (err) {
       this.logger.error(err.message);
