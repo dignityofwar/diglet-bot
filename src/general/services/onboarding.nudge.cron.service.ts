@@ -139,7 +139,7 @@ export class OnboardingNudgeCronService implements OnApplicationBootstrap {
     // The allowlist is explicit so a later edit to the wording can't turn this into a role or
     // @everyone ping in a public channel.
     await this.chitChatChannel.send({
-      content: `👋 ${batch.map(member => `<@${member.id}>`).join(' ')} — you've onboarded but haven't picked any game roles yet! Grab some from <#${this.roleSelectionChannelId}> so the channels for the games you play show up, and you get to hear when people are playing! You can opt out at any time should the pings become annoying by un-reacting from the role. We ask you do this before muting the server.`,
+      content: `👋 ${batch.map(member => `<@${member.id}>`).join(' ')} — you've onboarded but haven't picked any game roles yet! Grab some from <#${this.roleSelectionChannelId}> so the channels for the games you play show up, and you get to hear when people are playing! You can opt out at any time should the pings become annoying by un-reacting from the role. We ask you do this before muting the server.\n\nThis is a one time notification.`,
       allowedMentions: { users: batch.map(member => member.id) },
     });
 
