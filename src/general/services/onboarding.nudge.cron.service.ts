@@ -177,7 +177,7 @@ export class OnboardingNudgeCronService implements OnApplicationBootstrap {
   }
 
   private nudgeMessage(members: GuildMember[]): string {
-    return `👋 ${members.map(member => `<@${member.id}>`).join(' ')} — you've onboarded but haven't picked any game roles yet! Grab some from <#${this.roleSelectionChannelId}> so the channels for the games you play show up, and you get to hear when people are playing! You can opt out at any time should the pings become annoying by un-reacting from the role. We ask you do this before muting the server.\n\nThis is a one time notification.`;
+    return `👋 ${members.map(member => `<@${member.id}>`).join(' ')} — you've onboarded but haven't picked any game roles yet! Grab some from <#${this.roleSelectionChannelId}> so the channels for the games you play show up, and you get to hear when people are playing!\n\nYou can opt out at any time should the pings become annoying by un-reacting from the role. We ask you do this before muting the server.\n\nThis is a one time notification.`;
   }
 
   // A whole backlog cannot go in one message - Discord caps a message at 2000 characters and
