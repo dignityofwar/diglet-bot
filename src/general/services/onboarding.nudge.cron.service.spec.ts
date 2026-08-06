@@ -10,13 +10,13 @@ import { OnboardingNudgeCronService } from './onboarding.nudge.cron.service';
 const guildId = 'guild-1';
 const onboardedRoleId = 'role-onboarded';
 const otherRoleId = 'role-albion';
-const chitChatId = 'channel-chit-chat';
+const welcomeId = 'channel-welcome';
 const botJobsId = 'channel-bot-jobs';
 const rolesChannelId = 'channel-roles';
 
 const configValues = {
   'discord.guildId': guildId,
-  'discord.channels.chitChat': chitChatId,
+  'discord.channels.welcome': welcomeId,
   'discord.channels.botJobs': botJobsId,
   'discord.channels.roleSelection': rolesChannelId,
 };
@@ -71,7 +71,7 @@ describe('OnboardingNudgeCronService', () => {
   let configService: ConfigService;
   let nudgeRepository: { find: jest.Mock, getEntityManager: jest.Mock };
   let execute: jest.Mock;
-  let chitChatChannel: MockChannel;
+  let welcomeChannel: MockChannel;
   let botJobsChannel: MockChannel;
 
   const setMembers = (members: MockMember[]) => {
@@ -88,7 +88,7 @@ describe('OnboardingNudgeCronService', () => {
     service['enabled'] = true;
     service['guildId'] = guildId;
     service['roleSelectionChannelId'] = rolesChannelId;
-    service['chitChatChannel'] = chitChatChannel as unknown as TextChannel;
+    service['welcomeChannel'] = welcomeChannel as unknown as TextChannel;
     service['botJobsChannel'] = botJobsChannel as unknown as TextChannel;
   };
 
@@ -102,8 +102,8 @@ describe('OnboardingNudgeCronService', () => {
       }),
     };
 
-    chitChatChannel = {
-      id: chitChatId,
+    welcomeChannel = {
+      id: welcomeId,
       send: jest.fn().mockResolvedValue({}),
       isTextBased: jest.fn().mockReturnValue(true),
     };
@@ -126,7 +126,7 @@ describe('OnboardingNudgeCronService', () => {
             getGuild: jest.fn(),
             getAllRolesFromGuild: jest.fn().mockResolvedValue(mockRoles()),
             getTextChannel: jest.fn().mockImplementation(async (id: string) =>
-              (id === chitChatId ? chitChatChannel : botJobsChannel)),
+              (id === welcomeId ? welcomeChannel : botJobsChannel)),
           },
         },
         {
@@ -150,14 +150,14 @@ describe('OnboardingNudgeCronService', () => {
     it('resolves both channels and enables the job', async () => {
       await service.onApplicationBootstrap();
 
-      expect(discordService.getTextChannel).toHaveBeenCalledWith(chitChatId);
+      expect(discordService.getTextChannel).toHaveBeenCalledWith(welcomeId);
       expect(discordService.getTextChannel).toHaveBeenCalledWith(botJobsId);
       expect(service['enabled']).toBe(true);
     });
 
     it.each([
       'discord.guildId',
-      'discord.channels.chitChat',
+      'discord.channels.welcome',
       'discord.channels.botJobs',
       'discord.channels.roleSelection',
     ])('stays disabled without throwing when %s is missing', async (missingKey) => {
@@ -179,7 +179,7 @@ describe('OnboardingNudgeCronService', () => {
     });
 
     it('stays disabled when a channel is not text based', async () => {
-      chitChatChannel.isTextBased.mockReturnValue(false);
+      welcomeChannel.isTextBased.mockReturnValue(false);
 
       await service.onApplicationBootstrap();
 
@@ -251,7 +251,7 @@ describe('OnboardingNudgeCronService', () => {
 
       expect(summary).toContain('**[DRY RUN]** 1 member(s) are sat on only the Onboarded role');
       expect(summary).toContain('nick-todo');
-      expect(chitChatChannel.send).not.toHaveBeenCalled();
+      expect(welcomeChannel.send).not.toHaveBeenCalled();
       expect(execute).not.toHaveBeenCalled();
     });
 
@@ -294,8 +294,8 @@ describe('OnboardingNudgeCronService', () => {
 
       const [summary] = await service.run();
 
-      expect(chitChatChannel.send).toHaveBeenCalledTimes(1);
-      const payload = chitChatChannel.send.mock.calls[0][0];
+      expect(welcomeChannel.send).toHaveBeenCalledTimes(1);
+      const payload = welcomeChannel.send.mock.calls[0][0];
       expect(payload.content).toContain('<@a> <@b>');
       expect(payload.content).toContain(`<#${rolesChannelId}>`);
       expect(payload.allowedMentions).toEqual({ users: ['a', 'b'] });
@@ -304,7 +304,7 @@ describe('OnboardingNudgeCronService', () => {
       expect(execute.mock.calls[0][1]).toEqual(expect.arrayContaining(['a', 'nick-a', 'b', 'nick-b']));
 
       // Recording before sending would mark people nudged and then never nudge them
-      expect(chitChatChannel.send.mock.invocationCallOrder[0])
+      expect(welcomeChannel.send.mock.invocationCallOrder[0])
         .toBeLessThan(execute.mock.invocationCallOrder[0]);
 
       // The audit log names people, so it must not be able to ping them a second time
@@ -321,7 +321,7 @@ describe('OnboardingNudgeCronService', () => {
 
       const [summary] = await service.run();
 
-      expect(chitChatChannel.send.mock.calls[0][0].allowedMentions.users).toHaveLength(5);
+      expect(welcomeChannel.send.mock.calls[0][0].allowedMentions.users).toHaveLength(5);
       expect(summary).toContain('3 still waiting');
     });
 
@@ -330,8 +330,8 @@ describe('OnboardingNudgeCronService', () => {
 
       const [summary] = await service.run(false, true);
 
-      expect(chitChatChannel.send).toHaveBeenCalledTimes(1);
-      expect(chitChatChannel.send.mock.calls[0][0].allowedMentions.users).toHaveLength(8);
+      expect(welcomeChannel.send).toHaveBeenCalledTimes(1);
+      expect(welcomeChannel.send.mock.calls[0][0].allowedMentions.users).toHaveLength(8);
       expect(summary).toContain('Nudged 8 member(s)');
       expect(summary).toContain('0 still waiting');
     });
@@ -342,10 +342,10 @@ describe('OnboardingNudgeCronService', () => {
       const [summary] = await service.run(false, true);
 
       // 25 mentions a message, so 60 members is three sends and three recordings
-      expect(chitChatChannel.send).toHaveBeenCalledTimes(3);
+      expect(welcomeChannel.send).toHaveBeenCalledTimes(3);
       expect(execute).toHaveBeenCalledTimes(3);
-      expect(chitChatChannel.send.mock.calls.every(([payload]) => payload.content.length <= 2000)).toBe(true);
-      expect(chitChatChannel.send.mock.calls.flatMap(([payload]) => payload.allowedMentions.users)).toHaveLength(60);
+      expect(welcomeChannel.send.mock.calls.every(([payload]) => payload.content.length <= 2000)).toBe(true);
+      expect(welcomeChannel.send.mock.calls.flatMap(([payload]) => payload.allowedMentions.users)).toHaveLength(60);
       expect(summary).toContain('across 3 messages');
       expect(summary).toContain('0 still waiting');
     });
@@ -357,14 +357,14 @@ describe('OnboardingNudgeCronService', () => {
       const [summary] = await service.run(false, true);
 
       // Otherwise a broken database means the whole backlog is pinged and none of it remembered
-      expect(chitChatChannel.send).toHaveBeenCalledTimes(1);
+      expect(welcomeChannel.send).toHaveBeenCalledTimes(1);
       expect(summary).toContain('Nudged 25 of 60 member(s)');
       expect(summary).toContain('stopped because the nudge could not be recorded');
     });
 
     it('stops sending when Discord refuses a block, keeping what it already recorded', async () => {
       setMembers(Array.from({ length: 60 }, (_, index) => mockMember({ id: `m${index}`, joinedAt: daysAgo(70 - index) })));
-      chitChatChannel.send
+      welcomeChannel.send
         .mockResolvedValueOnce({})
         .mockRejectedValueOnce(new Error('Missing Permissions'));
 
@@ -390,7 +390,7 @@ describe('OnboardingNudgeCronService', () => {
       const [summary] = await service.run();
 
       expect(summary).toBe('No members are sat on only the Onboarded role right now.');
-      expect(chitChatChannel.send).not.toHaveBeenCalled();
+      expect(welcomeChannel.send).not.toHaveBeenCalled();
       expect(botJobsChannel.send).not.toHaveBeenCalled();
     });
 
@@ -414,13 +414,13 @@ describe('OnboardingNudgeCronService', () => {
       const [summary] = await service.run();
 
       // The repeat ping is exactly what standing down exists to stop, so prove it happens twice
-      expect(chitChatChannel.send).toHaveBeenCalledTimes(2);
+      expect(welcomeChannel.send).toHaveBeenCalledTimes(2);
       expect(service['consecutiveFailures']).toBe(2);
       expect(summary).toContain('Standing the job down');
 
       // ...and then stops, including for a manual run
       expect((await service.run())[0]).toContain('stood down');
-      expect(chitChatChannel.send).toHaveBeenCalledTimes(2);
+      expect(welcomeChannel.send).toHaveBeenCalledTimes(2);
     });
 
     it('still allows a dry run once the job has stood down', async () => {
@@ -428,7 +428,7 @@ describe('OnboardingNudgeCronService', () => {
       service['consecutiveFailures'] = 2;
 
       expect((await service.run(true))[0]).toContain('[DRY RUN]');
-      expect(chitChatChannel.send).not.toHaveBeenCalled();
+      expect(welcomeChannel.send).not.toHaveBeenCalled();
     });
 
     it('clears the failure count once a recording succeeds', async () => {
@@ -444,7 +444,7 @@ describe('OnboardingNudgeCronService', () => {
       service['isRunning'] = true;
 
       expect((await service.run())[0]).toContain('already in progress');
-      expect(chitChatChannel.send).not.toHaveBeenCalled();
+      expect(welcomeChannel.send).not.toHaveBeenCalled();
     });
 
     it('releases the overlap guard when a run throws', async () => {
@@ -495,7 +495,7 @@ describe('OnboardingNudgeCronService', () => {
 
       await service.runNudgeJob();
 
-      expect(chitChatChannel.send).toHaveBeenCalled();
+      expect(welcomeChannel.send).toHaveBeenCalled();
     });
   });
 });

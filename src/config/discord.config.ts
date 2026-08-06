@@ -8,7 +8,7 @@ export default () => ({
     albionAnnouncements: process.env.CHANNEL_ALBION_EU_ANNOUNCEMENTS,
     albionScans: process.env.CHANNEL_ALBION_SCANS,
     botJobs: process.env.CHANNEL_BOT_JOBS,
-    chitChat: process.env.CHANNEL_CHIT_CHAT,
+    welcome: process.env.CHANNEL_WELCOME,
     // Named to keep it distinct from the `roles` map below, which holds role IDs not channels
     roleSelection: process.env.CHANNEL_ROLES,
     ps2Verify: process.env.CHANNEL_PS2_VERIFY,
