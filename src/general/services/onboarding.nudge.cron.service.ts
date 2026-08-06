@@ -28,7 +28,7 @@ export class OnboardingNudgeCronService implements OnApplicationBootstrap {
   private readonly maxConsecutiveFailures = 2;
 
   private guildId: string;
-  private chitChatChannel: TextChannel;
+  private welcomeChannel: TextChannel;
   private botJobsChannel: TextChannel;
   private roleSelectionChannelId: string;
 
@@ -46,13 +46,13 @@ export class OnboardingNudgeCronService implements OnApplicationBootstrap {
   // in the bot down with it, which is far too much for one optional automation.
   async onApplicationBootstrap(): Promise<void> {
     this.guildId = this.config.get('discord.guildId');
-    const chitChatId = this.config.get('discord.channels.chitChat');
+    const welcomeId = this.config.get('discord.channels.welcome');
     const botJobsId = this.config.get('discord.channels.botJobs');
     this.roleSelectionChannelId = this.config.get('discord.channels.roleSelection');
 
     const missing = [
       ['GUILD_ID_WITH_COMMANDS', this.guildId],
-      ['CHANNEL_CHIT_CHAT', chitChatId],
+      ['CHANNEL_WELCOME', welcomeId],
       ['CHANNEL_BOT_JOBS', botJobsId],
       ['CHANNEL_ROLES', this.roleSelectionChannelId],
     ].filter(([, value]) => !value).map(([name]) => name);
@@ -63,7 +63,7 @@ export class OnboardingNudgeCronService implements OnApplicationBootstrap {
     }
 
     try {
-      this.chitChatChannel = await this.discordService.getTextChannel(chitChatId);
+      this.welcomeChannel = await this.discordService.getTextChannel(welcomeId);
       this.botJobsChannel = await this.discordService.getTextChannel(botJobsId);
     }
     catch (err) {
@@ -71,8 +71,8 @@ export class OnboardingNudgeCronService implements OnApplicationBootstrap {
       return;
     }
 
-    if (!this.chitChatChannel?.isTextBased() || !this.botJobsChannel?.isTextBased()) {
-      this.logger.error('Onboarding nudge job disabled, CHANNEL_CHIT_CHAT or CHANNEL_BOT_JOBS is not a text channel');
+    if (!this.welcomeChannel?.isTextBased() || !this.botJobsChannel?.isTextBased()) {
+      this.logger.error('Onboarding nudge job disabled, CHANNEL_WELCOME or CHANNEL_BOT_JOBS is not a text channel');
       return;
     }
 
@@ -123,7 +123,7 @@ export class OnboardingNudgeCronService implements OnApplicationBootstrap {
 
   private async execute(dryRun: boolean, all: boolean): Promise<string[]> {
     if (!this.enabled) {
-      throw new Error('The onboarding nudge job is not configured. Check CHANNEL_CHIT_CHAT, CHANNEL_BOT_JOBS and CHANNEL_ROLES are set.');
+      throw new Error('The onboarding nudge job is not configured. Check CHANNEL_WELCOME, CHANNEL_BOT_JOBS and CHANNEL_ROLES are set.');
     }
 
     const candidates = await this.findCandidates();
@@ -147,7 +147,7 @@ export class OnboardingNudgeCronService implements OnApplicationBootstrap {
       try {
         // The allowlist is explicit so a later edit to the wording can't turn this into a role
         // or @everyone ping in a public channel.
-        await this.chitChatChannel.send({
+        await this.welcomeChannel.send({
           content: this.nudgeMessage(group),
           allowedMentions: { users: group.map(member => member.id) },
         });
@@ -215,7 +215,7 @@ export class OnboardingNudgeCronService implements OnApplicationBootstrap {
     // Named only when the list is short enough to be worth reading - a cleared backlog is not
     const who = sent.length <= this.maxPerRun ? `: ${sent.map(member => member.displayName).join(', ')}` : '';
 
-    return `Nudged ${sent.length} member(s) in <#${this.chitChatChannel.id}>${across}${who}. ${eligible - sent.length} still waiting.`;
+    return `Nudged ${sent.length} member(s) in <#${this.welcomeChannel.id}>${across}${who}. ${eligible - sent.length} still waiting.`;
   }
 
   // Plain names and IDs, never mentions - a report of who hasn't picked roles must not become
