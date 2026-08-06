@@ -119,12 +119,19 @@ const leadershipPing = isProduction
 // Filtered on priority rather than name because production spells tier 3 "EldritchMager".
 const ELECTOR_MAX_PRIORITY = 3;
 
-// Roles that keep their content roles without a registration, e.g. the alliance role. Alliance
+// Roles that keep their ping roles without a registration, e.g. the alliance role. Alliance
 // members use the pings but never register with DIG, so the sweep would otherwise strip them.
-const contentRoleExemptRoles = (process.env.ALBION_CONTENT_ROLE_EXEMPT_ROLES ?? '')
+const pingRoleExemptRoles = (process.env.ALBION_PING_ROLE_EXEMPT_ROLES ?? '')
   .split(',')
   .map((roleId) => roleId.trim())
   .filter((roleId) => roleId.length > 0);
+
+// There is one embed per ping category — content pings and guild pings — and more can be added
+// without a deploy, so this is a list rather than a single ID.
+const pingsMessageIds = (process.env.MESSAGE_ALBION_PINGS ?? '')
+  .split(',')
+  .map((messageId) => messageId.trim())
+  .filter((messageId) => messageId.length > 0);
 
 export default () => ({
   guildId: '0_zTfLfASD2Wtw6Tc-yckA',
@@ -136,10 +143,10 @@ export default () => ({
   // soft-leadership, so a human makes that call even after a successful vote.
   autoAssignRanks: ['@ALB/Graduate'],
   gameActivityName: 'Albion Online', // As Discord reports it in presence data
-  // The content pings embed is the source of truth for which ALB/ roles are content roles.
+  // The pings embeds are the source of truth for which ALB/ roles are ping roles.
   // Rank roles share the prefix, so the name alone can't tell the two apart.
-  contentPingsMessageId: process.env.MESSAGE_ALBION_CONTENT_PINGS,
-  contentRoleExemptRoles,
+  pingsMessageIds,
+  pingRoleExemptRoles,
   scanExcludedUsers: [], // Discord IDs
   guildLeaderRole: findRole('@ALB/Archmage'),
   guildOfficerRole: findRole('@ALB/Magister'),

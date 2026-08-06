@@ -310,19 +310,24 @@ export class TestBootstrapper {
     } as any;
   }
 
-  // Content role IDs and the embed that names them. The pings message is the only source of
-  // truth for which ALB/ roles are content roles, so most content role tests start here.
-  static readonly mockContentRoleIds = {
+  // Ping role IDs and the embeds that name them. The pings messages are the only source of
+  // truth for which ALB/ roles are ping roles, so most ping role tests start here. Two embeds,
+  // as in production: content pings and guild pings.
+  static readonly mockPingRoleIds = {
     factionWarfare: '9000000000000001',
     mist: '9000000000000002',
     arena: '9000000000000003',
+    cta: '9000000000000004',
+    gatherer: '9000000000000005',
   };
 
-  static getMockContentRoleCollection() {
+  static getMockPingRoleCollection() {
     return new Collection<Snowflake, Role>()
-      .set(this.mockContentRoleIds.factionWarfare, { id: this.mockContentRoleIds.factionWarfare, name: 'ALB/FactionWarfare' } as Role)
-      .set(this.mockContentRoleIds.mist, { id: this.mockContentRoleIds.mist, name: 'ALB/Mist' } as Role)
-      .set(this.mockContentRoleIds.arena, { id: this.mockContentRoleIds.arena, name: 'ALB/Arena' } as Role);
+      .set(this.mockPingRoleIds.factionWarfare, { id: this.mockPingRoleIds.factionWarfare, name: 'ALB/FactionWarfare' } as Role)
+      .set(this.mockPingRoleIds.mist, { id: this.mockPingRoleIds.mist, name: 'ALB/Mist' } as Role)
+      .set(this.mockPingRoleIds.arena, { id: this.mockPingRoleIds.arena, name: 'ALB/Arena' } as Role)
+      .set(this.mockPingRoleIds.cta, { id: this.mockPingRoleIds.cta, name: 'ALB/CTA' } as Role)
+      .set(this.mockPingRoleIds.gatherer, { id: this.mockPingRoleIds.gatherer, name: 'ALB/Gatherer' } as Role);
   }
 
   static getMockContentPingsEmbedDescription() {
@@ -335,9 +340,18 @@ export class TestBootstrapper {
     ].join('\n');
   }
 
+  static getMockGuildPingsEmbedDescription() {
+    return [
+      'Proclamations, Event and the CTA ping can only be used by leadership members.',
+      '**Ping List**',
+      '📯 ALB/CTA - Call To Arms for instant action',
+      '👨‍🌾 ALB/Gatherer - to be pinged for gathering requests',
+    ].join('\n');
+  }
+
   // A reaction whose users.fetch() honours Discord's paging contract, so a test can prove the
   // sweep pages past the first 100 users.
-  static getMockContentReaction(emojiName: string, userIds: string[], botIds: string[] = []) {
+  static getMockPingReaction(emojiName: string, userIds: string[], botIds: string[] = []) {
     const allIds = [...userIds, ...botIds];
     return {
       emoji: { name: emojiName, id: null },
@@ -356,13 +370,31 @@ export class TestBootstrapper {
   }
 
   static getMockContentPingsMessage(reactions: any[] = []) {
+    return this.getMockPingsMessage(
+      this.mockConfig.albion.pingsMessageIds[0],
+      'Albion Content Pings',
+      this.getMockContentPingsEmbedDescription(),
+      reactions,
+    );
+  }
+
+  static getMockGuildPingsMessage(reactions: any[] = []) {
+    return this.getMockPingsMessage(
+      this.mockConfig.albion.pingsMessageIds[1],
+      'Albion Guild Pings',
+      this.getMockGuildPingsEmbedDescription(),
+      reactions,
+    );
+  }
+
+  private static getMockPingsMessage(id: string, title: string, description: string, reactions: any[]) {
     return {
-      id: this.mockConfig.albion.contentPingsMessageId,
+      id,
       content: '',
       embeds: [
         {
-          title: 'Albion Content Pings',
-          description: this.getMockContentPingsEmbedDescription(),
+          title,
+          description,
           fields: [],
         },
       ],
@@ -534,8 +566,8 @@ export class TestBootstrapper {
       electorMaxPriority: 3,
       autoAssignRanks: ['@ALB/Graduate'],
       gameActivityName: 'Albion Online',
-      contentPingsMessageId: '1401401401401401401',
-      contentRoleExemptRoles: ['7070707070707070'],
+      pingsMessageIds: ['1401401401401401401', '1402402402402402402'],
+      pingRoleExemptRoles: ['7070707070707070'],
     },
     discord: {
       guildId: '657687978899',

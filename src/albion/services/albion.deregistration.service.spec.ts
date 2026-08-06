@@ -9,7 +9,7 @@ import { EntityRepository } from '@mikro-orm/core';
 import { AlbionDeregistrationService } from './albion.deregistration.service';
 import { DiscordService } from '../../discord/discord.service';
 import { AlbionDeregisterDto } from '../dto/albion.deregister.dto';
-import { AlbionContentRoleService } from './albion.content.role.service';
+import { AlbionPingRoleService } from './albion.ping.role.service';
 import { Role } from 'discord.js';
 
 let mockAlbionRegistrationsRepository: jest.Mocked<EntityRepository<AlbionRegistrationsEntity>>;
@@ -23,7 +23,7 @@ describe('AlbionDeregistrationService', () => {
   let service: AlbionDeregistrationService;
   let discordService: jest.Mocked<DiscordService>;
   let configService: jest.Mocked<ConfigService>;
-  let albionContentRoleService: jest.Mocked<AlbionContentRoleService>;
+  let albionPingRoleService: jest.Mocked<AlbionPingRoleService>;
 
   beforeEach(async () => {
     mockCharacter = TestBootstrapper.getMockAlbionCharacter();
@@ -62,7 +62,7 @@ describe('AlbionDeregistrationService', () => {
           },
         },
         {
-          provide: AlbionContentRoleService,
+          provide: AlbionPingRoleService,
           useValue: {
             stripForDeregistration: jest.fn(),
           },
@@ -79,7 +79,7 @@ describe('AlbionDeregistrationService', () => {
     service = moduleRef.get<AlbionDeregistrationService>(AlbionDeregistrationService);
     discordService = moduleRef.get(DiscordService) as any;
     configService = moduleRef.get(ConfigService) as any;
-    albionContentRoleService = moduleRef.get(AlbionContentRoleService) as any;
+    albionPingRoleService = moduleRef.get(AlbionPingRoleService) as any;
 
     // Ensure albion.roleMap + devUserId available for role stripping tests
     (configService.get as jest.Mock).mockImplementation((key: string) => {
@@ -183,38 +183,38 @@ describe('AlbionDeregistrationService', () => {
       expect(stripRolesSpy).not.toHaveBeenCalled();
     });
 
-    it('should strip content roles and reactions for the member', async () => {
+    it('should strip ping roles and reactions for the member', async () => {
       const dto: AlbionDeregisterDto = { discordMember: mockDiscordMember.user };
 
       await service.deregister(mockChannel, dto);
 
-      expect(albionContentRoleService.stripForDeregistration).toHaveBeenCalledWith(
+      expect(albionPingRoleService.stripForDeregistration).toHaveBeenCalledWith(
         mockRegistration.discordId,
         mockDiscordMember,
         mockChannel,
       );
     });
 
-    it('should still clear content ping reactions when the member has left the server', async () => {
+    it('should still clear ping reactions when the member has left the server', async () => {
       const dto: AlbionDeregisterDto = { discordMember: mockDiscordMember.user };
       discordService.getGuildMember.mockRejectedValueOnce(new Error('Gone'));
 
       await service.deregister(mockChannel, dto);
 
-      expect(albionContentRoleService.stripForDeregistration).toHaveBeenCalledWith(
+      expect(albionPingRoleService.stripForDeregistration).toHaveBeenCalledWith(
         mockRegistration.discordId,
         null,
         mockChannel,
       );
     });
 
-    it('should not strip content roles when there was no registration to remove', async () => {
+    it('should not strip ping roles when there was no registration to remove', async () => {
       const dto: AlbionDeregisterDto = { discordMember: mockDiscordMember.user };
       mockAlbionRegistrationsRepository.findOne.mockResolvedValueOnce(null);
 
       await service.deregister(mockChannel, dto);
 
-      expect(albionContentRoleService.stripForDeregistration).not.toHaveBeenCalled();
+      expect(albionPingRoleService.stripForDeregistration).not.toHaveBeenCalled();
     });
 
     it('should skip role stripping if member fetch fails (character path)', async () => {

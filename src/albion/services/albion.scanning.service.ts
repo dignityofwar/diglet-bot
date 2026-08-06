@@ -10,7 +10,7 @@ import { AlbionRoleMapInterface } from '../../config/albion.app.config';
 import { AlbionUtilities } from '../utilities/albion.utilities';
 import { getChannel } from '../../discord/discord.hacks';
 import { AlbionDeregistrationService } from './albion.deregistration.service';
-import { AlbionContentRoleService } from './albion.content.role.service';
+import { AlbionPingRoleService } from './albion.ping.role.service';
 
 export interface RoleInconsistencyResult {
   id: string,
@@ -28,7 +28,7 @@ export class AlbionScanningService {
     private readonly albionApiService: AlbionApiService,
     private readonly config: ConfigService,
     private readonly albionDeregistrationService: AlbionDeregistrationService,
-    private readonly albionContentRoleService: AlbionContentRoleService,
+    private readonly albionPingRoleService: AlbionPingRoleService,
     private readonly albionUtilities: AlbionUtilities,
     @InjectRepository(AlbionRegistrationsEntity) private readonly albionRegistrationsRepository: EntityRepository<AlbionRegistrationsEntity>,
   ) {}
@@ -85,9 +85,9 @@ export class AlbionScanningService {
       }
 
       // Runs after the leaver pass so it sees the registrations that pass has just removed
-      const sweepHeading = `# ${emoji} Task: [5/5] Sweeping content roles...`;
+      const sweepHeading = `# ${emoji} Task: [5/5] Sweeping ping roles...`;
       await message.edit(sweepHeading);
-      await this.albionContentRoleService.reconcile(message, dryRun, sweepHeading);
+      await this.albionPingRoleService.reconcile(message, dryRun, sweepHeading);
     }
     catch (err) {
       await message.edit(`## ${emoji} ❌ An error occurred while scanning!`);

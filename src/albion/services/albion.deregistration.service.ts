@@ -7,7 +7,7 @@ import { GuildMember, GuildTextBasedChannel } from 'discord.js';
 import { AlbionRoleMapInterface } from '../../config/albion.app.config';
 import { DiscordService } from '../../discord/discord.service';
 import { AlbionDeregisterDto } from '../dto/albion.deregister.dto';
-import { AlbionContentRoleService } from './albion.content.role.service';
+import { AlbionPingRoleService } from './albion.ping.role.service';
 
 @Injectable()
 export class AlbionDeregistrationService {
@@ -16,7 +16,7 @@ export class AlbionDeregistrationService {
   constructor(
     private readonly config: ConfigService,
     private readonly discordService: DiscordService,
-    private readonly albionContentRoleService: AlbionContentRoleService,
+    private readonly albionPingRoleService: AlbionPingRoleService,
     @InjectRepository(AlbionRegistrationsEntity) private readonly albionRegistrationsRepository: EntityRepository<AlbionRegistrationsEntity>,
   ) {
   }
@@ -71,7 +71,7 @@ export class AlbionDeregistrationService {
 
     // Runs whether or not they're still on the server: their reactions on the content pings
     // message outlive them, and Discord never prunes reactions of people who have left.
-    await this.albionContentRoleService.stripForDeregistration(
+    await this.albionPingRoleService.stripForDeregistration(
       registration.discordId,
       discordMember,
       responseChannel,
