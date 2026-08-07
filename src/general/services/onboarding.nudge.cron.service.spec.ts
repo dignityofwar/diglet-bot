@@ -21,6 +21,8 @@ const configValues = {
   'discord.channels.roleSelection': rolesChannelId,
 };
 
+const messageUrl = `https://discord.com/channels/${guildId}/${welcomeId}/`;
+
 const daysAgo = (days: number): Date => new Date(Date.now() - days * 24 * 60 * 60 * 1000);
 
 interface MemberOptions {
@@ -73,6 +75,7 @@ describe('OnboardingNudgeCronService', () => {
   let execute: jest.Mock;
   let welcomeChannel: MockChannel;
   let botJobsChannel: MockChannel;
+  let sentMessages: number;
 
   const setMembers = (members: MockMember[]) => {
     (discordService.getGuild as jest.Mock).mockResolvedValue({
@@ -94,6 +97,7 @@ describe('OnboardingNudgeCronService', () => {
 
   beforeEach(async () => {
     execute = jest.fn().mockResolvedValue(undefined);
+    sentMessages = 0;
 
     nudgeRepository = {
       find: jest.fn().mockResolvedValue([]),
@@ -104,7 +108,8 @@ describe('OnboardingNudgeCronService', () => {
 
     welcomeChannel = {
       id: welcomeId,
-      send: jest.fn().mockResolvedValue({}),
+      // Discord hands back the message it sent, which is where the jump link comes from
+      send: jest.fn().mockImplementation(async () => ({ url: `${messageUrl}${++sentMessages}` })),
       isTextBased: jest.fn().mockReturnValue(true),
     };
     botJobsChannel = {
@@ -314,6 +319,61 @@ describe('OnboardingNudgeCronService', () => {
       });
       expect(summary).toContain('Nudged 2 member(s)');
       expect(summary).toContain('0 still waiting');
+    });
+
+    it('names everyone it nudged in bot jobs, with a link to the post they will not see', async () => {
+      setMembers([mockMember({ id: 'a', joinedAt: daysAgo(20) }), mockMember({ id: 'b', joinedAt: daysAgo(10) })]);
+
+      const [summary] = await service.run();
+
+      expect(summary).toContain('**Reminded to pick roles:**');
+      expect(summary).toContain('**nick-a** (`a`) — joined <t:');
+      expect(summary).toContain('**nick-b** (`b`) — joined <t:');
+      expect(summary).toContain(`[Jump to the nudge](${messageUrl}1)`);
+
+      // The roster is read in bot jobs, so it must not ping the people it names a second time
+      expect(summary).not.toContain('<@');
+      expect(botJobsChannel.send).toHaveBeenCalledWith({ content: summary, allowedMentions: { users: [] } });
+    });
+
+    it('names a whole backlog rather than giving up past the per-run batch size', async () => {
+      setMembers(Array.from({ length: 8 }, (_, index) => mockMember({ id: `m${index}`, joinedAt: daysAgo(20 + index) })));
+
+      const report = (await service.run(false, true)).join('\n');
+
+      for (let index = 0; index < 8; index++) {
+        expect(report).toContain(`**nick-m${index}** (\`m${index}\`)`);
+      }
+    });
+
+    it('links every welcome post when the nudge is split across messages', async () => {
+      setMembers(Array.from({ length: 60 }, (_, index) => mockMember({ id: `m${index}`, joinedAt: daysAgo(70 - index) })));
+
+      const report = (await service.run(false, true)).join('\n');
+
+      expect(report).toContain(`[Jump to nudge 1](${messageUrl}1)`);
+      expect(report).toContain(`[Jump to nudge 2](${messageUrl}2)`);
+      expect(report).toContain(`[Jump to nudge 3](${messageUrl}3)`);
+    });
+
+    it('splits a roster too long for one message across several bot jobs posts', async () => {
+      setMembers(Array.from({ length: 60 }, (_, index) => mockMember({ id: `m${index}`, joinedAt: daysAgo(70 - index) })));
+
+      const messages = await service.run(false, true);
+
+      expect(messages.length).toBeGreaterThan(1);
+      expect(messages.every(message => message.length <= 2000)).toBe(true);
+      expect(botJobsChannel.send).toHaveBeenCalledTimes(messages.length);
+    });
+
+    it('names the people it managed to nudge before it stopped', async () => {
+      setMembers([mockMember({ id: 'a' })]);
+      execute.mockRejectedValue(new Error('Deadlock found'));
+
+      const [summary] = await service.run();
+
+      expect(summary).toContain('stopped because the nudge could not be recorded');
+      expect(summary).toContain('**nick-a** (`a`)');
     });
 
     it('nudges at most five members per run and says how many are left', async () => {
