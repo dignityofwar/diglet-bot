@@ -140,6 +140,7 @@ export class OnboardingNudgeCronService implements OnApplicationBootstrap {
     }
 
     const sent: GuildMember[] = [];
+    const links: string[] = [];
     let recorded = 0;
     let halted = '';
 
@@ -147,10 +148,16 @@ export class OnboardingNudgeCronService implements OnApplicationBootstrap {
       try {
         // The allowlist is explicit so a later edit to the wording can't turn this into a role
         // or @everyone ping in a public channel.
-        await this.welcomeChannel.send({
+        const message = await this.welcomeChannel.send({
           content: this.nudgeMessage(group),
           allowedMentions: { users: group.map(member => member.id) },
         });
+
+        // Discord always gives a sent message a URL; guarded only so a stubbed send can't
+        // take the whole run down over a link
+        if (message?.url) {
+          links.push(message.url);
+        }
       }
       catch (err) {
         halted = `Discord refused the message: ${err.message}`;
@@ -169,11 +176,15 @@ export class OnboardingNudgeCronService implements OnApplicationBootstrap {
       recorded += group.length;
     }
 
-    const summary = this.summarise(candidates.length, sent, recorded, groups.length, halted);
+    const messages = this.summarise(candidates.length, sent, recorded, groups.length, halted, links);
 
-    await this.log(summary);
+    // In order, so the roster reads as one block rather than interleaving with anything else
+    // the bot posts to the channel
+    for (const message of messages) {
+      await this.log(message);
+    }
 
-    return [summary];
+    return messages;
   }
 
   private nudgeMessage(members: GuildMember[]): string {
@@ -206,16 +217,36 @@ export class OnboardingNudgeCronService implements OnApplicationBootstrap {
     return groups;
   }
 
-  private summarise(eligible: number, sent: GuildMember[], recorded: number, groups: number, halted: string): string {
-    if (halted) {
-      return `⚠️ Nudged ${sent.length} of ${eligible} member(s) and stopped because ${halted}. ${sent.length - recorded} of those failed to record it, so they are due to be nudged again.${this.consecutiveFailures >= this.maxConsecutiveFailures ? ' Standing the job down until the bot restarts.' : ''}`;
+  // Everyone nudged is named here, however many there were. The welcome channel is muted by the
+  // people who need to know a nudge went out, so bot jobs is the only place the roster gets read.
+  private summarise(eligible: number, sent: GuildMember[], recorded: number, groups: number, halted: string, links: string[]): string[] {
+    const across = groups > 1 ? ` across ${groups} messages` : '';
+
+    const header = halted
+      ? `⚠️ Nudged ${sent.length} of ${eligible} member(s) and stopped because ${halted}. ${sent.length - recorded} of those failed to record it, so they are due to be nudged again.${this.consecutiveFailures >= this.maxConsecutiveFailures ? ' Standing the job down until the bot restarts.' : ''}`
+      : `Nudged ${sent.length} member(s) in <#${this.welcomeChannel.id}>${across}. ${eligible - sent.length} still waiting.`;
+
+    if (sent.length === 0) {
+      return [header];
     }
 
-    const across = groups > 1 ? ` across ${groups} messages` : '';
-    // Named only when the list is short enough to be worth reading - a cleared backlog is not
-    const who = sent.length <= this.maxPerRun ? `: ${sent.map(member => member.displayName).join(', ')}` : '';
+    return this.paginate(header, [
+      '',
+      '**Reminded to pick roles:**',
+      ...sent.map(member => this.describe(member)),
+      ...this.jumpLinks(links),
+    ]);
+  }
 
-    return `Nudged ${sent.length} member(s) in <#${this.welcomeChannel.id}>${across}${who}. ${eligible - sent.length} still waiting.`;
+  // Masked links, so a message link never renders as a preview of the ping itself
+  private jumpLinks(links: string[]): string[] {
+    if (links.length === 0) {
+      return [];
+    }
+
+    const label = (index: number) => (links.length > 1 ? `Jump to nudge ${index + 1}` : 'Jump to the nudge');
+
+    return ['', links.map((url, index) => `[${label(index)}](${url})`).join(' • ')];
   }
 
   // Plain names and IDs, never mentions - a report of who hasn't picked roles must not become
