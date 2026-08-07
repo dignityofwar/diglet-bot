@@ -1,7 +1,7 @@
 import { Injectable, Logger, OnApplicationBootstrap } from '@nestjs/common';
 import { InjectRepository } from '@mikro-orm/nestjs';
 import { EntityRepository } from '@mikro-orm/core';
-import { GuildMember, TextChannel } from 'discord.js';
+import { GuildMember, Message, TextChannel } from 'discord.js';
 import { ConfigService } from '@nestjs/config';
 import { Cron } from '@nestjs/schedule';
 import { DiscordService } from '../../discord/discord.service';
@@ -140,14 +140,17 @@ export class OnboardingNudgeCronService implements OnApplicationBootstrap {
     }
 
     const sent: GuildMember[] = [];
+    const links: string[] = [];
     let recorded = 0;
     let halted = '';
 
     for (const group of groups) {
+      let posted: Message;
+
       try {
         // The allowlist is explicit so a later edit to the wording can't turn this into a role
         // or @everyone ping in a public channel.
-        await this.welcomeChannel.send({
+        posted = await this.welcomeChannel.send({
           content: this.nudgeMessage(group),
           allowedMentions: { users: group.map(member => member.id) },
         });
@@ -158,6 +161,10 @@ export class OnboardingNudgeCronService implements OnApplicationBootstrap {
       }
 
       sent.push(...group);
+
+      if (posted?.url) {
+        links.push(posted.url);
+      }
 
       // Stop rather than keep pinging into a database that can't remember it happened - the
       // whole backlog would otherwise be nudged again on the next run.
@@ -170,10 +177,39 @@ export class OnboardingNudgeCronService implements OnApplicationBootstrap {
     }
 
     const summary = this.summarise(candidates.length, sent, recorded, groups.length, halted);
+    const report = this.paginate(summary, this.nudgedRoster(sent, links));
 
-    await this.log(summary);
+    // Sent in order rather than in parallel, so a split roster reads top to bottom in the channel
+    for (const page of report) {
+      await this.log(page);
+    }
 
-    return [summary];
+    return report;
+  }
+
+  // The people who need to know this ran keep the welcome channel muted, so bot jobs carries the
+  // whole roster and a way back to the post rather than a bare count they'd have to go and check.
+  private nudgedRoster(sent: GuildMember[], links: string[]): string[] {
+    if (sent.length === 0) {
+      return [];
+    }
+
+    return [
+      '',
+      ...sent.map(member => this.describe(member)),
+      ...this.jumpLine(links),
+    ];
+  }
+
+  // Nothing to link to when Discord handed back no message, which is every path that failed to send
+  private jumpLine(links: string[]): string[] {
+    if (links.length === 0) {
+      return [];
+    }
+
+    return links.length === 1
+      ? ['', `[Jump to the post](${links[0]})`]
+      : ['', `Jump to the posts: ${links.map((link, index) => `[${index + 1}](${link})`).join(' ')}`];
   }
 
   private nudgeMessage(members: GuildMember[]): string {
@@ -212,14 +248,13 @@ export class OnboardingNudgeCronService implements OnApplicationBootstrap {
     }
 
     const across = groups > 1 ? ` across ${groups} messages` : '';
-    // Named only when the list is short enough to be worth reading - a cleared backlog is not
-    const who = sent.length <= this.maxPerRun ? `: ${sent.map(member => member.displayName).join(', ')}` : '';
 
-    return `Nudged ${sent.length} member(s) in <#${this.welcomeChannel.id}>${across}${who}. ${eligible - sent.length} still waiting.`;
+    // Who was nudged is listed underneath, so the summary line stays a headline
+    return `Nudged ${sent.length} member(s) in <#${this.welcomeChannel.id}>${across}. ${eligible - sent.length} still waiting.`;
   }
 
-  // Plain names and IDs, never mentions - a report of who hasn't picked roles must not become
-  // the nudge itself, and it is read in a staff channel where pinging them would be noise.
+  // Plain names and IDs, never mentions - a report of who has or hasn't picked roles must not
+  // become the nudge itself, and it is read in a staff channel where pinging them would be noise.
   private describe(member: GuildMember): string {
     return `- **${member.displayName}** (\`${member.id}\`) — joined ${discordTime(member.joinedAt, 'R')}`;
   }

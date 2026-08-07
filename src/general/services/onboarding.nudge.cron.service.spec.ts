@@ -316,6 +316,75 @@ describe('OnboardingNudgeCronService', () => {
       expect(summary).toContain('0 still waiting');
     });
 
+    it('names everyone it nudged in bot jobs, so a muted welcome channel misses nothing', async () => {
+      setMembers(Array.from({ length: 8 }, (_, index) => mockMember({ id: `m${index}`, joinedAt: daysAgo(20 + index) })));
+
+      const report = (await service.run(false, true)).join('\n');
+
+      expect(botJobsChannel.send).toHaveBeenCalled();
+      expect(botJobsChannel.send.mock.calls.map(([payload]) => payload.content).join('\n')).toBe(report);
+
+      for (let index = 0; index < 8; index++) {
+        expect(report).toContain(`**nick-m${index}** (\`m${index}\`) — joined <t:`);
+      }
+
+      // Naming them a second time must not ping them a second time
+      expect(report).not.toContain('<@');
+      expect(botJobsChannel.send.mock.calls.every(([payload]) => payload.allowedMentions.users.length === 0)).toBe(true);
+    });
+
+    it('links back to the welcome post it made', async () => {
+      setMembers([mockMember({ id: 'a' })]);
+      welcomeChannel.send.mockResolvedValue({ url: 'https://discord.com/channels/1/2/3' });
+
+      expect((await service.run()).join('\n')).toContain('[Jump to the post](https://discord.com/channels/1/2/3)');
+    });
+
+    it('links to every welcome post when the batch was split', async () => {
+      setMembers(Array.from({ length: 60 }, (_, index) => mockMember({ id: `m${index}`, joinedAt: daysAgo(70 - index) })));
+      welcomeChannel.send.mockImplementation(async () => ({ url: `https://discord.com/channels/1/2/${welcomeChannel.send.mock.calls.length}` }));
+
+      const report = (await service.run(false, true)).join('\n');
+
+      expect(report).toContain('Jump to the posts: [1](https://discord.com/channels/1/2/1) [2](https://discord.com/channels/1/2/2) [3](https://discord.com/channels/1/2/3)');
+    });
+
+    it('still names whoever was reached when the run halted part way', async () => {
+      setMembers(Array.from({ length: 60 }, (_, index) => mockMember({ id: `m${index}`, joinedAt: daysAgo(70 - index) })));
+      welcomeChannel.send
+        .mockResolvedValueOnce({})
+        .mockRejectedValueOnce(new Error('Missing Permissions'));
+
+      const report = (await service.run(false, true)).join('\n');
+
+      expect(report).toContain('Nudged 25 of 60 member(s)');
+      expect(report).toContain('**nick-m0** (`m0`)');
+      expect(report).toContain('**nick-m24** (`m24`)');
+      // Never sent, so never listed as nudged
+      expect(report).not.toContain('**nick-m25** (`m25`)');
+    });
+
+    it('logs only the summary when nothing was sent', async () => {
+      setMembers([mockMember({ id: 'a' })]);
+      welcomeChannel.send.mockRejectedValue(new Error('Missing Permissions'));
+
+      const report = await service.run();
+
+      expect(report).toHaveLength(1);
+      expect(report[0]).toContain('Discord refused the message: Missing Permissions');
+      expect(report[0]).not.toContain('nick-a');
+    });
+
+    it('splits a nudged roster too long for one message', async () => {
+      setMembers(Array.from({ length: 400 }, (_, index) => mockMember({ id: `m${index}`, joinedAt: daysAgo(410 - index) })));
+
+      const report = await service.run(false, true);
+
+      expect(report.length).toBeGreaterThan(1);
+      expect(report.every(message => message.length <= 2000)).toBe(true);
+      expect(botJobsChannel.send).toHaveBeenCalledTimes(report.length);
+    });
+
     it('nudges at most five members per run and says how many are left', async () => {
       setMembers(Array.from({ length: 8 }, (_, index) => mockMember({ id: `m${index}`, joinedAt: daysAgo(20 + index) })));
 
