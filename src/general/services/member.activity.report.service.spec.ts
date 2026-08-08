@@ -134,7 +134,9 @@ describe('MemberActivityReportService', () => {
 
       expect(summary).toContain('💬 Messages: **15**');
       expect(summary).toContain('⭐ Reactions: **3**');
-      expect(summary).toContain('🎙️ Voice: **2h 0m**');
+      // Averaged the same way messages are - two hours reads very differently over five days
+      // than it does over five months
+      expect(summary).toContain('🎙️ Voice: **2h 0m** (0.4h/day)');
       // Five, not four - the day in progress counts, same as the rank up ballot
       expect(summary).toContain('📊 Active days all time: **2** of **5** days (40%) — 🟠 Occasional');
     });

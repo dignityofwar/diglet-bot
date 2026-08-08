@@ -7,6 +7,7 @@ import {
   AlbionRankUpVoteService,
   majorityScore,
   PROVISIONAL_HOLD_MS,
+  UNANIMOUS_HOLD_MS,
   REACTION_DEBOUNCE_MS,
   COUNTDOWN_MARKS,
   RECALCULATING_TICK_MS,
@@ -325,6 +326,88 @@ describe('AlbionRankUpVoteService', () => {
       expect(line).toContain('window to change it');
     });
 
+    it('holds a unanimous pass for a minute rather than an hour', () => {
+      const vote = makeVote({
+        electorateSize: 4,
+        requiredScore: 2.5,
+        score: 4,
+        provisionalStatus: AlbionRankUpVoteStatus.PASSED,
+      });
+
+      expect(service.holdMs(vote)).toBe(UNANIMOUS_HOLD_MS);
+    });
+
+    it('holds a pass that is not unanimous for the full hour', () => {
+      const vote = makeVote({
+        electorateSize: 4,
+        requiredScore: 2.5,
+        score: 3.5, // Three approvals and a shrug is a pass, but somebody is unconvinced
+        provisionalStatus: AlbionRankUpVoteStatus.PASSED,
+      });
+
+      expect(service.holdMs(vote)).toBe(PROVISIONAL_HOLD_MS);
+    });
+
+    it('gives a veto the full hour even when everyone else approved', () => {
+      const vote = makeVote({
+        electorateSize: 4,
+        requiredScore: 2.5,
+        score: 4,
+        provisionalStatus: AlbionRankUpVoteStatus.VETOED,
+      });
+
+      expect(service.holdMs(vote)).toBe(PROVISIONAL_HOLD_MS);
+    });
+
+    it('commits a unanimous pass a minute in, without waiting the hour', async () => {
+      const vote = makeVote({
+        electorateSize: 4,
+        requiredScore: 2.5,
+        provisionalStatus: AlbionRankUpVoteStatus.PASSED,
+        provisionalSince: new Date(Date.now() - UNANIMOUS_HOLD_MS - 1000),
+      });
+      discordService.getTextChannel.mockResolvedValue({
+        id: 'chan-1',
+        send: channelSend,
+        messages: { fetch: jest.fn().mockResolvedValue(makeMessage({ [VOTE_APPROVE]: ['e1', 'e2', 'e3', 'e4'] })) },
+      });
+
+      await service.evaluate(vote);
+
+      expect(execute.mock.calls[0][0]).toContain('set status = ?');
+      expect(execute.mock.calls[0][1][0]).toBe(AlbionRankUpVoteStatus.PASSED);
+    });
+
+    it('leaves a pass that is not unanimous held a minute in', async () => {
+      const vote = makeVote({
+        electorateSize: 5,
+        requiredScore: 3,
+        provisionalStatus: AlbionRankUpVoteStatus.PASSED,
+        provisionalSince: new Date(Date.now() - UNANIMOUS_HOLD_MS - 1000),
+      });
+      discordService.getTextChannel.mockResolvedValue({
+        id: 'chan-1',
+        send: channelSend,
+        messages: { fetch: jest.fn().mockResolvedValue(makeMessage({ [VOTE_APPROVE]: ['e1', 'e2', 'e3', 'e4'] })) },
+      });
+
+      await service.evaluate(vote);
+
+      expect(execute).not.toHaveBeenCalled();
+    });
+
+    it('says a unanimous hold will pass unanimously', () => {
+      const vote = makeVote({
+        electorateSize: 4,
+        requiredScore: 2.5,
+        score: 4,
+        provisionalStatus: AlbionRankUpVoteStatus.PASSED,
+        provisionalSince: new Date(),
+      });
+
+      expect(service.scoreLine(vote)).toContain('pass unanimously');
+    });
+
     it('shows only the score when nothing is being held', () => {
       const line = service.scoreLine(makeVote({ score: 2 }));
 
@@ -388,6 +471,65 @@ describe('AlbionRankUpVoteService', () => {
       for (let n = 1; n <= 20; n++) {
         expect(majorityScore(n)).toBeGreaterThan(n / 2);
       }
+    });
+  });
+
+  // A 60 second hold left to the minute sweep would routinely take two minutes to land
+  describe('committing a short hold on time', () => {
+    beforeEach(() => jest.useFakeTimers());
+    afterEach(() => jest.useRealTimers());
+
+    const unanimousBallot = (vote: any) => {
+      voteRepository.findOne.mockResolvedValue(vote);
+      discordService.getTextChannel.mockResolvedValue({
+        id: 'chan-1',
+        send: channelSend,
+        messages: { fetch: jest.fn().mockResolvedValue(makeMessage({ [VOTE_APPROVE]: ['e1', 'e2', 'e3', 'e4'] })) },
+      });
+    };
+
+    it('wakes a unanimous ballot up when its own hold ends, without the sweep', async () => {
+      const vote = makeVote({ electorateSize: 4, requiredScore: 2.5 });
+      unanimousBallot(vote);
+
+      await service.evaluate(vote);
+      expect(execute).not.toHaveBeenCalled(); // Held, not resolved
+
+      await jest.advanceTimersByTimeAsync(UNANIMOUS_HOLD_MS);
+
+      expect(execute.mock.calls[0][0]).toContain('set status = ?');
+      expect(execute.mock.calls[0][1][0]).toBe(AlbionRankUpVoteStatus.PASSED);
+    });
+
+    it('leaves the hour long hold to the sweep rather than pinning a timer for it', async () => {
+      const vote = makeVote({ electorateSize: 7, requiredScore: 4 });
+      unanimousBallot(vote); // Four of seven: a pass, but nowhere near unanimous
+
+      await service.evaluate(vote);
+      await jest.advanceTimersByTimeAsync(UNANIMOUS_HOLD_MS * 10);
+
+      expect(execute).not.toHaveBeenCalled();
+    });
+
+    // Someone taking their 👍 back inside the window has to stop the commit, not just cancel
+    // the provisional status the commit would have read
+    it('drops the timer when the hold is cancelled', async () => {
+      const vote = makeVote({ electorateSize: 4, requiredScore: 2.5 });
+      unanimousBallot(vote);
+
+      await service.evaluate(vote);
+
+      // Same ballot, one approval short of the bar now
+      discordService.getTextChannel.mockResolvedValue({
+        id: 'chan-1',
+        send: channelSend,
+        messages: { fetch: jest.fn().mockResolvedValue(makeMessage({ [VOTE_APPROVE]: ['e1', 'e2'] })) },
+      });
+      await service.evaluate(vote);
+
+      await jest.advanceTimersByTimeAsync(UNANIMOUS_HOLD_MS);
+
+      expect(execute).not.toHaveBeenCalled();
     });
   });
 

@@ -740,6 +740,12 @@ describe('AlbionRankUpService', () => {
       expect(content).toContain('- ⛔ veto the rank up (this action needs justification with proof), this will cause the vote to fail within 1 hour.');
     });
 
+    it('tells electors a clean sweep locks in inside the minute', async () => {
+      await service.handleRankUpRequest(member);
+
+      expect(lastSentContent()).toContain('👍 from all 7 of you and it locks in after 60 seconds');
+    });
+
     it('bullets each reaction explainer but keeps the scoring on one line', async () => {
       await service.handleRankUpRequest(member);
       const content = lastSentContent();
@@ -835,6 +841,21 @@ describe('AlbionRankUpService', () => {
       expect(content).not.toContain('Foxhole');
       expect(content).not.toContain('Noita');
       expect(content).not.toContain('Other games');
+    });
+
+    // A voice total on its own says nothing about pace, exactly as a message total doesn't
+    it('averages voice time per day alongside the total', async () => {
+      // Half a day off the boundary: tracking starting exactly ten days ago rounds up to
+      // eleven the moment any time passes between the mock being set and the clock being read
+      rollupService.getTrackingStartDate.mockResolvedValue(daysAgo(9.5));
+      rollupService.getRollup.mockResolvedValue([
+        { messagesSent: 0, reactionsAdded: 0, voiceMinutes: 300, date: daysAgo(2) },
+        { messagesSent: 0, reactionsAdded: 0, voiceMinutes: 300, date: daysAgo(1) },
+      ]);
+
+      await service.handleRankUpRequest(member);
+
+      expect(lastSentContent()).toContain('🎙️ Voice: **10h 0m** (1.0h/day)');
     });
 
     it('heads the block Metrics and bullets the dates with the rest', async () => {

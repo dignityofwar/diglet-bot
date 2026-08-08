@@ -14,6 +14,19 @@ export const VOTE_REACTIONS = [VOTE_APPROVE, VOTE_SHRUG, VOTE_DISAPPROVE, VOTE_V
 // which has already had the full voting period.
 export const PROVISIONAL_HOLD_MS = 60 * 60 * 1000;
 
+// A pass every elector approved is held for a token window instead of the full hour. The hold
+// exists to give a dissenter time to speak up, and a unanimous board has no dissenter left to
+// wait for. Not zero, so a misclicked 👍 can still be taken back.
+export const UNANIMOUS_HOLD_MS = 60 * 1000;
+export const UNANIMOUS_HOLD_SECONDS = Math.round(UNANIMOUS_HOLD_MS / 1000);
+
+// Every elector voted 👍. A 👍 is the only reaction worth a whole point, so nothing short of a
+// full board of them reaches the electorate's own size. Read off the row rather than a tally so
+// the hold can be measured anywhere the ballot is drawn; if the electorate has grown since the
+// ballot was posted this reads the frozen size, the same one requiredScore was set from.
+export const isUnanimous = (score: number, electorateSize: number): boolean =>
+  electorateSize > 0 && score >= electorateSize;
+
 // A majority is strictly more than half. Shrugs are worth 0.5, so half a point is a real
 // increment and an even electorate needs half plus 0.5 rather than a whole extra vote:
 // 6 voters pass at 3.5, not 4. Odd counts are unchanged - 7 still passes at 4.

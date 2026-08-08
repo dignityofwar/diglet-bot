@@ -22,6 +22,12 @@ export const friendlyDuration = (minutes: number): string => {
   return `${hours}h ${minutes % 60}m`;
 };
 
+// The daily average behind a total, in hours. A total on its own says nothing about pace - two
+// hours is a lot over a week and nothing at all over a year - so it is reported alongside the
+// same way messages are. Hours rather than minutes to match how the total is written.
+export const hoursPerDay = (minutes: number, days: number): string =>
+  `${(minutes / 60 / Math.max(1, days)).toFixed(1)}h/day`;
+
 // Shared by the rank up ballot and /activity so the same ratio always reads the same way
 export const activityBand = (activeDays: number, trackedDays: number): string => {
   if (trackedDays <= 0) {

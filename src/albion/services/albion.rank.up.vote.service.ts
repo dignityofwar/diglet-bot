@@ -16,9 +16,11 @@ import { discordTime } from '../../helpers';
 import { AlbionRankUpService } from './albion.rank.up.service';
 import {
   COUNTDOWN_MARKS,
+  isUnanimous,
   PROVISIONAL_HOLD_MS,
   RECALCULATING_TICK_MS,
   scoreHeading,
+  UNANIMOUS_HOLD_MS,
   VOTE_APPROVE,
   VOTE_DISAPPROVE,
   VOTE_SHRUG,
@@ -28,12 +30,15 @@ import {
 // Re-exported so callers have one place to import ballot vocabulary from
 export {
   COUNTDOWN_MARKS,
+  isUnanimous,
   majorityScore,
   UNPOSTED_GRACE_MS,
   PROVISIONAL_HOLD_MS,
   RECALCULATING,
   RECALCULATING_TICK_MS,
   scoreHeading,
+  UNANIMOUS_HOLD_MS,
+  UNANIMOUS_HOLD_SECONDS,
   VOTE_APPROVE,
   VOTE_DISAPPROVE,
   VOTE_REACTIONS,
@@ -62,6 +67,9 @@ const SCORE_EDIT_THROTTLE_MS = 5000;
 // mid-change. Waiting for the burst to settle means one recount against a settled ballot.
 export const REACTION_DEBOUNCE_MS = 5 * 1000;
 
+// A hold no longer than this gets its own commit timer rather than waiting for the minute sweep
+const SHORT_HOLD_MAX_MS = 5 * 60 * 1000;
+
 interface PendingRecount {
   deadline: number;
   timer: NodeJS.Timeout;
@@ -86,6 +94,7 @@ export class AlbionRankUpVoteService {
   private readonly logger = new Logger(AlbionRankUpVoteService.name);
   private readonly lastScoreEdit = new Map<number, number>();
   private readonly pendingRecounts = new Map<number, PendingRecount>();
+  private readonly holdCommits = new Map<number, NodeJS.Timeout>();
 
   constructor(
     private readonly config: ConfigService,
@@ -308,6 +317,7 @@ export class AlbionRankUpVoteService {
       vote.provisionalStatus = null;
       vote.provisionalSince = null;
       vote.provisionalNote = null;
+      this.clearHoldCommit(vote.id);
       await this.voteRepository.getEntityManager().persist(vote).flush();
       await this.repaint(vote, message, rerender);
       return;
@@ -327,7 +337,44 @@ export class AlbionRankUpVoteService {
       return;
     }
 
+    this.scheduleHoldCommit(vote);
     await this.repaint(vote, message, rerender);
+  }
+
+  // The sweep commits an elapsed hold within a minute of it passing, which is neither here nor
+  // there on an hour long hold and far too coarse for the unanimous one - a 60 second window
+  // would routinely take two minutes to land. So a short hold gets a timer of its own, firing
+  // the moment it is up. In process and lost on a restart; the sweep remains the backstop, so
+  // losing it costs lateness rather than the result.
+  private scheduleHoldCommit(vote: AlbionRankUpVoteEntity): void {
+    this.clearHoldCommit(vote.id);
+
+    const holdMs = this.holdMs(vote);
+
+    if (holdMs > SHORT_HOLD_MAX_MS || !vote.provisionalSince) {
+      return;
+    }
+
+    const remaining = Math.max(0, vote.provisionalSince.getTime() + holdMs - Date.now());
+
+    // recount() re-reads the row and does nothing unless it is still pending, so a timer left
+    // over from a hold that has since been cancelled or resolved elsewhere is harmless
+    const timer = setTimeout(() => {
+      this.holdCommits.delete(vote.id);
+      void this.recount(vote.id);
+    }, remaining);
+
+    timer.unref?.(); // Must not hold the process open on shutdown
+    this.holdCommits.set(vote.id, timer);
+  }
+
+  private clearHoldCommit(voteId: number): void {
+    const timer = this.holdCommits.get(voteId);
+
+    if (timer) {
+      clearTimeout(timer);
+      this.holdCommits.delete(voteId);
+    }
   }
 
   private async repaint(vote: AlbionRankUpVoteEntity, message: Message, rerender: boolean): Promise<void> {
@@ -374,12 +421,22 @@ export class AlbionRankUpVoteService {
     return null;
   }
 
+  // How long this ballot's provisional result waits before it locks in. A unanimous pass gets the
+  // short window; everything else, a veto included, gets the full hour. Read from the row so the
+  // countdown drawn on the ballot and the commit that ends it can never disagree.
+  holdMs(vote: AlbionRankUpVoteEntity): number {
+    const unanimousPass = vote.provisionalStatus === AlbionRankUpVoteStatus.PASSED
+      && isUnanimous(vote.score, vote.electorateSize);
+
+    return unanimousPass ? UNANIMOUS_HOLD_MS : PROVISIONAL_HOLD_MS;
+  }
+
   holdElapsed(vote: AlbionRankUpVoteEntity): boolean {
     if (!vote.provisionalSince) {
       return false;
     }
 
-    return Date.now() - vote.provisionalSince.getTime() >= PROVISIONAL_HOLD_MS;
+    return Date.now() - vote.provisionalSince.getTime() >= this.holdMs(vote);
   }
 
   scoreLine(vote: AlbionRankUpVoteEntity, secondsLeft?: number): string {
@@ -389,10 +446,12 @@ export class AlbionRankUpVoteService {
       return base;
     }
 
-    const locksAt = new Date(vote.provisionalSince.getTime() + PROVISIONAL_HOLD_MS);
+    const locksAt = new Date(vote.provisionalSince.getTime() + this.holdMs(vote));
+    const unanimous = vote.provisionalStatus === AlbionRankUpVoteStatus.PASSED
+      && isUnanimous(vote.score, vote.electorateSize);
     // Carries the outcome's own emoji, so which way the hold is going reads at a glance
     const verb = {
-      [AlbionRankUpVoteStatus.PASSED]: '✅ pass',
+      [AlbionRankUpVoteStatus.PASSED]: unanimous ? '✅ pass unanimously' : '✅ pass',
       [AlbionRankUpVoteStatus.VETOED]: `${VOTE_VETO} be vetoed`,
       [AlbionRankUpVoteStatus.FAILED]: 'fail',
     }[vote.provisionalStatus] ?? 'close';
@@ -454,6 +513,9 @@ export class AlbionRankUpVoteService {
     score: number,
     note?: string,
   ): Promise<boolean> {
+    // However this vote is being closed, its hold is over
+    this.clearHoldCommit(vote.id);
+
     const connection = this.voteRepository.getEntityManager().getConnection();
 
     const result = await connection.execute(
