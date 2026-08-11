@@ -16,10 +16,11 @@ import {
   majorityScore,
   PROVISIONAL_HOLD_MS,
   scoreHeading,
+  UNANIMOUS_HOLD_SECONDS,
   UNPOSTED_GRACE_MS,
   VOTE_REACTIONS,
 } from './albion.ballot.text';
-import { activityBand, discordTime, friendlyDuration } from '../../helpers';
+import { activityBand, discordTime, friendlyDuration, hoursPerDay } from '../../helpers';
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 const DENIAL_NOTICE_THROTTLE_HOURS = 24;
@@ -417,6 +418,7 @@ Passes at a score of **${requiredScore}** — a majority of ${electorateSize} ($
 Voting closes ${discordTime(expiresAt, 'R')}
 
 -# Every outcome, a veto included, is held for ${HOLD_HOURS} hour${HOLD_HOURS === 1 ? '' : 's'} before it locks in. Lift a veto inside that window and the vote carries on.
+-# The exception is a clean sweep: 👍 from all ${electorateSize} of you and it locks in after ${UNANIMOUS_HOLD_SECONDS} seconds, since there is nobody left to object.
 
 ${scoreLine}
 
@@ -483,7 +485,7 @@ ${stats}`;
         : '- ⚔️ No game activity recorded ¹');
 
       lines.push(
-        `- 🎙️ Voice: **${this.friendlyDuration(voiceMinutes)}** ²`,
+        `- 🎙️ Voice: **${this.friendlyDuration(voiceMinutes)}** (${this.hoursPerDay(voiceMinutes, trackedDays)}) ²`,
         `- 💬 Messages: **${messages}** (${(messages / trackedDays).toFixed(1)}/day) ²`,
         `- ⭐ Reactions: **${reactions}** ²`,
         this.activityLine('📊 Activity all time registered', activeDays, trackedDays),
@@ -519,6 +521,10 @@ ${stats}`;
 
   friendlyDuration(minutes: number): string {
     return friendlyDuration(minutes);
+  }
+
+  hoursPerDay(minutes: number, days: number): string {
+    return hoursPerDay(minutes, days);
   }
 
   friendlyRank(roleName: string): string {

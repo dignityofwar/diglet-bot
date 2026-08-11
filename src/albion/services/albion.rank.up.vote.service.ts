@@ -15,10 +15,12 @@ import { resolvePartialReaction } from '../../discord/discord.hacks';
 import { discordTime } from '../../helpers';
 import { AlbionRankUpService } from './albion.rank.up.service';
 import {
-  COUNTDOWN_MARKS,
+  isUnanimous,
   PROVISIONAL_HOLD_MS,
-  RECALCULATING_TICK_MS,
   scoreHeading,
+  UNANIMOUS_BOX,
+  UNANIMOUS_HOLD_MS,
+  UNANIMOUS_HOLD_SECONDS,
   VOTE_APPROVE,
   VOTE_DISAPPROVE,
   VOTE_SHRUG,
@@ -27,13 +29,15 @@ import {
 
 // Re-exported so callers have one place to import ballot vocabulary from
 export {
-  COUNTDOWN_MARKS,
+  isUnanimous,
   majorityScore,
   UNPOSTED_GRACE_MS,
   PROVISIONAL_HOLD_MS,
   RECALCULATING,
-  RECALCULATING_TICK_MS,
   scoreHeading,
+  UNANIMOUS_BOX,
+  UNANIMOUS_HOLD_MS,
+  UNANIMOUS_HOLD_SECONDS,
   VOTE_APPROVE,
   VOTE_DISAPPROVE,
   VOTE_REACTIONS,
@@ -49,10 +53,14 @@ const REACTION_SCORES: Record<string, number> = {
 
 const DISCORD_UNKNOWN_MESSAGE = 10008;
 
-// The live score line plus any hold notice beneath it, rewritten in place on every recount. Both
-// are matched together so a stale hold notice can't survive the replacement. Deliberately loose
-// about the heading so ballots posted before it was added keep updating.
-const SCORE_LINE = /^.*Current score:.*(?:\n⏳.*)?$/m;
+// The live score line plus any hold notice beneath it, rewritten in place on every recount. The
+// notice is one ⏳ line for an ordinary hold and a heading plus its footnote for the unanimous
+// countdown; every shape is matched together so a stale notice can't survive the replacement.
+// Deliberately loose about the heading so ballots posted before it was added keep updating.
+const SCORE_LINE = new RegExp(
+  `^.*Current score:.*(?:\\n⏳.*|\\n## ${UNANIMOUS_BOX}.*(?:\\n-#.*)?)?$`,
+  'm',
+);
 
 // Discord rate limits message edits, and a busy ballot recounts on every reaction
 const SCORE_EDIT_THROTTLE_MS = 5000;
@@ -62,10 +70,18 @@ const SCORE_EDIT_THROTTLE_MS = 5000;
 // mid-change. Waiting for the burst to settle means one recount against a settled ballot.
 export const REACTION_DEBOUNCE_MS = 5 * 1000;
 
+// A hold no longer than this gets its own commit timer rather than waiting for the minute sweep
+const SHORT_HOLD_MAX_MS = 5 * 60 * 1000;
+
+// How close the stamp already on the ballot has to be to running out before a reaction still
+// arriving repaints it. A burst that keeps pushing the deadline back then costs an edit every few
+// seconds rather than one per reaction, and the recount rewrites the line properly regardless.
+const COUNTDOWN_REPAINT_GRACE_MS = 1000;
+
 interface PendingRecount {
   deadline: number;
   timer: NodeJS.Timeout;
-  painted: Set<number>; // Marks already shown, so a mark costs one edit however often we tick
+  paintedDeadline?: number; // The stamp currently on the ballot, which is not always the deadline
   message?: Message;
 }
 
@@ -86,6 +102,7 @@ export class AlbionRankUpVoteService {
   private readonly logger = new Logger(AlbionRankUpVoteService.name);
   private readonly lastScoreEdit = new Map<number, number>();
   private readonly pendingRecounts = new Map<number, PendingRecount>();
+  private readonly holdCommits = new Map<number, NodeJS.Timeout>();
 
   constructor(
     private readonly config: ConfigService,
@@ -133,62 +150,45 @@ export class AlbionRankUpVoteService {
   }
 
   // A burst produces one tally once it settles: each reaction replaces the countdown outright
-  // rather than pushing the old one's deadline back. The ticker closes over the vote row and
-  // keeps whatever phase it started on, so an extended countdown paints a stale score and fires
-  // late. The fetched ballot carries across, so replacing costs no extra REST call.
+  // rather than pushing the old one's deadline back. The fetched ballot carries across, so
+  // replacing costs no extra REST call.
   // The timer is in process and lost on restart; resyncPending() in the sweep is the backstop.
   async scheduleRecount(vote: AlbionRankUpVoteEntity): Promise<void> {
     const previous = this.pendingRecounts.get(vote.id);
 
     if (previous) {
-      clearInterval(previous.timer);
+      clearTimeout(previous.timer);
     }
 
-    const timer = setInterval(() => void this.tick(vote), RECALCULATING_TICK_MS);
+    const timer = setTimeout(() => {
+      this.pendingRecounts.delete(vote.id);
+      void this.recount(vote.id);
+    }, REACTION_DEBOUNCE_MS);
+
     timer.unref?.(); // Must not hold the process open on shutdown
 
     const started: PendingRecount = {
       deadline: Date.now() + REACTION_DEBOUNCE_MS,
       timer,
-      painted: new Set(),
+      paintedDeadline: previous?.paintedDeadline,
       message: previous?.message,
     };
     this.pendingRecounts.set(vote.id, started);
 
-    // Painted immediately rather than waiting a tick, so the ballot reacts at once
-    await this.paintCountdown(vote, started, REACTION_DEBOUNCE_MS / 1000);
+    // The stamp counts itself down on the client, so the rest of the burst rides on the paint
+    // that started it. Repainted only once that stamp has run out and reactions are still
+    // arriving, which is what keeps a long burst from costing an edit per reaction.
+    const painted = started.paintedDeadline;
+
+    if (painted === undefined || painted - Date.now() <= COUNTDOWN_REPAINT_GRACE_MS) {
+      await this.paintCountdown(vote, started);
+    }
   }
 
-  private async tick(vote: AlbionRankUpVoteEntity): Promise<void> {
-    const pending = this.pendingRecounts.get(vote.id);
-
-    if (!pending) {
-      return;
-    }
-
-    if (Date.now() >= pending.deadline) {
-      clearInterval(pending.timer);
-      this.pendingRecounts.delete(vote.id);
-      await this.recount(vote.id);
-      return;
-    }
-
-    // Crossed rather than equalled: a tick that runs late must still paint the mark it stepped
-    // over, or timer jitter silently drops it and the countdown appears to stall.
-    const secondsLeft = (pending.deadline - Date.now()) / 1000;
-    const due = COUNTDOWN_MARKS.find(mark => secondsLeft <= mark && !pending.painted.has(mark));
-
-    if (due === undefined) {
-      return;
-    }
-
-    pending.painted.add(due);
-    await this.paintCountdown(vote, pending, due);
-  }
-
-  // Repaints the score line with the time left. The ballot is fetched once per burst and reused,
-  // so a countdown costs one fetch and one edit per mark rather than a fetch per tick.
-  private async paintCountdown(vote: AlbionRankUpVoteEntity, pending: PendingRecount, secondsLeft: number): Promise<void> {
+  // Marks the score line as unsettled, with a stamp saying when the recount lands. The ballot is
+  // fetched once per burst and reused, so this costs one fetch and one edit for the whole burst
+  // rather than an edit per second of countdown.
+  private async paintCountdown(vote: AlbionRankUpVoteEntity, pending: PendingRecount): Promise<void> {
     try {
       pending.message ??= await this.fetchBallot(vote);
 
@@ -198,7 +198,12 @@ export class AlbionRankUpVoteService {
         return;
       }
 
-      const updated = pending.message.content.replace(SCORE_LINE, this.scoreLine(vote, secondsLeft));
+      const updated = pending.message.content.replace(
+        SCORE_LINE,
+        this.scoreLine(vote, new Date(pending.deadline)),
+      );
+
+      pending.paintedDeadline = pending.deadline;
 
       if (updated !== pending.message.content) {
         pending.message = await pending.message.edit(updated);
@@ -308,6 +313,7 @@ export class AlbionRankUpVoteService {
       vote.provisionalStatus = null;
       vote.provisionalSince = null;
       vote.provisionalNote = null;
+      this.clearHoldCommit(vote.id);
       await this.voteRepository.getEntityManager().persist(vote).flush();
       await this.repaint(vote, message, rerender);
       return;
@@ -327,7 +333,44 @@ export class AlbionRankUpVoteService {
       return;
     }
 
+    this.scheduleHoldCommit(vote);
     await this.repaint(vote, message, rerender);
+  }
+
+  // The sweep commits an elapsed hold within a minute of it passing, which is neither here nor
+  // there on an hour long hold and far too coarse for the unanimous one - a 60 second window
+  // would routinely take two minutes to land. So a short hold gets a timer of its own, firing
+  // the moment it is up. In process and lost on a restart; the sweep remains the backstop, so
+  // losing it costs lateness rather than the result.
+  private scheduleHoldCommit(vote: AlbionRankUpVoteEntity): void {
+    this.clearHoldCommit(vote.id);
+
+    const holdMs = this.holdMs(vote);
+
+    if (holdMs > SHORT_HOLD_MAX_MS || !vote.provisionalSince) {
+      return;
+    }
+
+    const remaining = Math.max(0, vote.provisionalSince.getTime() + holdMs - Date.now());
+
+    // recount() re-reads the row and does nothing unless it is still pending, so a timer left
+    // over from a hold that has since been cancelled or resolved elsewhere is harmless
+    const timer = setTimeout(() => {
+      this.holdCommits.delete(vote.id);
+      void this.recount(vote.id);
+    }, remaining);
+
+    timer.unref?.(); // Must not hold the process open on shutdown
+    this.holdCommits.set(vote.id, timer);
+  }
+
+  private clearHoldCommit(voteId: number): void {
+    const timer = this.holdCommits.get(voteId);
+
+    if (timer) {
+      clearTimeout(timer);
+      this.holdCommits.delete(voteId);
+    }
   }
 
   private async repaint(vote: AlbionRankUpVoteEntity, message: Message, rerender: boolean): Promise<void> {
@@ -374,22 +417,47 @@ export class AlbionRankUpVoteService {
     return null;
   }
 
+  // How long this ballot's provisional result waits before it locks in. A unanimous pass gets the
+  // short window; everything else, a veto included, gets the full hour. Read from the row so the
+  // countdown drawn on the ballot and the commit that ends it can never disagree.
+  holdMs(vote: AlbionRankUpVoteEntity): number {
+    const unanimousPass = vote.provisionalStatus === AlbionRankUpVoteStatus.PASSED
+      && isUnanimous(vote.score, vote.electorateSize);
+
+    return unanimousPass ? UNANIMOUS_HOLD_MS : PROVISIONAL_HOLD_MS;
+  }
+
   holdElapsed(vote: AlbionRankUpVoteEntity): boolean {
     if (!vote.provisionalSince) {
       return false;
     }
 
-    return Date.now() - vote.provisionalSince.getTime() >= PROVISIONAL_HOLD_MS;
+    return Date.now() - vote.provisionalSince.getTime() >= this.holdMs(vote);
   }
 
-  scoreLine(vote: AlbionRankUpVoteEntity, secondsLeft?: number): string {
-    const base = scoreHeading(vote.score, vote.requiredScore, secondsLeft);
+  scoreLine(vote: AlbionRankUpVoteEntity, recalculatingUntil?: Date): string {
+    const base = scoreHeading(vote.score, vote.requiredScore, recalculatingUntil);
 
     if (!vote.provisionalStatus || !vote.provisionalSince) {
       return base;
     }
 
-    const locksAt = new Date(vote.provisionalSince.getTime() + PROVISIONAL_HOLD_MS);
+    const locksAt = new Date(vote.provisionalSince.getTime() + this.holdMs(vote));
+    const unanimous = vote.provisionalStatus === AlbionRankUpVoteStatus.PASSED
+      && isUnanimous(vote.score, vote.electorateSize);
+
+    // A minute-long hold is short enough that the notice has to be impossible to miss, and
+    // sitting under its own heading is what makes it read as a countdown rather than a footnote.
+    // The clock is Discord's own relative stamp: under a minute the client re-renders it every
+    // second, so "in 42 seconds" ticks down live without the bot editing the message at all.
+    if (unanimous) {
+      return [
+        base,
+        `## ${UNANIMOUS_BOX} Unanimous — this vote passes ${discordTime(locksAt, 'R')}`,
+        `-# Every elector approved, so it locks in after ${UNANIMOUS_HOLD_SECONDS} seconds rather than the usual hour. Take a ${VOTE_APPROVE} back before then and the vote carries on.`,
+      ].join('\n');
+    }
+
     // Carries the outcome's own emoji, so which way the hold is going reads at a glance
     const verb = {
       [AlbionRankUpVoteStatus.PASSED]: '✅ pass',
@@ -454,6 +522,9 @@ export class AlbionRankUpVoteService {
     score: number,
     note?: string,
   ): Promise<boolean> {
+    // However this vote is being closed, its hold is over
+    this.clearHoldCommit(vote.id);
+
     const connection = this.voteRepository.getEntityManager().getConnection();
 
     const result = await connection.execute(

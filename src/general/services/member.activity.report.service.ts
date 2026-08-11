@@ -5,7 +5,7 @@ import { GuildMember, User } from 'discord.js';
 import { ActivityEntity } from '../../database/entities/activity.entity';
 import { GameTotal, MemberActivityRollupService } from './member.activity.rollup.service';
 import { MemberDailyActivityEntity } from '../../database/entities/member.daily.activity.entity';
-import { activityBand, discordTime, friendlyDuration, utcMidnight } from '../../helpers';
+import { activityBand, discordTime, friendlyDuration, hoursPerDay, utcMidnight } from '../../helpers';
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 const RECENT_WINDOW_DAYS = 14;
@@ -139,7 +139,7 @@ export class MemberActivityReportService {
     lines.push(
       `- 💬 Messages: **${messages}** (${(messages / trackedDays).toFixed(1)}/day)`,
       `- ⭐ Reactions: **${reactions}**`,
-      `- 🎙️ Voice: **${friendlyDuration(voiceMinutes)}**`,
+      `- 🎙️ Voice: **${friendlyDuration(voiceMinutes)}** (${hoursPerDay(voiceMinutes, trackedDays)})`,
       this.activityLine('📊 Active days all time', activeDays, trackedDays),
       this.activityLine(`📈 Active days last ${RECENT_WINDOW_DAYS}`, recentActiveDays, Math.min(RECENT_WINDOW_DAYS, trackedDays)),
     );

@@ -7,9 +7,8 @@ import {
   AlbionRankUpVoteService,
   majorityScore,
   PROVISIONAL_HOLD_MS,
+  UNANIMOUS_HOLD_MS,
   REACTION_DEBOUNCE_MS,
-  COUNTDOWN_MARKS,
-  RECALCULATING_TICK_MS,
   scoreHeading,
   VOTE_APPROVE,
   VOTE_DISAPPROVE,
@@ -325,6 +324,110 @@ describe('AlbionRankUpVoteService', () => {
       expect(line).toContain('window to change it');
     });
 
+    it('holds a unanimous pass for a minute rather than an hour', () => {
+      const vote = makeVote({
+        electorateSize: 4,
+        requiredScore: 2.5,
+        score: 4,
+        provisionalStatus: AlbionRankUpVoteStatus.PASSED,
+      });
+
+      expect(service.holdMs(vote)).toBe(UNANIMOUS_HOLD_MS);
+    });
+
+    it('holds a pass that is not unanimous for the full hour', () => {
+      const vote = makeVote({
+        electorateSize: 4,
+        requiredScore: 2.5,
+        score: 3.5, // Three approvals and a shrug is a pass, but somebody is unconvinced
+        provisionalStatus: AlbionRankUpVoteStatus.PASSED,
+      });
+
+      expect(service.holdMs(vote)).toBe(PROVISIONAL_HOLD_MS);
+    });
+
+    it('gives a veto the full hour even when everyone else approved', () => {
+      const vote = makeVote({
+        electorateSize: 4,
+        requiredScore: 2.5,
+        score: 4,
+        provisionalStatus: AlbionRankUpVoteStatus.VETOED,
+      });
+
+      expect(service.holdMs(vote)).toBe(PROVISIONAL_HOLD_MS);
+    });
+
+    it('commits a unanimous pass a minute in, without waiting the hour', async () => {
+      const vote = makeVote({
+        electorateSize: 4,
+        requiredScore: 2.5,
+        provisionalStatus: AlbionRankUpVoteStatus.PASSED,
+        provisionalSince: new Date(Date.now() - UNANIMOUS_HOLD_MS - 1000),
+      });
+      discordService.getTextChannel.mockResolvedValue({
+        id: 'chan-1',
+        send: channelSend,
+        messages: { fetch: jest.fn().mockResolvedValue(makeMessage({ [VOTE_APPROVE]: ['e1', 'e2', 'e3', 'e4'] })) },
+      });
+
+      await service.evaluate(vote);
+
+      expect(execute.mock.calls[0][0]).toContain('set status = ?');
+      expect(execute.mock.calls[0][1][0]).toBe(AlbionRankUpVoteStatus.PASSED);
+    });
+
+    it('leaves a pass that is not unanimous held a minute in', async () => {
+      const vote = makeVote({
+        electorateSize: 5,
+        requiredScore: 3,
+        provisionalStatus: AlbionRankUpVoteStatus.PASSED,
+        provisionalSince: new Date(Date.now() - UNANIMOUS_HOLD_MS - 1000),
+      });
+      discordService.getTextChannel.mockResolvedValue({
+        id: 'chan-1',
+        send: channelSend,
+        messages: { fetch: jest.fn().mockResolvedValue(makeMessage({ [VOTE_APPROVE]: ['e1', 'e2', 'e3', 'e4'] })) },
+      });
+
+      await service.evaluate(vote);
+
+      expect(execute).not.toHaveBeenCalled();
+    });
+
+    // Prominent because the window is a minute: an ⏳ footnote is easy to miss in that time
+    it('heads a unanimous hold with a green countdown', () => {
+      const startedAt = new Date();
+      const vote = makeVote({
+        electorateSize: 4,
+        requiredScore: 2.5,
+        score: 4,
+        provisionalStatus: AlbionRankUpVoteStatus.PASSED,
+        provisionalSince: startedAt,
+      });
+
+      const line = service.scoreLine(vote);
+      const locksAt = Math.floor((startedAt.getTime() + UNANIMOUS_HOLD_MS) / 1000);
+
+      // Discord re-renders a relative stamp under a minute every second, so the countdown runs
+      // on the client and the bot never edits the message to move it
+      expect(line).toContain(`## 🟩 Unanimous — this vote passes <t:${locksAt}:R>`);
+      expect(line).toContain('locks in after 60 seconds rather than the usual hour');
+      expect(line).not.toContain('⏳');
+    });
+
+    it('keeps the ⏳ notice for a hold that is not unanimous', () => {
+      const vote = makeVote({
+        score: 4,
+        provisionalStatus: AlbionRankUpVoteStatus.PASSED,
+        provisionalSince: new Date(),
+      });
+
+      const line = service.scoreLine(vote);
+
+      expect(line).toContain('⏳ This vote will be locked in and **✅ pass**');
+      expect(line).not.toContain('🟩');
+    });
+
     it('shows only the score when nothing is being held', () => {
       const line = service.scoreLine(makeVote({ score: 2 }));
 
@@ -388,6 +491,65 @@ describe('AlbionRankUpVoteService', () => {
       for (let n = 1; n <= 20; n++) {
         expect(majorityScore(n)).toBeGreaterThan(n / 2);
       }
+    });
+  });
+
+  // A 60 second hold left to the minute sweep would routinely take two minutes to land
+  describe('committing a short hold on time', () => {
+    beforeEach(() => jest.useFakeTimers());
+    afterEach(() => jest.useRealTimers());
+
+    const unanimousBallot = (vote: any) => {
+      voteRepository.findOne.mockResolvedValue(vote);
+      discordService.getTextChannel.mockResolvedValue({
+        id: 'chan-1',
+        send: channelSend,
+        messages: { fetch: jest.fn().mockResolvedValue(makeMessage({ [VOTE_APPROVE]: ['e1', 'e2', 'e3', 'e4'] })) },
+      });
+    };
+
+    it('wakes a unanimous ballot up when its own hold ends, without the sweep', async () => {
+      const vote = makeVote({ electorateSize: 4, requiredScore: 2.5 });
+      unanimousBallot(vote);
+
+      await service.evaluate(vote);
+      expect(execute).not.toHaveBeenCalled(); // Held, not resolved
+
+      await jest.advanceTimersByTimeAsync(UNANIMOUS_HOLD_MS);
+
+      expect(execute.mock.calls[0][0]).toContain('set status = ?');
+      expect(execute.mock.calls[0][1][0]).toBe(AlbionRankUpVoteStatus.PASSED);
+    });
+
+    it('leaves the hour long hold to the sweep rather than pinning a timer for it', async () => {
+      const vote = makeVote({ electorateSize: 7, requiredScore: 4 });
+      unanimousBallot(vote); // Four of seven: a pass, but nowhere near unanimous
+
+      await service.evaluate(vote);
+      await jest.advanceTimersByTimeAsync(UNANIMOUS_HOLD_MS * 10);
+
+      expect(execute).not.toHaveBeenCalled();
+    });
+
+    // Someone taking their 👍 back inside the window has to stop the commit, not just cancel
+    // the provisional status the commit would have read
+    it('drops the timer when the hold is cancelled', async () => {
+      const vote = makeVote({ electorateSize: 4, requiredScore: 2.5 });
+      unanimousBallot(vote);
+
+      await service.evaluate(vote);
+
+      // Same ballot, one approval short of the bar now
+      discordService.getTextChannel.mockResolvedValue({
+        id: 'chan-1',
+        send: channelSend,
+        messages: { fetch: jest.fn().mockResolvedValue(makeMessage({ [VOTE_APPROVE]: ['e1', 'e2'] })) },
+      });
+      await service.evaluate(vote);
+
+      await jest.advanceTimersByTimeAsync(UNANIMOUS_HOLD_MS);
+
+      expect(execute).not.toHaveBeenCalled();
     });
   });
 
@@ -577,30 +739,52 @@ describe('AlbionRankUpVoteService', () => {
       expect(editedLines()[0]).toContain('2.5 / 4');
     });
 
-    // A per-second countdown queued behind Discord's edit limit and lagged the whole burst
-    it('spends one edit per countdown mark, not one per second', async () => {
+    // The stamp counts itself down on the client, so nothing has to edit the message to move it
+    it('stamps when the recount lands rather than a number it has to rewrite', async () => {
       withBallot();
+      const landsAt = Math.floor((Date.now() + REACTION_DEBOUNCE_MS) / 1000);
+
       await service.scheduleRecount(makeVote({ score: 2.5 }));
 
-      await jest.advanceTimersByTimeAsync(REACTION_DEBOUNCE_MS - RECALCULATING_TICK_MS);
-
-      const seconds = editedLines()
-        .map((line: string) => line.match(/(\d+)s\)/)?.[1])
-        .filter(Boolean)
-        .map(Number);
-
-      expect(seconds).toEqual([REACTION_DEBOUNCE_MS / 1000, ...COUNTDOWN_MARKS]);
+      expect(editedLines()[0]).toContain(`recalculating… <t:${landsAt}:R>`);
     });
 
-    // Jitter must not drop a mark: a tick running late steps over it rather than landing on it
-    it('paints a mark the ticker stepped over', async () => {
+    // A per-second countdown queued behind Discord's edit limit and lagged the whole burst
+    it('spends a single edit on the whole countdown', async () => {
       withBallot();
       await service.scheduleRecount(makeVote({ score: 2.5 }));
 
-      jest.setSystemTime(Date.now() + REACTION_DEBOUNCE_MS - 1500);
-      await jest.advanceTimersByTimeAsync(RECALCULATING_TICK_MS);
+      await jest.advanceTimersByTimeAsync(REACTION_DEBOUNCE_MS - 1);
 
-      expect(editedLines().at(-1)).toContain(`${Math.max(...COUNTDOWN_MARKS)}s)`);
+      expect(editedLines()).toHaveLength(1);
+    });
+
+    // The whole point of a live stamp: seven electors reacting together ride on the first paint
+    it('does not repaint for every reaction in a burst', async () => {
+      withBallot();
+      const vote = makeVote({ score: 2.5 });
+
+      for (let i = 0; i < 5; i++) {
+        await service.scheduleRecount(vote);
+        await jest.advanceTimersByTimeAsync(500);
+      }
+
+      expect(editedLines()).toHaveLength(1);
+    });
+
+    // A burst long enough to outrun its own stamp would otherwise leave "recalculating… 3
+    // seconds ago" sitting on the ballot while reactions are still arriving
+    it('repaints once the stamp it painted has run out', async () => {
+      withBallot();
+      const vote = makeVote({ score: 2.5 });
+
+      await service.scheduleRecount(vote);
+      await jest.advanceTimersByTimeAsync(REACTION_DEBOUNCE_MS - 500);
+      const landsAt = Math.floor((Date.now() + REACTION_DEBOUNCE_MS) / 1000);
+      await service.scheduleRecount(vote);
+
+      expect(editedLines()).toHaveLength(2);
+      expect(editedLines()[1]).toContain(`<t:${landsAt}:R>`);
     });
 
     it('recounts when the countdown runs out, and stops painting', async () => {
@@ -614,13 +798,13 @@ describe('AlbionRankUpVoteService', () => {
       expect(evaluate).toHaveBeenCalledTimes(1);
 
       const afterRecount = messageEdit.mock.calls.length;
-      await jest.advanceTimersByTimeAsync(RECALCULATING_TICK_MS * 5);
+      await jest.advanceTimersByTimeAsync(REACTION_DEBOUNCE_MS * 5);
 
       expect(messageEdit.mock.calls.length).toBe(afterRecount);
       expect(evaluate).toHaveBeenCalledTimes(1);
     });
 
-    // A reaction mid countdown replaces the countdown rather than starting a second ticker
+    // A reaction mid countdown replaces the countdown rather than starting a second timer
     it('restarts the countdown when another reaction lands', async () => {
       withBallot();
       const vote = makeVote({ score: 2.5 });
@@ -628,9 +812,9 @@ describe('AlbionRankUpVoteService', () => {
       const evaluate = jest.spyOn(service, 'evaluate').mockResolvedValue(undefined);
 
       await service.scheduleRecount(vote);
-      await jest.advanceTimersByTimeAsync(RECALCULATING_TICK_MS * 3);
+      await jest.advanceTimersByTimeAsync(3000);
       await service.scheduleRecount(vote);
-      await jest.advanceTimersByTimeAsync(RECALCULATING_TICK_MS * 3);
+      await jest.advanceTimersByTimeAsync(3000);
 
       expect(evaluate).not.toHaveBeenCalled();
 
@@ -639,7 +823,8 @@ describe('AlbionRankUpVoteService', () => {
       expect(evaluate).toHaveBeenCalledTimes(1);
     });
 
-    // The replaced ticker kept its own phase, so an extended countdown fired late and off-step
+    // The replaced timer would otherwise fire on the original deadline, recounting early and
+    // against a burst that has not finished
     it('runs the replacement countdown from the reaction that replaced it', async () => {
       withBallot();
       const vote = makeVote({ score: 2.5 });
@@ -647,22 +832,22 @@ describe('AlbionRankUpVoteService', () => {
       const evaluate = jest.spyOn(service, 'evaluate').mockResolvedValue(undefined);
 
       await service.scheduleRecount(vote);
-      await jest.advanceTimersByTimeAsync(RECALCULATING_TICK_MS * 3);
+      await jest.advanceTimersByTimeAsync(3000);
       await service.scheduleRecount(vote);
 
       // The original deadline has now passed, and must not be what fires
-      await jest.advanceTimersByTimeAsync(RECALCULATING_TICK_MS * 3);
+      await jest.advanceTimersByTimeAsync(3000);
       expect(evaluate).not.toHaveBeenCalled();
 
-      await jest.advanceTimersByTimeAsync(RECALCULATING_TICK_MS * 2);
+      await jest.advanceTimersByTimeAsync(2000);
       expect(evaluate).toHaveBeenCalledTimes(1);
     });
 
-    // One fetch per burst, not one per tick - the countdown must not cost a REST call a second
+    // One fetch per burst - the countdown must not cost a REST call per reaction
     it('fetches the ballot once for the whole countdown', async () => {
       withBallot();
       await service.scheduleRecount(makeVote({ score: 2.5 }));
-      await jest.advanceTimersByTimeAsync(RECALCULATING_TICK_MS * 3);
+      await jest.advanceTimersByTimeAsync(3000);
 
       const channel = await discordService.getTextChannel();
       expect(channel.messages.fetch).toHaveBeenCalledTimes(1);
@@ -674,11 +859,12 @@ describe('AlbionRankUpVoteService', () => {
       const vote = makeVote({ score: 2.5 });
 
       await service.scheduleRecount(vote);
-      await jest.advanceTimersByTimeAsync(RECALCULATING_TICK_MS * 3);
-      await service.scheduleRecount(vote);
+      await jest.advanceTimersByTimeAsync(4500);
+      await service.scheduleRecount(vote); // Late enough that it repaints, from the same message
 
       const channel = await discordService.getTextChannel();
       expect(channel.messages.fetch).toHaveBeenCalledTimes(1);
+      expect(editedLines()).toHaveLength(2);
     });
 
     // Otherwise the old paint lands after the new one and the ballot shows the wrong time left
@@ -711,7 +897,7 @@ describe('AlbionRankUpVoteService', () => {
     });
 
     it('clears the marker when the recount lands', async () => {
-      withBallot(scoreHeading(2.5, 4, 5));
+      withBallot(scoreHeading(2.5, 4, new Date(Date.now() + REACTION_DEBOUNCE_MS)));
       const vote = makeVote({ score: 2.5 });
       voteRepository.findOne.mockResolvedValue(vote);
 
@@ -785,6 +971,42 @@ describe('AlbionRankUpVoteService', () => {
 
     it('is a heading so it stands out from the ballot body', () => {
       expect(scoreHeading(2, 4).startsWith('## ')).toBe(true);
+    });
+
+    const unanimousHold = () => makeVote({
+      electorateSize: 4,
+      requiredScore: 2.5,
+      score: 4,
+      provisionalStatus: AlbionRankUpVoteStatus.PASSED,
+      provisionalSince: new Date(),
+    });
+
+    const withContent = (content: string) => {
+      const message = makeMessage({ [VOTE_APPROVE]: ['e1', 'e2'] }, content);
+      discordService.getTextChannel = jest.fn().mockResolvedValue({
+        id: 'chan-1', send: channelSend, messages: { fetch: jest.fn().mockResolvedValue(message) },
+      });
+    };
+
+    // The countdown is a heading plus its footnote, so the rewrite has to take the whole block
+    // back off. A "this vote passes" notice left under a cancelled hold is simply a lie.
+    it('clears the whole unanimous countdown when the hold is cancelled', async () => {
+      const vote = unanimousHold();
+      withContent(service.scoreLine(vote));
+
+      await service.evaluate(vote);
+
+      expect(messageEdit).toHaveBeenCalledWith(scoreHeading(2, 2.5));
+    });
+
+    it('leaves the rest of the ballot alone when it clears the countdown', async () => {
+      const vote = unanimousHold();
+      withContent(`INTRO\n\n${service.scoreLine(vote)}\n\n### Metrics\n-# a footnote`);
+
+      await service.evaluate(vote);
+
+      const edited = messageEdit.mock.calls[0][0];
+      expect(edited).toBe(`INTRO\n\n${scoreHeading(2, 2.5)}\n\n### Metrics\n-# a footnote`);
     });
   });
 
