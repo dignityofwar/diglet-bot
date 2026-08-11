@@ -20,6 +20,10 @@ export const PROVISIONAL_HOLD_MS = 60 * 60 * 1000;
 export const UNANIMOUS_HOLD_MS = 60 * 1000;
 export const UNANIMOUS_HOLD_SECONDS = Math.round(UNANIMOUS_HOLD_MS / 1000);
 
+// Fronts the unanimous countdown, and is what the score line regex looks for to find that notice
+// again on the next rewrite. One definition, so the two can never drift apart.
+export const UNANIMOUS_BOX = '🟩';
+
 // Every elector voted 👍. A 👍 is the only reaction worth a whole point, so nothing short of a
 // full board of them reaches the electorate's own size. Read off the row rather than a tally so
 // the hold can be measured anywhere the ballot is drawn; if the electorate has grown since the

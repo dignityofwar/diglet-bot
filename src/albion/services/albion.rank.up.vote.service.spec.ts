@@ -396,16 +396,38 @@ describe('AlbionRankUpVoteService', () => {
       expect(execute).not.toHaveBeenCalled();
     });
 
-    it('says a unanimous hold will pass unanimously', () => {
+    // Prominent because the window is a minute: an ⏳ footnote is easy to miss in that time
+    it('heads a unanimous hold with a green countdown', () => {
+      const startedAt = new Date();
       const vote = makeVote({
         electorateSize: 4,
         requiredScore: 2.5,
         score: 4,
         provisionalStatus: AlbionRankUpVoteStatus.PASSED,
+        provisionalSince: startedAt,
+      });
+
+      const line = service.scoreLine(vote);
+      const locksAt = Math.floor((startedAt.getTime() + UNANIMOUS_HOLD_MS) / 1000);
+
+      // Discord re-renders a relative stamp under a minute every second, so the countdown runs
+      // on the client and the bot never edits the message to move it
+      expect(line).toContain(`## 🟩 Unanimous — this vote passes <t:${locksAt}:R>`);
+      expect(line).toContain('locks in after 60 seconds rather than the usual hour');
+      expect(line).not.toContain('⏳');
+    });
+
+    it('keeps the ⏳ notice for a hold that is not unanimous', () => {
+      const vote = makeVote({
+        score: 4,
+        provisionalStatus: AlbionRankUpVoteStatus.PASSED,
         provisionalSince: new Date(),
       });
 
-      expect(service.scoreLine(vote)).toContain('pass unanimously');
+      const line = service.scoreLine(vote);
+
+      expect(line).toContain('⏳ This vote will be locked in and **✅ pass**');
+      expect(line).not.toContain('🟩');
     });
 
     it('shows only the score when nothing is being held', () => {
@@ -927,6 +949,42 @@ describe('AlbionRankUpVoteService', () => {
 
     it('is a heading so it stands out from the ballot body', () => {
       expect(scoreHeading(2, 4).startsWith('## ')).toBe(true);
+    });
+
+    const unanimousHold = () => makeVote({
+      electorateSize: 4,
+      requiredScore: 2.5,
+      score: 4,
+      provisionalStatus: AlbionRankUpVoteStatus.PASSED,
+      provisionalSince: new Date(),
+    });
+
+    const withContent = (content: string) => {
+      const message = makeMessage({ [VOTE_APPROVE]: ['e1', 'e2'] }, content);
+      discordService.getTextChannel = jest.fn().mockResolvedValue({
+        id: 'chan-1', send: channelSend, messages: { fetch: jest.fn().mockResolvedValue(message) },
+      });
+    };
+
+    // The countdown is a heading plus its footnote, so the rewrite has to take the whole block
+    // back off. A "this vote passes" notice left under a cancelled hold is simply a lie.
+    it('clears the whole unanimous countdown when the hold is cancelled', async () => {
+      const vote = unanimousHold();
+      withContent(service.scoreLine(vote));
+
+      await service.evaluate(vote);
+
+      expect(messageEdit).toHaveBeenCalledWith(scoreHeading(2, 2.5));
+    });
+
+    it('leaves the rest of the ballot alone when it clears the countdown', async () => {
+      const vote = unanimousHold();
+      withContent(`INTRO\n\n${service.scoreLine(vote)}\n\n### Metrics\n-# a footnote`);
+
+      await service.evaluate(vote);
+
+      const edited = messageEdit.mock.calls[0][0];
+      expect(edited).toBe(`INTRO\n\n${scoreHeading(2, 2.5)}\n\n### Metrics\n-# a footnote`);
     });
   });
 

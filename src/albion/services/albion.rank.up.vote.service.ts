@@ -20,7 +20,9 @@ import {
   PROVISIONAL_HOLD_MS,
   RECALCULATING_TICK_MS,
   scoreHeading,
+  UNANIMOUS_BOX,
   UNANIMOUS_HOLD_MS,
+  UNANIMOUS_HOLD_SECONDS,
   VOTE_APPROVE,
   VOTE_DISAPPROVE,
   VOTE_SHRUG,
@@ -37,6 +39,7 @@ export {
   RECALCULATING,
   RECALCULATING_TICK_MS,
   scoreHeading,
+  UNANIMOUS_BOX,
   UNANIMOUS_HOLD_MS,
   UNANIMOUS_HOLD_SECONDS,
   VOTE_APPROVE,
@@ -54,10 +57,14 @@ const REACTION_SCORES: Record<string, number> = {
 
 const DISCORD_UNKNOWN_MESSAGE = 10008;
 
-// The live score line plus any hold notice beneath it, rewritten in place on every recount. Both
-// are matched together so a stale hold notice can't survive the replacement. Deliberately loose
-// about the heading so ballots posted before it was added keep updating.
-const SCORE_LINE = /^.*Current score:.*(?:\n⏳.*)?$/m;
+// The live score line plus any hold notice beneath it, rewritten in place on every recount. The
+// notice is one ⏳ line for an ordinary hold and a heading plus its footnote for the unanimous
+// countdown; every shape is matched together so a stale notice can't survive the replacement.
+// Deliberately loose about the heading so ballots posted before it was added keep updating.
+const SCORE_LINE = new RegExp(
+  `^.*Current score:.*(?:\\n⏳.*|\\n## ${UNANIMOUS_BOX}.*(?:\\n-#.*)?)?$`,
+  'm',
+);
 
 // Discord rate limits message edits, and a busy ballot recounts on every reaction
 const SCORE_EDIT_THROTTLE_MS = 5000;
@@ -449,9 +456,22 @@ export class AlbionRankUpVoteService {
     const locksAt = new Date(vote.provisionalSince.getTime() + this.holdMs(vote));
     const unanimous = vote.provisionalStatus === AlbionRankUpVoteStatus.PASSED
       && isUnanimous(vote.score, vote.electorateSize);
+
+    // A minute-long hold is short enough that the notice has to be impossible to miss, and
+    // sitting under its own heading is what makes it read as a countdown rather than a footnote.
+    // The clock is Discord's own relative stamp: under a minute the client re-renders it every
+    // second, so "in 42 seconds" ticks down live without the bot editing the message at all.
+    if (unanimous) {
+      return [
+        base,
+        `## ${UNANIMOUS_BOX} Unanimous — this vote passes ${discordTime(locksAt, 'R')}`,
+        `-# Every elector approved, so it locks in after ${UNANIMOUS_HOLD_SECONDS} seconds rather than the usual hour. Take a ${VOTE_APPROVE} back before then and the vote carries on.`,
+      ].join('\n');
+    }
+
     // Carries the outcome's own emoji, so which way the hold is going reads at a glance
     const verb = {
-      [AlbionRankUpVoteStatus.PASSED]: unanimous ? '✅ pass unanimously' : '✅ pass',
+      [AlbionRankUpVoteStatus.PASSED]: '✅ pass',
       [AlbionRankUpVoteStatus.VETOED]: `${VOTE_VETO} be vetoed`,
       [AlbionRankUpVoteStatus.FAILED]: 'fail',
     }[vote.provisionalStatus] ?? 'close';
