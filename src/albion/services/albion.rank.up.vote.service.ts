@@ -15,10 +15,8 @@ import { resolvePartialReaction } from '../../discord/discord.hacks';
 import { discordTime } from '../../helpers';
 import { AlbionRankUpService } from './albion.rank.up.service';
 import {
-  COUNTDOWN_MARKS,
   isUnanimous,
   PROVISIONAL_HOLD_MS,
-  RECALCULATING_TICK_MS,
   scoreHeading,
   UNANIMOUS_BOX,
   UNANIMOUS_HOLD_MS,
@@ -31,13 +29,11 @@ import {
 
 // Re-exported so callers have one place to import ballot vocabulary from
 export {
-  COUNTDOWN_MARKS,
   isUnanimous,
   majorityScore,
   UNPOSTED_GRACE_MS,
   PROVISIONAL_HOLD_MS,
   RECALCULATING,
-  RECALCULATING_TICK_MS,
   scoreHeading,
   UNANIMOUS_BOX,
   UNANIMOUS_HOLD_MS,
@@ -77,10 +73,15 @@ export const REACTION_DEBOUNCE_MS = 5 * 1000;
 // A hold no longer than this gets its own commit timer rather than waiting for the minute sweep
 const SHORT_HOLD_MAX_MS = 5 * 60 * 1000;
 
+// How close the stamp already on the ballot has to be to running out before a reaction still
+// arriving repaints it. A burst that keeps pushing the deadline back then costs an edit every few
+// seconds rather than one per reaction, and the recount rewrites the line properly regardless.
+const COUNTDOWN_REPAINT_GRACE_MS = 1000;
+
 interface PendingRecount {
   deadline: number;
   timer: NodeJS.Timeout;
-  painted: Set<number>; // Marks already shown, so a mark costs one edit however often we tick
+  paintedDeadline?: number; // The stamp currently on the ballot, which is not always the deadline
   message?: Message;
 }
 
@@ -149,62 +150,45 @@ export class AlbionRankUpVoteService {
   }
 
   // A burst produces one tally once it settles: each reaction replaces the countdown outright
-  // rather than pushing the old one's deadline back. The ticker closes over the vote row and
-  // keeps whatever phase it started on, so an extended countdown paints a stale score and fires
-  // late. The fetched ballot carries across, so replacing costs no extra REST call.
+  // rather than pushing the old one's deadline back. The fetched ballot carries across, so
+  // replacing costs no extra REST call.
   // The timer is in process and lost on restart; resyncPending() in the sweep is the backstop.
   async scheduleRecount(vote: AlbionRankUpVoteEntity): Promise<void> {
     const previous = this.pendingRecounts.get(vote.id);
 
     if (previous) {
-      clearInterval(previous.timer);
+      clearTimeout(previous.timer);
     }
 
-    const timer = setInterval(() => void this.tick(vote), RECALCULATING_TICK_MS);
+    const timer = setTimeout(() => {
+      this.pendingRecounts.delete(vote.id);
+      void this.recount(vote.id);
+    }, REACTION_DEBOUNCE_MS);
+
     timer.unref?.(); // Must not hold the process open on shutdown
 
     const started: PendingRecount = {
       deadline: Date.now() + REACTION_DEBOUNCE_MS,
       timer,
-      painted: new Set(),
+      paintedDeadline: previous?.paintedDeadline,
       message: previous?.message,
     };
     this.pendingRecounts.set(vote.id, started);
 
-    // Painted immediately rather than waiting a tick, so the ballot reacts at once
-    await this.paintCountdown(vote, started, REACTION_DEBOUNCE_MS / 1000);
+    // The stamp counts itself down on the client, so the rest of the burst rides on the paint
+    // that started it. Repainted only once that stamp has run out and reactions are still
+    // arriving, which is what keeps a long burst from costing an edit per reaction.
+    const painted = started.paintedDeadline;
+
+    if (painted === undefined || painted - Date.now() <= COUNTDOWN_REPAINT_GRACE_MS) {
+      await this.paintCountdown(vote, started);
+    }
   }
 
-  private async tick(vote: AlbionRankUpVoteEntity): Promise<void> {
-    const pending = this.pendingRecounts.get(vote.id);
-
-    if (!pending) {
-      return;
-    }
-
-    if (Date.now() >= pending.deadline) {
-      clearInterval(pending.timer);
-      this.pendingRecounts.delete(vote.id);
-      await this.recount(vote.id);
-      return;
-    }
-
-    // Crossed rather than equalled: a tick that runs late must still paint the mark it stepped
-    // over, or timer jitter silently drops it and the countdown appears to stall.
-    const secondsLeft = (pending.deadline - Date.now()) / 1000;
-    const due = COUNTDOWN_MARKS.find(mark => secondsLeft <= mark && !pending.painted.has(mark));
-
-    if (due === undefined) {
-      return;
-    }
-
-    pending.painted.add(due);
-    await this.paintCountdown(vote, pending, due);
-  }
-
-  // Repaints the score line with the time left. The ballot is fetched once per burst and reused,
-  // so a countdown costs one fetch and one edit per mark rather than a fetch per tick.
-  private async paintCountdown(vote: AlbionRankUpVoteEntity, pending: PendingRecount, secondsLeft: number): Promise<void> {
+  // Marks the score line as unsettled, with a stamp saying when the recount lands. The ballot is
+  // fetched once per burst and reused, so this costs one fetch and one edit for the whole burst
+  // rather than an edit per second of countdown.
+  private async paintCountdown(vote: AlbionRankUpVoteEntity, pending: PendingRecount): Promise<void> {
     try {
       pending.message ??= await this.fetchBallot(vote);
 
@@ -214,7 +198,12 @@ export class AlbionRankUpVoteService {
         return;
       }
 
-      const updated = pending.message.content.replace(SCORE_LINE, this.scoreLine(vote, secondsLeft));
+      const updated = pending.message.content.replace(
+        SCORE_LINE,
+        this.scoreLine(vote, new Date(pending.deadline)),
+      );
+
+      pending.paintedDeadline = pending.deadline;
 
       if (updated !== pending.message.content) {
         pending.message = await pending.message.edit(updated);
@@ -446,8 +435,8 @@ export class AlbionRankUpVoteService {
     return Date.now() - vote.provisionalSince.getTime() >= this.holdMs(vote);
   }
 
-  scoreLine(vote: AlbionRankUpVoteEntity, secondsLeft?: number): string {
-    const base = scoreHeading(vote.score, vote.requiredScore, secondsLeft);
+  scoreLine(vote: AlbionRankUpVoteEntity, recalculatingUntil?: Date): string {
+    const base = scoreHeading(vote.score, vote.requiredScore, recalculatingUntil);
 
     if (!vote.provisionalStatus || !vote.provisionalSince) {
       return base;

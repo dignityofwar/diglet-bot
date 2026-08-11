@@ -9,8 +9,6 @@ import {
   PROVISIONAL_HOLD_MS,
   UNANIMOUS_HOLD_MS,
   REACTION_DEBOUNCE_MS,
-  COUNTDOWN_MARKS,
-  RECALCULATING_TICK_MS,
   scoreHeading,
   VOTE_APPROVE,
   VOTE_DISAPPROVE,
@@ -741,30 +739,52 @@ describe('AlbionRankUpVoteService', () => {
       expect(editedLines()[0]).toContain('2.5 / 4');
     });
 
-    // A per-second countdown queued behind Discord's edit limit and lagged the whole burst
-    it('spends one edit per countdown mark, not one per second', async () => {
+    // The stamp counts itself down on the client, so nothing has to edit the message to move it
+    it('stamps when the recount lands rather than a number it has to rewrite', async () => {
       withBallot();
+      const landsAt = Math.floor((Date.now() + REACTION_DEBOUNCE_MS) / 1000);
+
       await service.scheduleRecount(makeVote({ score: 2.5 }));
 
-      await jest.advanceTimersByTimeAsync(REACTION_DEBOUNCE_MS - RECALCULATING_TICK_MS);
-
-      const seconds = editedLines()
-        .map((line: string) => line.match(/(\d+)s\)/)?.[1])
-        .filter(Boolean)
-        .map(Number);
-
-      expect(seconds).toEqual([REACTION_DEBOUNCE_MS / 1000, ...COUNTDOWN_MARKS]);
+      expect(editedLines()[0]).toContain(`recalculating… <t:${landsAt}:R>`);
     });
 
-    // Jitter must not drop a mark: a tick running late steps over it rather than landing on it
-    it('paints a mark the ticker stepped over', async () => {
+    // A per-second countdown queued behind Discord's edit limit and lagged the whole burst
+    it('spends a single edit on the whole countdown', async () => {
       withBallot();
       await service.scheduleRecount(makeVote({ score: 2.5 }));
 
-      jest.setSystemTime(Date.now() + REACTION_DEBOUNCE_MS - 1500);
-      await jest.advanceTimersByTimeAsync(RECALCULATING_TICK_MS);
+      await jest.advanceTimersByTimeAsync(REACTION_DEBOUNCE_MS - 1);
 
-      expect(editedLines().at(-1)).toContain(`${Math.max(...COUNTDOWN_MARKS)}s)`);
+      expect(editedLines()).toHaveLength(1);
+    });
+
+    // The whole point of a live stamp: seven electors reacting together ride on the first paint
+    it('does not repaint for every reaction in a burst', async () => {
+      withBallot();
+      const vote = makeVote({ score: 2.5 });
+
+      for (let i = 0; i < 5; i++) {
+        await service.scheduleRecount(vote);
+        await jest.advanceTimersByTimeAsync(500);
+      }
+
+      expect(editedLines()).toHaveLength(1);
+    });
+
+    // A burst long enough to outrun its own stamp would otherwise leave "recalculating… 3
+    // seconds ago" sitting on the ballot while reactions are still arriving
+    it('repaints once the stamp it painted has run out', async () => {
+      withBallot();
+      const vote = makeVote({ score: 2.5 });
+
+      await service.scheduleRecount(vote);
+      await jest.advanceTimersByTimeAsync(REACTION_DEBOUNCE_MS - 500);
+      const landsAt = Math.floor((Date.now() + REACTION_DEBOUNCE_MS) / 1000);
+      await service.scheduleRecount(vote);
+
+      expect(editedLines()).toHaveLength(2);
+      expect(editedLines()[1]).toContain(`<t:${landsAt}:R>`);
     });
 
     it('recounts when the countdown runs out, and stops painting', async () => {
@@ -778,13 +798,13 @@ describe('AlbionRankUpVoteService', () => {
       expect(evaluate).toHaveBeenCalledTimes(1);
 
       const afterRecount = messageEdit.mock.calls.length;
-      await jest.advanceTimersByTimeAsync(RECALCULATING_TICK_MS * 5);
+      await jest.advanceTimersByTimeAsync(REACTION_DEBOUNCE_MS * 5);
 
       expect(messageEdit.mock.calls.length).toBe(afterRecount);
       expect(evaluate).toHaveBeenCalledTimes(1);
     });
 
-    // A reaction mid countdown replaces the countdown rather than starting a second ticker
+    // A reaction mid countdown replaces the countdown rather than starting a second timer
     it('restarts the countdown when another reaction lands', async () => {
       withBallot();
       const vote = makeVote({ score: 2.5 });
@@ -792,9 +812,9 @@ describe('AlbionRankUpVoteService', () => {
       const evaluate = jest.spyOn(service, 'evaluate').mockResolvedValue(undefined);
 
       await service.scheduleRecount(vote);
-      await jest.advanceTimersByTimeAsync(RECALCULATING_TICK_MS * 3);
+      await jest.advanceTimersByTimeAsync(3000);
       await service.scheduleRecount(vote);
-      await jest.advanceTimersByTimeAsync(RECALCULATING_TICK_MS * 3);
+      await jest.advanceTimersByTimeAsync(3000);
 
       expect(evaluate).not.toHaveBeenCalled();
 
@@ -803,7 +823,8 @@ describe('AlbionRankUpVoteService', () => {
       expect(evaluate).toHaveBeenCalledTimes(1);
     });
 
-    // The replaced ticker kept its own phase, so an extended countdown fired late and off-step
+    // The replaced timer would otherwise fire on the original deadline, recounting early and
+    // against a burst that has not finished
     it('runs the replacement countdown from the reaction that replaced it', async () => {
       withBallot();
       const vote = makeVote({ score: 2.5 });
@@ -811,22 +832,22 @@ describe('AlbionRankUpVoteService', () => {
       const evaluate = jest.spyOn(service, 'evaluate').mockResolvedValue(undefined);
 
       await service.scheduleRecount(vote);
-      await jest.advanceTimersByTimeAsync(RECALCULATING_TICK_MS * 3);
+      await jest.advanceTimersByTimeAsync(3000);
       await service.scheduleRecount(vote);
 
       // The original deadline has now passed, and must not be what fires
-      await jest.advanceTimersByTimeAsync(RECALCULATING_TICK_MS * 3);
+      await jest.advanceTimersByTimeAsync(3000);
       expect(evaluate).not.toHaveBeenCalled();
 
-      await jest.advanceTimersByTimeAsync(RECALCULATING_TICK_MS * 2);
+      await jest.advanceTimersByTimeAsync(2000);
       expect(evaluate).toHaveBeenCalledTimes(1);
     });
 
-    // One fetch per burst, not one per tick - the countdown must not cost a REST call a second
+    // One fetch per burst - the countdown must not cost a REST call per reaction
     it('fetches the ballot once for the whole countdown', async () => {
       withBallot();
       await service.scheduleRecount(makeVote({ score: 2.5 }));
-      await jest.advanceTimersByTimeAsync(RECALCULATING_TICK_MS * 3);
+      await jest.advanceTimersByTimeAsync(3000);
 
       const channel = await discordService.getTextChannel();
       expect(channel.messages.fetch).toHaveBeenCalledTimes(1);
@@ -838,11 +859,12 @@ describe('AlbionRankUpVoteService', () => {
       const vote = makeVote({ score: 2.5 });
 
       await service.scheduleRecount(vote);
-      await jest.advanceTimersByTimeAsync(RECALCULATING_TICK_MS * 3);
-      await service.scheduleRecount(vote);
+      await jest.advanceTimersByTimeAsync(4500);
+      await service.scheduleRecount(vote); // Late enough that it repaints, from the same message
 
       const channel = await discordService.getTextChannel();
       expect(channel.messages.fetch).toHaveBeenCalledTimes(1);
+      expect(editedLines()).toHaveLength(2);
     });
 
     // Otherwise the old paint lands after the new one and the ballot shows the wrong time left
@@ -875,7 +897,7 @@ describe('AlbionRankUpVoteService', () => {
     });
 
     it('clears the marker when the recount lands', async () => {
-      withBallot(scoreHeading(2.5, 4, 5));
+      withBallot(scoreHeading(2.5, 4, new Date(Date.now() + REACTION_DEBOUNCE_MS)));
       const vote = makeVote({ score: 2.5 });
       voteRepository.findOne.mockResolvedValue(vote);
 

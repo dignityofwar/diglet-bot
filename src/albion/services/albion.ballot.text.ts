@@ -2,6 +2,8 @@
 // these, and the vote runner asks the publisher to re-render a ballot - keeping the shared values
 // here is what stops that becoming a circular import.
 
+import { discordTime } from '../../helpers';
+
 export const VOTE_APPROVE = '👍';
 export const VOTE_SHRUG = '🤷';
 export const VOTE_DISAPPROVE = '👎';
@@ -40,20 +42,15 @@ export const majorityScore = (electorateSize: number): number => electorateSize 
 // looks visibly unsettled rather than silently wrong while the burst finishes
 export const RECALCULATING = 'recalculating';
 
-// How often the countdown is checked. Cheap - a tick only edits when it crosses a mark below.
-export const RECALCULATING_TICK_MS = 1000;
-
-// Seconds-remaining marks that actually cost an edit. A per-second countdown queued behind
-// Discord's edit limit and the whole burst visibly lagged, so the countdown shows the full
-// debounce, one step, then the recount rewrites it.
-export const COUNTDOWN_MARKS = [2];
-
 // The one definition of the score line, shared with the ballot builder. Kept together with the
 // regex in the vote service, which has to match whatever this writes.
-export const scoreHeading = (score: number, requiredScore: number, secondsLeft?: number): string => {
-  const countdown = secondsLeft === undefined
+// The countdown is Discord's own relative stamp rather than a number the bot keeps rewriting:
+// under a minute the client re-renders one every second, so it ticks down on its own and the
+// whole burst costs a single edit.
+export const scoreHeading = (score: number, requiredScore: number, recalculatingUntil?: Date): string => {
+  const countdown = recalculatingUntil === undefined
     ? ''
-    : ` *(${RECALCULATING}… ${Math.max(0, Math.ceil(secondsLeft))}s)*`;
+    : ` *(${RECALCULATING}… ${discordTime(recalculatingUntil, 'R')})*`;
 
   return `## 📊 Current score: ${score} / ${requiredScore}${countdown}`;
 };
