@@ -14,7 +14,7 @@ zero. Pass `'run'` as the third argument to get `{ affectedRows, rows }` back.
 
 **Why:** it fails silently and in the safe-looking direction. Every conditional-update election in
 the Albion rank-up feature — resolving a vote, claiming the announcement, claiming the denial-notice
-throttle, reclaiming a stranded ballot — treats "affected 1 row" as winning. Reading 0 means every
+throttle, reclaiming a stranded ballot, and `trackBallot` — treats "affected 1 row" as winning. Reading 0 means every
 caller concludes somebody else won and returns without doing anything, so votes resolved in the
 database and never announced, and denial notices never reached Judgement Hall. Nothing throws and
 nothing logs. It shipped because the specs mock `execute` and assert on the SQL string, which is

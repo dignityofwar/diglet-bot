@@ -19,7 +19,9 @@ it only holds if the gap is empty. Two things make it safe: build everything fal
 claim, and give the claim a reclaim path, since a crash between the two can always happen.
 `reclaimUnposted()` abandons pending rows with a null `messageId` older than a grace window, run
 first in the vote sweep so a stranded claim is cleared before expiry can time it out. The grace
-window matters — without it a concurrent request could reclaim a publish still in flight.
+window matters — without it a concurrent request could reclaim a publish still in flight. It is
+`UNPOSTED_GRACE_MS`, 5 minutes, keyed on `created_at`; the cost of having one is that a member
+whose row stranded less than 5 minutes ago is still told they have a vote open until it passes.
 
 **How to apply:** when a row claims a slot ahead of an irreversible side effect, check what can
 throw in between and move it earlier, then ask what clears the claim if the process dies there. Also
