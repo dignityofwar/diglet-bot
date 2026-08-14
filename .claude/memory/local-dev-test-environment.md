@@ -3,6 +3,8 @@ name: local-dev-test-environment
 description: "Running tests locally: any 24.x Node, pnpm install, then pnpm test (~91s, 54 suites / 786 tests); the engine-strict guard is currently inert under pnpm 11"
 metadata:
   type: project
+  volatility: hot
+  lastVerified: 2026-08-14
 ---
 
 `engines` pins Node to `>=24.12.0 <25.0.0`, but **nothing currently enforces it**. `.npmrc` carries `engine-strict=true`, which pnpm 11 ignores — the setting moved to `engineStrict` in `pnpm-workspace.yaml`, and the pnpm 10 → 11 bump (`3a8715b`, 2026-07-27) orphaned the old line without anything failing. A v26 Node now prints `[WARN] Unsupported engine` and runs Jest anyway.

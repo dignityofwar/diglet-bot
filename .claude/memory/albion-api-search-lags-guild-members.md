@@ -4,6 +4,8 @@ description: "The Albion /search endpoint can 404 a character that /guilds/{id}/
 metadata: 
   node_type: memory
   type: project
+  volatility: normal
+  lastVerified: 2026-08-14
   originSessionId: 2fa9c4b0-11e5-4ad5-af3f-7d94dee65519
   modified: 2026-07-30T20:37:08.236Z
 ---

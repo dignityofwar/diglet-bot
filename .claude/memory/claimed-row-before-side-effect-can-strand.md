@@ -4,6 +4,8 @@ description: Claiming a row before an unrepeatable side effect strands the claim
 metadata: 
   node_type: memory
   type: project
+  volatility: normal
+  lastVerified: 2026-08-14
   originSessionId: 90fbe174-1646-4977-a103-bfdf7cf2ff8d
   modified: 2026-08-02T20:16:33.889Z
 ---

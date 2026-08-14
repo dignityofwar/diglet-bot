@@ -4,6 +4,8 @@ description: "The release bump is chosen by substring-matching the commit messag
 metadata:
   node_type: memory
   type: project
+  volatility: hot
+  lastVerified: 2026-08-14
   originSessionId: ca733b42-5e99-422a-9fda-a6e80f064fc3
   modified: 2026-08-02T22:08:39.823Z
 ---

@@ -4,6 +4,8 @@ description: "necord skips the global command scope entirely when every command 
 metadata: 
   node_type: memory
   type: project
+  volatility: normal
+  lastVerified: 2026-08-14
   originSessionId: 32bc8f0f-2d66-4a8c-b99c-c9b4012b8549
   modified: 2026-08-03T20:23:47.759Z
 ---

@@ -4,6 +4,8 @@ description: "MikroORM runs forceUtcTimezone, so date.setHours(0,0,0,0) day keys
 metadata: 
   node_type: memory
   type: project
+  volatility: normal
+  lastVerified: 2026-08-14
   originSessionId: 90fbe174-1646-4977-a103-bfdf7cf2ff8d
   modified: 2026-08-02T16:57:28.208Z
 ---
