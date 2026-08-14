@@ -4,6 +4,8 @@ description: Bumping the mariadb image tag does nothing to system tables unless 
 metadata: 
   node_type: memory
   type: project
+  volatility: hot
+  lastVerified: 2026-08-14
   originSessionId: 98e6e913-c748-4676-92ad-94d3e2352e1b
   modified: 2026-07-29T01:37:36.272Z
 ---

@@ -4,6 +4,8 @@ description: Albion registration/scanning system is a core pillar of diglet-bot 
 metadata: 
   node_type: memory
   type: project
+  volatility: normal
+  lastVerified: 2026-08-14
   originSessionId: 909afba1-29e5-4f78-afed-8378271d3953
 ---
 

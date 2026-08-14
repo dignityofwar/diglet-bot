@@ -4,6 +4,8 @@ description: "Flipping an albion_registration_queue row's status can collide wit
 metadata: 
   node_type: memory
   type: project
+  volatility: hot
+  lastVerified: 2026-08-14
   originSessionId: 2229b546-6ab4-4ca6-b8b8-72c155b3b6af
   modified: 2026-08-02T19:34:44.047Z
 ---

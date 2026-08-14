@@ -3,6 +3,8 @@ name: lockfile-maintenance-bypasses-renovate-age-gate
 description: Renovate's 14-day minimumReleaseAge does not apply to lock file maintenance; pnpm's own setting is the only guard on that path
 metadata:
   type: project
+  volatility: hot
+  lastVerified: 2026-08-14
 ---
 
 `renovate.json` sets `minimumReleaseAge: 14 days`, but Renovate's `isMinimumReleaseAgeApplicable()`

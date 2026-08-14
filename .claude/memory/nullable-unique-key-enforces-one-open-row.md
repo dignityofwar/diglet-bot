@@ -4,6 +4,8 @@ description: "A nullable unique column beats a read-before-write check for \"onl
 metadata: 
   node_type: memory
   type: project
+  volatility: durable
+  lastVerified: 2026-08-14
   originSessionId: 90fbe174-1646-4977-a103-bfdf7cf2ff8d
   modified: 2026-08-02T16:57:39.545Z
 ---

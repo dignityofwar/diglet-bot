@@ -4,6 +4,8 @@ description: "necord's @Options() never constructs the DTO class, so field initi
 metadata: 
   node_type: memory
   type: project
+  volatility: normal
+  lastVerified: 2026-08-14
   originSessionId: 98e6e913-c748-4676-92ad-94d3e2352e1b
   modified: 2026-07-29T01:37:26.407Z
 ---
