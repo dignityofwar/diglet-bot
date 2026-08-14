@@ -11,4 +11,4 @@ The Albion Online registration system is one of the fundamental pillars of digle
 
 **Why:** Matt (the maintainer) explicitly flagged this as needing to be "very robust" — it's the primary live function serving the Dignity of War community.
 
-**How to apply:** Changes touching `src/albion/` registration/scanning/cron services deserve extra care: preserve retry behavior (failed registrants can retry — queue records get deleted on failure), don't weaken error handling, and keep test coverage strong.
+**How to apply:** Changes touching `src/albion/` registration/scanning/cron services deserve extra care: preserve retry behaviour (failed registrants can retry — a failed attempt is marked `FAILED` and **keeps** its row; the row is only cleared when the member enqueues again), don't weaken error handling, and keep test coverage strong. That persistence is load-bearing, not incidental — see [[queue-status-unique-key-collides-with-history]].
