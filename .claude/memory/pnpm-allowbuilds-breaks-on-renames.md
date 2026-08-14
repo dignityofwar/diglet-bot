@@ -4,7 +4,7 @@ description: "An unlisted ignored build script fails pnpm install outright; allo
 metadata: 
   node_type: memory
   type: project
-  volatility: durable
+  volatility: normal
   lastVerified: 2026-08-14
   originSessionId: 7e253822-08af-4203-b398-60ba9dcec1da
   modified: 2026-07-29T02:24:55.870Z

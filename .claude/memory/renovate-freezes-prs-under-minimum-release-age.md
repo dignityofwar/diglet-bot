@@ -3,7 +3,7 @@ name: renovate-freezes-prs-under-minimum-release-age
 description: A Renovate PR forced from the dashboard before minimumReleaseAge is frozen — no rebases, no bumps — and the rebase checkbox cannot unstick it
 metadata:
   type: project
-  volatility: normal
+  volatility: hot
   lastVerified: 2026-08-14
 ---
 
