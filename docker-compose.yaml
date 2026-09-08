@@ -11,7 +11,7 @@ services:
 #      - "com.centurylinklabs.watchtower.enable=true"
   digletbot-db:
     container_name: digletbot-db
-    image: mariadb:12.3.2
+    image: mariadb:12.3.3
     env_file: digletbot-db.env
     # Without this the image leaves system tables at the old version on a tag bump.
     environment:
