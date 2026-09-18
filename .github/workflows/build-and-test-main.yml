@@ -30,7 +30,7 @@ jobs:
       - name: Setup pnpm
         uses: pnpm/action-setup@v6
         with:
-          version: 11.25.0
+          version: 12.3.4
           run_install: false
 
       - uses: actions/cache@v6
