@@ -19,3 +19,11 @@ provisioning/local-data
 # Claude Code local settings (memories in .claude/memory ARE committed)
 .claude/settings.local.json
 .claude/worktrees/
+
+# Codex review scratch files (codex-plan-review / codex-build-review write these to the repo root)
+.codex-plan-review.md
+.codex-plan-review-result.md
+.codex-build-review.diff
+.codex-build-review-uncommitted.diff
+.codex-build-review-result.md
+.codex-build-review-tests.txt
