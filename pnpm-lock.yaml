@@ -64,7 +64,7 @@ importers:
         version: 6.14.0(@nestjs/common@11.2.5(reflect-metadata@0.2.2)(rxjs@7.8.1)(supports-color@8.1.1))(@nestjs/core@11.2.5(@nestjs/common@11.2.5(reflect-metadata@0.2.2)(rxjs@7.8.1)(supports-color@8.1.1))(reflect-metadata@0.2.2)(rxjs@7.8.1))(discord-api-types@0.37.120)(discord.js@14.27.0)(reflect-metadata@0.2.2)(rxjs@7.8.1)
       ps2census:
         specifier: ^4.9.2
-        version: 4.9.2(debug@4.4.3(supports-color@8.1.1))(supports-color@8.1.1)
+        version: 4.9.3(debug@4.4.3(supports-color@8.1.1))(supports-color@8.1.1)
       reflect-metadata:
         specifier: ^0.2.2
         version: 0.2.2
@@ -1434,9 +1434,6 @@ packages:
     resolution: {integrity: sha512-NZKeq9AfyQvEeNlN0zSYAaWrmBffJh3IELMZfRpJVWgrpEbtEpnjvzqBPf+mxoI287JohRDoa+/nsfqqiZmF6g==}
     engines: {node: '>= 6.0.0'}
 
-  axios@1.18.1:
-    resolution: {integrity: sha512-3nTvFlvpn9Zu/RkHUqtc7/+al4UpRW5az71ap5zccp6e8RAYEzhMTecX8Dz1wWDYrPpUoB1HAQEGEAEvUr7S9g==}
-
   axios@1.20.0:
     resolution: {integrity: sha512-r8aOh8j9cGKpgQAqpzrUHnSIc6a59Y3Xf/cv8sy1DrHCkZHzQGEuoq1tARk6qSyDdtQGSDgpb9kFlruzPvrgwg==}
 
@@ -2667,8 +2664,8 @@ packages:
     resolution: {integrity: sha512-cJ+oHTW1VAEa8cJslgmUZrc+sjRKgAKl3Zyse6+PV38hZe/V6Z14TbCuXcan9F9ghlz4QrFr2c92TNF82UkYHA==}
     engines: {node: '>=10'}
 
-  ps2census@4.9.2:
-    resolution: {integrity: sha512-JDmsegyTZWCNSw3TnAI8SFX3lUTvIp79TZ1j69qtC8LyhM+3OybTRRBvgHAZOmU4kJ75SHEp49tuYDIaHDvSxQ==}
+  ps2census@4.9.3:
+    resolution: {integrity: sha512-jAEqF2I7UnYhBg1bAOhORQtSSHmFqqbdjPtnOWo+mQTBiuWKNCvFGg0ouCN4D/+kuh8pQvADRmOME8Sv2XGz2w==}
     engines: {node: '>=14.0.0'}
     peerDependencies:
       bufferutil: ^4.0.7
@@ -3144,6 +3141,18 @@ packages:
 
   ws@8.21.1:
     resolution: {integrity: sha512-+0NTnW77fFN/DjQi6k/Sq/Yvk4Sgajw7urW8V+asjXnRgDs9gyGkdb7EzgfhA4goXsRIZKE28fzIXBHEzhuiWw==}
+    engines: {node: '>=10.0.0'}
+    peerDependencies:
+      bufferutil: ^4.0.1
+      utf-8-validate: '>=5.0.2'
+    peerDependenciesMeta:
+      bufferutil:
+        optional: true
+      utf-8-validate:
+        optional: true
+
+  ws@8.21.3:
+    resolution: {integrity: sha512-201TZ/kPWxoPr/OKWjquZR1SWKXcvxdH+e1xrx89b3YbmzLMFCLfnaG1HFIgWzJOEWZ7MvpK++odZufgYR50Rw==}
     engines: {node: '>=10.0.0'}
     peerDependencies:
       bufferutil: ^4.0.1
@@ -4692,16 +4701,6 @@ snapshots:
 
   aws-ssl-profiles@1.1.2: {}
 
-  axios@1.18.1(debug@4.4.3(supports-color@8.1.1))(supports-color@8.1.1):
-    dependencies:
-      follow-redirects: 1.16.0(debug@4.4.3(supports-color@8.1.1))
-      form-data: 4.0.6
-      https-proxy-agent: 5.0.1(supports-color@8.1.1)
-      proxy-from-env: 2.1.0
-    transitivePeerDependencies:
-      - debug
-      - supports-color
-
   axios@1.20.0(debug@4.4.3(supports-color@8.1.1))(supports-color@8.1.1):
     dependencies:
       follow-redirects: 1.16.0(debug@4.4.3(supports-color@8.1.1))
@@ -5419,9 +5418,9 @@ snapshots:
 
   isexe@2.0.0: {}
 
-  isomorphic-ws@5.0.0(ws@8.21.1):
+  isomorphic-ws@5.0.0(ws@8.21.3):
     dependencies:
-      ws: 8.21.1
+      ws: 8.21.3
 
   istanbul-lib-coverage@3.2.2: {}
 
@@ -6088,12 +6087,12 @@ snapshots:
 
   proxy-from-env@2.1.0: {}
 
-  ps2census@4.9.2(debug@4.4.3(supports-color@8.1.1))(supports-color@8.1.1):
+  ps2census@4.9.3(debug@4.4.3(supports-color@8.1.1))(supports-color@8.1.1):
     dependencies:
-      axios: 1.18.1(debug@4.4.3(supports-color@8.1.1))(supports-color@8.1.1)
+      axios: 1.20.0(debug@4.4.3(supports-color@8.1.1))(supports-color@8.1.1)
       eventemitter3: 5.0.4
-      isomorphic-ws: 5.0.0(ws@8.21.1)
-      ws: 8.21.1
+      isomorphic-ws: 5.0.0(ws@8.21.3)
+      ws: 8.21.3
     transitivePeerDependencies:
       - debug
       - supports-color
@@ -6533,6 +6532,8 @@ snapshots:
       signal-exit: 4.1.0
 
   ws@8.21.1: {}
+
+  ws@8.21.3: {}
 
   y18n@5.0.8: {}
 
