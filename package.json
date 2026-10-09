@@ -49,7 +49,7 @@
     "@sentry/profiling-node": "^10.0.0",
     "axios": "^1.7.2",
     "discord.js": "^14.22.0",
-    "dotenv": "^17.0.0",
+    "dotenv": "^18.0.0",
     "lodash": "^4.17.21",
     "necord": "^6.14.0",
     "ps2census": "^4.9.2",
