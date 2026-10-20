@@ -7,6 +7,7 @@ import { AlbionRegistrationService } from './services/albion.registration.servic
 import { DiscordModule } from '../discord/discord.module';
 import { AlbionScanningService } from './services/albion.scanning.service';
 import { AlbionScanCommand } from './commands/scan.command';
+import { AlbionPingRoleService } from './services/albion.ping.role.service';
 import { AlbionCronService } from './services/albion.cron.service';
 import { AlbionUtilities } from './utilities/albion.utilities';
 import { AlbionLogCommand } from './commands/log.command';
@@ -31,6 +32,7 @@ import { GeneralModule } from '../general/general.module';
   imports: [ConfigModule, DatabaseModule, DiscordModule, GeneralModule],
   providers: [
     AlbionApiService,
+    AlbionPingRoleService,
     AlbionCronService,
     AlbionDeregisterCommand,
     AlbionDeregistrationService,
